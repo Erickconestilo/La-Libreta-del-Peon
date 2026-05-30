@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "workSessions": [
+    {
+      "id": "work-session-2026-05-26",
+      "date": "2026-05-26",
+      "notes": "Coordenadas de trabajo del dia. Los prismas se cargaran en una seccion separada.",
+      "coordinates": []
+    }
+  ]
+}

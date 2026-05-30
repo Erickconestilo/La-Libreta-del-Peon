@@ -1,0 +1,617 @@
+{
+  "schemaVersion": 1,
+  "stations": [
+    {
+      "id": "trimble-station-001",
+      "name": "Galeria peana Sarria",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Nombre real del estacionamiento proporcionado por el usuario.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3989943,
+            "lng": 2.1258232,
+            "utm": {
+              "zone": "31T",
+              "easting": 426925.169,
+              "northing": 4583419.416
+            },
+            "elevation": 77.2
+          },
+          "accuracy": 11.78,
+          "bearing": 0,
+          "declination": 2.19,
+          "speedKmh": 0.28,
+          "url": "https://www.google.com/maps/place/41.3989943,2.1258232"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.398994997506385,
+            "lng": 2.1258246526122093,
+            "utm": {
+              "zone": "31T",
+              "easting": 426925.291,
+              "northing": 4583419.493
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.398994997506385,2.1258246526122093"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.39899464875319,
+        "lng": 2.1258239263061047,
+        "utm": {
+          "zone": "31T",
+          "easting": 426925.23,
+          "northing": 4583419.4545
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-002",
+      "name": "Estacionamiento Norte Sarria",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacionamiento registrado con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.39900983589987,
+            "lng": 2.1255648136138916,
+            "utm": {
+              "zone": "31T",
+              "easting": 426903.587,
+              "northing": 4583421.359
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.39900983589987,2.1255648136138916"
+        },
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3989788,
+            "lng": 2.1254946,
+            "utm": {
+              "zone": "31T",
+              "easting": 426897.682,
+              "northing": 4583417.973
+            },
+            "elevation": 109.9
+          },
+          "accuracy": 6.93,
+          "bearing": 0,
+          "declination": 2.19,
+          "speedKmh": 0.27,
+          "url": "https://www.google.com/maps/place/41.3989788,2.1254946"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.398994317949935,
+        "lng": 2.1255297068069456,
+        "utm": {
+          "zone": "31T",
+          "easting": 426900.6345,
+          "northing": 4583419.666
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-003",
+      "name": "Estacionamiento Rampa Sarria",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacionamiento registrado con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3992555,
+            "lng": 2.124986,
+            "utm": {
+              "zone": "31T",
+              "easting": 426855.477,
+              "northing": 4583449.121
+            },
+            "elevation": 110.4
+          },
+          "accuracy": 6.92,
+          "bearing": 0,
+          "declination": 2.19,
+          "speedKmh": 0.26,
+          "url": "https://www.google.com/maps/place/41.3992555,2.124986"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.39926384855095,
+            "lng": 2.124984450638294,
+            "utm": {
+              "zone": "31T",
+              "easting": 426855.357,
+              "northing": 4583450.049
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.39926384855095,2.124984450638294"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.39925967427548,
+        "lng": 2.124985225319147,
+        "utm": {
+          "zone": "31T",
+          "easting": 426855.417,
+          "northing": 4583449.585
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-004",
+      "name": "Estacionamiento Sur Sarria E01",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacionamiento registrado con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.398644156538,
+            "lng": 2.125581242144108,
+            "utm": {
+              "zone": "31T",
+              "easting": 426904.55,
+              "northing": 4583380.748
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.398644156538,2.125581242144108"
+        },
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3986911,
+            "lng": 2.125597,
+            "utm": {
+              "zone": "31T",
+              "easting": 426905.92,
+              "northing": 4583385.946
+            },
+            "elevation": 110
+          },
+          "accuracy": 6.48,
+          "bearing": 0,
+          "declination": 2.19,
+          "speedKmh": 0.33,
+          "url": "https://www.google.com/maps/place/41.3986911,2.125597"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.398667628268996,
+        "lng": 2.125589121072054,
+        "utm": {
+          "zone": "31T",
+          "easting": 426905.235,
+          "northing": 4583383.347
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-005",
+      "name": "Estacionamiento galeria Sanllehy",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Comparte coordenadas aproximadas con Estacionamiento Pozo Sanllehy. Se diferenciara despues por prismas reflectantes.",
+      "readings": [
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.413932023547424,
+            "lng": 2.16106116771698,
+            "utm": {
+              "zone": "31T",
+              "easting": 429886.896,
+              "northing": 4585048.662
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.413932023547424,2.16106116771698"
+        },
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.4138771,
+            "lng": 2.1610277,
+            "utm": {
+              "zone": "31T",
+              "easting": 429884.039,
+              "northing": 4585042.591
+            },
+            "elevation": 59.37
+          },
+          "accuracy": 6.72,
+          "bearing": 0,
+          "declination": 2.2,
+          "speedKmh": 0,
+          "url": "https://www.google.com/maps/place/41.4138771,2.1610277"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.41390456177371,
+        "lng": 2.16104443385849,
+        "utm": {
+          "zone": "31T",
+          "easting": 429885.4675,
+          "northing": 4585045.626499999
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-006",
+      "name": "Estacionamiento Pozo Sanllehy",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Comparte coordenadas aproximadas con Estacionamiento galeria Sanllehy. Se diferenciara despues por prismas reflectantes.",
+      "readings": [
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.413932023547424,
+            "lng": 2.16106116771698,
+            "utm": {
+              "zone": "31T",
+              "easting": 429886.896,
+              "northing": 4585048.662
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.413932023547424,2.16106116771698"
+        },
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.4138771,
+            "lng": 2.1610277,
+            "utm": {
+              "zone": "31T",
+              "easting": 429884.039,
+              "northing": 4585042.591
+            },
+            "elevation": 59.37
+          },
+          "accuracy": 6.72,
+          "bearing": 0,
+          "declination": 2.2,
+          "speedKmh": 0,
+          "url": "https://www.google.com/maps/place/41.4138771,2.1610277"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.41390456177371,
+        "lng": 2.16104443385849,
+        "utm": {
+          "zone": "31T",
+          "easting": 429885.4675,
+          "northing": 4585045.626499999
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "leica-station-001",
+      "name": "Estacionamiento Sanllehy Sy02",
+      "deviceType": "leica",
+      "status": "approximate",
+      "notes": "Estacion Leica registrada con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.414152,
+            "lng": 2.160879,
+            "utm": {
+              "zone": "31T",
+              "easting": 429871.908,
+              "northing": 4585073.231
+            },
+            "elevation": 123.8
+          },
+          "accuracy": 4.98,
+          "bearing": 241.33,
+          "declination": 2.2,
+          "speedKmh": 4.33,
+          "url": "https://www.google.com/maps/place/41.414152,2.160879"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.41409747112835,
+            "lng": 2.1609515324234962,
+            "utm": {
+              "zone": "31T",
+              "easting": 429877.911,
+              "northing": 4585067.118
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.41409747112835,2.1609515324234962"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.41412473556417,
+        "lng": 2.160915266211748,
+        "utm": {
+          "zone": "31T",
+          "easting": 429874.9095,
+          "northing": 4585070.1745
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "leica-station-002",
+      "name": "Estacionamiento Sanllehy Sy01",
+      "deviceType": "leica",
+      "status": "approximate",
+      "notes": "Estacion Leica registrada con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.4139269,
+            "lng": 2.1605141,
+            "utm": {
+              "zone": "31T",
+              "easting": 429841.169,
+              "northing": 4585048.536
+            },
+            "elevation": 124.8
+          },
+          "accuracy": 3.77,
+          "bearing": 88.66,
+          "declination": 2.2,
+          "speedKmh": 0.69,
+          "url": "https://www.google.com/maps/place/41.4139269,2.1605141"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.413917188561356,
+            "lng": 2.1605170145630836,
+            "utm": {
+              "zone": "31T",
+              "easting": 429841.402,
+              "northing": 4585047.455
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.413917188561356,2.1605170145630836"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.41392204428068,
+        "lng": 2.160515557281542,
+        "utm": {
+          "zone": "31T",
+          "easting": 429841.2855,
+          "northing": 4585047.9955
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-007",
+      "name": "Estacionamiento Sanllehy Sy03",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacion Trimble registrada con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.4141431,
+            "lng": 2.1613187,
+            "utm": {
+              "zone": "31T",
+              "easting": 429908.646,
+              "northing": 4585071.887
+            },
+            "elevation": 122.8
+          },
+          "accuracy": 5.45,
+          "bearing": 191.93,
+          "declination": 2.2,
+          "speedKmh": 2.83,
+          "url": "https://www.google.com/maps/place/41.4141431,2.1613187"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.41415278785474,
+            "lng": 2.161320671439171,
+            "utm": {
+              "zone": "31T",
+              "easting": 429908.821,
+              "northing": 4585072.961
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.41415278785474,2.161320671439171"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.41414794392737,
+        "lng": 2.1613196857195853,
+        "utm": {
+          "zone": "31T",
+          "easting": 429908.7335,
+          "northing": 4585072.424000001
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-008",
+      "name": "Estacionamiento Sanllehy Sy04",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacion Trimble registrada con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.4134765,
+            "lng": 2.161193,
+            "utm": {
+              "zone": "31T",
+              "easting": 429897.424,
+              "northing": 4584997.983
+            },
+            "elevation": 116.6
+          },
+          "accuracy": 5.03,
+          "bearing": 230.67,
+          "declination": 2.2,
+          "speedKmh": 4.28,
+          "url": "https://www.google.com/maps/place/41.4134765,2.161193"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.41349879027139,
+            "lng": 2.1611811965703964,
+            "utm": {
+              "zone": "31T",
+              "easting": 429896.461,
+              "northing": 4585000.467
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.41349879027139,2.1611811965703964"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.413487645135696,
+        "lng": 2.161187098285198,
+        "utm": {
+          "zone": "31T",
+          "easting": 429896.9425,
+          "northing": 4584999.225
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-009",
+      "name": "Campus Nord Estacionamiento CN2",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacion Trimble registrada con lectura con conexion y sin conexion.",
+      "readings": [
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.38917853212459,
+            "lng": 2.113892510533333,
+            "utm": {
+              "zone": "31T",
+              "easting": 425916.695,
+              "northing": 4582339.814
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.38917853212459,2.113892510533333"
+        },
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3891297,
+            "lng": 2.1139215,
+            "utm": {
+              "zone": "31T",
+              "easting": 425919.063,
+              "northing": 4582334.368
+            },
+            "elevation": 99.2
+          },
+          "accuracy": 11.23,
+          "bearing": 90.01,
+          "declination": 2.19,
+          "speedKmh": 1.13,
+          "url": "https://www.google.com/maps/place/41.3891297,2.1139215"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.389154116062294,
+        "lng": 2.1139070052666664,
+        "utm": {
+          "zone": "31T",
+          "easting": 425917.879,
+          "northing": 4582337.091
+        },
+        "displayMode": "approximate"
+      }
+    },
+    {
+      "id": "trimble-station-010",
+      "name": "Estacionamiento Campus Nord CN3",
+      "deviceType": "trimble",
+      "status": "approximate",
+      "notes": "Estacion Trimble registrada con lectura con conexion y sin conexion. La primera lectura conflictiva fue descartada y sustituida por la repeticion consistente.",
+      "readings": [
+        {
+          "source": "gps_offline",
+          "position": {
+            "lat": 41.3897456,
+            "lng": 2.1150808,
+            "utm": {
+              "zone": "31T",
+              "easting": 426016.686,
+              "northing": 4582401.754
+            },
+            "elevation": 96.3
+          },
+          "accuracy": 5.86,
+          "bearing": 226.17,
+          "declination": 2.19,
+          "speedKmh": 1.73,
+          "url": "https://www.google.com/maps/place/41.3897456,2.1150808"
+        },
+        {
+          "source": "mobile_network",
+          "position": {
+            "lat": 41.38974951680565,
+            "lng": 2.1150559186935425,
+            "utm": {
+              "zone": "31T",
+              "easting": 426014.61,
+              "northing": 4582402.21
+            }
+          },
+          "url": "https://www.google.com/maps/place/41.38974951680565,2.1150559186935425"
+        }
+      ],
+      "resolvedPosition": {
+        "method": "simple_average",
+        "lat": 41.389747558402824,
+        "lng": 2.115068359346771,
+        "utm": {
+          "zone": "31T",
+          "easting": 426015.648,
+          "northing": 4582401.982
+        },
+        "displayMode": "approximate"
+      }
+    }
+  ]
+}
