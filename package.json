@@ -1,0 +1,14 @@
+{
+  "name": "topofield-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "mobile:start": "npm run start --workspace apps/mobile",
+    "mobile:android": "npm run android --workspace apps/mobile",
+    "mobile:web": "npm run web --workspace apps/mobile",
+    "backend:dev": "npm run dev --workspace apps/backend",
+    "backend:build": "npm run build --workspace apps/backend"
+  }
+}
