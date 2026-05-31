@@ -13,7 +13,7 @@ const incidentSuggestionSchema = z.object({
 
 const createIncidentSchema = z.object({
   description: z.string().trim().min(1).max(1600),
-  photoUrl: z.string().url().nullable().optional().default(null),
+  photoUrl: z.null().optional().default(null),
   prismId: z.string().uuid().nullable().optional().default(null),
   stationId: z.string().uuid().nullable().optional().default(null),
   suggestion: incidentSuggestionSchema.nullable().optional().default(null),
