@@ -41,7 +41,6 @@ const mapReadingRow = (row: Record<string, unknown>) => {
     lat: row.lat,
     lng: row.lng,
     mapUrl: row.map_url,
-    rawPayload: row.raw_payload,
     source: row.source,
     speedKmh: row.speed_kmh,
     stationId: row.station_id,
@@ -142,7 +141,6 @@ export const getStationById = async (stationId: string) => {
       speed_kmh,
       map_url,
       captured_online,
-      raw_payload,
       created_at
     FROM station_readings
     WHERE station_id = $1
@@ -216,7 +214,7 @@ export const createStation = async (input: ValidatedCreateStationInput, createdB
       input.elevation ?? null,
       input.resolvedMethod ?? null,
       input.displayMode ?? null,
-      input.photoUrl ?? null,
+      null,
       input.notes ?? null,
       createdBy,
       input.status

@@ -89,7 +89,6 @@ export interface StationReading {
   speedKmh: number | null;
   mapUrl: string | null;
   capturedOnline: boolean;
-  rawPayload: Record<string, unknown> | null;
   createdAt: string;
 }
 
@@ -123,7 +122,6 @@ export interface CreateStationInput {
   elevation?: number | null;
   resolvedMethod?: string | null;
   displayMode?: string | null;
-  photoUrl?: string | null;
   notes?: string | null;
   status?: StationStatus;
   readings?: CreateStationReadingInput[];
@@ -184,7 +182,6 @@ export interface PrismObservation {
   northing: number | null;
   reducedLevel: number | null;
   prismConstant: number | null;
-  rawPayload: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }

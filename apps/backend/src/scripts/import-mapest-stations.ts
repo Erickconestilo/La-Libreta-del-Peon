@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { pool } from '../db/pool.js';
 import { getMaxReadingSpreadMeters } from '../utils/geo.js';
+import { assertWriteAllowed } from './safety.js';
 
 const SYSTEM_IMPORT_USER_ID = '00000000-0000-0000-0000-000000000001';
 const SOURCE_SYSTEM = 'mapEst';
@@ -172,6 +173,8 @@ const assertStationsLookConsistent = (stations: Array<z.infer<typeof stationImpo
 const importStations = async () => {
   const stations = await loadStationsFile();
   assertStationsLookConsistent(stations);
+  assertWriteAllowed('import-mapest-stations');
+
   await ensureSystemImportUser();
 
   const client = await pool.connect();

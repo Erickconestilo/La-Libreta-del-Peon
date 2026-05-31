@@ -3,10 +3,13 @@ import dotenv from 'dotenv';
 import { pool } from '../db/pool.js';
 import { loadedEnvPath } from '../lib/load-env.js';
 import { reconcilePrismObservationsForExistingStations } from '../models/prisms.model.js';
+import { assertWriteAllowed } from './safety.js';
 
 dotenv.config({ path: loadedEnvPath });
 
 const main = async () => {
+  assertWriteAllowed('reconcile-prism-observations');
+
   const summary = await reconcilePrismObservationsForExistingStations();
 
   console.log('Prism observation reconciliation complete');

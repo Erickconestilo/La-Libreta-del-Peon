@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { pool } from '../db/pool.js';
+import { assertWriteAllowed } from './safety.js';
 
 const SYSTEM_IMPORT_USER_ID = '00000000-0000-0000-0000-000000000001';
 const SOURCE_SYSTEM = 'topotask-monitoring';
@@ -258,6 +259,8 @@ const importTopotaskPrisms = async () => {
     console.log('No database writes performed. Re-run with --apply to import.');
     return;
   }
+
+  assertWriteAllowed('import-topotask-prisms');
 
   await ensureSystemImportUser();
 

@@ -17,8 +17,13 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 export const stationsRouter = Router();
 
-stationsRouter.get('/', listStationsController);
-stationsRouter.get('/:stationId/photos', listStationPhotosController);
+stationsRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listStationsController);
+stationsRouter.get(
+  '/:stationId/photos',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  listStationPhotosController
+);
 stationsRouter.post('/:stationId/photos', requireAuth, requireRole(['admin', 'topografo']), createStationPhotoController);
 stationsRouter.delete(
   '/:stationId/photos/:stationPhotoId',
@@ -26,8 +31,8 @@ stationsRouter.delete(
   requireRole(['admin', 'topografo']),
   deleteStationPhotoController
 );
-stationsRouter.get('/:stationId/prisms', listStationPrismsController);
-stationsRouter.get('/:stationId', getStationByIdController);
+stationsRouter.get('/:stationId/prisms', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listStationPrismsController);
+stationsRouter.get('/:stationId', requireAuth, requireRole(['admin', 'topografo', 'visitante']), getStationByIdController);
 stationsRouter.post('/', requireAuth, requireRole(['admin', 'topografo']), createStationController);
 stationsRouter.patch('/:stationId/notes', requireAuth, requireRole(['admin', 'topografo']), updateStationNotesController);
 stationsRouter.patch('/:stationId/photo', requireAuth, requireRole(['admin', 'topografo']), updateStationPhotoController);
