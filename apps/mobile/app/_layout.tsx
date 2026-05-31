@@ -75,6 +75,12 @@ function RootLayoutNav() {
                 }}
               />
               <Stack.Screen
+                name="guide/[manualId]"
+                options={{
+                  title: 'Guía'
+                }}
+              />
+              <Stack.Screen
                 name="prisms/coverage/[groupCode]"
                 options={{
                   title: 'Cobertura de prismas'
