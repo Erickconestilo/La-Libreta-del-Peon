@@ -385,7 +385,7 @@ export const getPrismCoverageByGroupCode = async (groupCode: string) => {
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE
       po.station_code = $1
-      OR po.station_code LIKE ($1 || '.%')
+      OR starts_with(po.station_code, $1 || '.')
     ORDER BY po.station_code ASC, p.code ASC
   `;
 

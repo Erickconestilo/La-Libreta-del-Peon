@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { AuthSessionUser } from '@shared/types';
+import * as SecureStore from 'expo-secure-store';
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { apiFetch, setApiBearerToken } from '@/lib/api';
@@ -28,6 +29,33 @@ const SESSION_TOKEN_KEY = 'topofield_admin_bearer_token';
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+const loadStoredToken = async () => {
+  const secureToken = await SecureStore.getItemAsync(SESSION_TOKEN_KEY);
+
+  if (secureToken) {
+    return secureToken;
+  }
+
+  const legacyToken = await Storage.getItemAsync(SESSION_TOKEN_KEY);
+
+  if (legacyToken) {
+    await SecureStore.setItemAsync(SESSION_TOKEN_KEY, legacyToken);
+    await Storage.removeItemAsync(SESSION_TOKEN_KEY);
+  }
+
+  return legacyToken;
+};
+
+const saveStoredToken = async (token: string) => {
+  await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
+  await Storage.removeItemAsync(SESSION_TOKEN_KEY);
+};
+
+const removeStoredToken = async () => {
+  await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
+  await Storage.removeItemAsync(SESSION_TOKEN_KEY);
+};
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AuthSessionUser | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -42,7 +70,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      const token = await Storage.getItemAsync(SESSION_TOKEN_KEY);
+      const token = await loadStoredToken();
       setStoredToken(token);
       setApiBearerToken(token);
       await loadCurrentUser();
@@ -71,13 +99,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setApiBearerToken(trimmedToken);
-      await Storage.setItemAsync(SESSION_TOKEN_KEY, trimmedToken);
+      await saveStoredToken(trimmedToken);
       setStoredToken(trimmedToken);
       await loadCurrentUser();
       setErrorMessage(null);
     } catch (error) {
       setApiBearerToken(null);
-      await Storage.removeItemAsync(SESSION_TOKEN_KEY);
+      await removeStoredToken();
       setStoredToken(null);
       setCurrentUser(null);
       const message = error instanceof Error ? error.message : 'No se pudo validar el token.';
@@ -92,7 +120,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      await Storage.removeItemAsync(SESSION_TOKEN_KEY);
+      await removeStoredToken();
       setStoredToken(null);
       setApiBearerToken(null);
       await loadCurrentUser();

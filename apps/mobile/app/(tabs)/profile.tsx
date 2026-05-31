@@ -11,10 +11,10 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { connectWithToken, currentUser, errorMessage, isLoading, resetToGuest, storedToken } = useCurrentSession();
-  const [tokenInput, setTokenInput] = useState(storedToken ?? '');
+  const [tokenInput, setTokenInput] = useState('');
 
   useEffect(() => {
-    setTokenInput(storedToken ?? '');
+    setTokenInput('');
   }, [storedToken]);
 
   const handleConnect = async () => {
@@ -39,13 +39,16 @@ export default function ProfileScreen() {
           Solo para admin o topógrafo. Pega un token si necesitas crear estaciones, subir fotos o gestionar la guía.
         </Text>
         <TextInput
+          autoComplete="off"
           autoCapitalize="none"
           autoCorrect={false}
-          multiline
+          importantForAutofill="no"
           onChangeText={setTokenInput}
-          placeholder="Token de acceso"
+          placeholder={storedToken ? 'Token guardado en este dispositivo' : 'Token de acceso'}
           placeholderTextColor="#64748b"
+          secureTextEntry
           style={styles.input}
+          textContentType="none"
           value={tokenInput}
         />
         <Pressable disabled={isLoading} onPress={() => void handleConnect()} style={styles.primaryButton}>
@@ -144,9 +147,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: colors.textPrimary,
-    minHeight: 120,
+    minHeight: 56,
     padding: 12,
-    textAlignVertical: 'top',
   },
   primaryButton: {
     alignItems: 'center',

@@ -25,6 +25,16 @@ const parseLimit = (value: unknown, defaultLimit: number, maxLimit: number) => {
   return Math.min(Math.max(parsed, 1), maxLimit);
 };
 
+const normalizeCoverageGroupCode = (value: string) => {
+  const groupCode = value.trim();
+
+  if (!/^[a-z0-9][a-z0-9_-]{0,39}$/i.test(groupCode)) {
+    throw new AppError('Invalid coverage group code', 400, 'INVALID_COVERAGE_GROUP');
+  }
+
+  return groupCode;
+};
+
 export const listStationPrismsController = async (request: Request, response: Response) => {
   try {
     const stationId = Array.isArray(request.params.stationId)
@@ -82,7 +92,7 @@ export const getPrismCoverageController = async (request: Request, response: Res
       throw new AppError('Coverage group code is required', 400, 'COVERAGE_GROUP_REQUIRED');
     }
 
-    const coverage = await getPrismCoverageByGroupCode(groupCode);
+    const coverage = await getPrismCoverageByGroupCode(normalizeCoverageGroupCode(groupCode));
 
     sendSuccess(response, coverage);
   } catch (error) {

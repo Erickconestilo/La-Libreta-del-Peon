@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Animated, Dimensions, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, Dimensions, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -120,7 +120,22 @@ export default function MapScreen() {
   const handleOpenInMaps = useCallback(async (station: StationWithProject & { lat: number; lng: number }) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}`;
 
-    await Linking.openURL(url);
+    Alert.alert(
+      'Abrir fuera de la app',
+      'Se enviarán las coordenadas de esta estación a Google Maps.',
+      [
+        {
+          style: 'cancel',
+          text: 'Cancelar'
+        },
+        {
+          onPress: () => {
+            void Linking.openURL(url);
+          },
+          text: 'Abrir'
+        }
+      ]
+    );
   }, []);
 
   const translateY = slideAnim.interpolate({

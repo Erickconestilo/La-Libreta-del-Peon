@@ -19,5 +19,7 @@ services:
         sync: false
       - key: GUEST_PUBLIC_TOKEN
         sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
       - key: PORT
         value: "3000"

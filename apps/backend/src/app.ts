@@ -1,4 +1,4 @@
-import cors from 'cors';
+import cors, { type CorsOptions } from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
@@ -20,9 +20,24 @@ dotenv.config();
 
 export const app = express();
 
+const allowedCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOptions: CorsOptions = {
+  origin(origin, callback) {
+    if (!origin || process.env.NODE_ENV !== 'production' || allowedCorsOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  }
+};
+
 app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 app.get('/api/v1/health', (_request, response) => {

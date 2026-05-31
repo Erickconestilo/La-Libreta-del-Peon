@@ -19,6 +19,10 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://la-libreta-del-peon-1.onrender.com/api/v1",
+        "EXPO_PUBLIC_GUEST_PUBLIC_TOKEN": "un-token-publico-largo-y-dificil"
+      },
       "android": {
         "buildType": "app-bundle"
       }
