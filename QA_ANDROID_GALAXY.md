@@ -2,18 +2,19 @@
 
 ## APK actual
 
-- Build EAS: `33f519a5-d5fa-48eb-9e70-69f8098f07f5`
-- APK: https://expo.dev/artifacts/eas/7q8aLQUtTFW4RXwzx3xd3Z.apk
+- Build EAS: `3acdddbc-b755-41c3-9dd1-1a8b7a647731`
+- APK: https://expo.dev/artifacts/eas/8gaj82tLkP8pFFX2tg4eHc.apk
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
-- Commit incluido: `92fa9fa6256e58a8dcdf866952bc0c3ff31375d9`
+- Commit incluido: `e0aa9a046a35d9b47e1e13e032f07a925409932d`
 
 ## Estado backend Render
 
 - `GET /health`: 200
 - `GET /stations`: 200
+- `GET /projects`: 404 en la ultima comprobacion local
 - `GET /guide-entries`: 404 en la ultima comprobacion local
-- Si `Guia` o `Memoria visual` muestran "funcion no disponible", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
+- Si `Guia`, `Memoria visual` o subida de imagen de obra muestran "funcion no disponible", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
 
 ## Instalación en Galaxy
 
@@ -25,7 +26,8 @@
 ## Prueba mínima como visitante
 
 - La app abre sin pantalla blanca ni cierre.
-- La pestaña `Lista` carga estaciones.
+- La pestaña `Obras` carga tarjetas de obra.
+- Tocar una obra abre sus estacionamientos.
 - Pull to refresh funciona.
 - Abrir una estación desde la lista.
 - La pestaña `Mapa` muestra marcadores.
@@ -57,6 +59,14 @@
 - Confirmar que la imagen aparece.
 - Cambiar foto desde galería.
 - Quitar foto principal.
+
+## Prueba de obras
+
+- Abrir `Obras`.
+- Ver tarjetas con contador de estacionamientos.
+- Entrar en `Campus Nord`, `Sanllehy` o `Sarrià`.
+- Confirmar que solo aparecen estacionamientos de esa obra.
+- Con rol `admin` o `topografo`, añadir/cambiar imagen de obra.
 
 ## Prueba de memoria visual
 
