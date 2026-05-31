@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useRouter } from 'expo-router';
-import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useStations } from '@/hooks/use-stations';
+import { getStationDisplayName } from '@/lib/station-display';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 type StationWithProject = import('@shared/types').Station & {
@@ -30,26 +31,65 @@ const statusConfig = {
 
 export default function MapScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ projectId?: string; projectName?: string }>();
   const insets = useSafeAreaInsets();
   const { data, errorMessage, isLoading, refetch, isRefetching } = useStations();
   const stations = data ?? [];
 
   const [selectedStation, setSelectedStation] = useState<StationWithProject | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    const projectId = Array.isArray(params.projectId) ? params.projectId[0] : params.projectId;
+
+    if (projectId) {
+      setSelectedProjectId(projectId);
+    }
+  }, [params.projectId]);
+
+  const projectOptions = useMemo(() => {
+    const map = new Map<string, string>();
+
+    for (const station of stations) {
+      if (station.projectId && station.project?.name) {
+        map.set(station.projectId, station.project.name);
+      }
+    }
+
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [stations]);
+
+  const visibleStations = useMemo(() => {
+    if (!selectedProjectId) {
+      return stations;
+    }
+
+    return stations.filter((station) => station.projectId === selectedProjectId);
+  }, [selectedProjectId, stations]);
 
   const stationsWithCoordinates = useMemo(
     () =>
-      stations.filter(
+      visibleStations.filter(
         (s): s is typeof s & { lat: number; lng: number } =>
           typeof s.lat === 'number' && typeof s.lng === 'number',
       ),
-    [stations],
+    [visibleStations],
   );
 
   const initialRegion = useMemo(
     () => getInitialRegion(stationsWithCoordinates),
     [stationsWithCoordinates],
   );
+
+  useEffect(() => {
+    if (stationsWithCoordinates.length > 0) {
+      mapRef.current?.animateToRegion(initialRegion, 350);
+    }
+  }, [initialRegion, stationsWithCoordinates.length]);
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -65,6 +105,11 @@ export default function MapScreen() {
   );
 
   const handleClosePanel = useCallback(() => setSelectedStation(null), []);
+
+  const handleProjectFilter = useCallback((projectId: string | null) => {
+    setSelectedProjectId(projectId);
+    setSelectedStation(null);
+  }, []);
 
   const handleDetail = useCallback(() => {
     if (!selectedStation) return;
@@ -104,7 +149,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView initialRegion={initialRegion} style={styles.map}>
+      <MapView ref={mapRef} initialRegion={initialRegion} style={styles.map}>
         {stationsWithCoordinates.map((station) => (
           <Marker
             key={station.id}
@@ -122,6 +167,24 @@ export default function MapScreen() {
         <Text style={styles.refreshBtnText}>{isRefetching ? '...' : '↻'}</Text>
       </Pressable>
 
+      <View style={[styles.projectFilters, { top: spacing[3] + insets.top }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.projectFilterRow}>
+          <ProjectChip
+            label="Todas"
+            onPress={() => handleProjectFilter(null)}
+            selected={selectedProjectId === null}
+          />
+          {projectOptions.map((project) => (
+            <ProjectChip
+              key={project.id}
+              label={project.name}
+              onPress={() => handleProjectFilter(project.id)}
+              selected={selectedProjectId === project.id}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
       {selectedStation ? (
         <Pressable onPress={handleClosePanel} style={styles.backdrop} />
       ) : null}
@@ -130,7 +193,7 @@ export default function MapScreen() {
         <View style={styles.panelHandle} />
 
         <View style={styles.panelContent}>
-          <Text style={styles.panelTitle}>{selectedStation?.name ?? ''}</Text>
+          <Text style={styles.panelTitle}>{selectedStation ? getStationDisplayName(selectedStation) : ''}</Text>
 
           <View style={styles.panelRow}>
             <Text style={styles.panelProject}>
@@ -156,6 +219,14 @@ export default function MapScreen() {
         </View>
       </Animated.View>
     </View>
+  );
+}
+
+function ProjectChip({ label, onPress, selected }: { label: string; onPress: () => void; selected: boolean }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.projectChip, selected ? styles.projectChipSelected : null]}>
+      <Text style={[styles.projectChipText, selected ? styles.projectChipTextSelected : null]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -263,6 +334,37 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: typography.fontSizeTitle,
     fontWeight: '800',
+  },
+  projectChip: {
+    backgroundColor: 'rgba(28, 31, 38, 0.92)',
+    borderColor: '#2a2f3a',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  projectChipSelected: {
+    backgroundColor: colors.accentGreen,
+    borderColor: colors.accentGreen,
+  },
+  projectChipText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  projectChipTextSelected: {
+    color: colors.background,
+  },
+  projectFilterRow: {
+    gap: spacing[1],
+    paddingLeft: spacing[3],
+    paddingRight: 64,
+  },
+  projectFilters: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: 3,
   },
   refreshBtn: {
     alignItems: 'center',

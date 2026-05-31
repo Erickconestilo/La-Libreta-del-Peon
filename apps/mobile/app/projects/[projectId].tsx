@@ -151,6 +151,22 @@ export default function ProjectDetailScreen() {
               ) : null}
             </View>
 
+            <Pressable
+              onPress={() =>
+                router.push({
+                  params: {
+                    projectId,
+                    projectName: project?.name ?? ''
+                  },
+                  pathname: '/(tabs)/map'
+                } as never)
+              }
+              style={styles.mapButton}
+            >
+              <MaterialIcons color={colors.background} name="map" size={20} />
+              <Text style={styles.mapButtonText}>Ver mapa de esta obra</Text>
+            </Pressable>
+
             {stationsErrorMessage ? (
               <View style={styles.errorCard}>
                 <Text style={styles.errorTitle}>No se pudieron cargar estaciones</Text>
@@ -325,6 +341,20 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: colors.textPrimary,
     fontSize: 28,
+    fontWeight: '900',
+  },
+  mapButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: spacing[1],
+    justifyContent: 'center',
+    paddingVertical: spacing[2],
+  },
+  mapButtonText: {
+    color: colors.background,
+    fontSize: 14,
     fontWeight: '900',
   },
   primaryButton: {

@@ -12,6 +12,7 @@ import {
   useStationPhotos
 } from '@/hooks/use-station-photos';
 import { useStationPhotoMutations } from '@/hooks/use-station-photo';
+import { getStationDisplayName } from '@/lib/station-display';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 const PHOTO_KINDS: Array<{ label: string; value: StationPhotoKind }> = [
@@ -135,7 +136,7 @@ export default function StationDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: data?.name ?? 'Detalle de estación' }} />
+      <Stack.Screen options={{ title: data ? getStationDisplayName(data) : 'Detalle de estación' }} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 32 + insets.bottom }]} style={styles.container}>
         {isLoading ? (
           <View style={styles.card}>
@@ -155,7 +156,7 @@ export default function StationDetailScreen() {
           <>
             <View style={styles.heroCard}>
               <Text style={styles.eyebrow}>{data.project?.name ?? 'Sin obra asignada'}</Text>
-              <Text style={styles.heroTitle}>{data.name}</Text>
+              <Text style={styles.heroTitle}>{getStationDisplayName(data)}</Text>
               <Text style={styles.body}>
                 Instrumento: {data.deviceType ?? 'sin definir'} · Estado mapa: {data.mapStatus ?? 'sin definir'}
               </Text>

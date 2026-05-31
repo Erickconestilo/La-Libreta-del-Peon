@@ -11,6 +11,7 @@ const mapStationRow = (row: Record<string, unknown>) => {
     deviceType: row.device_type,
     displayMode: row.display_mode,
     elevation: row.elevation,
+    externalId: row.external_id,
     id: row.id,
     lat: row.lat,
     lng: row.lng,
@@ -54,6 +55,7 @@ export const listStations = async (projectId?: string | null) => {
   const query = `
     SELECT
       s.id,
+      s.external_id,
       s.project_id,
       s.name,
       s.device_type,
@@ -97,6 +99,7 @@ export const getStationById = async (stationId: string) => {
   const stationQuery = `
     SELECT
       s.id,
+      s.external_id,
       s.project_id,
       s.name,
       s.device_type,
