@@ -363,3 +363,66 @@ export const updateStationPhoto = async (
     client.release();
   }
 };
+
+export const updateStationNotes = async (
+  stationId: string,
+  notes: string | null,
+  changedBy: string
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const currentResult = await client.query(
+      `
+        SELECT id, notes
+        FROM stations
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [stationId]
+    );
+
+    if (currentResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const oldNotes = currentResult.rows[0].notes as string | null;
+
+    await client.query(
+      `
+        UPDATE stations
+        SET
+          notes = $2,
+          updated_at = NOW()
+        WHERE id = $1
+      `,
+      [stationId, notes]
+    );
+
+    if (oldNotes !== notes) {
+      await createChangeLog(
+        {
+          entityId: stationId,
+          entityType: 'station',
+          fieldChanged: 'notes',
+          newValue: notes,
+          oldValue: oldNotes
+        },
+        changedBy,
+        client
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return getStationById(stationId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};

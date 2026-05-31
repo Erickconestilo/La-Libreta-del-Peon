@@ -129,6 +129,10 @@ export interface CreateStationInput {
   readings?: CreateStationReadingInput[];
 }
 
+export interface UpdateStationNotesInput {
+  notes: string | null;
+}
+
 export interface StationPhoto {
   id: string;
   stationId: string;

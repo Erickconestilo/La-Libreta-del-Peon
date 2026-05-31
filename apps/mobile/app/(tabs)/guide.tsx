@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useGuideEntries } from '@/hooks/use-guide';
+import { guideManuals } from '@/lib/guide-catalog';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function GuideScreen() {
@@ -28,11 +29,28 @@ export default function GuideScreen() {
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 112 + insets.bottom }]} style={styles.container}>
       <View style={styles.heroCard}>
         <Text style={styles.eyebrow}>Guía de campo</Text>
-        <Text style={styles.heroTitle}>Consulta rápida en obra</Text>
+        <Text style={styles.heroTitle}>Manuales y fichas rápidas</Text>
         <Text style={styles.body}>
-          Procedimientos, recordatorios y criterios operativos preparados para lectura rápida.
+          Las guías grandes aparecen como tarjetas. Debajo quedan fichas cortas para consultar en obra.
         </Text>
       </View>
+
+      <View style={styles.manualGrid}>
+        {guideManuals.map((manual) => (
+          <View key={manual.id} style={[styles.manualCard, manual.accent === 'green' ? styles.manualCardGreen : styles.manualCardAmber]}>
+            <View style={styles.manualTopRow}>
+              <Text style={[styles.manualTag, manual.accent === 'green' ? styles.manualTagGreen : styles.manualTagAmber]}>
+                {manual.tag}
+              </Text>
+              <Text style={styles.manualPages}>{manual.pages} pág.</Text>
+            </View>
+            <Text style={styles.manualTitle}>{manual.title}</Text>
+            <Text style={styles.body}>{manual.summary}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Text style={styles.sectionLabel}>Fichas rápidas</Text>
 
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
@@ -176,6 +194,60 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 28,
     fontWeight: '800',
+  },
+  manualCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: spacing[1],
+    padding: spacing[3],
+  },
+  manualCardAmber: {
+    borderColor: 'rgba(245, 158, 11, 0.55)',
+  },
+  manualCardGreen: {
+    borderColor: 'rgba(34, 197, 94, 0.55)',
+  },
+  manualGrid: {
+    gap: spacing[2],
+  },
+  manualPages: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  manualTag: {
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: spacing[1],
+    paddingVertical: 4,
+    textTransform: 'uppercase',
+  },
+  manualTagAmber: {
+    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    color: colors.amber,
+  },
+  manualTagGreen: {
+    backgroundColor: 'rgba(34, 197, 94, 0.18)',
+    color: colors.accentGreen,
+  },
+  manualTitle: {
+    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  manualTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  sectionLabel: {
+    color: colors.textPrimary,
+    fontSize: typography.fontSizeTitle,
+    fontWeight: '900',
+    marginTop: spacing[1],
   },
   title: {
     color: colors.textPrimary,

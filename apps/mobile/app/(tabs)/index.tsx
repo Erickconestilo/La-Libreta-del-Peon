@@ -1,17 +1,58 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProjectSummary } from '@shared/types';
-import { useProjects } from '@/hooks/use-projects';
+import { useCurrentSession } from '@/hooks/use-auth';
+import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function ProjectsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { currentUser } = useCurrentSession();
   const { data, errorMessage, isLoading, isRefetching, refetch } = useProjects();
+  const {
+    errorMessage: photoErrorMessage,
+    isMutating: isPhotoMutating,
+    removeProjectPhoto,
+    uploadProjectPhoto
+  } = useProjectPhotoMutations(null);
   const projects = data ?? [];
+  const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+
+  const handleEditProjectImage = (project: ProjectSummary) => {
+    Alert.alert('Imagen de obra', `Actualiza la portada de ${project.name}.`, [
+      {
+        onPress: () => {
+          void uploadProjectPhoto('camera', project.id).catch(() => undefined);
+        },
+        text: 'Cámara'
+      },
+      {
+        onPress: () => {
+          void uploadProjectPhoto('library', project.id).catch(() => undefined);
+        },
+        text: 'Galería'
+      },
+      ...(project.imageUrl
+        ? [
+            {
+              onPress: () => {
+                void removeProjectPhoto(project.id).catch(() => undefined);
+              },
+              style: 'destructive' as const,
+              text: 'Quitar imagen'
+            }
+          ]
+        : []),
+      {
+        style: 'cancel' as const,
+        text: 'Cancelar'
+      }
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -28,6 +69,13 @@ export default function ProjectsScreen() {
         </View>
       ) : null}
 
+      {photoErrorMessage ? (
+        <View style={styles.errorCard}>
+          <Text style={styles.errorTitle}>No se pudo actualizar la imagen</Text>
+          <Text style={styles.errorBody}>{photoErrorMessage}</Text>
+        </View>
+      ) : null}
+
       <FlatList
         contentContainerStyle={[styles.listContent, { paddingBottom: 112 + insets.bottom }]}
         data={projects}
@@ -35,6 +83,9 @@ export default function ProjectsScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         renderItem={({ item }) => (
           <ProjectCard
+            canEditImage={canEditProjectImage}
+            isEditingImage={isPhotoMutating}
+            onEditImage={() => handleEditProjectImage(item)}
             project={item}
             onPress={() => router.push(`/projects/${item.id}` as never)}
           />
@@ -50,7 +101,19 @@ export default function ProjectsScreen() {
   );
 }
 
-function ProjectCard({ onPress, project }: { onPress: () => void; project: ProjectSummary }) {
+function ProjectCard({
+  canEditImage,
+  isEditingImage,
+  onEditImage,
+  onPress,
+  project
+}: {
+  canEditImage: boolean;
+  isEditingImage: boolean;
+  onEditImage: () => void;
+  onPress: () => void;
+  project: ProjectSummary;
+}) {
   const content = (
     <>
       <View style={styles.statusBadge}>
@@ -68,6 +131,12 @@ function ProjectCard({ onPress, project }: { onPress: () => void; project: Proje
         </View>
         <MaterialIcons color={colors.accentGreen} name="arrow-forward" size={24} />
       </View>
+      {canEditImage ? (
+        <Pressable disabled={isEditingImage} onPress={onEditImage} style={[styles.editImageButton, isEditingImage ? styles.disabledButton : null]}>
+          <MaterialIcons color={colors.background} name="photo-camera" size={17} />
+          <Text style={styles.editImageButtonText}>{isEditingImage ? 'Procesando...' : project.imageUrl ? 'Cambiar imagen' : 'Añadir imagen'}</Text>
+        </Pressable>
+      ) : null}
     </>
   );
 
@@ -99,6 +168,25 @@ const styles = StyleSheet.create({
   },
   cardSpacer: {
     height: 70,
+  },
+  disabledButton: {
+    opacity: 0.55,
+  },
+  editImageButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: spacing[0],
+    marginTop: spacing[2],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  editImageButtonText: {
+    color: colors.background,
+    fontSize: 12,
+    fontWeight: '900',
   },
   container: {
     backgroundColor: colors.background,

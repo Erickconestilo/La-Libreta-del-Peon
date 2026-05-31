@@ -2,9 +2,9 @@ import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
 import { sendSuccess } from '../lib/api-response.js';
-import { createStation, getStationById, listStations, updateStationPhoto } from '../models/stations.model.js';
+import { createStation, getStationById, listStations, updateStationNotes, updateStationPhoto } from '../models/stations.model.js';
 import { isValidStationPhotoPath, validateAttachStationPhotoInput } from '../utils/photo-validation.js';
-import { validateCreateStationInput } from '../utils/station-validation.js';
+import { validateCreateStationInput, validateUpdateStationNotesInput } from '../utils/station-validation.js';
 
 export const listStationsController = async (request: Request, response: Response) => {
   try {
@@ -137,6 +137,51 @@ export const updateStationPhotoController = async (request: Request, response: R
       error: {
         code: 'STATION_PHOTO_UPDATE_FAILED',
         message: 'Unable to update station photo'
+      }
+    });
+  }
+};
+
+export const updateStationNotesController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const stationId = Array.isArray(request.params.stationId)
+      ? request.params.stationId[0]
+      : request.params.stationId;
+
+    if (!stationId) {
+      throw new AppError('Station id is required', 400, 'STATION_ID_REQUIRED');
+    }
+
+    const input = validateUpdateStationNotesInput(request.body);
+    const station = await updateStationNotes(stationId, input.notes, request.user.id);
+
+    if (!station) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+
+    sendSuccess(response, station);
+  } catch (error) {
+    if (error instanceof AppError) {
+      response.status(error.statusCode).json({
+        data: null,
+        error: {
+          code: error.code,
+          details: error.details,
+          message: error.message
+        }
+      });
+      return;
+    }
+
+    response.status(500).json({
+      data: null,
+      error: {
+        code: 'STATION_NOTES_UPDATE_FAILED',
+        message: 'Unable to update station notes'
       }
     });
   }

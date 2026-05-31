@@ -4,6 +4,7 @@ import {
   createStationController,
   getStationByIdController,
   listStationsController,
+  updateStationNotesController,
   updateStationPhotoController
 } from '../controllers/stations.controller.js';
 import {
@@ -28,4 +29,5 @@ stationsRouter.delete(
 stationsRouter.get('/:stationId/prisms', listStationPrismsController);
 stationsRouter.get('/:stationId', getStationByIdController);
 stationsRouter.post('/', requireAuth, requireRole(['admin', 'topografo']), createStationController);
+stationsRouter.patch('/:stationId/notes', requireAuth, requireRole(['admin', 'topografo']), updateStationNotesController);
 stationsRouter.patch('/:stationId/photo', requireAuth, requireRole(['admin', 'topografo']), updateStationPhotoController);

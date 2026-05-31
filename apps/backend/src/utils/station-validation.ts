@@ -47,6 +47,12 @@ export const createStationSchema = z.object({
 
 export type ValidatedCreateStationInput = z.infer<typeof createStationSchema>;
 
+export const updateStationNotesSchema = z.object({
+  notes: z.string().trim().max(2000).nullable()
+});
+
+export type ValidatedUpdateStationNotesInput = z.infer<typeof updateStationNotesSchema>;
+
 export const validateCreateStationInput = (input: unknown): ValidatedCreateStationInput => {
   const parsedInput = createStationSchema.safeParse(input);
 
@@ -72,6 +78,16 @@ export const validateCreateStationInput = (input: unknown): ValidatedCreateStati
         }
       );
     }
+  }
+
+  return parsedInput.data;
+};
+
+export const validateUpdateStationNotesInput = (input: unknown): ValidatedUpdateStationNotesInput => {
+  const parsedInput = updateStationNotesSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid station notes payload', 400, 'INVALID_STATION_NOTES_PAYLOAD', parsedInput.error.flatten());
   }
 
   return parsedInput.data;

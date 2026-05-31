@@ -1,12 +1,12 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { StationPhoto, StationPhotoKind } from '@shared/types';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useStationPrisms } from '@/hooks/use-prisms';
-import { useStationDetail } from '@/hooks/use-stations';
+import { useStationDetail, useUpdateStationNotes } from '@/hooks/use-stations';
 import {
   useStationPhotoGalleryMutations,
   useStationPhotos
@@ -31,6 +31,13 @@ export default function StationDetailScreen() {
   const params = useLocalSearchParams<{ stationId: string }>();
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
   const { data, errorMessage, isLoading } = useStationDetail(stationId ?? null);
+  const {
+    errorMessage: notesErrorMessage,
+    isUpdating: isUpdatingNotes,
+    updateNotes
+  } = useUpdateStationNotes(stationId ?? null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState('');
   const [visualPhotoKind, setVisualPhotoKind] = useState<StationPhotoKind>('general');
   const [visualPhotoNotes, setVisualPhotoNotes] = useState('');
   const [visualPhotoTitle, setVisualPhotoTitle] = useState('');
@@ -60,8 +67,13 @@ export default function StationDetailScreen() {
   const coverageGroupCode = getCoverageGroupCode(prismData?.prisms);
   const prisms = prismData?.prisms ?? [];
   const canEditPhotos = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEditStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const [showTechnicalData, setShowTechnicalData] = useState(false);
+
+  useEffect(() => {
+    setNotesDraft(data?.notes ?? '');
+  }, [data?.notes]);
 
   const handleAddVisualPhoto = (source: 'camera' | 'library') => {
     void addStationPhoto({
@@ -132,6 +144,14 @@ export default function StationDetailScreen() {
         text: 'Quitar'
       }
     ]);
+  };
+
+  const handleSaveNotes = () => {
+    void updateNotes({
+      notes: notesDraft.trim() ? notesDraft.trim() : null
+    })
+      .then(() => setIsEditingNotes(false))
+      .catch(() => undefined);
   };
 
   return (
@@ -315,7 +335,49 @@ export default function StationDetailScreen() {
 
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Notas</Text>
-              <Text style={styles.body}>{data.notes ?? 'Sin notas todavía.'}</Text>
+              {notesErrorMessage ? <Text style={styles.errorText}>{notesErrorMessage}</Text> : null}
+              {isEditingNotes ? (
+                <>
+                  <TextInput
+                    multiline
+                    onChangeText={setNotesDraft}
+                    placeholder="Escribe una nota útil para campo"
+                    placeholderTextColor="#64748b"
+                    style={[styles.input, styles.notesInput]}
+                    value={notesDraft}
+                  />
+                  <View style={styles.notesActionRow}>
+                    <Pressable
+                      disabled={isUpdatingNotes}
+                      onPress={handleSaveNotes}
+                      style={[styles.linkButton, styles.notesActionButton, isUpdatingNotes ? styles.disabledButton : null]}
+                    >
+                      <Text style={styles.linkButtonText}>{isUpdatingNotes ? 'Guardando...' : 'Guardar nota'}</Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={isUpdatingNotes}
+                      onPress={() => {
+                        setNotesDraft(data.notes ?? '');
+                        setIsEditingNotes(false);
+                      }}
+                      style={[styles.secondaryButton, styles.notesActionButton, isUpdatingNotes ? styles.disabledButton : null]}
+                    >
+                      <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.body}>{data.notes ?? 'Sin notas todavía.'}</Text>
+                  {canEditStation ? (
+                    <Pressable onPress={() => setIsEditingNotes(true)} style={styles.secondaryButton}>
+                      <Text style={styles.secondaryButtonText}>{data.notes ? 'Editar notas' : 'Añadir notas'}</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.caption}>Estás en modo visitante. Para añadir notas o fotos, entra con un token de topógrafo/admin en Perfil.</Text>
+                  )}
+                </>
+              )}
             </View>
 
             <View style={styles.card}>
@@ -677,6 +739,13 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 86,
     textAlignVertical: 'top',
+  },
+  notesActionButton: {
+    flex: 1,
+  },
+  notesActionRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   photoActions: {
     gap: 10,
