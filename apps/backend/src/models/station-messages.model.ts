@@ -47,7 +47,7 @@ export const listStationMessages = async (
   projectScope: string[] | null = null
 ) => {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
-  const scope = buildStationScopeCondition(projectScope, 2);
+  const scope = buildStationScopeCondition(projectScope, 3);
 
   const result = await pool.query(
     `
