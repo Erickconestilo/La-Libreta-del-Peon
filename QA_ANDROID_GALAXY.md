@@ -8,19 +8,19 @@
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
 - Commit incluido en APK: `805fb6197a98ecdb358ff5839d6fbecbfe85b31d`
-- Commit posterior solo para forzar redeploy Render: `6a494de`
+- Commit backend desplegado en Render: `e5c87d48800b1b564d6828eab9e705c59b65e12a`
 - Instalación ADB en Galaxy: `Success`
 
 ## Estado backend Render
 
-- `GET /health`: 200
+- `GET /health`: 200 con `commit: e5c87d48800b1b564d6828eab9e705c59b65e12a`
 - `GET /stations`: 200
-- `GET /projects`: 404 en la ultima comprobacion local del 2026-05-31
-- `GET /guide-entries`: 404 en la ultima comprobacion local del 2026-05-31
-- `PATCH /prisms/:prismId/photo`: 404 en la ultima comprobacion local del 2026-05-31
-- Interpretacion: Render sigue sirviendo backend antiguo o no ha redeployado desde GitHub.
-- Impacto: lectura de estaciones, croquis de prismas y guias offline funcionan desde el APK; subida de foto de prisma, proyectos reales por backend y guia backend no funcionaran hasta redeploy.
-- Accion pendiente: revisar dashboard de Render, activar redeploy manual del servicio o confirmar que auto-deploy apunta a `main` del repo `Erickconestilo/La-Libreta-del-Peon`.
+- `GET /projects`: 200
+- `GET /guide-entries`: 200
+- `GET /prisms/coverage/CN1`: 200
+- `PATCH /prisms/:prismId/photo` sin token: 401, no 404
+- `POST /uploads/photos/sign` sin token: 401, no 404
+- Interpretacion: Render ya sirve backend nuevo. Si la foto de prisma falla en Galaxy, ya no es por ruta inexistente; revisar token/rol, firma de subida o payload.
 
 ## Instalación en Galaxy
 
@@ -79,7 +79,7 @@
 - Confirmar que cambia la ficha del prisma y aparece el codigo correcto.
 - Revisar distancia, angulo H, observaciones, ultima observacion y constante de prisma.
 - Con rol `admin` o `topografo`, probar `Añadir foto del prisma`.
-- Si la subida falla con 404 o funcion no disponible, confirmar primero el redeploy de Render.
+- Si la subida falla, anotar codigo HTTP y mensaje exacto. Render ya no deberia responder 404 en esta ruta.
 
 ## Prueba de obras
 
