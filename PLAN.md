@@ -34,6 +34,24 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Historial de cambios / auditoría
 - Foco en equipo pequeño y uso real de campo
 
+## Estado Actual - 2026-05-31
+
+- Flujo móvil principal ya entra por `Obras -> Estacionamientos`.
+- Guías Leica están embebidas como lector offline con páginas JPG optimizadas: `Guía Leica de estación` y `Nivel Leica LS10`.
+- Icono de app actualizado con libreta negra y mira amarilla.
+- Detalle de estación incluye foto principal, memoria visual, notas editables por rol y datos técnicos colapsados.
+- Mapa sin Google API key usa vista operativa/fallback con coordenadas y enlaces externos, evitando crash de `react-native-maps`.
+- Prismas por estación tienen croquis operativo con `react-native-svg`, basado en ángulo horizontal y distancia inclinada. No representa coordenadas geográficas absolutas.
+- Ficha de prisma permite preparar foto de prisma mediante Supabase Storage, pero depende de que Render publique el backend nuevo.
+- APK final de la tanda: EAS `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`, URL `https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk`, instalado por ADB en Galaxy.
+
+## Bloqueo Actual
+
+- Render sigue sirviendo backend antiguo tras push a `main`: `GET /projects`, `GET /guide-entries` y `PATCH /prisms/:prismId/photo` responden 404.
+- `GET /health` y `GET /stations` responden 200, por lo que el servicio vive pero no está en el último commit.
+- Se empujó commit vacío `6a494de` para intentar forzar redeploy.
+- Siguiente acción real: revisar dashboard de Render, confirmar auto-deploy desde `main`, o lanzar manual deploy del servicio backend.
+
 ## Principios de Implementación
 - Una feature cada vez
 - Una fuente de verdad por decisión
@@ -144,6 +162,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Crear CRUD de prismas
 - Añadir notas y fotos
 - Relacionar prismas con estacionamientos cuando corresponda
+- Mostrar croquis operativo por estación con ángulo/distancia, sin prometer mapa geográfico absoluto
 
 #### Dependencias
 - Requiere auth, BD y storage definidos
@@ -168,6 +187,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Permitir creación y edición solo para `admin` en Fase 1
 - Crear acceso claro para lectura para `topografo` y `visitante`
 - Permitir consulta sencilla en campo
+- Mantener las guías PDF pesadas como páginas renderizadas optimizadas dentro del APK cuando convenga lectura offline
 
 #### Dependencias
 - Puede empezar después de auth básica o en paralelo con otras pantallas si no depende de backend complejo
@@ -306,6 +326,8 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Listados demasiado grandes
 - Complejidad de permisos si se añaden roles sin necesidad
 - Mezclar demasiadas features antes de cerrar MVP
+- Desfase entre APK y backend Render si auto-deploy no publica los commits nuevos
+- Confundir croquis de prismas por ángulo/distancia con mapa geográfico real
 
 ## Secuencia Recomendada de Trabajo
 1. Documentos finales
