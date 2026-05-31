@@ -42,15 +42,16 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Detalle de estación incluye foto principal, memoria visual, notas editables por rol y datos técnicos colapsados.
 - Mapa sin Google API key usa vista operativa/fallback con coordenadas y enlaces externos, evitando crash de `react-native-maps`.
 - Prismas por estación tienen croquis operativo con `react-native-svg`, basado en ángulo horizontal y distancia inclinada. No representa coordenadas geográficas absolutas.
-- Ficha de prisma permite preparar foto de prisma mediante Supabase Storage, pero depende de que Render publique el backend nuevo.
+- Ficha de prisma permite preparar foto de prisma mediante Supabase Storage; Render ya publica el backend nuevo en commit `e5c87d48800b1b564d6828eab9e705c59b65e12a`.
 - APK final de la tanda: EAS `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`, URL `https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk`, instalado por ADB en Galaxy.
 
-## Bloqueo Actual
+## Estado Backend Render
 
-- Render sigue sirviendo backend antiguo tras push a `main`: `GET /projects`, `GET /guide-entries` y `PATCH /prisms/:prismId/photo` responden 404.
-- `GET /health` y `GET /stations` responden 200, por lo que el servicio vive pero no está en el último commit.
-- Se empujó commit vacío `6a494de` para intentar forzar redeploy.
-- Siguiente acción real: revisar dashboard de Render, confirmar auto-deploy desde `main`, o lanzar manual deploy del servicio backend.
+- Render fue redeployado manualmente desde `main` con cache limpio.
+- `GET /health` responde 200 con `commit: e5c87d48800b1b564d6828eab9e705c59b65e12a`.
+- `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 200.
+- `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
+- Siguiente acción real: QA funcional en Galaxy para guías, detalle de estación, croquis de prismas y foto de prisma con token `admin` o `topografo`.
 
 ## Principios de Implementación
 - Una feature cada vez
