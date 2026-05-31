@@ -104,9 +104,9 @@ export const updateProjectPhoto = async (
 
     const currentResult = await client.query(
       `
-        SELECT id, image_url
-        FROM projects
-        WHERE id = $1
+        SELECT p.id, p.image_url
+        FROM projects p
+        WHERE p.id = $1
         ${scope.clause}
         FOR UPDATE
       `,

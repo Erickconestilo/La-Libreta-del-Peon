@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 
+import { getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { listChangeLogs } from '../models/change-logs.model.js';
 import type { ChangeLogEntityType } from '../models/change-logs.model.js';
@@ -23,12 +24,14 @@ export const listChangeLogsController = async (request: Request, response: Respo
     const entityId = typeof request.query.entityId === 'string' ? request.query.entityId : null;
     const changedBy = typeof request.query.changedBy === 'string' ? request.query.changedBy : null;
     const limit = parseLimit(request.query.limit);
+    const projectScope = getActorProjectScope(request.user);
 
     const changeLogs = await listChangeLogs({
       changedBy,
       entityId,
       entityType,
-      limit
+      limit,
+      projectScope
     });
 
     sendSuccess(response, changeLogs, 200, {
