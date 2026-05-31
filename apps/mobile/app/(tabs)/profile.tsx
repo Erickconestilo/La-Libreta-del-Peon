@@ -104,7 +104,7 @@ const getRoleDescription = (role: string | undefined) => {
     case 'topografo':
       return 'Puedes registrar estaciones, fotos y memoria visual de campo.';
     case 'visitante':
-      return 'Puedes consultar obras, estacionamientos, mapa y guía sin modificar datos.';
+      return 'Puedes consultar obras, estacionamientos, mapas y guías sin modificar datos.';
     default:
       return 'Conecta una cuenta técnica solo si necesitas editar datos.';
   }

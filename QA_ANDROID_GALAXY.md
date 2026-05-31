@@ -74,6 +74,7 @@
 
 ### Pendiente de QA móvil
 
+- Nueva build Android preview tras cambios de Guías/Mapas/Conversación/croquis: intento con `npx eas-cli build -p android --profile preview --non-interactive` bloqueado por cuota mensual Android del plan Free. Expo indicó reinicio de cuota en unas 6 horas, lunes 2026-06-01.
 - Probar sesión real `admin`/`topografo` pegando token manualmente o con una build nueva que incluya el campo de token corregido.
 - Probar subida real de foto de prisma desde Galaxy.
 - Probar `Mensajes del equipo` creando un mensaje real cuando Render esté redeployado.

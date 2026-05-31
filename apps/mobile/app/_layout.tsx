@@ -77,7 +77,7 @@ function RootLayoutNav() {
               <Stack.Screen
                 name="guide/[manualId]"
                 options={{
-                  title: 'Guía'
+                  title: 'Guías'
                 }}
               />
               <Stack.Screen

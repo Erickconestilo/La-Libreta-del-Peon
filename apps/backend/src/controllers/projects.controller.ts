@@ -1,13 +1,15 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { getProjectById, listProjects, updateProjectPhoto } from '../models/projects.model.js';
 import { isValidProjectPhotoPath, validateAttachProjectPhotoInput } from '../utils/photo-validation.js';
 
-export const listProjectsController = async (_request: Request, response: Response) => {
+export const listProjectsController = async (request: Request, response: Response) => {
   try {
-    const projects = await listProjects();
+    const projectScope = getActorProjectScope(request.user);
+    const projects = await listProjects(projectScope);
     sendSuccess(response, projects);
   } catch {
     response.status(500).json({
@@ -26,6 +28,8 @@ export const updateProjectPhotoController = async (request: Request, response: R
       throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     }
 
+    const projectScope = getActorProjectScope(request.user);
+
     const projectId = Array.isArray(request.params.projectId)
       ? request.params.projectId[0]
       : request.params.projectId;
@@ -40,7 +44,7 @@ export const updateProjectPhotoController = async (request: Request, response: R
       throw new AppError('Invalid project photo path', 400, 'INVALID_PROJECT_PHOTO_PATH');
     }
 
-    const project = await updateProjectPhoto(projectId, input.storagePath, request.user.id);
+    const project = await updateProjectPhoto(projectId, input.storagePath, request.user.id, projectScope);
 
     if (!project) {
       throw new AppError('Project not found', 404, 'PROJECT_NOT_FOUND');
@@ -75,7 +79,8 @@ export const getProjectByIdController = async (request: Request, response: Respo
     const projectId = Array.isArray(request.params.projectId)
       ? request.params.projectId[0]
       : request.params.projectId;
-    const project = await getProjectById(projectId);
+    const projectScope = getActorProjectScope(request.user);
+    const project = await getProjectById(projectId, projectScope);
 
     if (!project) {
       throw new AppError('Project not found', 404, 'PROJECT_NOT_FOUND');

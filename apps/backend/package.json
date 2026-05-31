@@ -12,6 +12,7 @@
     "inspect:topotask-prisms": "tsx src/scripts/inspect-topotask-monitoring.ts",
     "import:topotask-prisms": "tsx src/scripts/import-topotask-prisms.ts",
     "reconcile:prism-observations": "tsx src/scripts/reconcile-prism-observations.ts",
+    "create:session-tokens": "tsx src/scripts/create-session-tokens.ts",
     "verify:guide-admin": "tsx src/scripts/verify-guide-admin.ts"
   },
   "dependencies": {

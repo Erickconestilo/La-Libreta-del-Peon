@@ -1,6 +1,13 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
+import {
+  shouldUsePublicDto,
+  toPublicPrism,
+  toPublicPrismCoverage,
+  toPublicPrismObservation
+} from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import {
   getPrismCoverageByGroupCode,
@@ -46,17 +53,25 @@ export const listStationPrismsController = async (request: Request, response: Re
     }
 
     const observationsLimit = parseLimit(request.query.observationsLimit, 200, 500);
+    const projectScope = getActorProjectScope(request.user);
 
     const [prisms, observations] = await Promise.all([
-      listPrismsByStationId(stationId),
-      listPrismObservationsByStationId(stationId, observationsLimit)
+      listPrismsByStationId(stationId, projectScope),
+      listPrismObservationsByStationId(stationId, observationsLimit, projectScope)
     ]);
+    const payload = shouldUsePublicDto(request.user)
+      ? {
+          observations: observations.map(toPublicPrismObservation),
+          prisms: prisms.map(toPublicPrism),
+          stationId
+        }
+      : {
+          observations,
+          prisms,
+          stationId
+        };
 
-    sendSuccess(response, {
-      observations,
-      prisms,
-      stationId
-    }, 200, {
+    sendSuccess(response, payload, 200, {
       observationsLimit
     });
   } catch (error) {
@@ -92,9 +107,10 @@ export const getPrismCoverageController = async (request: Request, response: Res
       throw new AppError('Coverage group code is required', 400, 'COVERAGE_GROUP_REQUIRED');
     }
 
-    const coverage = await getPrismCoverageByGroupCode(normalizeCoverageGroupCode(groupCode));
+    const projectScope = getActorProjectScope(request.user);
+    const coverage = await getPrismCoverageByGroupCode(normalizeCoverageGroupCode(groupCode), projectScope);
 
-    sendSuccess(response, coverage);
+    sendSuccess(response, shouldUsePublicDto(request.user) ? toPublicPrismCoverage(coverage) : coverage);
   } catch (error) {
     if (error instanceof AppError) {
       response.status(error.statusCode).json({
@@ -133,12 +149,13 @@ export const updatePrismPhotoController = async (request: Request, response: Res
     }
 
     const input = validateAttachPrismPhotoInput(request.body);
+    const projectScope = getActorProjectScope(request.user);
 
     if (input.storagePath && !isValidPrismPhotoPath(prismId, input.storagePath)) {
       throw new AppError('Invalid prism photo path', 400, 'INVALID_PRISM_PHOTO_PATH');
     }
 
-    const prism = await updatePrismPhoto(prismId, input.storagePath, request.user.id);
+    const prism = await updatePrismPhoto(prismId, input.storagePath, request.user.id, projectScope);
 
     if (!prism) {
       throw new AppError('Prism not found', 404, 'PRISM_NOT_FOUND');

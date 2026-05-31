@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GuideEntry } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
-import { fallbackGuideEntries } from '@/lib/fallback-guide';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -31,24 +30,14 @@ const fetchGuideEntries = async (category?: string | null) => {
   }
 
   const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : '';
-  try {
-    const response = await apiFetch<ApiEnvelope<GuideEntry[]>>(`/guide-entries${suffix}`);
-    if (response.data.length > 0) {
-      return response.data;
-    }
+  const response = await apiFetch<ApiEnvelope<GuideEntry[]>>(`/guide-entries${suffix}`);
+  return response.data;
+};
 
-    if (category) {
-      return fallbackGuideEntries.filter((entry) => entry.category === category);
-    }
+const fetchGuideEntry = async (guideEntryId: string) => {
+  const response = await apiFetch<ApiEnvelope<GuideEntry>>(`/guide-entries/${guideEntryId}`);
 
-    return fallbackGuideEntries;
-  } catch {
-    if (category) {
-      return fallbackGuideEntries.filter((entry) => entry.category === category);
-    }
-
-    return fallbackGuideEntries;
-  }
+  return response.data;
 };
 
 const createGuideEntry = async (input: Pick<GuideEntry, 'body' | 'category' | 'title'>) => {
@@ -92,6 +81,21 @@ export const useGuideEntries = (category?: string | null) => {
 
   return {
     ...query,
+    errorMessage: query.error ? getErrorMessage(query.error) : null
+  };
+};
+
+export const useGuideEntry = (guideEntryId?: string | null) => {
+  const query = useQuery({
+    enabled: Boolean(guideEntryId),
+    queryFn: () => fetchGuideEntry(guideEntryId as string),
+    queryKey: ['guide-entry', guideEntryId ?? null],
+    staleTime: 1000 * 60 * 10
+  });
+
+  return {
+    ...query,
+    data: query.data ?? null,
     errorMessage: query.error ? getErrorMessage(query.error) : null
   };
 };

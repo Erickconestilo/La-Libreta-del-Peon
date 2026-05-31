@@ -1,8 +1,11 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createIncident, listIncidents } from '../models/incidents.model.js';
+import { getPrismById } from '../models/prisms.model.js';
+import { getStationById } from '../models/stations.model.js';
 import { validateCreateIncidentInput } from '../utils/incidents-validation.js';
 
 const parseIncidentStatus = (value: unknown) => {
@@ -17,7 +20,8 @@ export const listIncidentsController = async (request: Request, response: Respon
     const incidents = await listIncidents({
       limit: Number.isFinite(limit) ? limit : 50,
       stationId,
-      status
+      status,
+      projectScope: getActorProjectScope(request.user)
     });
 
     sendSuccess(response, incidents);
@@ -39,6 +43,34 @@ export const createIncidentController = async (request: Request, response: Respo
     }
 
     const input = validateCreateIncidentInput(request.body);
+    const projectScope = getActorProjectScope(request.user);
+
+    const station = input.stationId
+      ? await getStationById(input.stationId, projectScope)
+      : null;
+
+    if (input.stationId && !station) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+
+    const prism = input.prismId
+      ? await getPrismById(input.prismId, projectScope)
+      : null;
+
+    if (input.prismId && !prism) {
+      throw new AppError('Prism not found', 404, 'PRISM_NOT_FOUND');
+    }
+
+    if (station && prism) {
+      if (station.projectId && prism.projectId && station.projectId !== prism.projectId) {
+        throw new AppError(
+          'Station and prism must belong to the same project',
+          400,
+          'INCIDENT_SCOPE_MISMATCH'
+        );
+      }
+    }
+
     const incident = await createIncident(input, request.user.id);
 
     sendSuccess(response, incident, 201);

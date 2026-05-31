@@ -155,7 +155,7 @@ export default function MapScreen() {
   if (isLoading && stationsWithCoordinates.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.loadingText}>Cargando mapa...</Text>
+        <Text style={styles.loadingText}>Cargando mapas...</Text>
       </View>
     );
   }
@@ -163,7 +163,7 @@ export default function MapScreen() {
   if (!isLoading && stationsWithCoordinates.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorTitle}>Sin estaciones en el mapa</Text>
+        <Text style={styles.errorTitle}>Sin estaciones en mapas</Text>
         <Text style={styles.errorBody}>No hay estaciones con coordenadas para mostrar.</Text>
       </View>
     );
@@ -180,7 +180,7 @@ export default function MapScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.fallbackHero}>
-            <Text style={styles.fallbackEyebrow}>Mapa operativo</Text>
+            <Text style={styles.fallbackEyebrow}>Mapas</Text>
             <Text style={styles.fallbackTitle}>Coordenadas por obra</Text>
             <Text style={styles.fallbackBody}>
               El mapa embebido necesita una clave de Google Maps. Mientras no la configuremos,

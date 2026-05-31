@@ -1,17 +1,23 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { shouldUsePublicDto, toPublicStation } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createStation, getStationById, listStations, updateStationNotes, updateStationPhoto } from '../models/stations.model.js';
+import { assertProjectAccess, getActorProjectScope } from '../lib/access-control.js';
 import { isValidStationPhotoPath, validateAttachStationPhotoInput } from '../utils/photo-validation.js';
 import { validateCreateStationInput, validateUpdateStationNotesInput } from '../utils/station-validation.js';
 
 export const listStationsController = async (request: Request, response: Response) => {
   try {
     const projectId = typeof request.query.projectId === 'string' ? request.query.projectId : null;
-    const stations = await listStations(projectId);
+    const projectScope = getActorProjectScope(request.user);
+    const stations = await listStations(projectId, projectScope);
+    const payload = shouldUsePublicDto(request.user)
+      ? stations.map(toPublicStation)
+      : stations;
 
-    sendSuccess(response, stations);
+    sendSuccess(response, payload);
   } catch {
     response.status(500).json({
       data: null,
@@ -28,13 +34,14 @@ export const getStationByIdController = async (request: Request, response: Respo
     const stationId = Array.isArray(request.params.stationId)
       ? request.params.stationId[0]
       : request.params.stationId;
-    const station = await getStationById(stationId);
+    const projectScope = getActorProjectScope(request.user);
+    const station = await getStationById(stationId, projectScope);
 
     if (!station) {
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
     }
 
-    sendSuccess(response, station);
+    sendSuccess(response, shouldUsePublicDto(request.user) ? toPublicStation(station) : station);
   } catch (error) {
     if (error instanceof AppError) {
       response.status(error.statusCode).json({
@@ -65,8 +72,15 @@ export const createStationController = async (request: Request, response: Respon
     }
 
     const input = validateCreateStationInput(request.body);
+    const projectScope = getActorProjectScope(request.user);
+    if (input.projectId) {
+      assertProjectAccess(request.user, input.projectId);
+    } else if (projectScope !== null) {
+      assertProjectAccess(request.user, null);
+    }
+
     const stationId = await createStation(input, request.user.id);
-    const station = await getStationById(stationId);
+    const station = await getStationById(stationId, projectScope);
 
     sendSuccess(response, station, 201);
   } catch (error) {
@@ -112,13 +126,14 @@ export const updateStationPhotoController = async (request: Request, response: R
       throw new AppError('Invalid station photo path', 400, 'INVALID_STATION_PHOTO_PATH');
     }
 
-    const station = await updateStationPhoto(stationId, input.storagePath, request.user.id);
+    const projectScope = getActorProjectScope(request.user);
+    const station = await updateStationPhoto(stationId, input.storagePath, request.user.id, projectScope);
 
     if (!station) {
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
     }
 
-    sendSuccess(response, station);
+    sendSuccess(response, shouldUsePublicDto(request.user) ? toPublicStation(station) : station);
   } catch (error) {
     if (error instanceof AppError) {
       response.status(error.statusCode).json({
@@ -157,13 +172,14 @@ export const updateStationNotesController = async (request: Request, response: R
     }
 
     const input = validateUpdateStationNotesInput(request.body);
-    const station = await updateStationNotes(stationId, input.notes, request.user.id);
+    const projectScope = getActorProjectScope(request.user);
+    const station = await updateStationNotes(stationId, input.notes, request.user.id, projectScope);
 
     if (!station) {
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
     }
 
-    sendSuccess(response, station);
+    sendSuccess(response, shouldUsePublicDto(request.user) ? toPublicStation(station) : station);
   } catch (error) {
     if (error instanceof AppError) {
       response.status(error.statusCode).json({

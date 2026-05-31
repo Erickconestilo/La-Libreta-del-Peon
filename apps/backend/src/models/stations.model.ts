@@ -50,7 +50,37 @@ const mapReadingRow = (row: Record<string, unknown>) => {
   };
 };
 
-export const listStations = async (projectId?: string | null) => {
+type StationScope = {
+  params: unknown[];
+  clause: string;
+};
+
+const buildStationScopeCondition = (projectIds: string[] | null): StationScope => {
+  if (projectIds === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectIds.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectIds],
+    clause: 'AND s.project_id = ANY($1::uuid[])'
+  };
+};
+
+export const listStations = async (projectId?: string | null, projectScope: string[] | null = null) => {
+  const scope = buildStationScopeCondition(projectScope);
+
+  if (scope.clause === 'AND 1=0') {
+    return [];
+  }
+
+  const requestedProjectFilter = projectId
+    ? `AND s.project_id = $${scope.params.length + 1}`
+    : '';
+
   const query = `
     SELECT
       s.id,
@@ -77,11 +107,19 @@ export const listStations = async (projectId?: string | null) => {
       p.code AS project_code
     FROM stations s
     LEFT JOIN projects p ON p.id = s.project_id
-    WHERE ($1::uuid IS NULL OR s.project_id = $1::uuid)
+    WHERE 1=1
+    ${scope.clause}
+    ${requestedProjectFilter}
     ORDER BY p.name NULLS LAST, s.name ASC
   `;
 
-  const result = await pool.query(query, [projectId ?? null]);
+  const params = [...scope.params];
+
+  if (projectId) {
+    params.push(projectId);
+  }
+
+  const result = await pool.query(query, params);
 
   return result.rows.map((row) => ({
     ...mapStationRow(row),
@@ -94,7 +132,16 @@ export const listStations = async (projectId?: string | null) => {
   }));
 };
 
-export const getStationById = async (stationId: string) => {
+export const getStationById = async (
+  stationId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildStationScopeCondition(projectScope);
+
+  if (scope.clause === 'AND 1=0') {
+    return null;
+  }
+
   const stationQuery = `
     SELECT
       s.id,
@@ -122,6 +169,7 @@ export const getStationById = async (stationId: string) => {
     FROM stations s
     LEFT JOIN projects p ON p.id = s.project_id
     WHERE s.id = $1
+    ${scope.clause.replaceAll('$1', '$2')}
   `;
 
   const readingQuery = `
@@ -148,7 +196,7 @@ export const getStationById = async (stationId: string) => {
   `;
 
   const [stationResult, readingsResult] = await Promise.all([
-    pool.query(stationQuery, [stationId]),
+    pool.query(stationQuery, [stationId, ...scope.params]),
     pool.query(readingQuery, [stationId])
   ]);
 
@@ -301,9 +349,12 @@ export const createStation = async (input: ValidatedCreateStationInput, createdB
 export const updateStationPhoto = async (
   stationId: string,
   storagePath: string | null,
-  changedBy: string
+  changedBy: string,
+  projectScope: string[] | null = null
 ) => {
   const client = await pool.connect();
+  const scope = buildStationScopeCondition(projectScope);
+  const scopeClause = scope.clause.replaceAll('$1', '$2');
 
   try {
     await client.query('BEGIN');
@@ -313,9 +364,10 @@ export const updateStationPhoto = async (
         SELECT id, photo_url
         FROM stations
         WHERE id = $1
+        ${scopeClause}
         FOR UPDATE
       `,
-      [stationId]
+      [stationId, ...scope.params]
     );
 
     if (currentResult.rowCount === 0) {
@@ -353,7 +405,7 @@ export const updateStationPhoto = async (
 
     await client.query('COMMIT');
 
-    return getStationById(stationId);
+    return getStationById(stationId, projectScope);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -365,9 +417,12 @@ export const updateStationPhoto = async (
 export const updateStationNotes = async (
   stationId: string,
   notes: string | null,
-  changedBy: string
+  changedBy: string,
+  projectScope: string[] | null = null
 ) => {
   const client = await pool.connect();
+  const scope = buildStationScopeCondition(projectScope);
+  const scopeClause = scope.clause.replaceAll('$1', '$2');
 
   try {
     await client.query('BEGIN');
@@ -377,9 +432,10 @@ export const updateStationNotes = async (
         SELECT id, notes
         FROM stations
         WHERE id = $1
+        ${scopeClause}
         FOR UPDATE
       `,
-      [stationId]
+      [stationId, ...scope.params]
     );
 
     if (currentResult.rowCount === 0) {
@@ -416,7 +472,7 @@ export const updateStationNotes = async (
 
     await client.query('COMMIT');
 
-    return getStationById(stationId);
+    return getStationById(stationId, projectScope);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
