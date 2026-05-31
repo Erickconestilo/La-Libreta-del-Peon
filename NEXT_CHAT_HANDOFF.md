@@ -18,6 +18,9 @@
 - `10c91b8` - hardening backend: auth local por tabla `users`, rutas GET con token invitado, rate limit, guardas de scripts y migración `011`.
 - `3e721a1` - hardening móvil: token en SecureStore, API production solo HTTPS, CORS restringido, permisos Android reducidos y aviso antes de abrir Google Maps externo.
 - `02b0102` - guía más clara: manuales pulsables y fichas rápidas como lectura directa.
+- `32b825d` - guía con búsqueda/agrupación, mensajes internos por estación y propuestas de estacionamiento provisional como incidencias.
+- `af21658` - hardening backend de mensajes/incidencias: creación devuelve fila exacta y `photoUrl` arbitrario queda bloqueado.
+- `416840d` - deploy backend reproducible: `npm ci` + `apps/backend/package-lock.json`.
 
 ## APK Actual
 
@@ -26,6 +29,14 @@
 - Archivo local: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`.
 - Instalado en Galaxy por ADB con resultado `Success`.
 - Nota: este APK fue construido antes de `3e721a1`; para probar SecureStore, permisos reducidos, aviso de Google Maps y mejoras locales de croquis/perfil hace falta una nueva build EAS.
+
+## APK EAS en Curso
+
+- Build EAS pendiente: `247704f1-2316-483f-bb9e-62adee8714cd`.
+- Estado último check: `IN_PROGRESS`.
+- Commit incluido: `32b825d4d8a954dcfb28cc07302f493bc4c44804`.
+- Incluye mejoras móviles de guía, mensajes, propuestas provisionales, croquis y campo de token.
+- No incluye commits backend-only posteriores (`af21658`, `416840d`), pero eso no exige nueva APK.
 
 ## Lo Que Ya Está Hecho
 
@@ -37,7 +48,7 @@
 - Croquis de prismas usa `react-native-svg`, ángulo horizontal y distancia inclinada.
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
-- Render ya despliega `3e721a1` y sirve las rutas nuevas protegidas.
+- Render público todavía sirve `3e721a1`; GitHub `main` ya va por `416840d`, por lo que falta redeploy manual/auto-deploy efectivo.
 - Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
 - Cambios locales pendientes de build: croquis con zona táctil mayor y campo de token con altura fija/submit por teclado.
 - Guía pendiente de nueva APK con búsqueda y agrupación por instrumento.
@@ -45,7 +56,7 @@
 
 ## Estado Backend Render
 
-Render fue redeployado manualmente con cache limpio desde `main`:
+Render fue redeployado manualmente con cache limpio desde `main` en una tanda previa:
 
 - `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
 - `GET /projects` sin token: 401
@@ -58,6 +69,8 @@ Render fue redeployado manualmente con cache limpio desde `main`:
 - `POST /uploads/photos/sign` sin token: 401, no 404
 
 Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma en móvil hace falta sesión `admin` o `topografo`.
+
+Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d`. Mensajes e incidencias nuevas necesitan ese redeploy.
 
 ## Hardening Backend Hecho Localmente
 
@@ -74,7 +87,7 @@ Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen t
 ## Siguiente Paso Recomendado
 
 1. Esperar build EAS nueva desde el último commit.
-2. Verificar Render con `GET /health` antes de instalar APK.
+2. Forzar/verificar redeploy Render hasta que `GET /health` muestre `416840d` o posterior.
 3. Reinstalar APK nuevo en Galaxy y repetir QA de token técnico, foto de prisma, mensajes y propuesta provisional.
 4. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
 
