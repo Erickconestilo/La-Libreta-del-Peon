@@ -2,10 +2,18 @@
 
 ## APK actual
 
-- Build EAS: `3b0da3a0-12db-412f-a2f6-416653d1f91d`
-- APK: https://expo.dev/artifacts/eas/8hWN5dhnt6qpf9W551MjZB.apk
+- Build EAS: `33f519a5-d5fa-48eb-9e70-69f8098f07f5`
+- APK: https://expo.dev/artifacts/eas/7q8aLQUtTFW4RXwzx3xd3Z.apk
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
+- Commit incluido: `92fa9fa6256e58a8dcdf866952bc0c3ff31375d9`
+
+## Estado backend Render
+
+- `GET /health`: 200
+- `GET /stations`: 200
+- `GET /guide-entries`: 404 en la ultima comprobacion local
+- Si `Guia` o `Memoria visual` muestran "funcion no disponible", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
 
 ## Instalación en Galaxy
 
