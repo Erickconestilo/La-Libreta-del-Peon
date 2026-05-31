@@ -12,6 +12,14 @@
 - Instalación ADB en Galaxy: `Success`
 - Nota: el APK actual no incluye todavía el hardening móvil de `3e721a1` ni los cambios locales posteriores de croquis/perfil.
 
+## APK nueva pendiente
+
+- Build EAS: `247704f1-2316-483f-bb9e-62adee8714cd`
+- Estado último check: `IN_PROGRESS`
+- Commit incluido: `32b825d4d8a954dcfb28cc07302f493bc4c44804`
+- Pendiente descargar, instalar por ADB y repetir QA cuando EAS entregue el artefacto.
+- Nota: los commits `af21658` y `416840d` son backend-only; no requieren otra APK.
+
 ## Estado backend Render
 
 - `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
@@ -25,6 +33,12 @@
 - `PATCH /prisms/:prismId/photo` sin token: 401, no 404
 - `POST /uploads/photos/sign` sin token: 401, no 404
 - Interpretacion: Render ya sirve backend nuevo. Si la foto de prisma falla en Galaxy, ya no es por ruta inexistente; revisar token/rol, firma de subida o payload.
+
+### Estado actual tras nuevos commits
+
+- GitHub `main`: `416840d`
+- Render `GET /health`: todavía `3e721a14a713fb2dc609c519305df3cfaeff757e`
+- Pendiente: redeploy Render para publicar mensajes de estación, incidencias/propuestas provisionales y lockfile de backend.
 
 ### Nota tras hardening backend `10c91b8`
 
@@ -53,6 +67,7 @@
 - Probar la mejora local del croquis: zona táctil ampliada y gráfico ligeramente mayor.
 - Probar `Mensajes del equipo` dentro de un estacionamiento.
 - Probar `Estacionamientos provisionales` creando una propuesta y verificando que aparece en la lista.
+- Confirmar primero que Render ya no sirve `3e721a1`; si sigue en ese commit, mensajes/provisionales fallarán aunque la APK sea correcta.
 
 ## Instalación en Galaxy
 
