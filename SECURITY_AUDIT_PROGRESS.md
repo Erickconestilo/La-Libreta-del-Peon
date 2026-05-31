@@ -40,6 +40,8 @@
 - UUID malformados en rutas públicas verificadas devuelven `400` antes de SQL.
 - Arreglo correcto aplicado localmente tras decidir que `visitante` puede seguir leyendo datos públicos: `change-logs` recibe `projectScope`, prismas por estación validan la estación como ancla de autorización, y foto de proyecto para `topografo` corrige alias SQL.
 - Verificación post-arreglo local: `npm run build --workspace apps/backend` OK, `npm audit --workspace apps/backend --json` sin vulnerabilidades, y consultas de solo lectura a `listChangeLogs`, `listPrismsByStationId` y `listPrismObservationsByStationId` ejecutan sin error SQL.
+- Commit `beeef8a2820947594657cf11fafa897a31571e47` empujado y desplegado en Render.
+- Smoke QA Render tras deploy: visitante mantiene `200` en lecturas públicas y `403` en incidencias; anónimo mantiene `401`; `topografo` obtiene `200` en `/auth/me`, `/change-logs`, `/stations` y `/stations/:id/prisms`.
 
 ## Resultado Actual de la Auditoría
 
@@ -47,7 +49,7 @@
 - Se corrigió una clase de IDOR entre proyectos para roles de operación.
 - No se encontró bypass directo para que `visitante` escriba mensajes, incidencias, fotos o guía.
 - Decisión de producto cerrada para Fase 1: `visitante` puede ver coordenadas, notas y fotos públicas; esto no se trata como vulnerabilidad del MVP.
-- Hallazgos corregidos localmente y pendientes de deploy/QA: historial de cambios con scope por proyecto para `topografo`, endpoints de prismas por estación anclados a la obra de la estación, y bug funcional de foto de proyecto para `topografo` por alias SQL.
+- Hallazgos corregidos, empujados y verificados en Render: historial de cambios con scope por proyecto para `topografo`, endpoints de prismas por estación anclados a la obra de la estación, y bug funcional de foto de proyecto para `topografo` por alias SQL.
 - Hallazgo pendiente de decisión operativa: auto-asignación inicial de todos los topógrafos a todas las obras; no se puede cerrar sin una matriz real usuario-obra.
 - La revisión queda en estado de auditoría aplicada (no certificación), con pasos de hardening pendiente.
 
@@ -88,16 +90,16 @@ Estado: mitigado en código con middleware centralizado de UUID. Pendiente de ve
 `GET /change-logs` está restringido a `admin` y `topografo`, pero el modelo no filtra por `project_memberships`.
 Si en el futuro se restringen topógrafos a obras concretas, un topógrafo podría ver historial de cambios de otras obras, incluyendo valores antiguos/nuevos de notas, fotos o mensajes registrados en logs.
 
-Estado: corregido localmente resolviendo el `projectScope` por `entity_type` con joins a `stations`, `prisms` y `projects`. Las entradas `guide_entry` se tratan como globales porque el usuario confirmó que el contenido visible para visitante no es problema.
-Pendiente: deploy y QA con token `topografo` real.
+Estado: corregido y desplegado. El `projectScope` se resuelve por `entity_type` con joins a `stations`, `prisms` y `projects`. Las entradas `guide_entry` se tratan como globales porque el usuario confirmó que el contenido visible para visitante no es problema.
+QA: `topografo` recibe `200` en `/change-logs`.
 
 ### Riesgo 7 - Scope de prismas por estación
 
 Los endpoints de prismas de una estación reciben `stationId`, pero el SQL filtra por `p.project_id` del prisma. Lo correcto para evitar BOLA es validar también la obra de la estación solicitada.
 Con datos actuales parece coherente, pero el control debe estar en el ancla de la ruta.
 
-Estado: corregido localmente. El controlador valida `getStationById(stationId, projectScope)` y las queries por estación filtran por `s.project_id`.
-Pendiente: deploy y QA con token `topografo`.
+Estado: corregido y desplegado. El controlador valida `getStationById(stationId, projectScope)` y las queries por estación filtran por `s.project_id`.
+QA: `topografo` recibe `200` en `/stations/:id/prisms`.
 
 ### Riesgo 8 - Membresías iniciales demasiado amplias
 
@@ -109,8 +111,8 @@ Propuesta: añadir una migración correctiva o script administrativo para dejar 
 
 `updateProjectPhoto` reutiliza una condición con alias `p.id`, pero la query de bloqueo usa `FROM projects` sin alias. Para `admin` no aparece porque no hay scope; para `topografo` puede acabar en 500.
 
-Estado: corregido localmente aliasando `FROM projects p`.
-Pendiente: deploy y prueba funcional de foto de obra con `topografo`.
+Estado: corregido y desplegado aliasando `FROM projects p`.
+Pendiente: prueba funcional de foto de obra con `topografo` en Galaxy, porque no se hizo una mutación de producción desde la auditoría.
 
 ## Propuestas Backend
 
@@ -135,9 +137,9 @@ Pendiente: deploy y prueba funcional de foto de obra con `topografo`.
 
 - Alcance técnico completado: scope por proyecto, autorización consistente y hardening de mutaciones.
 - Pendiente de producto futuro: revisar Storage firmado si el producto deja de tratar fotos/coordenadas como públicas para visitante.
-- Pendiente operativo: redeploy de Render con commit actual, luego validar escritura real en Galaxy con token técnico.
+- Pendiente operativo: validar escritura real en Galaxy con token técnico.
 
 ## Bloqueos Operativos
 
-- Render público aún debe mostrar commit posterior al actual para validar todas las rutas con cambios de seguridad.
-- APK EAS nueva ya está instalada; queda probar escritura real de mensajes, propuesta provisional, foto de prisma y token técnico tras el redeploy.
+- EAS Android sigue condicionado por la cuota del plan Free para generar una APK nueva.
+- En Galaxy queda probar escritura real de mensajes, propuesta provisional, foto de prisma, foto de obra y token técnico.
