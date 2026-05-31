@@ -26,24 +26,24 @@ export default function ProfileScreen() {
   return (
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 112 + insets.bottom }]} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Sesión</Text>
-        <Text style={styles.body}>Rol actual: {currentUser?.role ?? 'sin sesión'}</Text>
-        <Text style={styles.body}>Email: {currentUser?.email ?? 'sin email'}</Text>
-        <Text style={styles.body}>Proveedor: {storedToken ? 'token manual' : 'visitante'}</Text>
+        <Text style={styles.eyebrow}>Perfil</Text>
+        <Text style={styles.title}>{getRoleTitle(currentUser?.role)}</Text>
+        <Text style={styles.body}>{getRoleDescription(currentUser?.role)}</Text>
+        {currentUser?.email ? <Text style={styles.body}>Cuenta: {currentUser.email}</Text> : null}
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.title}>Token técnico</Text>
+        <Text style={styles.title}>Acceso técnico</Text>
         <Text style={styles.body}>
-          Pega aquí un bearer token válido de Supabase si quieres entrar como admin mientras el login real aún no está construido.
+          Solo para admin o topógrafo. Pega un token si necesitas crear estaciones, subir fotos o gestionar la guía.
         </Text>
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
           multiline
           onChangeText={setTokenInput}
-          placeholder="Bearer token de Supabase"
+          placeholder="Token de acceso"
           placeholderTextColor="#64748b"
           style={styles.input}
           value={tokenInput}
@@ -77,6 +77,32 @@ export default function ProfileScreen() {
   );
 }
 
+const getRoleTitle = (role: string | undefined) => {
+  switch (role) {
+    case 'admin':
+      return 'Administrador';
+    case 'topografo':
+      return 'Topógrafo';
+    case 'visitante':
+      return 'Modo visitante';
+    default:
+      return 'Sin sesión';
+  }
+};
+
+const getRoleDescription = (role: string | undefined) => {
+  switch (role) {
+    case 'admin':
+      return 'Puedes gestionar guía, revisar historial y editar contenido de campo.';
+    case 'topografo':
+      return 'Puedes registrar estaciones, fotos y memoria visual de campo.';
+    case 'visitante':
+      return 'Puedes consultar obras, estacionamientos, mapa y guía sin modificar datos.';
+    default:
+      return 'Conecta una cuenta técnica solo si necesitas editar datos.';
+  }
+};
+
 const styles = StyleSheet.create({
   body: {
     color: colors.textSecondary,
@@ -99,6 +125,13 @@ const styles = StyleSheet.create({
   content: {
     gap: 16,
     padding: 24,
+  },
+  eyebrow: {
+    color: colors.accentGreen,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
   },
   error: {
     color: colors.red,

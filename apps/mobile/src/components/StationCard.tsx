@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Station } from '@shared/types';
+import { getStationDisplayName } from '@/lib/station-display';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 type StationCardItem = Station & {
@@ -30,7 +31,7 @@ export function StationCard({ station, onPress }: StationCardProps) {
         </View>
       </View>
 
-      <Text style={styles.name}>{station.name}</Text>
+      <Text style={styles.name}>{getStationDisplayName(station)}</Text>
 
       <Text style={styles.date}>
         {station.createdAt

@@ -48,7 +48,7 @@ const buildProjectsFromStations = (stations: StationListItem[]): ProjectSummary[
     projects.set(station.projectId, {
       code: station.project.code,
       createdAt: station.createdAt,
-      description: `Obra con estaciones importadas de ${station.project.name}`,
+      description: `Obra con estaciones registradas en ${station.project.name}`,
       id: station.projectId,
       imageUrl: null,
       isActive: true,

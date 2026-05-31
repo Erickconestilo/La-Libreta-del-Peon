@@ -24,7 +24,7 @@ export const apiFetch = async <T>(path: string, init?: RequestInit) => {
       headers
     });
   } catch {
-    throw new Error('No se pudo conectar con el backend. Revisa la conexión y vuelve a intentar.');
+    throw new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.');
   }
 
   const json = (await response.json().catch(() => ({
@@ -49,12 +49,12 @@ const getFriendlyApiErrorMessage = (status: number, message?: string | null) => 
   const normalizedMessage = message?.trim();
 
   if (status === 404 && normalizedMessage && /route not found/i.test(normalizedMessage)) {
-    return 'Función no disponible en el backend desplegado. Actualiza el backend y vuelve a intentar.';
+    return 'Función pendiente de publicar. Vuelve a intentarlo más tarde.';
   }
 
   if (status >= 500) {
-    return 'El backend no pudo completar la operación. Reintenta en unos segundos.';
+    return 'No se pudo completar la operación. Reintenta en unos segundos.';
   }
 
-  return normalizedMessage || 'Error de comunicación con el backend.';
+  return normalizedMessage || 'Error de comunicación. Reintenta en unos segundos.';
 };

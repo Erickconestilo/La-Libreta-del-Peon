@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GuideEntry } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { fallbackGuideEntries } from '@/lib/fallback-guide';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -30,9 +31,16 @@ const fetchGuideEntries = async (category?: string | null) => {
   }
 
   const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : '';
-  const response = await apiFetch<ApiEnvelope<GuideEntry[]>>(`/guide-entries${suffix}`);
+  try {
+    const response = await apiFetch<ApiEnvelope<GuideEntry[]>>(`/guide-entries${suffix}`);
+    return response.data;
+  } catch {
+    if (category) {
+      return fallbackGuideEntries.filter((entry) => entry.category === category);
+    }
 
-  return response.data;
+    return fallbackGuideEntries;
+  }
 };
 
 const createGuideEntry = async (input: Pick<GuideEntry, 'body' | 'category' | 'title'>) => {
