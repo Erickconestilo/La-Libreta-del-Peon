@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { CreateStationInput, Station, StationReading } from '@shared/types';
+import type { CreateStationInput, Station, StationReading, UpdateStationNotesInput } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
 
@@ -59,6 +59,21 @@ const createStation = async (input: CreateStationInput) => {
   return response.data;
 };
 
+const updateStationNotes = async ({
+  input,
+  stationId
+}: {
+  input: UpdateStationNotesInput;
+  stationId: string;
+}) => {
+  const response = await apiFetch<ApiEnvelope<StationDetail>>(`/stations/${stationId}/notes`, {
+    body: JSON.stringify(input),
+    method: 'PATCH'
+  });
+
+  return response.data;
+};
+
 export const useStations = (projectId?: string | null) => {
   const query = useQuery({
     queryFn: () => fetchStations(projectId ?? null),
@@ -102,5 +117,31 @@ export const useCreateStation = () => {
     createStation: mutation.mutateAsync,
     errorMessage: mutation.error ? getErrorMessage(mutation.error) : null,
     isCreating: mutation.isPending
+  };
+};
+
+export const useUpdateStationNotes = (stationId: string | null) => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (input: UpdateStationNotesInput) => {
+      if (!stationId) {
+        throw new Error('Falta el id de estación para guardar notas.');
+      }
+
+      return updateStationNotes({ input, stationId });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['station-detail', stationId] }),
+        queryClient.invalidateQueries({ queryKey: ['stations'] }),
+        queryClient.invalidateQueries({ queryKey: ['change-logs'] })
+      ]);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error) : null,
+    isUpdating: mutation.isPending,
+    updateNotes: mutation.mutateAsync
   };
 };

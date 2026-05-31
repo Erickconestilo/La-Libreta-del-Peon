@@ -132,8 +132,10 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
   };
 
   const uploadMutation = useMutation({
-    mutationFn: async (source: PhotoSource) => {
-      if (!projectId) {
+    mutationFn: async ({ source, targetProjectId }: { source: PhotoSource; targetProjectId?: string | null }) => {
+      const resolvedProjectId = targetProjectId ?? projectId;
+
+      if (!resolvedProjectId) {
         throw new Error('Falta el id de obra para subir la imagen.');
       }
 
@@ -146,7 +148,7 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
       const signedUpload = await requestSignedProjectPhotoUpload({
         contentType: preparedPhoto.contentType,
         fileSizeBytes: preparedPhoto.fileSizeBytes,
-        projectId
+        projectId: resolvedProjectId
       });
 
       const uploadResponse = await fetch(signedUpload.signedUrl, {
@@ -164,7 +166,7 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
       }
 
       return updateProjectPhoto({
-        projectId,
+        projectId: resolvedProjectId,
         storagePath: signedUpload.path
       });
     },
@@ -172,13 +174,15 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async () => {
-      if (!projectId) {
+    mutationFn: async (targetProjectId?: string | null) => {
+      const resolvedProjectId = targetProjectId ?? projectId;
+
+      if (!resolvedProjectId) {
         throw new Error('Falta el id de obra para quitar la imagen.');
       }
 
       return updateProjectPhoto({
-        projectId,
+        projectId: resolvedProjectId,
         storagePath: null
       });
     },
@@ -190,7 +194,9 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
   return {
     errorMessage: error ? getErrorMessage(error) : null,
     isMutating: uploadMutation.isPending || removeMutation.isPending,
-    removeProjectPhoto: removeMutation.mutateAsync,
-    uploadProjectPhoto: uploadMutation.mutateAsync
+    removeProjectPhoto: (targetProjectId?: string | null) =>
+      removeMutation.mutateAsync(targetProjectId ?? null),
+    uploadProjectPhoto: (source: PhotoSource, targetProjectId?: string | null) =>
+      uploadMutation.mutateAsync({ source, targetProjectId })
   };
 };

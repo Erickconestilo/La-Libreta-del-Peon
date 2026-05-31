@@ -52,5 +52,35 @@ export const fallbackGuideEntries: GuideEntry[] = [
     title: 'Cierre de trabajo en campo',
     updatedAt: now,
     updatedBy: null
+  },
+  {
+    body: 'En el Leica LS10, enciende el equipo y navega con las flechas por la interfaz. Antes de medir, confirma que estás dentro del trabajo correcto y que la fecha/nombre siguen el criterio de obra.',
+    category: 'nivel ls10',
+    createdAt: now,
+    createdBy: 'local-guide',
+    id: 'local-guide-ls10-arranque-001',
+    title: 'Arranque del Nivel Leica LS10',
+    updatedAt: now,
+    updatedBy: null
+  },
+  {
+    body: 'Para crear trabajo en LS10 entra en Gestión > Trabajo > Nuevo. Usa formato YY/MM/DD e iniciales del lugar. Guarda con F4 y comprueba que el trabajo aparece antes de registrar lecturas.',
+    category: 'nivel ls10',
+    createdAt: now,
+    createdBy: 'local-guide',
+    id: 'local-guide-ls10-trabajo-001',
+    title: 'Crear trabajo en LS10',
+    updatedAt: now,
+    updatedBy: null
+  },
+  {
+    body: 'En nivelación, no confíes solo en que el equipo mida: revisa secuencia, punto, mira y cierre. Si una lectura queda dudosa, anótala y repite antes de abandonar la posición.',
+    category: 'nivelacion',
+    createdAt: now,
+    createdBy: 'local-guide',
+    id: 'local-guide-ls10-control-001',
+    title: 'Control rápido de nivelación',
+    updatedAt: now,
+    updatedBy: null
   }
 ];
