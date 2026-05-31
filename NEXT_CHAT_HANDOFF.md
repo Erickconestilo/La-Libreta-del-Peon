@@ -23,6 +23,8 @@
 - `416840d` - deploy backend reproducible: `npm ci` + `apps/backend/package-lock.json`.
 - `13e7b8b` - documentación de QA, handoff y auditoría de seguridad.
 - Commit posterior - validación centralizada de UUIDs en rutas backend para evitar errores SQL por params/query malformados.
+- `c33e812` - hardening por proyecto, DTO público visitante, Guías/Mapas/Conversación y croquis con pinza.
+- `5c5752c` - corrige scope de topógrafo en listado de mensajes de estación.
 
 ## APK Actual
 
@@ -88,10 +90,19 @@ Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen t
 
 ## Siguiente Paso Recomendado
 
-1. Forzar/verificar redeploy Render hasta que `GET /health` muestre un commit posterior a `3e721a1`, idealmente el último de `main`.
-2. Con Render actualizado, repetir QA con token `admin` o `topografo`: foto de prisma, mensajes y propuesta provisional.
-3. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
-4. Continuar auditoría aplicada: DTO público para visitante, permisos por obra/equipo y Storage privado/URLs firmadas de lectura.
+1. Esperar a que EAS libere cuota Android Free y lanzar nueva APK preview.
+2. Instalar APK nueva en Galaxy y validar que pestañas sean `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`.
+3. Con token `admin` o `topografo`, probar mensajes reales, propuesta provisional y foto de prisma.
+4. Revisar en Galaxy si el croquis permite zoom de pinza suficiente; si no, migrar a `react-native-gesture-handler`.
+5. Continuar auditoría aplicada: decidir privacidad de coordenadas/fotos/notas para visitante y Storage privado/URLs firmadas de lectura.
+
+## Estado Render Tras Último Push
+
+- `GET /health`: `5c5752c9e7d6417e759165c0a45061fb8f10167d`.
+- Rutas visitante principales con token: 200.
+- Rutas GET protegidas sin token: 401.
+- Mensajes de estación: admin 200, topógrafo 200, visitante 403.
+- DTO visitante: no expone `createdBy` en estaciones/guías ni `sourceFiles` en prismas.
 
 ## Nota Técnica Sobre Prismas
 
