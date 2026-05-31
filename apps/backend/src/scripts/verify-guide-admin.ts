@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Client } from 'pg';
 
 import { loadedEnvPath } from '../lib/load-env.js';
+import { assertWriteAllowed } from './safety.js';
 
 dotenv.config({ path: loadedEnvPath });
 
@@ -37,6 +38,8 @@ const assert = (condition: unknown, message: string) => {
 };
 
 const main = async () => {
+  assertWriteAllowed('verify-guide-admin');
+
   const email = `guide-admin-${Date.now()}@topofield.local`;
   const password = `TopoField!${Date.now()}`;
   const fullName = 'Admin temporal pruebas';
@@ -46,7 +49,11 @@ const main = async () => {
 
   let authUserId: string | null = null;
   let createdStationId: string | null = null;
+  let oldProjectImageUrl: string | null = null;
+  let signedProjectPhotoPath: string | null = null;
   let signedPhotoPath: string | null = null;
+  let testProjectChangeLogId: string | null = null;
+  let testProjectId: string | null = null;
   let testPrismId: string | null = null;
 
   try {
@@ -331,6 +338,103 @@ const main = async () => {
       'base64'
     );
 
+    const projectResult = await pgClient.query<{ id: string; image_url: string | null }>(
+      `
+        SELECT id, image_url
+        FROM projects
+        ORDER BY is_active DESC, name ASC
+        LIMIT 1
+      `
+    );
+
+    testProjectId = projectResult.rows[0]?.id ?? null;
+    oldProjectImageUrl = projectResult.rows[0]?.image_url ?? null;
+    assert(Boolean(testProjectId), 'Expected at least one project for project photo verification');
+
+    const signProjectPhotoResponse = await fetch(`${API_BASE_URL}/uploads/photos/sign`, {
+      body: JSON.stringify({
+        contentType: 'image/png',
+        entityId: testProjectId,
+        entityType: 'project',
+        fileSizeBytes: tinyPng.byteLength
+      }),
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+      method: 'POST'
+    });
+
+    assert(
+      signProjectPhotoResponse.status === 201,
+      `POST /uploads/photos/sign project failed with status ${signProjectPhotoResponse.status}`
+    );
+    const signProjectPhotoPayload = (await signProjectPhotoResponse.json()) as {
+      data?: {
+        path: string;
+        publicUrl: string;
+        signedUrl: string;
+      };
+    };
+
+    signedProjectPhotoPath = signProjectPhotoPayload.data?.path ?? null;
+    assert(Boolean(signedProjectPhotoPath), 'Signed project photo path missing');
+
+    const uploadProjectPhotoResponse = await fetch(signProjectPhotoPayload.data?.signedUrl ?? '', {
+      body: tinyPng,
+      headers: {
+        'cache-control': 'max-age=31536000',
+        'content-type': 'image/png',
+        'x-upsert': 'false'
+      },
+      method: 'PUT'
+    });
+
+    assert(uploadProjectPhotoResponse.ok, `PUT signed project photo failed with status ${uploadProjectPhotoResponse.status}`);
+
+    const updateProjectPhotoResponse = await fetch(`${API_BASE_URL}/projects/${testProjectId}/photo`, {
+      body: JSON.stringify({
+        storagePath: signedProjectPhotoPath
+      }),
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+      method: 'PATCH'
+    });
+
+    assert(
+      updateProjectPhotoResponse.ok,
+      `PATCH /projects/:id/photo failed with status ${updateProjectPhotoResponse.status}`
+    );
+    const updateProjectPhotoPayload = (await updateProjectPhotoResponse.json()) as {
+      data?: {
+        imageUrl: string | null;
+      };
+    };
+
+    assert(
+      updateProjectPhotoPayload.data?.imageUrl === signProjectPhotoPayload.data?.publicUrl,
+      'Project imageUrl was not updated to the signed public URL'
+    );
+
+    const projectChangeLogResult = await pgClient.query<{ id: string }>(
+      `
+        SELECT id
+        FROM change_logs
+        WHERE entity_type = 'project'
+          AND entity_id = $1
+          AND changed_by = $2
+          AND field_changed = 'image_url'
+        ORDER BY changed_at DESC
+        LIMIT 1
+      `,
+      [testProjectId, authUserId]
+    );
+
+    testProjectChangeLogId = projectChangeLogResult.rows[0]?.id ?? null;
+    assert(Boolean(testProjectChangeLogId), 'Expected project image_url change log');
+
     const signPhotoResponse = await fetch(`${API_BASE_URL}/uploads/photos/sign`, {
       body: JSON.stringify({
         contentType: 'image/png',
@@ -521,7 +625,11 @@ const main = async () => {
       `Guest GET /change-logs should be 401/403, got ${guestHistoryResponse.status}`
     );
 
-    const listResponse = await fetch(`${API_BASE_URL}/guide-entries`);
+    const listResponse = await fetch(`${API_BASE_URL}/guide-entries`, {
+      headers: {
+        Authorization: `Bearer ${adminToken}`
+      }
+    });
     assert(listResponse.ok, `GET /guide-entries failed with status ${listResponse.status}`);
     const listPayload = (await listResponse.json()) as {
       data?: Array<{ id: string }>;
@@ -531,6 +639,21 @@ const main = async () => {
 
     console.log('verify-guide-admin: ok');
   } finally {
+    if (testProjectId) {
+      await pgClient.query('UPDATE projects SET image_url = $2, updated_at = NOW() WHERE id = $1', [
+        testProjectId,
+        oldProjectImageUrl
+      ]).catch(() => undefined);
+    }
+
+    if (testProjectChangeLogId) {
+      await pgClient.query('DELETE FROM change_logs WHERE id = $1', [testProjectChangeLogId]).catch(() => undefined);
+    }
+
+    if (signedProjectPhotoPath) {
+      await adminClient.storage.from('topofield-photos').remove([signedProjectPhotoPath]).catch(() => undefined);
+    }
+
     if (signedPhotoPath) {
       await adminClient.storage.from('topofield-photos').remove([signedPhotoPath]).catch(() => undefined);
     }

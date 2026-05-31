@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { pool } from '../db/pool.js';
+import { assertWriteAllowed } from './safety.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +39,8 @@ const loadMigrationFiles = async () => {
 };
 
 const runMigrations = async () => {
+  assertWriteAllowed('run-migrations');
+
   await ensureMigrationsTable();
 
   const appliedMigrations = await getAppliedMigrations();

@@ -10,5 +10,5 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 export const prismsRouter = Router();
 
 prismsRouter.post('/reconcile-stations', requireAuth, requireRole(['admin']), reconcilePrismObservationsController);
-prismsRouter.get('/coverage/:groupCode', getPrismCoverageController);
+prismsRouter.get('/coverage/:groupCode', requireAuth, requireRole(['admin', 'topografo', 'visitante']), getPrismCoverageController);
 prismsRouter.patch('/:prismId/photo', requireAuth, requireRole(['admin', 'topografo']), updatePrismPhotoController);

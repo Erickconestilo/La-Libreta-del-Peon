@@ -39,7 +39,6 @@ export const createStationSchema = z.object({
   elevation: z.number().nullable().optional(),
   resolvedMethod: z.string().trim().max(100).nullable().optional(),
   displayMode: z.string().trim().max(100).nullable().optional(),
-  photoUrl: z.string().url().nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
   status: z.enum(['active', 'replaced', 'incident']).default('active'),
   readings: z.array(stationReadingSchema).default([])

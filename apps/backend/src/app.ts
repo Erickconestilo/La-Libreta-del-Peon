@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { authenticateRequest } from './middleware/auth.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
+import { apiRateLimit } from './middleware/rate-limit.js';
 import { authRouter } from './routes/auth.routes.js';
 import { changeLogsRouter } from './routes/change-logs.routes.js';
 import { guideRouter } from './routes/guide.routes.js';
@@ -19,6 +20,7 @@ dotenv.config();
 
 export const app = express();
 
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -30,6 +32,7 @@ app.get('/api/v1/health', (_request, response) => {
   });
 });
 
+app.use('/api/v1', apiRateLimit);
 app.use(authenticateRequest);
 
 app.use('/api/v1/auth', authRouter);

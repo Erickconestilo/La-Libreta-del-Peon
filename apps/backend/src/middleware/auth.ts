@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { sendError } from '../lib/api-response.js';
 import { supabaseAdmin } from '../lib/supabase.js';
+import { getUserProfileById } from '../models/users.model.js';
 
 const extractBearerToken = (request: Request) => {
   const authorizationHeader = request.headers.authorization;
@@ -12,21 +13,6 @@ const extractBearerToken = (request: Request) => {
   }
 
   return authorizationHeader.slice('Bearer '.length).trim();
-};
-
-const getRoleFromMetadata = (user: { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> }) => {
-  const appRole = user.app_metadata?.role;
-  const userRole = user.user_metadata?.role;
-
-  if (appRole === 'admin' || appRole === 'topografo' || appRole === 'visitante') {
-    return appRole;
-  }
-
-  if (userRole === 'admin' || userRole === 'topografo' || userRole === 'visitante') {
-    return userRole;
-  }
-
-  return 'visitante';
 };
 
 export const authenticateRequest = async (request: Request, _response: Response, next: NextFunction) => {
@@ -56,11 +42,17 @@ export const authenticateRequest = async (request: Request, _response: Response,
       throw new AppError('Invalid authentication token', 401, 'INVALID_TOKEN');
     }
 
+    const userProfile = await getUserProfileById(data.user.id);
+
+    if (!userProfile?.isActive) {
+      throw new AppError('User is inactive or not registered', 403, 'USER_INACTIVE_OR_UNKNOWN');
+    }
+
     request.user = {
       authProvider: 'supabase',
-      email: data.user.email ?? null,
+      email: userProfile.email ?? data.user.email ?? null,
       id: data.user.id,
-      role: getRoleFromMetadata(data.user)
+      role: userProfile.role
     };
 
     next();

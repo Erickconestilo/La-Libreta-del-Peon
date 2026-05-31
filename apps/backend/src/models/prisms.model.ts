@@ -36,7 +36,6 @@ const mapObservationRow = (row: Record<string, unknown>) => {
     northing: row.northing,
     prismConstant: row.prism_constant,
     prismId: row.prism_id,
-    rawPayload: row.raw_payload,
     reducedLevel: row.reduced_level,
     slopeDistance: row.slope_distance,
     sourceFile: row.source_file,
@@ -205,7 +204,6 @@ export const listPrismObservationsByStationId = async (stationId: string, limit 
       po.northing,
       po.reduced_level,
       po.prism_constant,
-      po.raw_payload,
       po.created_at,
       po.updated_at,
       p.code AS prism_code
@@ -268,12 +266,31 @@ export const reconcilePrismObservationsForStation = async (
 
     const updateResult = await client.query(
       `
-        UPDATE prism_observations
+        WITH candidate_matches AS (
+          SELECT
+            po.id AS observation_id,
+            MIN(s.id::text)::uuid AS station_id,
+            COUNT(DISTINCT s.id) AS station_count
+          FROM prism_observations po
+          INNER JOIN stations s
+            ON po.station_code = s.external_id
+            OR po.station_code = s.name
+          WHERE po.station_id IS NULL
+            AND po.station_code = ANY($2::text[])
+          GROUP BY po.id
+        ),
+        safe_matches AS (
+          SELECT observation_id
+          FROM candidate_matches
+          WHERE station_count = 1
+            AND station_id = $1
+        )
+        UPDATE prism_observations po
         SET
           station_id = $1,
           updated_at = NOW()
-        WHERE station_id IS NULL
-          AND station_code = ANY($2::text[])
+        FROM safe_matches sm
+        WHERE po.id = sm.observation_id
       `,
       [stationId, candidateCodes]
     );
