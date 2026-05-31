@@ -89,5 +89,5 @@ Impacto actual: bajo, porque no expone stack trace y hay rate limit. Propuesta: 
 
 ## Bloqueos Operativos
 
-- Render público sigue en `3e721a1`; debe redeployarse hasta `13e7b8b` o al menos `416840d`/`af21658`.
+- Render público sigue en `3e721a1`; debe redeployarse hasta un commit posterior, idealmente el último de `main`.
 - APK EAS nueva ya está instalada; queda probar escritura real de mensajes, propuesta provisional, foto de prisma y token técnico tras el redeploy.
