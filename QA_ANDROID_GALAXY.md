@@ -51,6 +51,8 @@
 - Probar sesión real `admin`/`topografo` pegando token manualmente o con una build nueva que incluya el campo de token corregido.
 - Probar subida real de foto de prisma desde Galaxy.
 - Probar la mejora local del croquis: zona táctil ampliada y gráfico ligeramente mayor.
+- Probar `Mensajes del equipo` dentro de un estacionamiento.
+- Probar `Estacionamientos provisionales` creando una propuesta y verificando que aparece en la lista.
 
 ## Instalación en Galaxy
 
@@ -91,6 +93,13 @@
 - Borrar entrada temporal.
 - Volver a `Guía` y confirmar que no queda basura.
 
+## Prueba de guía visitante
+
+- Abrir `Guía`.
+- Confirmar que los manuales muestran acción clara `Abrir manual`.
+- Buscar texto como `nivel`, `prisma` o `foto`.
+- Confirmar que las fichas rápidas se agrupan por instrumento y no parecen botones de navegación.
+
 ## Prueba de fotos
 
 - Abrir una estación.
@@ -127,6 +136,17 @@
 - Añadir título corto y nota.
 - Marcar una foto como principal y confirmar que cambia la foto principal.
 - Borrar una foto de memoria.
+
+## Prueba de mensajes y provisionales
+
+- Abrir una estación con rol `admin` o `topografo`.
+- En `Mensajes del equipo`, dejar un mensaje corto.
+- Confirmar que el mensaje aparece con autor y fecha.
+- Volver a visitante y confirmar que los mensajes internos no se muestran.
+- En `Estacionamientos provisionales`, crear una propuesta con nombre y motivo.
+- Confirmar que la propuesta queda como `Abierta`.
+- Confirmar que se pueden tener varias propuestas abiertas.
+- Volver a visitante y confirmar que las propuestas internas no se muestran.
 
 ## Prueba de historial
 

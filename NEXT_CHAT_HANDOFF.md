@@ -17,6 +17,7 @@
 - `e5c87d4` - health expone commit Render y forzó redeploy real del backend.
 - `10c91b8` - hardening backend: auth local por tabla `users`, rutas GET con token invitado, rate limit, guardas de scripts y migración `011`.
 - `3e721a1` - hardening móvil: token en SecureStore, API production solo HTTPS, CORS restringido, permisos Android reducidos y aviso antes de abrir Google Maps externo.
+- `02b0102` - guía más clara: manuales pulsables y fichas rápidas como lectura directa.
 
 ## APK Actual
 
@@ -39,6 +40,8 @@
 - Render ya despliega `3e721a1` y sirve las rutas nuevas protegidas.
 - Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
 - Cambios locales pendientes de build: croquis con zona táctil mayor y campo de token con altura fija/submit por teclado.
+- Guía pendiente de nueva APK con búsqueda y agrupación por instrumento.
+- Estacionamiento pendiente de nueva APK/Render con mensajes del equipo y propuestas provisionales como incidencias `new_station`; ambos flujos son internos y requieren rol `admin` o `topografo`.
 
 ## Estado Backend Render
 
@@ -70,10 +73,10 @@ Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen t
 
 ## Siguiente Paso Recomendado
 
-1. Commit/push de las mejoras locales de croquis/perfil.
-2. Lanzar nueva EAS preview para incluir `3e721a1` y los cambios locales.
-3. Reinstalar APK nuevo en Galaxy y repetir QA de token técnico/foto de prisma.
-4. Si la foto de prisma falla ahora, mirar primero rol/token, firma de subida y payload; ya no es un 404 de ruta inexistente.
+1. Esperar build EAS nueva desde el último commit.
+2. Verificar Render con `GET /health` antes de instalar APK.
+3. Reinstalar APK nuevo en Galaxy y repetir QA de token técnico, foto de prisma, mensajes y propuesta provisional.
+4. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
 
 ## Nota Técnica Sobre Prismas
 

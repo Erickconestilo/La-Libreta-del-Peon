@@ -47,6 +47,8 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Hardening backend aplicado en `10c91b8`: roles ya no salen de metadata mutable, usuarios Supabase se validan contra tabla local `users`, lecturas GET requieren token invitado, hay rate limit básico, scripts de escritura requieren autorización explícita y `PATCH /projects/:id/photo` queda corregido por migración `011`.
 - Hardening móvil aplicado en `3e721a1` pero pendiente de nueva APK: token técnico en SecureStore, API production solo HTTPS, permisos Android reducidos y aviso antes de abrir Google Maps externo.
 - QA Galaxy visitante validada: Obras, `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante sin errores de app en `logcat`.
+- Guía mejorada con búsqueda y agrupación de fichas rápidas por instrumento.
+- Estacionamiento empieza a funcionar como unidad operativa: mensajes/bitácora por estación y propuestas de estacionamiento provisional como incidencias con sugerencia `new_station`; son flujos internos para `admin/topografo`, no públicos para visitante.
 
 ## Estado Backend Render
 
@@ -54,7 +56,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - `GET /health` responde 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 401 sin token y 200 con `GUEST_PUBLIC_TOKEN`.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Siguiente acción real: generar nueva EAS preview con hardening móvil y mejoras locales, reinstalar en Galaxy y probar token técnico/foto de prisma con rol `admin` o `topografo`.
+- Siguiente acción real: generar nueva EAS preview desde el último commit, esperar Render, reinstalar en Galaxy y probar token técnico, foto de prisma, mensajes de estación y propuesta provisional.
 
 ## Principios de Implementación
 - Una feature cada vez

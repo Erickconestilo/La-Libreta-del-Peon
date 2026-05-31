@@ -6,12 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StationPhoto, StationPhotoKind } from '@shared/types';
 import { PrismSketch, type PrismSketchItem } from '@/components/prism-sketch';
 import { useCurrentSession } from '@/hooks/use-auth';
+import { useCreateIncident, useStationIncidents } from '@/hooks/use-incidents';
 import {
   type StationPrismListItem,
   type StationPrismObservation,
   usePrismPhotoMutations,
   useStationPrisms
 } from '@/hooks/use-prisms';
+import { useCreateStationMessage, useStationMessages } from '@/hooks/use-station-messages';
 import { useStationDetail, useUpdateStationNotes } from '@/hooks/use-stations';
 import {
   useStationPhotoGalleryMutations,
@@ -36,6 +38,7 @@ export default function StationDetailScreen() {
   const { currentUser } = useCurrentSession();
   const params = useLocalSearchParams<{ stationId: string }>();
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
+  const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const { data, errorMessage, isLoading } = useStationDetail(stationId ?? null);
   const {
     errorMessage: notesErrorMessage,
@@ -47,6 +50,10 @@ export default function StationDetailScreen() {
   const [visualPhotoKind, setVisualPhotoKind] = useState<StationPhotoKind>('general');
   const [visualPhotoNotes, setVisualPhotoNotes] = useState('');
   const [visualPhotoTitle, setVisualPhotoTitle] = useState('');
+  const [messageDraft, setMessageDraft] = useState('');
+  const [provisionalName, setProvisionalName] = useState('');
+  const [provisionalNotes, setProvisionalNotes] = useState('');
+  const [showProvisionalForm, setShowProvisionalForm] = useState(false);
   const [setAsPrimary, setSetAsPrimary] = useState(false);
   const {
     errorMessage: photoErrorMessage,
@@ -71,6 +78,26 @@ export default function StationDetailScreen() {
     isLoading: isPrismLoading,
   } = useStationPrisms(stationId ?? null);
   const {
+    data: stationMessages,
+    errorMessage: stationMessagesErrorMessage,
+    isLoading: isStationMessagesLoading
+  } = useStationMessages(canUseTeamTools ? stationId ?? null : null);
+  const {
+    createMessage,
+    errorMessage: createMessageErrorMessage,
+    isCreating: isCreatingMessage
+  } = useCreateStationMessage(canUseTeamTools ? stationId ?? null : null);
+  const {
+    data: stationIncidents,
+    errorMessage: stationIncidentsErrorMessage,
+    isLoading: isStationIncidentsLoading
+  } = useStationIncidents(canUseTeamTools ? stationId ?? null : null);
+  const {
+    createIncident,
+    errorMessage: createIncidentErrorMessage,
+    isCreating: isCreatingIncident
+  } = useCreateIncident(canUseTeamTools ? stationId ?? null : null);
+  const {
     errorMessage: prismPhotoErrorMessage,
     isMutating: isPrismPhotoMutating,
     removePrismPhoto,
@@ -84,9 +111,12 @@ export default function StationDetailScreen() {
   );
   const [selectedPrismCode, setSelectedPrismCode] = useState<string | null>(null);
   const selectedPrismSketchItem = prismSketchItems.find((item) => item.code === selectedPrismCode) ?? null;
-  const canEditPhotos = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
-  const canEditStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
-  const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const provisionalStationIncidents = useMemo(() => {
+    return (stationIncidents ?? []).filter((incident) => incident.suggestion?.kind === 'new_station');
+  }, [stationIncidents]);
+  const canEditPhotos = canUseTeamTools;
+  const canEditStation = canUseTeamTools;
+  const canViewTechnical = canUseTeamTools;
   const [showTechnicalData, setShowTechnicalData] = useState(false);
 
   useEffect(() => {
@@ -180,6 +210,49 @@ export default function StationDetailScreen() {
       notes: notesDraft.trim() ? notesDraft.trim() : null
     })
       .then(() => setIsEditingNotes(false))
+      .catch(() => undefined);
+  };
+
+  const handleCreateMessage = () => {
+    const body = messageDraft.trim();
+
+    if (!body) {
+      return;
+    }
+
+    void createMessage({ body })
+      .then(() => setMessageDraft(''))
+      .catch(() => undefined);
+  };
+
+  const handleCreateProvisionalStation = () => {
+    if (!data) {
+      return;
+    }
+
+    const proposedStationName = provisionalName.trim() || `Provisional ${getStationDisplayName(data)}`;
+    const notes = provisionalNotes.trim() || null;
+
+    void createIncident({
+      description: notes
+        ? `Propuesta de estacionamiento provisional: ${notes}`
+        : 'Propuesta de estacionamiento provisional.',
+      stationId: data.id,
+      suggestion: {
+        kind: 'new_station',
+        notes,
+        proposedLat: typeof data.lat === 'number' ? data.lat : null,
+        proposedLng: typeof data.lng === 'number' ? data.lng : null,
+        proposedPrismCode: null,
+        proposedStationName
+      },
+      type: 'obstaculo_estacionamiento'
+    })
+      .then(() => {
+        setProvisionalName('');
+        setProvisionalNotes('');
+        setShowProvisionalForm(false);
+      })
       .catch(() => undefined);
   };
 
@@ -443,6 +516,125 @@ export default function StationDetailScreen() {
                     <Text style={styles.caption}>Estás en modo visitante. Para añadir notas o fotos, entra con un token de topógrafo/admin en Perfil.</Text>
                   )}
                 </>
+              )}
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Mensajes del equipo</Text>
+              <Text style={styles.body}>
+                Bitácora corta para dejar avisos a la siguiente persona que visite este estacionamiento.
+              </Text>
+
+              {stationMessagesErrorMessage ? <Text style={styles.errorText}>{stationMessagesErrorMessage}</Text> : null}
+              {createMessageErrorMessage ? <Text style={styles.errorText}>{createMessageErrorMessage}</Text> : null}
+              {isStationMessagesLoading ? <Text style={styles.body}>Cargando mensajes...</Text> : null}
+
+              {(stationMessages ?? []).length === 0 && !isStationMessagesLoading && canUseTeamTools ? (
+                <Text style={styles.caption}>Todavía no hay mensajes para este estacionamiento.</Text>
+              ) : null}
+
+              {canUseTeamTools ? (stationMessages ?? []).slice(0, 5).map((message) => (
+                <View key={message.id} style={styles.messageCard}>
+                  <Text style={styles.body}>{message.body}</Text>
+                  <Text style={styles.messageMeta}>
+                    {formatUserLabel(message.createdByUser)} · {formatDate(message.createdAt)}
+                  </Text>
+                </View>
+              )) : null}
+
+              {canEditStation ? (
+                <View style={styles.messageForm}>
+                  <TextInput
+                    multiline
+                    onChangeText={setMessageDraft}
+                    placeholder="Ej. Prisma PN2 tapado por material, revisar mañana"
+                    placeholderTextColor="#64748b"
+                    style={[styles.input, styles.notesInput]}
+                    value={messageDraft}
+                  />
+                  <Pressable
+                    disabled={isCreatingMessage || !messageDraft.trim()}
+                    onPress={handleCreateMessage}
+                    style={[
+                      styles.linkButton,
+                      isCreatingMessage || !messageDraft.trim() ? styles.disabledButton : null
+                    ]}
+                  >
+                    <Text style={styles.linkButtonText}>{isCreatingMessage ? 'Guardando...' : 'Dejar mensaje'}</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Text style={styles.caption}>Mensajes internos solo visibles con token de topógrafo/admin.</Text>
+              )}
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Estacionamientos provisionales</Text>
+              <Text style={styles.body}>
+                Si este punto no sirve en campo, registra una propuesta provisional ligada a esta estación. Puede haber ninguna, una o varias.
+              </Text>
+
+              {stationIncidentsErrorMessage ? <Text style={styles.errorText}>{stationIncidentsErrorMessage}</Text> : null}
+              {createIncidentErrorMessage ? <Text style={styles.errorText}>{createIncidentErrorMessage}</Text> : null}
+              {isStationIncidentsLoading ? <Text style={styles.body}>Cargando propuestas...</Text> : null}
+
+              {provisionalStationIncidents.length === 0 && !isStationIncidentsLoading && canUseTeamTools ? (
+                <Text style={styles.caption}>No hay propuestas provisionales abiertas.</Text>
+              ) : null}
+
+              {canUseTeamTools ? provisionalStationIncidents.map((incident) => (
+                <View key={incident.id} style={styles.provisionalCard}>
+                  <View style={styles.prismHeader}>
+                    <Text style={styles.readingTitle}>{incident.suggestion?.proposedStationName ?? 'Provisional sin nombre'}</Text>
+                    <Text style={[styles.statusTag, styles.statusTagAmber]}>Abierta</Text>
+                  </View>
+                  {incident.suggestion?.notes ? <Text style={styles.body}>{incident.suggestion.notes}</Text> : null}
+                  <Text style={styles.caption}>Registrada: {formatDate(incident.reportedAt)}</Text>
+                </View>
+              )) : null}
+
+              {canEditStation ? (
+                showProvisionalForm ? (
+                  <View style={styles.messageForm}>
+                    <TextInput
+                      onChangeText={setProvisionalName}
+                      placeholder="Nombre, ej. Provisional rampa norte"
+                      placeholderTextColor="#64748b"
+                      style={styles.input}
+                      value={provisionalName}
+                    />
+                    <TextInput
+                      multiline
+                      onChangeText={setProvisionalNotes}
+                      placeholder="Motivo y cómo llegar al punto provisional"
+                      placeholderTextColor="#64748b"
+                      style={[styles.input, styles.notesInput]}
+                      value={provisionalNotes}
+                    />
+                    <View style={styles.notesActionRow}>
+                      <Pressable
+                        disabled={isCreatingIncident}
+                        onPress={handleCreateProvisionalStation}
+                        style={[styles.linkButton, styles.notesActionButton, isCreatingIncident ? styles.disabledButton : null]}
+                      >
+                        <Text style={styles.linkButtonText}>{isCreatingIncident ? 'Guardando...' : 'Guardar propuesta'}</Text>
+                      </Pressable>
+                      <Pressable
+                        disabled={isCreatingIncident}
+                        onPress={() => setShowProvisionalForm(false)}
+                        style={[styles.secondaryButton, styles.notesActionButton]}
+                      >
+                        <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable onPress={() => setShowProvisionalForm(true)} style={styles.secondaryButton}>
+                    <Text style={styles.secondaryButtonText}>Proponer estacionamiento provisional</Text>
+                  </Pressable>
+                )
+              ) : (
+                <Text style={styles.caption}>Propuestas internas solo visibles con token de topógrafo/admin.</Text>
               )}
             </View>
 
@@ -847,6 +1039,20 @@ const getPhotoKindLabel = (kind: StationPhotoKind) => {
   return PHOTO_KINDS.find((item) => item.value === kind)?.label ?? kind;
 };
 
+const formatUserLabel = (
+  user: {
+    email: string;
+    fullName: string;
+    role: string;
+  } | null
+) => {
+  if (!user) {
+    return 'Equipo';
+  }
+
+  return user.fullName || user.email;
+};
+
 const styles = StyleSheet.create({
   body: {
     color: colors.textSecondary,
@@ -976,6 +1182,25 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     padding: 12,
   },
+  messageCard: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+    padding: 12,
+  },
+  messageForm: {
+    borderTopColor: '#2a2f3a',
+    borderTopWidth: 1,
+    gap: 10,
+    paddingTop: 12,
+  },
+  messageMeta: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
   kindChip: {
     borderColor: '#2a2f3a',
     borderRadius: 999,
@@ -1034,6 +1259,14 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '800',
+  },
+  provisionalCard: {
+    backgroundColor: '#151922',
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+    padding: 12,
   },
   legendDot: {
     borderRadius: 999,
