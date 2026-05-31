@@ -2,20 +2,25 @@
 
 ## APK actual
 
-- Build EAS: `b46fc344-e68c-4643-9665-33bc5e3b90fa`
-- APK: https://expo.dev/artifacts/eas/ohixyjHoi3qc5YMQSrRQCs.apk
+- Build EAS: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`
+- APK: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
+- APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
-- Commit incluido: `84260002f29cc7503661f909bdf5bbf60cafb3d1`
+- Commit incluido en APK: `805fb6197a98ecdb358ff5839d6fbecbfe85b31d`
+- Commit posterior solo para forzar redeploy Render: `6a494de`
+- Instalación ADB en Galaxy: `Success`
 
 ## Estado backend Render
 
 - `GET /health`: 200
 - `GET /stations`: 200
-- `GET /projects`: 404 en la ultima comprobacion local
-- `GET /guide-entries`: 404 en la ultima comprobacion local
-- Si `Memoria visual` o subida de imagen de obra muestran "funcion pendiente de publicar", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
-- `Guia` tiene contenido local de respaldo en el APK aunque Render no haya desplegado.
+- `GET /projects`: 404 en la ultima comprobacion local del 2026-05-31
+- `GET /guide-entries`: 404 en la ultima comprobacion local del 2026-05-31
+- `PATCH /prisms/:prismId/photo`: 404 en la ultima comprobacion local del 2026-05-31
+- Interpretacion: Render sigue sirviendo backend antiguo o no ha redeployado desde GitHub.
+- Impacto: lectura de estaciones, croquis de prismas y guias offline funcionan desde el APK; subida de foto de prisma, proyectos reales por backend y guia backend no funcionaran hasta redeploy.
+- Accion pendiente: revisar dashboard de Render, activar redeploy manual del servicio o confirmar que auto-deploy apunta a `main` del repo `Erickconestilo/La-Libreta-del-Peon`.
 
 ## Instalación en Galaxy
 
@@ -34,6 +39,8 @@
 - La pestaña `Mapa` muestra marcadores.
 - Un marcador abre el detalle de estación.
 - La pestaña `Guía` muestra contenido Leica real.
+- Tocar `Guía Leica de estación` abre paginas renderizadas con texto e imagenes.
+- Tocar `Nivel Leica LS10` abre paginas renderizadas con texto e imagenes.
 - El perfil visitante no muestra lenguaje técnico de backend/proveedor.
 - Desde una obra, `Ver mapa de esta obra` mantiene el filtro por obra.
 - La pestaña `Perfil` muestra rol `visitante`.
@@ -62,6 +69,17 @@
 - Confirmar que la imagen aparece.
 - Cambiar foto desde galería.
 - Quitar foto principal.
+
+## Prueba de croquis de prismas
+
+- Abrir una estación con prismas asociados.
+- Ver tarjeta `Croquis de prismas`.
+- Confirmar texto: `Vista operativa por ángulo y distancia desde esta estación. No es coordenada geográfica absoluta.`
+- Tocar varios puntos del croquis.
+- Confirmar que cambia la ficha del prisma y aparece el codigo correcto.
+- Revisar distancia, angulo H, observaciones, ultima observacion y constante de prisma.
+- Con rol `admin` o `topografo`, probar `Añadir foto del prisma`.
+- Si la subida falla con 404 o funcion no disponible, confirmar primero el redeploy de Render.
 
 ## Prueba de obras
 
@@ -93,5 +111,6 @@
 - Mapa se queda vacío pese a tener estaciones.
 - Cámara/galería no piden permisos o fallan.
 - Foto sube pero no aparece después.
+- Foto de prisma falla mientras Render mantenga `PATCH /prisms/:id/photo` en 404.
 - Token técnico no cambia el rol.
 - Historial no refleja acciones recientes.
