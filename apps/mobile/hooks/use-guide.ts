@@ -33,7 +33,15 @@ const fetchGuideEntries = async (category?: string | null) => {
   const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : '';
   try {
     const response = await apiFetch<ApiEnvelope<GuideEntry[]>>(`/guide-entries${suffix}`);
-    return response.data;
+    if (response.data.length > 0) {
+      return response.data;
+    }
+
+    if (category) {
+      return fallbackGuideEntries.filter((entry) => entry.category === category);
+    }
+
+    return fallbackGuideEntries;
   } catch {
     if (category) {
       return fallbackGuideEntries.filter((entry) => entry.category === category);

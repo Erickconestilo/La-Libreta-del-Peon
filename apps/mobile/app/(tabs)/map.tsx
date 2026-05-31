@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,7 @@ type StationWithProject = import('@shared/types').Station & {
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const PANEL_HEIGHT = 200;
+const HAS_GOOGLE_MAPS_KEY = Boolean(process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY);
 
 const DEFAULT_REGION = {
   latitude: 41.4013,
@@ -86,7 +87,7 @@ export default function MapScreen() {
   );
 
   useEffect(() => {
-    if (stationsWithCoordinates.length > 0) {
+    if (HAS_GOOGLE_MAPS_KEY && stationsWithCoordinates.length > 0) {
       mapRef.current?.animateToRegion(initialRegion, 350);
     }
   }, [initialRegion, stationsWithCoordinates.length]);
@@ -116,6 +117,12 @@ export default function MapScreen() {
     router.push(`/station/${selectedStation.id}`);
   }, [router, selectedStation]);
 
+  const handleOpenInMaps = useCallback(async (station: StationWithProject & { lat: number; lng: number }) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}`;
+
+    await Linking.openURL(url);
+  }, []);
+
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [PANEL_HEIGHT, 0],
@@ -143,6 +150,74 @@ export default function MapScreen() {
       <View style={styles.centered}>
         <Text style={styles.errorTitle}>Sin estaciones en el mapa</Text>
         <Text style={styles.errorBody}>No hay estaciones con coordenadas para mostrar.</Text>
+      </View>
+    );
+  }
+
+  if (!HAS_GOOGLE_MAPS_KEY) {
+    return (
+      <View style={styles.fallbackContainer}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.fallbackContent,
+            { paddingBottom: 112 + insets.bottom, paddingTop: spacing[3] + insets.top },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.fallbackHero}>
+            <Text style={styles.fallbackEyebrow}>Mapa operativo</Text>
+            <Text style={styles.fallbackTitle}>Coordenadas por obra</Text>
+            <Text style={styles.fallbackBody}>
+              El mapa embebido necesita una clave de Google Maps. Mientras no la configuremos,
+              la app muestra las estaciones con coordenadas y permite abrirlas en Google Maps.
+            </Text>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.projectFilterRow}>
+            <ProjectChip
+              label="Todas"
+              onPress={() => handleProjectFilter(null)}
+              selected={selectedProjectId === null}
+            />
+            {projectOptions.map((project) => (
+              <ProjectChip
+                key={project.id}
+                label={project.name}
+                onPress={() => handleProjectFilter(project.id)}
+                selected={selectedProjectId === project.id}
+              />
+            ))}
+          </ScrollView>
+
+          <Text style={styles.fallbackCount}>
+            {stationsWithCoordinates.length} estacionamientos con coordenadas
+          </Text>
+
+          {stationsWithCoordinates.map((station) => (
+            <View key={station.id} style={styles.stationMapCard}>
+              <View style={styles.stationMapHeader}>
+                <Text style={styles.stationMapProject}>
+                  {station.project?.name ?? 'Sin obra'}
+                </Text>
+                <View style={[styles.statusChip, { backgroundColor: statusConfig[station.status].color }]}>
+                  <Text style={styles.statusChipText}>{statusConfig[station.status].label}</Text>
+                </View>
+              </View>
+              <Text style={styles.stationMapTitle}>{getStationDisplayName(station)}</Text>
+              <Text style={styles.stationMapCoords}>
+                {station.lat.toFixed(8)}, {station.lng.toFixed(8)}
+              </Text>
+              <View style={styles.stationMapActions}>
+                <Pressable onPress={() => router.push(`/station/${station.id}`)} style={styles.secondaryBtn}>
+                  <Text style={styles.secondaryBtnText}>Ver detalle</Text>
+                </Pressable>
+                <Pressable onPress={() => void handleOpenInMaps(station)} style={styles.primaryMapBtn}>
+                  <Text style={styles.detailBtnText}>Abrir mapa</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
       </View>
     );
   }
@@ -278,6 +353,44 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizeBody,
     fontWeight: '700',
   },
+  fallbackBody: {
+    color: colors.textSecondary,
+    fontSize: typography.fontSizeBody - 1,
+    lineHeight: 22,
+  },
+  fallbackContainer: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+  fallbackContent: {
+    gap: spacing[2],
+    padding: spacing[3],
+  },
+  fallbackCount: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  fallbackEyebrow: {
+    color: colors.accentGreen,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
+  fallbackHero: {
+    backgroundColor: colors.card,
+    borderColor: '#2a2f3a',
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: spacing[1],
+    padding: spacing[3],
+  },
+  fallbackTitle: {
+    color: colors.textPrimary,
+    fontSize: 30,
+    fontWeight: '900',
+  },
   errorBody: {
     color: colors.textSecondary,
     fontSize: typography.fontSizeBody - 1,
@@ -385,6 +498,61 @@ const styles = StyleSheet.create({
   refreshBtnText: {
     color: colors.textPrimary,
     fontSize: 22,
+  },
+  primaryMapBtn: {
+    alignItems: 'center',
+    backgroundColor: colors.accentGreen,
+    borderRadius: borderRadius[0],
+    flex: 1,
+    paddingVertical: spacing[2],
+  },
+  secondaryBtn: {
+    alignItems: 'center',
+    borderColor: '#2a2f3a',
+    borderRadius: borderRadius[0],
+    borderWidth: 1,
+    flex: 1,
+    paddingVertical: spacing[2],
+  },
+  secondaryBtnText: {
+    color: colors.textPrimary,
+    fontSize: typography.fontSizeBody - 1,
+    fontWeight: '800',
+  },
+  stationMapActions: {
+    flexDirection: 'row',
+    gap: spacing[1],
+    marginTop: spacing[1],
+  },
+  stationMapCard: {
+    backgroundColor: colors.card,
+    borderColor: '#2a2f3a',
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: spacing[1],
+    padding: spacing[3],
+  },
+  stationMapCoords: {
+    color: colors.accentGreen,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  stationMapHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  stationMapProject: {
+    color: colors.amber,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  stationMapTitle: {
+    color: colors.textPrimary,
+    fontSize: typography.fontSizeTitle,
+    fontWeight: '900',
   },
   statusChip: {
     borderRadius: borderRadius[0],
