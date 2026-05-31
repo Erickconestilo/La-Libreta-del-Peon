@@ -22,6 +22,21 @@ const buildPrismScopeCondition = (projectIds: string[] | null, baseOffset: numbe
   };
 };
 
+const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
+  if (projectIds === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectIds.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectIds],
+    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])`
+  };
+};
+
 const mapPrismRow = (row: Record<string, unknown>) => {
   return {
     code: row.code,
@@ -69,7 +84,7 @@ const mapObservationRow = (row: Record<string, unknown>) => {
 };
 
 export const listPrismsByStationId = async (stationId: string, projectScope: string[] | null = null) => {
-  const scope = buildPrismScopeCondition(projectScope, 2);
+  const scope = buildStationProjectScopeCondition(projectScope, 2);
 
   const query = `
     SELECT
@@ -94,6 +109,7 @@ export const listPrismsByStationId = async (stationId: string, projectScope: str
       MIN(po.measured_at) AS station_first_observed_at,
       MAX(po.measured_at) AS station_last_observed_at
     FROM prism_observations po
+    INNER JOIN stations s ON s.id = po.station_id
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE po.station_id = $1
     ${scope.clause}
@@ -221,7 +237,7 @@ export const listPrismObservationsByStationId = async (
   limit = 200,
   projectScope: string[] | null = null
 ) => {
-  const scope = buildPrismScopeCondition(projectScope, 3);
+  const scope = buildStationProjectScopeCondition(projectScope, 3);
 
   const query = `
     SELECT
@@ -246,6 +262,7 @@ export const listPrismObservationsByStationId = async (
       po.updated_at,
       p.code AS prism_code
     FROM prism_observations po
+    INNER JOIN stations s ON s.id = po.station_id
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE po.station_id = $1
     ${scope.clause}

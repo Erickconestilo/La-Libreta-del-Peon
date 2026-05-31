@@ -33,13 +33,22 @@
 - `npm audit --workspace apps/mobile --json`: 11 vulnerabilidades moderadas en tooling Expo/xcode/uuid, sin high/critical.
 - Revisión de rutas objetivo: mensajes (`/stations/:id/messages`), incidencias (`/incidents`) y firma de subida (`/uploads/photos/sign`) requieren `admin` o `topografo`.
 - QA Galaxy real quedó limitada por despliegue antiguo de Render al momento de validar escritura en backend; lectura de guías/obras ya valida cambios de permisos y no cae por 404.
+- Continuación auditoría Fase 1 backend: Render responde `GET /health` con commit `5c5752c9e7d6417e759165c0a45061fb8f10167d`.
+- Producción sin token: `/projects`, `/stations`, `/guide-entries`, `/prisms/coverage/CN1` e `/incidents` devuelven `401`.
+- Producción con `GUEST_PUBLIC_TOKEN`: `/projects`, `/stations`, `/guide-entries` y `/prisms/coverage/CN1` devuelven `200`; `/incidents` devuelve `403`.
+- Producción con token visitante en escritura: `POST /uploads/photos/sign`, `POST /guide-entries` y `PATCH /projects/:id/photo` devuelven `401`.
+- UUID malformados en rutas públicas verificadas devuelven `400` antes de SQL.
+- Arreglo correcto aplicado localmente tras decidir que `visitante` puede seguir leyendo datos públicos: `change-logs` recibe `projectScope`, prismas por estación validan la estación como ancla de autorización, y foto de proyecto para `topografo` corrige alias SQL.
+- Verificación post-arreglo local: `npm run build --workspace apps/backend` OK, `npm audit --workspace apps/backend --json` sin vulnerabilidades, y consultas de solo lectura a `listChangeLogs`, `listPrismsByStationId` y `listPrismObservationsByStationId` ejecutan sin error SQL.
 
 ## Resultado Actual de la Auditoría
 
 - No hay hallazgos críticos o altos validados en el código revisado tras la última tanda.
 - Se corrigió una clase de IDOR entre proyectos para roles de operación.
 - No se encontró bypass directo para que `visitante` escriba mensajes, incidencias, fotos o guía.
-- Riesgo restante principal: decidir si las coordenadas/fotos públicas son aceptables para visitante y definir política de Storage firmado.
+- Decisión de producto cerrada para Fase 1: `visitante` puede ver coordenadas, notas y fotos públicas; esto no se trata como vulnerabilidad del MVP.
+- Hallazgos corregidos localmente y pendientes de deploy/QA: historial de cambios con scope por proyecto para `topografo`, endpoints de prismas por estación anclados a la obra de la estación, y bug funcional de foto de proyecto para `topografo` por alias SQL.
+- Hallazgo pendiente de decisión operativa: auto-asignación inicial de todos los topógrafos a todas las obras; no se puede cerrar sin una matriz real usuario-obra.
 - La revisión queda en estado de auditoría aplicada (no certificación), con pasos de hardening pendiente.
 
 ## Hallazgos y Riesgos Vigentes
@@ -48,7 +57,7 @@
 
 `GUEST_PUBLIC_TOKEN` está dentro de la APK, por tanto debe tratarse como público. Actualmente `visitante` puede leer obras, estaciones, coordenadas, notas públicas, fotos públicas y prismas permitidos.
 
-Estado: DTO público inicial aplicado para ocultar metadatos internos. Decisión pendiente: confirmar si coordenadas, notas y fotos deben seguir siendo públicas para visitante.
+Estado: DTO público inicial aplicado para ocultar metadatos internos. Confirmado por producto: coordenadas, notas y fotos pueden seguir siendo públicas para `visitante` en Fase 1.
 
 ### Riesgo 2 - Fotos públicas
 
@@ -74,6 +83,35 @@ Algunas rutas confían en PostgreSQL para castear UUIDs. Un UUID malformado pued
 
 Estado: mitigado en código con middleware centralizado de UUID. Pendiente de verificar deploy en producción.
 
+### Riesgo 6 - Historial sin scope por proyecto
+
+`GET /change-logs` está restringido a `admin` y `topografo`, pero el modelo no filtra por `project_memberships`.
+Si en el futuro se restringen topógrafos a obras concretas, un topógrafo podría ver historial de cambios de otras obras, incluyendo valores antiguos/nuevos de notas, fotos o mensajes registrados en logs.
+
+Estado: corregido localmente resolviendo el `projectScope` por `entity_type` con joins a `stations`, `prisms` y `projects`. Las entradas `guide_entry` se tratan como globales porque el usuario confirmó que el contenido visible para visitante no es problema.
+Pendiente: deploy y QA con token `topografo` real.
+
+### Riesgo 7 - Scope de prismas por estación
+
+Los endpoints de prismas de una estación reciben `stationId`, pero el SQL filtra por `p.project_id` del prisma. Lo correcto para evitar BOLA es validar también la obra de la estación solicitada.
+Con datos actuales parece coherente, pero el control debe estar en el ancla de la ruta.
+
+Estado: corregido localmente. El controlador valida `getStationById(stationId, projectScope)` y las queries por estación filtran por `s.project_id`.
+Pendiente: deploy y QA con token `topografo`.
+
+### Riesgo 8 - Membresías iniciales demasiado amplias
+
+La migración `013_project_memberships.sql` asigna todos los topógrafos existentes a todas las obras. Esto sirve para no romper QA, pero no demuestra aislamiento real entre equipos.
+
+Propuesta: añadir una migración correctiva o script administrativo para dejar membresías explícitas por obra cuando existan usuarios reales.
+
+### Riesgo 9 - Bug funcional en foto de proyecto para topógrafo
+
+`updateProjectPhoto` reutiliza una condición con alias `p.id`, pero la query de bloqueo usa `FROM projects` sin alias. Para `admin` no aparece porque no hay scope; para `topografo` puede acabar en 500.
+
+Estado: corregido localmente aliasando `FROM projects p`.
+Pendiente: deploy y prueba funcional de foto de obra con `topografo`.
+
 ## Propuestas Backend
 
 - Completar el hardening de privacidad de campo: separar datos públicos, datos internos y datos administrativos cuando el producto lo necesite.
@@ -96,7 +134,7 @@ Estado: mitigado en código con middleware centralizado de UUID. Pendiente de ve
 ## Estado de Cierre (fase 3 de auditoría local)
 
 - Alcance técnico completado: scope por proyecto, autorización consistente y hardening de mutaciones.
-- Pendiente de producto: confirmar reglas de privacidad visitante y rollout de Storage firmado antes de exponer a más obra/usuarios.
+- Pendiente de producto futuro: revisar Storage firmado si el producto deja de tratar fotos/coordenadas como públicas para visitante.
 - Pendiente operativo: redeploy de Render con commit actual, luego validar escritura real en Galaxy con token técnico.
 
 ## Bloqueos Operativos

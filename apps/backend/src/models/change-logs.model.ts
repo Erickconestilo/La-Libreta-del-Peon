@@ -17,9 +17,36 @@ export interface ListChangeLogsFilters {
   entityId?: string | null;
   entityType?: ChangeLogEntityType | null;
   limit?: number | null;
+  projectScope?: string[] | null;
 }
 
 type Queryable = Pick<PoolClient, 'query'>;
+
+type ChangeLogScope = {
+  clause: string;
+  params: unknown[];
+};
+
+const buildChangeLogScopeCondition = (
+  projectScope: string[] | null | undefined,
+  baseOffset: number
+): ChangeLogScope => {
+  if (projectScope === null || projectScope === undefined) {
+    return { clause: '', params: [] };
+  }
+
+  return {
+    clause: `
+      AND (
+        cl.entity_type = 'guide_entry'
+        OR (cl.entity_type = 'station' AND s.project_id = ANY($${baseOffset}::uuid[]))
+        OR (cl.entity_type = 'prism' AND p.project_id = ANY($${baseOffset}::uuid[]))
+        OR (cl.entity_type = 'project' AND prj.id = ANY($${baseOffset}::uuid[]))
+      )
+    `,
+    params: [projectScope]
+  };
+};
 
 const serializeChangeValue = (value: unknown) => {
   if (value === null || value === undefined) {
@@ -100,6 +127,7 @@ export const createChangeLogs = async (
 
 export const listChangeLogs = async (filters: ListChangeLogsFilters = {}) => {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const scope = buildChangeLogScopeCondition(filters.projectScope, 5);
 
   const result = await pool.query(
     `
@@ -117,13 +145,17 @@ export const listChangeLogs = async (filters: ListChangeLogsFilters = {}) => {
         u.role AS changed_by_role
       FROM change_logs cl
       LEFT JOIN users u ON u.id = cl.changed_by
+      LEFT JOIN stations s ON cl.entity_type = 'station' AND s.id = cl.entity_id
+      LEFT JOIN prisms p ON cl.entity_type = 'prism' AND p.id = cl.entity_id
+      LEFT JOIN projects prj ON cl.entity_type = 'project' AND prj.id = cl.entity_id
       WHERE ($1::text IS NULL OR cl.entity_type = $1::text)
         AND ($2::uuid IS NULL OR cl.entity_id = $2::uuid)
         AND ($3::uuid IS NULL OR cl.changed_by = $3::uuid)
+        ${scope.clause}
       ORDER BY cl.changed_at DESC, cl.id DESC
       LIMIT $4
     `,
-    [filters.entityType ?? null, filters.entityId ?? null, filters.changedBy ?? null, limit]
+    [filters.entityType ?? null, filters.entityId ?? null, filters.changedBy ?? null, limit, ...scope.params]
   );
 
   return result.rows.map(mapChangeLogRow);

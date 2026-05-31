@@ -16,6 +16,7 @@ import {
   reconcilePrismObservationsForExistingStations,
   updatePrismPhoto
 } from '../models/prisms.model.js';
+import { getStationById } from '../models/stations.model.js';
 import { isValidPrismPhotoPath, validateAttachPrismPhotoInput } from '../utils/photo-validation.js';
 
 const parseLimit = (value: unknown, defaultLimit: number, maxLimit: number) => {
@@ -54,6 +55,11 @@ export const listStationPrismsController = async (request: Request, response: Re
 
     const observationsLimit = parseLimit(request.query.observationsLimit, 200, 500);
     const projectScope = getActorProjectScope(request.user);
+    const station = await getStationById(stationId, projectScope);
+
+    if (!station) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
 
     const [prisms, observations] = await Promise.all([
       listPrismsByStationId(stationId, projectScope),
