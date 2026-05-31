@@ -52,6 +52,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Auditoría de seguridad en progreso documentada en `SECURITY_AUDIT_PROGRESS.md`.
 - Backend Docker/Render usa `npm ci` con lockfile propio para builds reproducibles.
 - APK EAS `247704f1-2316-483f-bb9e-62adee8714cd` instalada en Galaxy: valida Guía con búsqueda/agrupación, Obra `Campus Nord`, detalle de estación y presencia de mensajes/provisionales/croquis sin errores nativos ni JS.
+- Backend añade validación centralizada de UUIDs en params/query para devolver `400` controlado antes de SQL.
 
 ## Estado Backend Render
 

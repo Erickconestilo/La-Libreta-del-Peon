@@ -22,6 +22,7 @@
 - `af21658` - hardening backend de mensajes/incidencias: creación devuelve fila exacta y `photoUrl` arbitrario queda bloqueado.
 - `416840d` - deploy backend reproducible: `npm ci` + `apps/backend/package-lock.json`.
 - `13e7b8b` - documentación de QA, handoff y auditoría de seguridad.
+- Commit posterior - validación centralizada de UUIDs en rutas backend para evitar errores SQL por params/query malformados.
 
 ## APK Actual
 
@@ -49,6 +50,7 @@
 - Croquis de prismas usa `react-native-svg`, ángulo horizontal y distancia inclinada.
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
+- Backend local compila con validación UUID previa a SQL en rutas de estaciones, proyectos, guía, prismas, incidencias e historial.
 - Render público todavía sirve `3e721a1`; GitHub `main` ya tiene commits posteriores, por lo que falta redeploy manual/auto-deploy efectivo.
 - Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
 - APK `247704f1` validada por ADB: abre sin crash, Guía muestra búsqueda/agrupación, Campus Nord abre estaciones y el detalle contiene `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.

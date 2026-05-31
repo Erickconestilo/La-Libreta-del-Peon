@@ -6,9 +6,22 @@ import {
   updateProjectPhotoController
 } from '../controllers/projects.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { validateUuidParam } from '../middleware/validate-uuid.js';
 
 export const projectsRouter = Router();
 
 projectsRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listProjectsController);
-projectsRouter.get('/:projectId', requireAuth, requireRole(['admin', 'topografo', 'visitante']), getProjectByIdController);
-projectsRouter.patch('/:projectId/photo', requireAuth, requireRole(['admin', 'topografo']), updateProjectPhotoController);
+projectsRouter.get(
+  '/:projectId',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('projectId'),
+  getProjectByIdController
+);
+projectsRouter.patch(
+  '/:projectId/photo',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('projectId'),
+  updateProjectPhotoController
+);

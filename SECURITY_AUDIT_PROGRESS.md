@@ -17,6 +17,7 @@
 - Validación de paths de foto exige prefijo por entidad: `stations/:id`, `projects/:id`, `prisms/:id`.
 - Scripts de escritura contra base probable de producción requieren `TOPOFIELD_ALLOW_PRODUCTION_WRITE`.
 - Docker/Render backend cambian de `npm install` a `npm ci` con lockfile propio para despliegues reproducibles.
+- Rutas con UUID en params/query validan el formato antes de llegar a SQL; esto evita depender del cast de PostgreSQL para entradas malformadas.
 
 ## Verificación Realizada
 
@@ -66,7 +67,7 @@ Propuesta: seguir ruta oficial de patch de Expo SDK y revisar advisories antes d
 
 Algunas rutas confían en PostgreSQL para castear UUIDs. Un UUID malformado puede acabar como error 500 genérico en vez de 400 controlado.
 
-Impacto actual: bajo, porque no expone stack trace y hay rate limit. Propuesta: añadir validación centralizada de params UUID para mejorar robustez y logs.
+Estado: mitigado en código con middleware centralizado de UUID. Pendiente de Render para quedar activo en producción.
 
 ## Propuestas Backend
 
@@ -75,7 +76,7 @@ Impacto actual: bajo, porque no expone stack trace y hay rate limit. Propuesta: 
 - Añadir permisos por obra/equipo antes de entregar tokens a más personas.
 - Verificar existencia del objeto en Supabase antes de vincular una foto como evidencia.
 - Añadir endpoint admin para resolver incidencias/propuestas y convertir una propuesta provisional en estación real.
-- Validar UUIDs de params y queries antes de llegar al modelo SQL.
+- Mantener y ampliar validación centralizada de params/query si aparecen nuevas rutas con UUID.
 - Mantener `morgan` fuera de producción o reducirlo a logs estructurados sin ruido cuando la app tenga usuarios reales.
 
 ## Propuestas Frontend
