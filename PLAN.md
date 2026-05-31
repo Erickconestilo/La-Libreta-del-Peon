@@ -44,6 +44,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Prismas por estación tienen croquis operativo con `react-native-svg`, basado en ángulo horizontal y distancia inclinada. No representa coordenadas geográficas absolutas.
 - Ficha de prisma permite preparar foto de prisma mediante Supabase Storage; Render ya publica el backend nuevo en commit `e5c87d48800b1b564d6828eab9e705c59b65e12a`.
 - APK final de la tanda: EAS `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`, URL `https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk`, instalado por ADB en Galaxy.
+- Hardening backend aplicado en `10c91b8`: roles ya no salen de metadata mutable, usuarios Supabase se validan contra tabla local `users`, lecturas GET requieren token invitado, hay rate limit básico, scripts de escritura requieren autorización explícita y `PATCH /projects/:id/photo` queda corregido por migración `011`.
 
 ## Estado Backend Render
 
@@ -51,7 +52,8 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - `GET /health` responde 200 con `commit: e5c87d48800b1b564d6828eab9e705c59b65e12a`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 200.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Siguiente acción real: QA funcional en Galaxy para guías, detalle de estación, croquis de prismas y foto de prisma con token `admin` o `topografo`.
+- Tras desplegar `10c91b8` o posterior, las lecturas visitantes deben responder 200 solo con `GUEST_PUBLIC_TOKEN`; sin token deben responder 401.
+- Siguiente acción real: verificar redeploy Render del hardening y continuar QA funcional en Galaxy para guías, detalle de estación, croquis de prismas y foto de prisma con token `admin` o `topografo`.
 
 ## Principios de Implementación
 - Una feature cada vez

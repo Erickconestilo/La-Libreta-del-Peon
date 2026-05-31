@@ -22,6 +22,12 @@
 - `POST /uploads/photos/sign` sin token: 401, no 404
 - Interpretacion: Render ya sirve backend nuevo. Si la foto de prisma falla en Galaxy, ya no es por ruta inexistente; revisar token/rol, firma de subida o payload.
 
+### Nota tras hardening backend `10c91b8`
+
+- Después del redeploy de `10c91b8` o posterior, las rutas `GET /stations`, `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` deben probarse con `Authorization: Bearer $GUEST_PUBLIC_TOKEN`.
+- Sin token deben responder 401. Esto es correcto.
+- El APK actual incluye token visitante público, por lo que la prueba normal desde la app no debería cambiar.
+
 ## Instalación en Galaxy
 
 1. Abrir la URL del APK desde el Galaxy.
@@ -111,6 +117,7 @@
 - Mapa se queda vacío pese a tener estaciones.
 - Cámara/galería no piden permisos o fallan.
 - Foto sube pero no aparece después.
-- Foto de prisma falla mientras Render mantenga `PATCH /prisms/:id/photo` en 404.
+- Foto de prisma falla con 404 en `PATCH /prisms/:id/photo`.
+- Lecturas visitantes fallan con 401 dentro de la app tras redeploy; indicaría que el APK no está enviando `GUEST_PUBLIC_TOKEN`.
 - Token técnico no cambia el rol.
 - Historial no refleja acciones recientes.
