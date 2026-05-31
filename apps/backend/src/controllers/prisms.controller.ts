@@ -6,8 +6,10 @@ import {
   getPrismCoverageByGroupCode,
   listPrismObservationsByStationId,
   listPrismsByStationId,
-  reconcilePrismObservationsForExistingStations
+  reconcilePrismObservationsForExistingStations,
+  updatePrismPhoto
 } from '../models/prisms.model.js';
+import { isValidPrismPhotoPath, validateAttachPrismPhotoInput } from '../utils/photo-validation.js';
 
 const parseLimit = (value: unknown, defaultLimit: number, maxLimit: number) => {
   if (typeof value !== 'string') {
@@ -101,6 +103,56 @@ export const getPrismCoverageController = async (request: Request, response: Res
       error: {
         code: 'PRISM_COVERAGE_FAILED',
         message: 'Unable to load prism coverage'
+      }
+    });
+  }
+};
+
+export const updatePrismPhotoController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const prismId = Array.isArray(request.params.prismId)
+      ? request.params.prismId[0]
+      : request.params.prismId;
+
+    if (!prismId) {
+      throw new AppError('Prism id is required', 400, 'PRISM_ID_REQUIRED');
+    }
+
+    const input = validateAttachPrismPhotoInput(request.body);
+
+    if (input.storagePath && !isValidPrismPhotoPath(prismId, input.storagePath)) {
+      throw new AppError('Invalid prism photo path', 400, 'INVALID_PRISM_PHOTO_PATH');
+    }
+
+    const prism = await updatePrismPhoto(prismId, input.storagePath, request.user.id);
+
+    if (!prism) {
+      throw new AppError('Prism not found', 404, 'PRISM_NOT_FOUND');
+    }
+
+    sendSuccess(response, prism);
+  } catch (error) {
+    if (error instanceof AppError) {
+      response.status(error.statusCode).json({
+        data: null,
+        error: {
+          code: error.code,
+          details: error.details,
+          message: error.message
+        }
+      });
+      return;
+    }
+
+    response.status(500).json({
+      data: null,
+      error: {
+        code: 'PRISM_PHOTO_UPDATE_FAILED',
+        message: 'Unable to update prism photo'
       }
     });
   }

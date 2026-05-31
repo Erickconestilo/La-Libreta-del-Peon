@@ -1,11 +1,17 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { StationPhoto, StationPhotoKind } from '@shared/types';
+import { PrismSketch, type PrismSketchItem } from '@/components/prism-sketch';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useStationPrisms } from '@/hooks/use-prisms';
+import {
+  type StationPrismListItem,
+  type StationPrismObservation,
+  usePrismPhotoMutations,
+  useStationPrisms
+} from '@/hooks/use-prisms';
 import { useStationDetail, useUpdateStationNotes } from '@/hooks/use-stations';
 import {
   useStationPhotoGalleryMutations,
@@ -64,8 +70,20 @@ export default function StationDetailScreen() {
     errorMessage: prismErrorMessage,
     isLoading: isPrismLoading,
   } = useStationPrisms(stationId ?? null);
+  const {
+    errorMessage: prismPhotoErrorMessage,
+    isMutating: isPrismPhotoMutating,
+    removePrismPhoto,
+    uploadPrismPhoto
+  } = usePrismPhotoMutations(stationId ?? null);
   const coverageGroupCode = getCoverageGroupCode(prismData?.prisms);
   const prisms = prismData?.prisms ?? [];
+  const prismSketchItems = useMemo(
+    () => buildPrismSketchItems(prisms, prismData?.observations ?? []),
+    [prisms, prismData?.observations]
+  );
+  const [selectedPrismCode, setSelectedPrismCode] = useState<string | null>(null);
+  const selectedPrismSketchItem = prismSketchItems.find((item) => item.code === selectedPrismCode) ?? null;
   const canEditPhotos = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const canEditStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
@@ -74,6 +92,17 @@ export default function StationDetailScreen() {
   useEffect(() => {
     setNotesDraft(data?.notes ?? '');
   }, [data?.notes]);
+
+  useEffect(() => {
+    if (prismSketchItems.length === 0) {
+      setSelectedPrismCode(null);
+      return;
+    }
+
+    if (!selectedPrismCode || !prismSketchItems.some((item) => item.code === selectedPrismCode)) {
+      setSelectedPrismCode(prismSketchItems[0].code);
+    }
+  }, [prismSketchItems, selectedPrismCode]);
 
   const handleAddVisualPhoto = (source: 'camera' | 'library') => {
     void addStationPhoto({
@@ -152,6 +181,43 @@ export default function StationDetailScreen() {
     })
       .then(() => setIsEditingNotes(false))
       .catch(() => undefined);
+  };
+
+  const handleUploadPrismPhoto = (prismId: string) => {
+    Alert.alert('Foto de prisma', 'Elige el origen de la imagen. Se comprimirá antes de subirla.', [
+      {
+        onPress: () => {
+          void uploadPrismPhoto(prismId, 'camera').catch(() => undefined);
+        },
+        text: 'Cámara'
+      },
+      {
+        onPress: () => {
+          void uploadPrismPhoto(prismId, 'library').catch(() => undefined);
+        },
+        text: 'Galería'
+      },
+      {
+        style: 'cancel',
+        text: 'Cancelar'
+      }
+    ]);
+  };
+
+  const handleRemovePrismPhoto = (prismId: string) => {
+    Alert.alert('Quitar foto de prisma', 'La ficha del prisma quedará sin imagen asociada.', [
+      {
+        style: 'cancel',
+        text: 'Cancelar'
+      },
+      {
+        onPress: () => {
+          void removePrismPhoto(prismId).catch(() => undefined);
+        },
+        style: 'destructive',
+        text: 'Quitar'
+      }
+    ]);
   };
 
   return (
@@ -392,6 +458,109 @@ export default function StationDetailScreen() {
               <Text style={styles.caption}>Los detalles técnicos quedan separados para no saturar la consulta rápida.</Text>
             </View>
 
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Croquis de prismas</Text>
+              <Text style={styles.body}>
+                Vista operativa por ángulo y distancia desde esta estación. No es coordenada geográfica absoluta.
+              </Text>
+
+              {prismPhotoErrorMessage ? <Text style={styles.errorText}>{prismPhotoErrorMessage}</Text> : null}
+
+              {isPrismLoading ? (
+                <Text style={styles.body}>Cargando croquis de prismas...</Text>
+              ) : prismErrorMessage ? (
+                <Text style={styles.body}>{prismErrorMessage}</Text>
+              ) : (
+                <>
+                  <PrismSketch
+                    items={prismSketchItems}
+                    onSelect={setSelectedPrismCode}
+                    selectedCode={selectedPrismCode}
+                  />
+                  <View style={styles.prismSketchLegend}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, styles.legendDotGreen]} />
+                      <Text style={styles.caption}>Activo</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, styles.legendDotAmber]} />
+                      <Text style={styles.caption}>Reemplazado</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, styles.legendDotRed]} />
+                      <Text style={styles.caption}>No visible</Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {selectedPrismSketchItem ? (
+                <View style={styles.prismDetailCard}>
+                  <View style={styles.prismHeader}>
+                    <View>
+                      <Text style={styles.prismCode}>{selectedPrismSketchItem.code}</Text>
+                      <Text style={styles.caption}>Toca otro punto del croquis para cambiar de prisma.</Text>
+                    </View>
+                    <Text style={[styles.statusTag, getStatusTagStyle(selectedPrismSketchItem.status)]}>
+                      {formatStatus(selectedPrismSketchItem.status)}
+                    </Text>
+                  </View>
+
+                  {selectedPrismSketchItem.photoUrl ? (
+                    <Image source={{ uri: selectedPrismSketchItem.photoUrl }} style={styles.prismPhoto} />
+                  ) : (
+                    <View style={styles.photoPlaceholder}>
+                      <Text style={styles.photoPlaceholderTitle}>Sin foto de prisma</Text>
+                      <Text style={styles.body}>Añade una imagen para reconocerlo rápido en campo.</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.summaryRow}>
+                    <SummaryChip label="Distancia" value={`${formatMeters(selectedPrismSketchItem.distanceM)} m`} />
+                    <SummaryChip label="Ángulo H" value={`${formatAngle(selectedPrismSketchItem.angleDeg)}°`} />
+                  </View>
+                  <Text style={styles.body}>
+                    Observaciones: {selectedPrismSketchItem.observationCount} · Última: {formatDate(selectedPrismSketchItem.lastObservedAt)}
+                  </Text>
+                  <Text style={styles.body}>
+                    Constante prisma: {selectedPrismSketchItem.prismConstant ?? '—'}
+                  </Text>
+                  {selectedPrismSketchItem.notes ? (
+                    <Text style={styles.body}>{selectedPrismSketchItem.notes}</Text>
+                  ) : null}
+
+                  {canEditPhotos ? (
+                    <View style={styles.photoActions}>
+                      <Pressable
+                        disabled={isPrismPhotoMutating}
+                        onPress={() => handleUploadPrismPhoto(selectedPrismSketchItem.prismId)}
+                        style={[styles.linkButton, isPrismPhotoMutating ? styles.disabledButton : null]}
+                      >
+                        <Text style={styles.linkButtonText}>
+                          {isPrismPhotoMutating
+                            ? 'Procesando...'
+                            : selectedPrismSketchItem.photoUrl
+                              ? 'Cambiar foto del prisma'
+                              : 'Añadir foto del prisma'}
+                        </Text>
+                      </Pressable>
+                      {selectedPrismSketchItem.photoUrl ? (
+                        <Pressable
+                          disabled={isPrismPhotoMutating}
+                          onPress={() => handleRemovePrismPhoto(selectedPrismSketchItem.prismId)}
+                          style={[styles.secondaryButton, isPrismPhotoMutating ? styles.disabledButton : null]}
+                        >
+                          <Text style={styles.secondaryButtonText}>Quitar foto del prisma</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ) : (
+                    <Text style={styles.caption}>Solo admin y topógrafo pueden cambiar fotos de prismas.</Text>
+                  )}
+                </View>
+              ) : null}
+            </View>
+
             {canViewTechnical ? (
               <View style={styles.card}>
                 <Pressable
@@ -527,6 +696,14 @@ type SummaryChipProps = {
   value: string;
 };
 
+type StationPrismSketchItem = PrismSketchItem & {
+  lastObservedAt: string | null;
+  notes: string | null;
+  observationCount: number;
+  prismConstant: number | null;
+  prismId: string;
+};
+
 function SummaryChip({ label, value }: SummaryChipProps) {
   return (
     <View style={styles.summaryChip}>
@@ -535,6 +712,65 @@ function SummaryChip({ label, value }: SummaryChipProps) {
     </View>
   );
 }
+
+const buildPrismSketchItems = (
+  prisms: StationPrismListItem[],
+  observations: StationPrismObservation[]
+): StationPrismSketchItem[] => {
+  const prismsByCode = new Map(prisms.map((prism) => [prism.code, prism]));
+  const latestObservationByPrismCode = new Map<string, StationPrismObservation>();
+
+  for (const observation of observations) {
+    if (
+      !isFiniteNumber(observation.horizontalAngle) ||
+      !isFiniteNumber(observation.slopeDistance) ||
+      observation.slopeDistance <= 0
+    ) {
+      continue;
+    }
+
+    const current = latestObservationByPrismCode.get(observation.prismCode);
+
+    if (!current || getObservationTimestamp(observation) >= getObservationTimestamp(current)) {
+      latestObservationByPrismCode.set(observation.prismCode, observation);
+    }
+  }
+
+  return Array.from(latestObservationByPrismCode.entries())
+    .flatMap(([prismCode, observation]) => {
+      const prism = prismsByCode.get(prismCode);
+
+      if (!prism || !isFiniteNumber(observation.horizontalAngle) || !isFiniteNumber(observation.slopeDistance)) {
+        return [];
+      }
+
+      const item: StationPrismSketchItem = {
+        angleDeg: observation.horizontalAngle,
+        code: prism.code,
+        distanceM: observation.slopeDistance,
+        lastObservedAt: prism.stationLastObservedAt,
+        notes: prism.notes,
+        observationCount: prism.observationCount,
+        photoUrl: prism.photoUrl,
+        prismConstant: prism.prismConstant,
+        prismId: prism.id,
+        status: prism.status
+      };
+
+      return [item];
+    })
+    .sort((a, b) => a.code.localeCompare(b.code, 'es', { numeric: true }));
+};
+
+const getObservationTimestamp = (observation: StationPrismObservation) => {
+  const value = observation.measuredAt ?? observation.createdAt;
+  const timestamp = value ? new Date(value).getTime() : 0;
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const isFiniteNumber = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isFinite(value);
+};
 
 const getCoverageGroupCode = (
   prisms: Array<{ monitoringMetadata: Record<string, unknown> }> | undefined,
@@ -572,6 +808,10 @@ const formatDate = (value: string | null) => {
 };
 
 const formatCoordinate = (value: number) => value.toFixed(7);
+
+const formatAngle = (value: number) => value.toFixed(2);
+
+const formatMeters = (value: number) => value.toFixed(value >= 100 ? 0 : 1);
 
 const formatStatus = (status: string) => {
   switch (status) {
@@ -662,6 +902,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  prismCode: {
+    color: colors.textPrimary,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  prismDetailCard: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: spacing[2],
+    padding: spacing[3],
+  },
+  prismPhoto: {
+    backgroundColor: '#0f1117',
+    borderRadius: 16,
+    height: 180,
+    width: '100%',
+  },
+  prismSketchLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
   },
   readingRow: {
     borderTopColor: '#2a2f3a',
@@ -770,6 +1034,25 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '800',
+  },
+  legendDot: {
+    borderRadius: 999,
+    height: 10,
+    width: 10,
+  },
+  legendDotAmber: {
+    backgroundColor: colors.amber,
+  },
+  legendDotGreen: {
+    backgroundColor: colors.accentGreen,
+  },
+  legendDotRed: {
+    backgroundColor: colors.red,
+  },
+  legendItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   secondaryButton: {
     alignItems: 'center',

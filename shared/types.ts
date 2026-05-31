@@ -220,7 +220,7 @@ export interface ChangeLog {
   changedAt: string;
 }
 
-export type PhotoUploadEntityType = 'station' | 'project';
+export type PhotoUploadEntityType = 'station' | 'project' | 'prism';
 export type PhotoContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 export interface SignedPhotoUpload {

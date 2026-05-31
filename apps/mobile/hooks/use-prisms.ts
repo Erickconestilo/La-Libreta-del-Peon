@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { Prism, PrismCoverageGroup, PrismObservation } from '@shared/types';
+import type { PhotoContentType, Prism, PrismCoverageGroup, PrismObservation, SignedPhotoUpload } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -48,6 +49,43 @@ const fetchPrismCoverage = async (groupCode: string) => {
   return response.data;
 };
 
+const requestSignedPrismPhotoUpload = async ({
+  contentType,
+  fileSizeBytes,
+  prismId
+}: {
+  contentType: PhotoContentType;
+  fileSizeBytes: number;
+  prismId: string;
+}) => {
+  const response = await apiFetch<ApiEnvelope<SignedPhotoUpload>>('/uploads/photos/sign', {
+    body: JSON.stringify({
+      contentType,
+      entityId: prismId,
+      entityType: 'prism',
+      fileSizeBytes
+    }),
+    method: 'POST'
+  });
+
+  return response.data;
+};
+
+const attachPrismPhoto = async ({
+  prismId,
+  storagePath
+}: {
+  prismId: string;
+  storagePath: string | null;
+}) => {
+  const response = await apiFetch<ApiEnvelope<Prism>>(`/prisms/${prismId}/photo`, {
+    body: JSON.stringify({ storagePath }),
+    method: 'PATCH'
+  });
+
+  return response.data;
+};
+
 export const useStationPrisms = (stationId: string | null) => {
   const query = useQuery({
     enabled: Boolean(stationId),
@@ -59,6 +97,72 @@ export const useStationPrisms = (stationId: string | null) => {
   return {
     ...query,
     errorMessage: query.error ? getErrorMessage(query.error) : null,
+  };
+};
+
+export const usePrismPhotoMutations = (stationId: string | null) => {
+  const queryClient = useQueryClient();
+
+  const invalidatePrisms = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['station-prisms', stationId] }),
+      queryClient.invalidateQueries({ queryKey: ['change-logs'] })
+    ]);
+  };
+
+  const uploadMutation = useMutation({
+    mutationFn: async ({ prismId, source }: { prismId: string; source: PhotoSource }) => {
+      const preparedPhoto = await pickAndCompressPhoto(source);
+
+      if (!preparedPhoto) {
+        return null;
+      }
+
+      const signedUpload = await requestSignedPrismPhotoUpload({
+        contentType: preparedPhoto.contentType,
+        fileSizeBytes: preparedPhoto.fileSizeBytes,
+        prismId
+      });
+
+      const uploadResponse = await fetch(signedUpload.signedUrl, {
+        body: preparedPhoto.blob,
+        headers: {
+          'cache-control': 'max-age=31536000',
+          'content-type': preparedPhoto.contentType,
+          'x-upsert': 'false'
+        },
+        method: 'PUT'
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`No se pudo subir la foto del prisma a Storage (${uploadResponse.status}).`);
+      }
+
+      return attachPrismPhoto({
+        prismId,
+        storagePath: signedUpload.path
+      });
+    },
+    onSuccess: invalidatePrisms
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (prismId: string) => {
+      return attachPrismPhoto({
+        prismId,
+        storagePath: null
+      });
+    },
+    onSuccess: invalidatePrisms
+  });
+
+  const error = uploadMutation.error ?? removeMutation.error ?? null;
+
+  return {
+    errorMessage: error ? getErrorMessage(error) : null,
+    isMutating: uploadMutation.isPending || removeMutation.isPending,
+    removePrismPhoto: removeMutation.mutateAsync,
+    uploadPrismPhoto: (prismId: string, source: PhotoSource) => uploadMutation.mutateAsync({ prismId, source })
   };
 };
 

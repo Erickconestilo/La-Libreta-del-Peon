@@ -1,4 +1,5 @@
 import { pool } from '../db/pool.js';
+import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import { createChangeLog } from './change-logs.model.js';
 
 const mapPrismRow = (row: Record<string, unknown>) => {
@@ -86,6 +87,102 @@ export const listPrismsByStationId = async (stationId: string) => {
     stationFirstObservedAt: row.station_first_observed_at,
     stationLastObservedAt: row.station_last_observed_at
   }));
+};
+
+export const getPrismById = async (prismId: string) => {
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        station_id,
+        project_id,
+        source_system,
+        external_id,
+        code,
+        prism_constant,
+        first_observed_at,
+        last_observed_at,
+        source_files,
+        monitoring_metadata,
+        notes,
+        photo_url,
+        created_by,
+        created_at,
+        updated_at,
+        status
+      FROM prisms
+      WHERE id = $1
+    `,
+    [prismId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapPrismRow(result.rows[0]);
+};
+
+export const updatePrismPhoto = async (
+  prismId: string,
+  storagePath: string | null,
+  changedBy: string
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const currentResult = await client.query(
+      `
+        SELECT id, photo_url
+        FROM prisms
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [prismId]
+    );
+
+    if (currentResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const photoUrl = storagePath ? getPublicPhotoUrl(storagePath) : null;
+    const oldPhotoUrl = currentResult.rows[0].photo_url as string | null;
+
+    await client.query(
+      `
+        UPDATE prisms
+        SET photo_url = $2, updated_at = NOW()
+        WHERE id = $1
+      `,
+      [prismId, photoUrl]
+    );
+
+    if (oldPhotoUrl !== photoUrl) {
+      await createChangeLog(
+        {
+          entityId: prismId,
+          entityType: 'prism',
+          fieldChanged: 'photo_url',
+          newValue: photoUrl,
+          oldValue: oldPhotoUrl
+        },
+        changedBy,
+        client
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return getPrismById(prismId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const listPrismObservationsByStationId = async (stationId: string, limit = 200) => {
