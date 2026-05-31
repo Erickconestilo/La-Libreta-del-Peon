@@ -46,6 +46,28 @@ export const listStationMessages = async (stationId: string, limit = 50) => {
   return result.rows.map(mapStationMessageRow);
 };
 
+const getStationMessageById = async (messageId: string) => {
+  const result = await pool.query(
+    `
+      SELECT
+        sm.id,
+        sm.station_id,
+        sm.body,
+        sm.created_by,
+        sm.created_at,
+        u.email AS created_by_email,
+        u.full_name AS created_by_full_name,
+        u.role AS created_by_role
+      FROM station_messages sm
+      LEFT JOIN users u ON u.id = sm.created_by
+      WHERE sm.id = $1
+    `,
+    [messageId]
+  );
+
+  return result.rowCount === 0 ? null : mapStationMessageRow(result.rows[0]);
+};
+
 export const createStationMessage = async (stationId: string, body: string, createdBy: string) => {
   const client = await pool.connect();
 
@@ -85,8 +107,7 @@ export const createStationMessage = async (stationId: string, body: string, crea
 
     await client.query('COMMIT');
 
-    const messages = await listStationMessages(stationId, 1);
-    return messages.find((message) => message.id === result.rows[0].id) ?? null;
+    return getStationMessageById(result.rows[0].id as string);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
