@@ -33,8 +33,15 @@ const getErrorMessage = (error: unknown) => {
   return 'Ha ocurrido un error inesperado cargando estaciones.';
 };
 
-const fetchStations = async () => {
-  const response = await apiFetch<ApiEnvelope<StationListItem[]>>('/stations');
+const fetchStations = async (projectId?: string | null) => {
+  const searchParams = new URLSearchParams();
+
+  if (projectId) {
+    searchParams.set('projectId', projectId);
+  }
+
+  const suffix = searchParams.size > 0 ? `?${searchParams.toString()}` : '';
+  const response = await apiFetch<ApiEnvelope<StationListItem[]>>(`/stations${suffix}`);
   return response.data;
 };
 
@@ -52,10 +59,10 @@ const createStation = async (input: CreateStationInput) => {
   return response.data;
 };
 
-export const useStations = () => {
+export const useStations = (projectId?: string | null) => {
   const query = useQuery({
-    queryFn: fetchStations,
-    queryKey: ['stations'],
+    queryFn: () => fetchStations(projectId ?? null),
+    queryKey: ['stations', projectId ?? null],
     staleTime: 1000 * 60
   });
 

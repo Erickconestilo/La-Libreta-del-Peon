@@ -2,7 +2,7 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { pool } from '../db/pool.js';
 
-export type ChangeLogEntityType = 'station' | 'prism' | 'guide_entry';
+export type ChangeLogEntityType = 'station' | 'prism' | 'guide_entry' | 'project';
 
 export interface CreateChangeLogInput {
   entityId: string;

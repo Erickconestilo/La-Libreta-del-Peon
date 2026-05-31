@@ -5,7 +5,7 @@ import { listChangeLogs } from '../models/change-logs.model.js';
 import type { ChangeLogEntityType } from '../models/change-logs.model.js';
 
 const isEntityType = (value: unknown): value is ChangeLogEntityType => {
-  return value === 'station' || value === 'prism' || value === 'guide_entry';
+  return value === 'station' || value === 'prism' || value === 'guide_entry' || value === 'project';
 };
 
 const parseLimit = (value: unknown) => {

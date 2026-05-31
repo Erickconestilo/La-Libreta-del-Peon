@@ -1,12 +1,13 @@
 import * as Location from 'expo-location';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CreateStationInput, DeviceType, StationStatus } from '@shared/types';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useCreateStation, useStations } from '@/hooks/use-stations';
+import { useProjects } from '@/hooks/use-projects';
+import { useCreateStation } from '@/hooks/use-stations';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 const STATUS_OPTIONS: Array<{ label: string; value: StationStatus }> = [
@@ -29,13 +30,15 @@ type CapturedCoordinate = {
 
 export default function NewStationScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ projectId?: string }>();
+  const initialProjectId = Array.isArray(params.projectId) ? params.projectId[0] : params.projectId;
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
-  const { data: stations } = useStations();
+  const { data: projects } = useProjects();
   const { createStation, errorMessage, isCreating } = useCreateStation();
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(initialProjectId ?? null);
   const [status, setStatus] = useState<StationStatus>('active');
   const [deviceType, setDeviceType] = useState<DeviceType | null>(null);
   const [coordinate, setCoordinate] = useState<CapturedCoordinate | null>(null);
@@ -43,19 +46,13 @@ export default function NewStationScreen() {
   const canCreateStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
 
   const projectOptions = useMemo(() => {
-    const map = new Map<string, { id: string; label: string }>();
-
-    for (const station of stations ?? []) {
-      if (station.projectId && station.project?.name) {
-        map.set(station.projectId, {
-          id: station.projectId,
-          label: station.project.name
-        });
-      }
-    }
-
-    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [stations]);
+    return (projects ?? [])
+      .map((project) => ({
+        id: project.id,
+        label: project.name
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [projects]);
 
   const handleCaptureGps = async () => {
     setIsLocating(true);
