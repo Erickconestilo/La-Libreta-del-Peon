@@ -81,6 +81,15 @@
 - Probar `Estacionamientos provisionales` creando una propuesta real cuando Render esté redeployado.
 - Confirmar primero que Render ya no sirve `3e721a1`; si sigue en ese commit, mensajes/provisionales fallarán aunque la APK sea correcta.
 
+## Resultado QA backend Render `5c5752c` — 2026-05-31
+
+- `GET /health`: 200 con `commit: 5c5752c9e7d6417e759165c0a45061fb8f10167d`.
+- Sin token, `/projects`, `/guide-entries` y `/prisms/coverage/CN1`: 401.
+- Con `GUEST_PUBLIC_TOKEN`, `/projects`, `/stations`, `/guide-entries` y `/prisms/coverage/CN1`: 200.
+- DTO visitante verificado: estaciones no exponen `createdBy`, guías no exponen `createdBy`, prismas no exponen `sourceFiles`.
+- `GET /stations/:stationId/messages`: admin 200, topógrafo 200, visitante 403.
+- Tokens técnicos locales generados en `topofield-session-tokens.local`; el archivo queda ignorado por git.
+
 ## Instalación en Galaxy
 
 1. Abrir la URL del APK desde el Galaxy.
