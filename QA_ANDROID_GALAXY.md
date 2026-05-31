@@ -2,11 +2,11 @@
 
 ## APK actual
 
-- Build EAS: `3acdddbc-b755-41c3-9dd1-1a8b7a647731`
-- APK: https://expo.dev/artifacts/eas/8gaj82tLkP8pFFX2tg4eHc.apk
+- Build EAS: `b46fc344-e68c-4643-9665-33bc5e3b90fa`
+- APK: https://expo.dev/artifacts/eas/ohixyjHoi3qc5YMQSrRQCs.apk
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
-- Commit incluido: `e0aa9a046a35d9b47e1e13e032f07a925409932d`
+- Commit incluido: `84260002f29cc7503661f909bdf5bbf60cafb3d1`
 
 ## Estado backend Render
 
@@ -14,7 +14,8 @@
 - `GET /stations`: 200
 - `GET /projects`: 404 en la ultima comprobacion local
 - `GET /guide-entries`: 404 en la ultima comprobacion local
-- Si `Guia`, `Memoria visual` o subida de imagen de obra muestran "funcion no disponible", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
+- Si `Memoria visual` o subida de imagen de obra muestran "funcion pendiente de publicar", Render todavia no ha desplegado el commit nuevo o el deploy fallo.
+- `Guia` tiene contenido local de respaldo en el APK aunque Render no haya desplegado.
 
 ## Instalación en Galaxy
 
@@ -33,6 +34,8 @@
 - La pestaña `Mapa` muestra marcadores.
 - Un marcador abre el detalle de estación.
 - La pestaña `Guía` muestra contenido Leica real.
+- El perfil visitante no muestra lenguaje técnico de backend/proveedor.
+- Desde una obra, `Ver mapa de esta obra` mantiene el filtro por obra.
 - La pestaña `Perfil` muestra rol `visitante`.
 
 ## Prueba con token técnico
