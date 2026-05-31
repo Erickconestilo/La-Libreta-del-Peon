@@ -4,9 +4,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
+import { SessionProvider } from '@/src/session/session-provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -48,19 +50,47 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="station/[stationId]"
-            options={{
-              title: 'Detalle de estación'
-            }}
-          />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="station/[stationId]"
+                options={{
+                  title: 'Detalle de estación'
+                }}
+              />
+              <Stack.Screen
+                name="station/new"
+                options={{
+                  title: 'Crear estación'
+                }}
+              />
+              <Stack.Screen
+                name="prisms/coverage/[groupCode]"
+                options={{
+                  title: 'Cobertura de prismas'
+                }}
+              />
+              <Stack.Screen
+                name="admin/guide"
+                options={{
+                  title: 'Guía admin'
+                }}
+              />
+              <Stack.Screen
+                name="history"
+                options={{
+                  title: 'Historial'
+                }}
+              />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    </SafeAreaProvider>
   );
 }

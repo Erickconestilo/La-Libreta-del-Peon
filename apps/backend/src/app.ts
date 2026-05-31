@@ -8,7 +8,11 @@ import { authenticateRequest } from './middleware/auth.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
 import { authRouter } from './routes/auth.routes.js';
+import { changeLogsRouter } from './routes/change-logs.routes.js';
+import { guideRouter } from './routes/guide.routes.js';
+import { prismsRouter } from './routes/prisms.routes.js';
 import { stationsRouter } from './routes/stations.routes.js';
+import { uploadsRouter } from './routes/uploads.routes.js';
 
 dotenv.config();
 
@@ -25,7 +29,11 @@ app.get('/api/v1/health', (_request, response) => {
 app.use(authenticateRequest);
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/change-logs', changeLogsRouter);
+app.use('/api/v1/guide-entries', guideRouter);
+app.use('/api/v1/prisms', prismsRouter);
 app.use('/api/v1/stations', stationsRouter);
+app.use('/api/v1/uploads', uploadsRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);

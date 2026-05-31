@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useStations } from '@/hooks/use-stations';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
@@ -29,6 +30,7 @@ const statusConfig = {
 
 export default function MapScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, errorMessage, isLoading, refetch, isRefetching } = useStations();
   const stations = data ?? [];
 
@@ -115,7 +117,7 @@ export default function MapScreen() {
 
       <Pressable
         onPress={isRefetching ? undefined : () => void refetch()}
-        style={styles.refreshBtn}
+        style={[styles.refreshBtn, { top: spacing[3] + insets.top }]}
       >
         <Text style={styles.refreshBtnText}>{isRefetching ? '...' : '↻'}</Text>
       </Pressable>
@@ -124,7 +126,7 @@ export default function MapScreen() {
         <Pressable onPress={handleClosePanel} style={styles.backdrop} />
       ) : null}
 
-      <Animated.View style={[styles.panel, { transform: [{ translateY }] }]}>
+      <Animated.View style={[styles.panel, { bottom: 64 + Math.max(insets.bottom, spacing[1]), transform: [{ translateY }] }]}>
         <View style={styles.panelHandle} />
 
         <View style={styles.panelContent}>
@@ -226,7 +228,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopLeftRadius: borderRadius[1],
     borderTopRightRadius: borderRadius[1],
-    bottom: 0,
     left: 0,
     paddingBottom: 24,
     position: 'absolute',
@@ -276,7 +277,6 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 2, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    top: spacing[4],
     width: 44,
     zIndex: 3,
   },

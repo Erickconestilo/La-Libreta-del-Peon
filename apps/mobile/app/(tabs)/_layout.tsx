@@ -1,10 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useCurrentSession } from '@/hooks/use-auth';
 import { borderRadius, colors, spacing } from '@/src/theme';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { currentUser } = useCurrentSession();
+  const canCreateStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const bottomInset = Math.max(insets.bottom, spacing[1]);
+
   return (
     <View style={styles.wrapper}>
       <Tabs
@@ -12,7 +20,13 @@ export default function TabLayout() {
           headerShown: false,
           tabBarActiveTintColor: colors.accentGreen,
           tabBarInactiveTintColor: colors.textSecondary,
-          tabBarStyle: styles.tabBar,
+          tabBarStyle: [
+            styles.tabBar,
+            {
+              height: 64 + bottomInset,
+              paddingBottom: bottomInset
+            }
+          ],
           tabBarLabelStyle: styles.tabBarLabel,
         }}
       >
@@ -31,10 +45,10 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="incidents"
+          name="guide"
           options={{
-            title: 'Incidencias',
-            tabBarIcon: ({ color }) => <MaterialIcons color={color} name="report-problem" size={24} />,
+            title: 'Guía',
+            tabBarIcon: ({ color }) => <MaterialIcons color={color} name="menu-book" size={24} />,
           }}
         />
         <Tabs.Screen
@@ -50,9 +64,15 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      <Pressable style={styles.fab} onPress={() => {}}>
-        <MaterialIcons color={colors.background} name="add" size={28} />
-      </Pressable>
+      {canCreateStation ? (
+        <Pressable
+          accessibilityLabel="Crear estación"
+          style={[styles.fab, { bottom: 72 + bottomInset }]}
+          onPress={() => router.push('/station/new' as never)}
+        >
+          <MaterialIcons color={colors.background} name="add" size={28} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -62,7 +82,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accentGreen,
     borderRadius: 28,
-    bottom: 72,
     elevation: 6,
     height: 56,
     justifyContent: 'center',

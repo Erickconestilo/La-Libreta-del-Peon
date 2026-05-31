@@ -45,9 +45,9 @@ export const createStationSchema = z.object({
   readings: z.array(stationReadingSchema).default([])
 });
 
-export type CreateStationInput = z.infer<typeof createStationSchema>;
+export type ValidatedCreateStationInput = z.infer<typeof createStationSchema>;
 
-export const validateCreateStationInput = (input: unknown) => {
+export const validateCreateStationInput = (input: unknown): ValidatedCreateStationInput => {
   const parsedInput = createStationSchema.safeParse(input);
 
   if (!parsedInput.success) {

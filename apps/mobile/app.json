@@ -36,13 +36,14 @@
         }
       ],
       [
-        "expo-build-properties",
+        "expo-image-picker",
         {
-          "android": {
-            "usesCleartextTraffic": true
-          }
+          "photosPermission": "Permite adjuntar fotos de campo a estaciones.",
+          "cameraPermission": "Permite hacer fotos de campo para estaciones.",
+          "microphonePermission": false
         }
-      ]
+      ],
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
