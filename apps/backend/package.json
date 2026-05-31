@@ -8,7 +8,11 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "migrate": "tsx src/scripts/run-migrations.ts",
-    "import:stations": "tsx src/scripts/import-mapest-stations.ts"
+    "import:stations": "tsx src/scripts/import-mapest-stations.ts",
+    "inspect:topotask-prisms": "tsx src/scripts/inspect-topotask-monitoring.ts",
+    "import:topotask-prisms": "tsx src/scripts/import-topotask-prisms.ts",
+    "reconcile:prism-observations": "tsx src/scripts/reconcile-prism-observations.ts",
+    "verify:guide-admin": "tsx src/scripts/verify-guide-admin.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

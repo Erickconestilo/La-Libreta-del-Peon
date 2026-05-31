@@ -1,7 +1,7 @@
-import type { UserRole } from '../../../../shared/types.js';
+import type { AuthProvider, UserRole } from '../../../../shared/types.js';
 
 export interface AuthenticatedUser {
-  authProvider: 'guest' | 'supabase';
+  authProvider: AuthProvider;
   email: string | null;
   id: string;
   role: UserRole;

@@ -1,5 +1,8 @@
 import { pool } from '../db/pool.js';
-import type { CreateStationInput } from '../utils/station-validation.js';
+import { getPublicPhotoUrl } from '../lib/photo-storage.js';
+import { createChangeLog } from './change-logs.model.js';
+import { reconcilePrismObservationsForStation } from './prisms.model.js';
+import type { ValidatedCreateStationInput } from '../utils/station-validation.js';
 
 const mapStationRow = (row: Record<string, unknown>) => {
   return {
@@ -166,7 +169,7 @@ export const getStationById = async (stationId: string) => {
   };
 };
 
-export const createStation = async (input: CreateStationInput, createdBy: string) => {
+export const createStation = async (input: ValidatedCreateStationInput, createdBy: string) => {
   const client = await pool.connect();
 
   try {
@@ -264,9 +267,92 @@ export const createStation = async (input: CreateStationInput, createdBy: string
       await client.query(readingInsertQuery, readingInsertValues);
     }
 
+    await createChangeLog(
+      {
+        entityId: stationId,
+        entityType: 'station',
+        fieldChanged: 'created',
+        newValue: {
+          lat: input.lat ?? null,
+          lng: input.lng ?? null,
+          name: input.name,
+          status: input.status
+        },
+        oldValue: null
+      },
+      createdBy,
+      client
+    );
+
     await client.query('COMMIT');
 
+    await reconcilePrismObservationsForStation(stationId, createdBy);
+
     return stationId;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const updateStationPhoto = async (
+  stationId: string,
+  storagePath: string | null,
+  changedBy: string
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const currentResult = await client.query(
+      `
+        SELECT id, photo_url
+        FROM stations
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [stationId]
+    );
+
+    if (currentResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const photoUrl = storagePath ? getPublicPhotoUrl(storagePath) : null;
+    const oldPhotoUrl = currentResult.rows[0].photo_url as string | null;
+
+    await client.query(
+      `
+        UPDATE stations
+        SET
+          photo_url = $2,
+          updated_at = NOW()
+        WHERE id = $1
+      `,
+      [stationId, photoUrl]
+    );
+
+    if (oldPhotoUrl !== photoUrl) {
+      await createChangeLog(
+        {
+          entityId: stationId,
+          entityType: 'station',
+          fieldChanged: 'photo_url',
+          newValue: photoUrl,
+          oldValue: oldPhotoUrl
+        },
+        changedBy,
+        client
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return getStationById(stationId);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

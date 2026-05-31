@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useRouter } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StationCard } from '@/src/components/StationCard';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
@@ -17,6 +18,7 @@ const statusLabels: Record<StationStatus, string> = {
 
 export default function StationsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, errorMessage, isLoading, isRefetching, refetch } = useStations();
   const stations = data ?? [];
 
@@ -100,7 +102,7 @@ export default function StationsScreen() {
       ) : null}
 
       <FlatList
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 112 + insets.bottom }]}
         data={filteredStations}
         keyExtractor={(item) => item.id}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
