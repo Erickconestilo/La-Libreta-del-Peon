@@ -15,6 +15,7 @@
 - `805fb61` - croquis de prismas por estación y foto de prisma.
 - `6a494de` - commit vacío para intentar forzar redeploy Render.
 - `e5c87d4` - health expone commit Render y forzó redeploy real del backend.
+- `10c91b8` - hardening backend: auth local por tabla `users`, rutas GET con token invitado, rate limit, guardas de scripts y migración `011`.
 
 ## APK Actual
 
@@ -48,6 +49,18 @@ Render fue redeployado manualmente con cache limpio desde `main`:
 
 Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma hace falta token `admin` o `topografo`.
 
+## Hardening Backend Hecho Localmente
+
+- Commit de código: `10c91b8`.
+- Migración `011_change_logs_project_entity.sql` aplicada en la BD actual para permitir `entity_type = 'project'`.
+- `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` ahora requieren `Authorization`. Sin token responden 401; con `GUEST_PUBLIC_TOKEN` responden 200.
+- El APK actual ya envía `GUEST_PUBLIC_TOKEN`, por lo que las lecturas visitantes deberían seguir funcionando tras redeploy.
+- `PATCH /projects/:id/photo` queda cubierto por `verify:guide-admin`.
+- Scripts de escritura contra producción quedan bloqueados salvo `TOPOFIELD_ALLOW_PRODUCTION_WRITE=<script>`.
+- Verificado localmente: `npm run build --workspace apps/backend`, `npx tsc --noEmit --project apps/mobile/tsconfig.json`, `npm run verify:guide-admin --workspace apps/backend`, `npm audit --workspace apps/backend --json`.
+
+Pendiente tras push/deploy: confirmar en Render que `GET /health` expone el commit nuevo y repetir las rutas anteriores con/sin token.
+
 ## Siguiente Paso Recomendado
 
 1. Reprobar en Galaxy con el APK ya instalado:
@@ -56,8 +69,9 @@ Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegi
    - detalle de estación
    - croquis de prismas
    - foto de prisma con token `admin` o `topografo`
-2. Si se quiere automatizar desde el PC, reinstalar o localizar `adb.exe`; en esta sesión no apareció en `PATH`, `Downloads`, `AppData\Local` ni `Documents`.
-3. Si la foto de prisma falla ahora, mirar primero el rol/token y la respuesta exacta, porque ya no es un 404 de ruta inexistente.
+2. Verificar Render después del redeploy del hardening `10c91b8`.
+3. Si se quiere automatizar desde el PC, reinstalar o localizar `adb.exe`; en esta sesión no apareció en `PATH`, `Downloads`, `AppData\Local` ni `Documents`.
+4. Si la foto de prisma falla ahora, mirar primero el rol/token y la respuesta exacta, porque ya no es un 404 de ruta inexistente.
 
 ## Nota Técnica Sobre Prismas
 
