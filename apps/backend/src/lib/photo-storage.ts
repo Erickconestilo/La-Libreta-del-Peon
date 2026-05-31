@@ -16,6 +16,10 @@ export const createProjectPhotoStoragePath = (projectId: string, contentType: Ph
   return `projects/${projectId}/${randomUUID()}.${getPhotoExtension(contentType)}`;
 };
 
+export const createPrismPhotoStoragePath = (prismId: string, contentType: PhotoContentType) => {
+  return `prisms/${prismId}/${randomUUID()}.${getPhotoExtension(contentType)}`;
+};
+
 export const createSignedPhotoUpload = async (storagePath: string) => {
   const { data, error } = await supabaseAdmin.storage
     .from(PHOTO_BUCKET)

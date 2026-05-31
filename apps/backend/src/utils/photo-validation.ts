@@ -13,7 +13,7 @@ const allowedPhotoContentTypes = ['image/jpeg', 'image/png', 'image/webp'] as co
 const signedPhotoUploadSchema = z.object({
   contentType: z.enum(allowedPhotoContentTypes),
   entityId: z.string().uuid(),
-  entityType: z.enum(['station', 'project']),
+  entityType: z.enum(['station', 'project', 'prism']),
   fileSizeBytes: z.number().int().positive().max(MAX_PHOTO_UPLOAD_BYTES)
 });
 
@@ -22,6 +22,10 @@ const attachStationPhotoSchema = z.object({
 });
 
 const attachProjectPhotoSchema = z.object({
+  storagePath: z.string().trim().min(1).max(500).nullable()
+});
+
+const attachPrismPhotoSchema = z.object({
   storagePath: z.string().trim().min(1).max(500).nullable()
 });
 
@@ -36,6 +40,7 @@ const createStationPhotoSchema = z.object({
 export type SignedPhotoUploadInput = z.infer<typeof signedPhotoUploadSchema>;
 export type AttachStationPhotoInput = z.infer<typeof attachStationPhotoSchema>;
 export type AttachProjectPhotoInput = z.infer<typeof attachProjectPhotoSchema>;
+export type AttachPrismPhotoInput = z.infer<typeof attachPrismPhotoSchema>;
 export type CreateStationPhotoInput = z.infer<typeof createStationPhotoSchema>;
 export type PhotoContentType = (typeof allowedPhotoContentTypes)[number];
 
@@ -64,6 +69,16 @@ export const validateAttachProjectPhotoInput = (input: unknown) => {
 
   if (!parsedInput.success) {
     throw new AppError('Invalid project photo payload', 400, 'INVALID_PROJECT_PHOTO_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateAttachPrismPhotoInput = (input: unknown) => {
+  const parsedInput = attachPrismPhotoSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid prism photo payload', 400, 'INVALID_PRISM_PHOTO_PAYLOAD', parsedInput.error.flatten());
   }
 
   return parsedInput.data;
@@ -101,6 +116,13 @@ export const isValidStationPhotoPath = (stationId: string, storagePath: string) 
 export const isValidProjectPhotoPath = (projectId: string, storagePath: string) => {
   const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`^projects/${escapedProjectId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
+
+  return pattern.test(storagePath);
+};
+
+export const isValidPrismPhotoPath = (prismId: string, storagePath: string) => {
+  const escapedPrismId = prismId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^prisms/${escapedPrismId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
 
   return pattern.test(storagePath);
 };
