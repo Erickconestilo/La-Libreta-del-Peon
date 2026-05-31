@@ -2,23 +2,22 @@
 
 ## APK actual
 
-- Build EAS: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`
-- APK: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
-- APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`
+- Build EAS: `247704f1-2316-483f-bb9e-62adee8714cd`
+- APK: https://expo.dev/artifacts/eas/5vayQrWGeBVzi8V8SdCfit.apk
+- APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-247704f1-team-messages.apk`
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
-- Commit incluido en APK: `805fb6197a98ecdb358ff5839d6fbecbfe85b31d`
+- Commit incluido en APK: `32b825d4d8a954dcfb28cc07302f493bc4c44804`
 - Commit backend desplegado en Render: `3e721a14a713fb2dc609c519305df3cfaeff757e`
 - Instalación ADB en Galaxy: `Success`
-- Nota: el APK actual no incluye todavía el hardening móvil de `3e721a1` ni los cambios locales posteriores de croquis/perfil.
+- Nota: esta APK incluye guía con búsqueda/agrupación, mensajes internos, propuestas provisionales, croquis con zona táctil mayor y campo de token corregido.
 
-## APK nueva pendiente
+## APK anterior
 
-- Build EAS: `247704f1-2316-483f-bb9e-62adee8714cd`
-- Estado último check: `IN_PROGRESS`
-- Commit incluido: `32b825d4d8a954dcfb28cc07302f493bc4c44804`
-- Pendiente descargar, instalar por ADB y repetir QA cuando EAS entregue el artefacto.
-- Nota: los commits `af21658` y `416840d` son backend-only; no requieren otra APK.
+- Build EAS anterior: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`
+- APK anterior: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
+- APK local anterior: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`
+- Commit incluido en APK anterior: `805fb6197a98ecdb358ff5839d6fbecbfe85b31d`
 
 ## Estado backend Render
 
@@ -36,9 +35,9 @@
 
 ### Estado actual tras nuevos commits
 
-- GitHub `main`: `416840d`
+- GitHub `main`: `13e7b8b`
 - Render `GET /health`: todavía `3e721a14a713fb2dc609c519305df3cfaeff757e`
-- Pendiente: redeploy Render para publicar mensajes de estación, incidencias/propuestas provisionales y lockfile de backend.
+- Pendiente: redeploy Render para publicar mensajes de estación, incidencias/propuestas provisionales, hardening de incidencias y lockfile de backend.
 
 ### Nota tras hardening backend `10c91b8`
 
@@ -60,13 +59,25 @@
 - `Perfil` vuelve a modo visitante y queda sin token visible tras reinicio.
 - `logcat` filtrado por PID de TopoField: sin `FATAL EXCEPTION`, sin `AndroidRuntime`, sin `ReactNativeJS`.
 
+## Resultado QA APK `247704f1` en Galaxy — 2026-05-31
+
+- Dispositivo: `SM_S938B`, ADB id `R5CY21X6FLE`.
+- APK `247704f1` instalado por ADB con resultado `Success`.
+- La app abre y el proceso queda activo sin cierre.
+- `Guía` muestra `GUÍA DE CAMPO`, campo `Buscar`, agrupación `ESTACIÓN TOTAL` y `NIVEL DIGITAL`, tarjetas `Guía Leica de estación` y `Nivel Leica LS10`, y acción `ABRIR MANUAL`.
+- Búsqueda en guía acepta texto (`LS10`) sin crash.
+- `Obras -> Campus Nord` carga la obra y sus 2 estacionamientos.
+- `Campus Nord Estacionamiento CN2` abre correctamente.
+- En detalle de estación aparecen las secciones `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.
+- `logcat` filtrado por PID de TopoField: sin `FATAL EXCEPTION`, sin `AndroidRuntime`, sin `ReactNativeJS`, sin `TypeError` y sin `ReferenceError`.
+- Limitación: no se probó escritura real de mensajes/provisionales/foto de prisma porque Render público sigue en `3e721a1`.
+
 ### Pendiente de QA móvil
 
 - Probar sesión real `admin`/`topografo` pegando token manualmente o con una build nueva que incluya el campo de token corregido.
 - Probar subida real de foto de prisma desde Galaxy.
-- Probar la mejora local del croquis: zona táctil ampliada y gráfico ligeramente mayor.
-- Probar `Mensajes del equipo` dentro de un estacionamiento.
-- Probar `Estacionamientos provisionales` creando una propuesta y verificando que aparece en la lista.
+- Probar `Mensajes del equipo` creando un mensaje real cuando Render esté redeployado.
+- Probar `Estacionamientos provisionales` creando una propuesta real cuando Render esté redeployado.
 - Confirmar primero que Render ya no sirve `3e721a1`; si sigue en ese commit, mensajes/provisionales fallarán aunque la APK sea correcta.
 
 ## Instalación en Galaxy

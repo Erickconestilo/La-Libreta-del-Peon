@@ -21,22 +21,23 @@
 - `32b825d` - guía con búsqueda/agrupación, mensajes internos por estación y propuestas de estacionamiento provisional como incidencias.
 - `af21658` - hardening backend de mensajes/incidencias: creación devuelve fila exacta y `photoUrl` arbitrario queda bloqueado.
 - `416840d` - deploy backend reproducible: `npm ci` + `apps/backend/package-lock.json`.
+- `13e7b8b` - documentación de QA, handoff y auditoría de seguridad.
 
 ## APK Actual
 
-- EAS build: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`.
-- URL APK: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
-- Archivo local: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`.
+- EAS build: `247704f1-2316-483f-bb9e-62adee8714cd`.
+- URL APK: https://expo.dev/artifacts/eas/5vayQrWGeBVzi8V8SdCfit.apk
+- Archivo local: `C:\Users\guill\Downloads\topofield-247704f1-team-messages.apk`.
 - Instalado en Galaxy por ADB con resultado `Success`.
-- Nota: este APK fue construido antes de `3e721a1`; para probar SecureStore, permisos reducidos, aviso de Google Maps y mejoras locales de croquis/perfil hace falta una nueva build EAS.
+- Commit incluido en APK: `32b825d4d8a954dcfb28cc07302f493bc4c44804`.
+- Incluye hardening móvil previo, guía con búsqueda/agrupación, mensajes internos, propuestas provisionales, croquis con zona táctil mayor y campo de token corregido.
+- No incluye commits backend-only posteriores (`af21658`, `416840d`, `13e7b8b`), pero eso no requiere otra APK.
 
-## APK EAS en Curso
+## APK Anterior
 
-- Build EAS pendiente: `247704f1-2316-483f-bb9e-62adee8714cd`.
-- Estado último check: `IN_PROGRESS`.
-- Commit incluido: `32b825d4d8a954dcfb28cc07302f493bc4c44804`.
-- Incluye mejoras móviles de guía, mensajes, propuestas provisionales, croquis y campo de token.
-- No incluye commits backend-only posteriores (`af21658`, `416840d`), pero eso no exige nueva APK.
+- EAS build anterior: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`.
+- URL APK anterior: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
+- Archivo local anterior: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`.
 
 ## Lo Que Ya Está Hecho
 
@@ -48,11 +49,10 @@
 - Croquis de prismas usa `react-native-svg`, ángulo horizontal y distancia inclinada.
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
-- Render público todavía sirve `3e721a1`; GitHub `main` ya va por `416840d`, por lo que falta redeploy manual/auto-deploy efectivo.
+- Render público todavía sirve `3e721a1`; GitHub `main` ya va por `13e7b8b`, por lo que falta redeploy manual/auto-deploy efectivo.
 - Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
-- Cambios locales pendientes de build: croquis con zona táctil mayor y campo de token con altura fija/submit por teclado.
-- Guía pendiente de nueva APK con búsqueda y agrupación por instrumento.
-- Estacionamiento pendiente de nueva APK/Render con mensajes del equipo y propuestas provisionales como incidencias `new_station`; ambos flujos son internos y requieren rol `admin` o `topografo`.
+- APK `247704f1` validada por ADB: abre sin crash, Guía muestra búsqueda/agrupación, Campus Nord abre estaciones y el detalle contiene `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.
+- Estacionamiento queda pendiente de Render actualizado para probar escritura real de mensajes y propuestas provisionales; ambos flujos son internos y requieren rol `admin` o `topografo`.
 
 ## Estado Backend Render
 
@@ -70,7 +70,7 @@ Render fue redeployado manualmente con cache limpio desde `main` en una tanda pr
 
 Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma en móvil hace falta sesión `admin` o `topografo`.
 
-Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d`. Mensajes e incidencias nuevas necesitan ese redeploy.
+Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d`/`13e7b8b`. Mensajes e incidencias nuevas necesitan ese redeploy.
 
 ## Hardening Backend Hecho Localmente
 
@@ -86,10 +86,10 @@ Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen t
 
 ## Siguiente Paso Recomendado
 
-1. Esperar build EAS nueva desde el último commit.
-2. Forzar/verificar redeploy Render hasta que `GET /health` muestre `416840d` o posterior.
-3. Reinstalar APK nuevo en Galaxy y repetir QA de token técnico, foto de prisma, mensajes y propuesta provisional.
-4. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
+1. Forzar/verificar redeploy Render hasta que `GET /health` muestre `13e7b8b` o al menos `416840d`/`af21658`.
+2. Con Render actualizado, repetir QA con token `admin` o `topografo`: foto de prisma, mensajes y propuesta provisional.
+3. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
+4. Continuar auditoría aplicada: DTO público para visitante, permisos por obra/equipo y Storage privado/URLs firmadas de lectura.
 
 ## Nota Técnica Sobre Prismas
 

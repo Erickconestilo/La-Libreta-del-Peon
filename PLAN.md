@@ -51,6 +51,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Estacionamiento empieza a funcionar como unidad operativa: mensajes/bitácora por estación y propuestas de estacionamiento provisional como incidencias con sugerencia `new_station`; son flujos internos para `admin/topografo`, no públicos para visitante.
 - Auditoría de seguridad en progreso documentada en `SECURITY_AUDIT_PROGRESS.md`.
 - Backend Docker/Render usa `npm ci` con lockfile propio para builds reproducibles.
+- APK EAS `247704f1-2316-483f-bb9e-62adee8714cd` instalada en Galaxy: valida Guía con búsqueda/agrupación, Obra `Campus Nord`, detalle de estación y presencia de mensajes/provisionales/croquis sin errores nativos ni JS.
 
 ## Estado Backend Render
 
@@ -58,8 +59,8 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - `GET /health` responde 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 401 sin token y 200 con `GUEST_PUBLIC_TOKEN`.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Estado actual: GitHub `main` ya va por `416840d`, pero Render público aún responde `3e721a1`; falta redeploy manual/auto-deploy efectivo.
-- Siguiente acción real: esperar APK EAS `247704f1`, forzar/verificar Render, reinstalar en Galaxy y probar token técnico, foto de prisma, mensajes de estación y propuesta provisional.
+- Estado actual: GitHub `main` ya va por `13e7b8b`, pero Render público aún responde `3e721a1`; falta redeploy manual/auto-deploy efectivo.
+- Siguiente acción real: forzar/verificar Render, y con token técnico probar foto de prisma, mensajes de estación y propuesta provisional en Galaxy.
 
 ## Principios de Implementación
 - Una feature cada vez

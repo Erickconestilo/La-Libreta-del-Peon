@@ -21,10 +21,20 @@
 ## Verificación Realizada
 
 - `npm run build` en backend: OK.
+- `npx tsc --noEmit --project apps/mobile/tsconfig.json`: OK.
 - `npm ci --dry-run` en backend: OK.
 - `npm audit --workspaces=false` en backend: 0 vulnerabilidades.
 - `npm audit --workspace apps/mobile`: 11 vulnerabilidades moderadas en tooling Expo/xcode/uuid, sin high/critical.
 - Pruebas locales previas: visitante no puede leer mensajes/incidencias internas; admin temporal pudo crear mensaje y propuesta provisional.
+- Revisión de rutas: mensajes (`/stations/:id/messages`), incidencias (`/incidents`) y firma de subida (`/uploads/photos/sign`) requieren `admin` o `topografo`.
+- QA Galaxy APK `247704f1`: Guía, Obra, detalle de estación, mensajes/provisionales/croquis visibles sin errores JS/nativos. Escritura real queda bloqueada por Render antiguo.
+
+## Resultado Actual de la Auditoría
+
+- No hay hallazgos críticos o altos validados en el código revisado.
+- No se encontró bypass directo para que `visitante` escriba mensajes, incidencias, fotos o guía.
+- La superficie de riesgo principal no es un bug puntual, sino una decisión de producto: qué datos se consideran públicos en modo visitante.
+- El escaneo exhaustivo formal quedó limitado por presupuesto del objetivo anterior; esta fase deja hallazgos priorizados y verificables, no una certificación completa.
 
 ## Hallazgos y Riesgos Vigentes
 
@@ -52,6 +62,12 @@ Las alertas vienen de Expo/config tooling y `uuid` vía `xcode`. No conviene apl
 
 Propuesta: seguir ruta oficial de patch de Expo SDK y revisar advisories antes de producción abierta.
 
+### Riesgo 5 - Validación de UUIDs en parámetros
+
+Algunas rutas confían en PostgreSQL para castear UUIDs. Un UUID malformado puede acabar como error 500 genérico en vez de 400 controlado.
+
+Impacto actual: bajo, porque no expone stack trace y hay rate limit. Propuesta: añadir validación centralizada de params UUID para mejorar robustez y logs.
+
 ## Propuestas Backend
 
 - Crear DTO público para visitante: ocultar `createdBy`, `uploadedBy`, `storagePath`, `sourceFiles`, observaciones crudas y notas internas.
@@ -59,6 +75,8 @@ Propuesta: seguir ruta oficial de patch de Expo SDK y revisar advisories antes d
 - Añadir permisos por obra/equipo antes de entregar tokens a más personas.
 - Verificar existencia del objeto en Supabase antes de vincular una foto como evidencia.
 - Añadir endpoint admin para resolver incidencias/propuestas y convertir una propuesta provisional en estación real.
+- Validar UUIDs de params y queries antes de llegar al modelo SQL.
+- Mantener `morgan` fuera de producción o reducirlo a logs estructurados sin ruido cuando la app tenga usuarios reales.
 
 ## Propuestas Frontend
 
@@ -67,8 +85,9 @@ Propuesta: seguir ruta oficial de patch de Expo SDK y revisar advisories antes d
 - En Guía, mantener búsqueda y agrupación por instrumento; añadir favoritos o “usadas recientemente” si crece el contenido.
 - En estacionamiento, separar visualmente: datos oficiales, mensajes internos, propuestas provisionales y memoria visual.
 - Para croquis de prismas, añadir zoom/pan o mapa operativo más adelante; ahora el croquis es correcto como vista angular/distancia, no como mapa geográfico.
+- En Perfil, nunca mostrar el token guardado; ya se usa `SecureStore`, mantenerlo así.
 
 ## Bloqueos Operativos
 
-- Render público aún debe verificarse contra el último commit desplegado.
-- APK EAS nueva debe terminar, instalarse en Galaxy y probar: guía, mensajes, propuesta provisional, foto de prisma y token técnico.
+- Render público sigue en `3e721a1`; debe redeployarse hasta `13e7b8b` o al menos `416840d`/`af21658`.
+- APK EAS nueva ya está instalada; queda probar escritura real de mensajes, propuesta provisional, foto de prisma y token técnico tras el redeploy.
