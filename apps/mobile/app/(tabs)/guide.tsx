@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,6 +10,7 @@ import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function GuideScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { data, errorMessage, isLoading } = useGuideEntries();
   const entries = data ?? [];
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -37,7 +39,16 @@ export default function GuideScreen() {
 
       <View style={styles.manualGrid}>
         {guideManuals.map((manual) => (
-          <View key={manual.id} style={[styles.manualCard, manual.accent === 'green' ? styles.manualCardGreen : styles.manualCardAmber]}>
+          <Pressable
+            accessibilityRole="button"
+            key={manual.id}
+            onPress={() => router.push(`/guide/${manual.id}` as never)}
+            style={({ pressed }) => [
+              styles.manualCard,
+              manual.accent === 'green' ? styles.manualCardGreen : styles.manualCardAmber,
+              pressed ? styles.manualCardPressed : null
+            ]}
+          >
             <View style={styles.manualTopRow}>
               <Text style={[styles.manualTag, manual.accent === 'green' ? styles.manualTagGreen : styles.manualTagAmber]}>
                 {manual.tag}
@@ -46,7 +57,8 @@ export default function GuideScreen() {
             </View>
             <Text style={styles.manualTitle}>{manual.title}</Text>
             <Text style={styles.body}>{manual.summary}</Text>
-          </View>
+            <Text style={styles.manualCta}>Leer guía completa</Text>
+          </Pressable>
         ))}
       </View>
 
@@ -202,6 +214,10 @@ const styles = StyleSheet.create({
     gap: spacing[1],
     padding: spacing[3],
   },
+  manualCardPressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.99 }],
+  },
   manualCardAmber: {
     borderColor: 'rgba(245, 158, 11, 0.55)',
   },
@@ -237,6 +253,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 24,
     fontWeight: '900',
+  },
+  manualCta: {
+    color: colors.accentGreen,
+    fontSize: 13,
+    fontWeight: '900',
+    marginTop: spacing[1],
+    textTransform: 'uppercase',
   },
   manualTopRow: {
     alignItems: 'center',
