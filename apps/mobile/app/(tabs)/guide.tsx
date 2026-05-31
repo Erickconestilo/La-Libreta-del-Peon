@@ -31,9 +31,9 @@ export default function GuideScreen() {
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 112 + insets.bottom }]} style={styles.container}>
       <View style={styles.heroCard}>
         <Text style={styles.eyebrow}>Guía de campo</Text>
-        <Text style={styles.heroTitle}>Manuales y fichas rápidas</Text>
+        <Text style={styles.heroTitle}>Manuales de campo</Text>
         <Text style={styles.body}>
-          Las guías grandes aparecen como tarjetas. Debajo quedan fichas cortas para consultar en obra.
+          Toca un manual para abrirlo. Las fichas rápidas de abajo son recordatorios cortos y se leen sin cambiar de pantalla.
         </Text>
       </View>
 
@@ -53,16 +53,22 @@ export default function GuideScreen() {
               <Text style={[styles.manualTag, manual.accent === 'green' ? styles.manualTagGreen : styles.manualTagAmber]}>
                 {manual.tag}
               </Text>
-              <Text style={styles.manualPages}>{manual.pages} pág.</Text>
+              <Text style={styles.manualMode}>Offline</Text>
             </View>
             <Text style={styles.manualTitle}>{manual.title}</Text>
             <Text style={styles.body}>{manual.summary}</Text>
-            <Text style={styles.manualCta}>Leer guía completa</Text>
+            <View style={styles.manualActionRow}>
+              <Text style={styles.manualCta}>Abrir manual</Text>
+              <Text style={styles.manualPages}>{manual.pages} páginas incluidas</Text>
+            </View>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>Fichas rápidas</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionLabel}>Fichas rápidas</Text>
+        <Text style={styles.sectionHint}>Lectura directa: no abren otra pantalla.</Text>
+      </View>
 
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
@@ -108,11 +114,12 @@ export default function GuideScreen() {
       ) : null}
 
       {filteredEntries.map((entry) => (
-        <View key={entry.id} style={styles.card}>
-          <Text style={styles.category}>{entry.category}</Text>
-          <Text style={styles.title}>{entry.title}</Text>
-          <Text style={styles.body}>{entry.body}</Text>
-        </View>
+        <QuickGuideCard
+          body={entry.body}
+          category={entry.category}
+          key={entry.id}
+          title={entry.title}
+        />
       ))}
     </ScrollView>
   );
@@ -131,6 +138,26 @@ function FilterChip({ label, onPress, selected }: FilterChipProps) {
     </Pressable>
   );
 }
+
+type QuickGuideCardProps = {
+  body: string;
+  category: string;
+  title: string;
+};
+
+function QuickGuideCard({ body, category, title }: QuickGuideCardProps) {
+  return (
+    <View style={styles.quickCard}>
+      <Text style={styles.quickLabel}>{formatCategoryLabel(category)}</Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.body}>{body}</Text>
+    </View>
+  );
+}
+
+const formatCategoryLabel = (category: string) => {
+  return category.replace(/\s+/g, ' ').trim();
+};
 
 const styles = StyleSheet.create({
   body: {
@@ -227,10 +254,21 @@ const styles = StyleSheet.create({
   manualGrid: {
     gap: spacing[2],
   },
+  manualMode: {
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+    borderRadius: 999,
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: spacing[1],
+    paddingVertical: 4,
+    textTransform: 'uppercase',
+  },
   manualPages: {
     color: colors.textSecondary,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   manualTag: {
     borderRadius: 999,
@@ -258,19 +296,48 @@ const styles = StyleSheet.create({
     color: colors.accentGreen,
     fontSize: 13,
     fontWeight: '900',
-    marginTop: spacing[1],
     textTransform: 'uppercase',
+  },
+  manualActionRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing[2],
+    justifyContent: 'space-between',
+    marginTop: spacing[1],
   },
   manualTopRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  quickCard: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: spacing[1],
+    padding: spacing[3],
+  },
+  quickLabel: {
+    color: colors.amber,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sectionHeader: {
+    gap: spacing[0],
+    marginTop: spacing[1],
+  },
+  sectionHint: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   sectionLabel: {
     color: colors.textPrimary,
     fontSize: typography.fontSizeTitle,
     fontWeight: '900',
-    marginTop: spacing[1],
   },
   title: {
     color: colors.textPrimary,
