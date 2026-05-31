@@ -1,4 +1,7 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1';
+const DEFAULT_DEV_API_BASE_URL = 'http://localhost:3000/api/v1';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() || (
+  process.env.NODE_ENV === 'production' ? '' : DEFAULT_DEV_API_BASE_URL
+);
 const GUEST_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_GUEST_PUBLIC_TOKEN ?? '';
 let runtimeBearerToken: string | null = null;
 
@@ -7,6 +10,14 @@ export const setApiBearerToken = (token: string | null) => {
 };
 
 export const apiFetch = async <T>(path: string, init?: RequestInit) => {
+  if (!API_BASE_URL) {
+    throw new Error('La URL de API no está configurada para esta versión de la app.');
+  }
+
+  if (process.env.NODE_ENV === 'production' && !API_BASE_URL.startsWith('https://')) {
+    throw new Error('La URL de API debe usar HTTPS en builds de producción.');
+  }
+
   const headers = new Headers(init?.headers);
   headers.set('Content-Type', 'application/json');
 

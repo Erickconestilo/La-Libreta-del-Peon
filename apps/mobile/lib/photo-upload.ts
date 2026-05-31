@@ -1,5 +1,6 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 import type { PhotoContentType } from '@shared/types';
 
@@ -8,7 +9,6 @@ export interface PreparedPhoto {
   contentType: PhotoContentType;
   fileSizeBytes: number;
   height: number;
-  uri: string;
   width: number;
 }
 
@@ -90,15 +90,18 @@ export const pickAndCompressPhoto = async (source: PhotoSource): Promise<Prepare
     }
   );
 
-  const blobResponse = await fetch(compressed.uri);
-  const blob = await blobResponse.blob();
+  try {
+    const blobResponse = await fetch(compressed.uri);
+    const blob = await blobResponse.blob();
 
-  return {
-    blob,
-    contentType: 'image/jpeg',
-    fileSizeBytes: blob.size,
-    height: compressed.height,
-    uri: compressed.uri,
-    width: compressed.width
-  };
+    return {
+      blob,
+      contentType: 'image/jpeg',
+      fileSizeBytes: blob.size,
+      height: compressed.height,
+      width: compressed.width
+    };
+  } finally {
+    await FileSystem.deleteAsync(compressed.uri, { idempotent: true }).catch(() => undefined);
+  }
 };
