@@ -21,10 +21,12 @@ type PrismSketchProps = {
 const VIEWBOX_SIZE = 320;
 const CENTER = VIEWBOX_SIZE / 2;
 const MAX_RADIUS = 124;
+const PRISM_TOUCH_RADIUS = 18;
+const SELECTED_PRISM_TOUCH_RADIUS = 22;
 
 export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps) {
   const { width } = useWindowDimensions();
-  const chartSize = Math.min(width - spacing[3] * 6, VIEWBOX_SIZE);
+  const chartSize = Math.min(width - spacing[3] * 4, 340);
   const maxDistance = useMemo(() => {
     return Math.max(...items.map((item) => item.distanceM), 1);
   }, [items]);
@@ -92,6 +94,12 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
           const selected = item.code === selectedCode;
           return (
             <G key={`${item.code}-${item.angle}-${item.distanceM}`} onPress={() => onSelect(item.code)}>
+              <Circle
+                cx={item.x}
+                cy={item.y}
+                fill="rgba(255, 255, 255, 0.01)"
+                r={selected ? SELECTED_PRISM_TOUCH_RADIUS : PRISM_TOUCH_RADIUS}
+              />
               {selected ? (
                 <Line
                   stroke="rgba(250, 204, 21, 0.5)"
