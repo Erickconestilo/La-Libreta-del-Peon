@@ -35,7 +35,7 @@
 
 ### Estado actual tras nuevos commits
 
-- GitHub `main`: `13e7b8b`
+- GitHub `main`: contiene commits posteriores a `3e721a1`
 - Render `GET /health`: todavía `3e721a14a713fb2dc609c519305df3cfaeff757e`
 - Pendiente: redeploy Render para publicar mensajes de estación, incidencias/propuestas provisionales, hardening de incidencias y lockfile de backend.
 

@@ -59,7 +59,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - `GET /health` responde 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 401 sin token y 200 con `GUEST_PUBLIC_TOKEN`.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Estado actual: GitHub `main` ya va por `13e7b8b`, pero Render público aún responde `3e721a1`; falta redeploy manual/auto-deploy efectivo.
+- Estado actual: GitHub `main` ya contiene commits posteriores a `3e721a1`, pero Render público aún responde `3e721a1`; falta redeploy manual/auto-deploy efectivo.
 - Siguiente acción real: forzar/verificar Render, y con token técnico probar foto de prisma, mensajes de estación y propuesta provisional en Galaxy.
 
 ## Principios de Implementación

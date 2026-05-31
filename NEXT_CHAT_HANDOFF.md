@@ -49,7 +49,7 @@
 - Croquis de prismas usa `react-native-svg`, ángulo horizontal y distancia inclinada.
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
-- Render público todavía sirve `3e721a1`; GitHub `main` ya va por `13e7b8b`, por lo que falta redeploy manual/auto-deploy efectivo.
+- Render público todavía sirve `3e721a1`; GitHub `main` ya tiene commits posteriores, por lo que falta redeploy manual/auto-deploy efectivo.
 - Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
 - APK `247704f1` validada por ADB: abre sin crash, Guía muestra búsqueda/agrupación, Campus Nord abre estaciones y el detalle contiene `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.
 - Estacionamiento queda pendiente de Render actualizado para probar escritura real de mensajes y propuestas provisionales; ambos flujos son internos y requieren rol `admin` o `topografo`.
@@ -70,7 +70,7 @@ Render fue redeployado manualmente con cache limpio desde `main` en una tanda pr
 
 Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma en móvil hace falta sesión `admin` o `topografo`.
 
-Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d`/`13e7b8b`. Mensajes e incidencias nuevas necesitan ese redeploy.
+Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d` ni los commits de documentación posteriores. Mensajes e incidencias nuevas necesitan ese redeploy.
 
 ## Hardening Backend Hecho Localmente
 
@@ -86,7 +86,7 @@ Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen t
 
 ## Siguiente Paso Recomendado
 
-1. Forzar/verificar redeploy Render hasta que `GET /health` muestre `13e7b8b` o al menos `416840d`/`af21658`.
+1. Forzar/verificar redeploy Render hasta que `GET /health` muestre un commit posterior a `3e721a1`, idealmente el último de `main`.
 2. Con Render actualizado, repetir QA con token `admin` o `topografo`: foto de prisma, mensajes y propuesta provisional.
 3. Si foto/mensajes/provisional fallan, mirar primero rol/token, migración `012`, firma de subida y payload.
 4. Continuar auditoría aplicada: DTO público para visitante, permisos por obra/equipo y Storage privado/URLs firmadas de lectura.
