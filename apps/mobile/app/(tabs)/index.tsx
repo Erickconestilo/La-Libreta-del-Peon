@@ -1,175 +1,104 @@
-import { useCallback, useMemo, useState } from 'react';
-
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { StationCard } from '@/src/components/StationCard';
+import type { ProjectSummary } from '@shared/types';
+import { useProjects } from '@/hooks/use-projects';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
-import { useStations } from '@/hooks/use-stations';
 
-import type { StationStatus } from '@shared/types';
-
-const statusLabels: Record<StationStatus, string> = {
-  active: 'Activa',
-  replaced: 'Reemplazada',
-  incident: 'Incidencia',
-};
-
-export default function StationsScreen() {
+export default function ProjectsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, errorMessage, isLoading, isRefetching, refetch } = useStations();
-  const stations = data ?? [];
-
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<StationStatus | null>(null);
-
-  const projectNames = useMemo(() => {
-    const names = new Set<string>();
-    for (const s of stations) {
-      if (s.project?.name) names.add(s.project.name);
-    }
-    return Array.from(names).sort();
-  }, [stations]);
-
-  const filteredStations = useMemo(() => {
-    let result = stations;
-    if (projectFilter) {
-      result = result.filter((s) => s.project?.name === projectFilter);
-    }
-    if (statusFilter) {
-      result = result.filter((s) => s.status === statusFilter);
-    }
-    return result;
-  }, [stations, projectFilter, statusFilter]);
-
-  const handlePress = useCallback(
-    (stationId: string) => router.push(`/station/${stationId}`),
-    [router],
-  );
-
-  const handleRefresh = useCallback(() => void refetch(), [refetch]);
+  const { data, errorMessage, isLoading, isRefetching, refetch } = useProjects();
+  const projects = data ?? [];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Estaciones</Text>
-        <Text style={styles.subtitle}>
-          {stations.length} estación{stations.length !== 1 ? 'es' : ''} en campo
-        </Text>
-      </View>
-
-      <View style={styles.filters}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <FilterChip
-            label="Todas"
-            selected={projectFilter === null}
-            onPress={() => setProjectFilter(null)}
-          />
-          {projectNames.map((name) => (
-            <FilterChip
-              key={name}
-              label={name}
-              selected={projectFilter === name}
-              onPress={() => setProjectFilter(name)}
-            />
-          ))}
-        </ScrollView>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          <FilterChip
-            label="Todos"
-            selected={statusFilter === null}
-            onPress={() => setStatusFilter(null)}
-          />
-          {(Object.entries(statusLabels) as [StationStatus, string][]).map(([key, label]) => (
-            <FilterChip
-              key={key}
-              label={label}
-              selected={statusFilter === key}
-              onPress={() => setStatusFilter(key)}
-            />
-          ))}
-        </ScrollView>
+        <Text style={styles.eyebrow}>La Libreta del Peón</Text>
+        <Text style={styles.title}>Seleccionar obra</Text>
+        <Text style={styles.subtitle}>Elige una obra activa para consultar o registrar datos de campo.</Text>
       </View>
 
       {errorMessage ? (
         <View style={styles.errorCard}>
-          <Text style={styles.errorTitle}>Error al cargar</Text>
+          <Text style={styles.errorTitle}>No se pudieron cargar las obras</Text>
           <Text style={styles.errorBody}>{errorMessage}</Text>
         </View>
       ) : null}
 
       <FlatList
         contentContainerStyle={[styles.listContent, { paddingBottom: 112 + insets.bottom }]}
-        data={filteredStations}
+        data={projects}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />}
-        renderItem={({ item }) => <StationCard station={item} onPress={handlePress} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+        renderItem={({ item }) => (
+          <ProjectCard
+            project={item}
+            onPress={() => router.push(`/projects/${item.id}` as never)}
+          />
+        )}
         ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>Cargando...</Text>
-            </View>
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>Sin estaciones</Text>
-              <Text style={styles.emptyBody}>
-                {projectFilter || statusFilter
-                  ? 'Ninguna estación coincide con los filtros seleccionados.'
-                  : 'Todavía no hay estaciones cargadas en el sistema.'}
-              </Text>
-            </View>
-          )
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>{isLoading ? 'Cargando obras...' : 'Sin obras disponibles'}</Text>
+            {!isLoading ? <Text style={styles.emptyBody}>No hay proyectos activos o estaciones asociadas todavía.</Text> : null}
+          </View>
         }
       />
     </View>
   );
 }
 
-type FilterChipProps = {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-};
+function ProjectCard({ onPress, project }: { onPress: () => void; project: ProjectSummary }) {
+  const content = (
+    <>
+      <View style={styles.statusBadge}>
+        <Text style={styles.statusBadgeText}>{project.isActive ? 'Activo' : 'Archivada'}</Text>
+      </View>
+      <View style={styles.cardSpacer} />
+      <Text style={styles.projectTitle}>{project.name}</Text>
+      <Text numberOfLines={1} style={styles.projectDescription}>{project.description ?? 'Obra sin descripción'}</Text>
+      <View style={styles.cardFooter}>
+        <View style={styles.stationCount}>
+          <MaterialIcons color={colors.textPrimary} name="gps-fixed" size={17} />
+          <Text style={styles.stationCountText}>
+            {project.stationCount} estacionamiento{project.stationCount === 1 ? '' : 's'}
+          </Text>
+        </View>
+        <MaterialIcons color={colors.accentGreen} name="arrow-forward" size={24} />
+      </View>
+    </>
+  );
 
-function FilterChip({ label, selected, onPress }: FilterChipProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.chip, selected && styles.chipSelected]}
-    >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-        {label}
-      </Text>
+    <Pressable onPress={onPress} style={styles.projectCard}>
+      {project.imageUrl ? (
+        <ImageBackground imageStyle={styles.projectImage} source={{ uri: project.imageUrl }} style={styles.projectImageWrap}>
+          <View style={styles.imageOverlay}>{content}</View>
+        </ImageBackground>
+      ) : (
+        <View style={styles.fallbackCover}>
+          <View style={styles.fallbackStripe} />
+          <View style={[styles.fallbackStripe, styles.fallbackStripeSecond]} />
+          {content}
+        </View>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    borderColor: colors.textSecondary,
-    borderRadius: borderRadius[0],
-    borderWidth: 1,
-    paddingHorizontal: spacing[2],
-    paddingVertical: spacing[0],
+  cardFooter: {
+    alignItems: 'center',
+    borderTopColor: 'rgba(241, 245, 249, 0.12)',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: spacing[2],
   },
-  chipRow: {
-    gap: spacing[1],
-    paddingHorizontal: spacing[3],
-  },
-  chipSelected: {
-    backgroundColor: colors.accentGreen,
-    borderColor: colors.accentGreen,
-  },
-  chipText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  chipTextSelected: {
-    color: colors.background,
+  cardSpacer: {
+    height: 70,
   },
   container: {
     backgroundColor: colors.background,
@@ -190,7 +119,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.textPrimary,
     fontSize: typography.fontSizeBody,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   errorBody: {
     color: colors.textSecondary,
@@ -208,31 +137,104 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: colors.red,
     fontSize: typography.fontSizeBody,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: spacing[0],
   },
-  filters: {
-    gap: spacing[1],
-    paddingBottom: spacing[2],
-    paddingTop: spacing[2],
+  eyebrow: {
+    color: colors.accentGreen,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  fallbackCover: {
+    backgroundColor: colors.card,
+    minHeight: 214,
+    overflow: 'hidden',
+    padding: spacing[3],
+  },
+  fallbackStripe: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    height: 160,
+    position: 'absolute',
+    right: -52,
+    top: -42,
+    transform: [{ rotate: '-16deg' }],
+    width: 190,
+  },
+  fallbackStripeSecond: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    right: 92,
+    top: -78,
   },
   header: {
+    gap: spacing[1],
     paddingHorizontal: spacing[3],
     paddingTop: spacing[4],
+  },
+  imageOverlay: {
+    backgroundColor: 'rgba(15, 17, 23, 0.68)',
+    flex: 1,
+    padding: spacing[3],
   },
   listContent: {
     gap: spacing[2],
     padding: spacing[3],
-    paddingBottom: 96,
+  },
+  projectCard: {
+    borderColor: '#2a2f3a',
+    borderRadius: borderRadius[1],
+    borderWidth: 1,
+    minHeight: 214,
+    overflow: 'hidden',
+  },
+  projectDescription: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: spacing[0],
+  },
+  projectImage: {
+    opacity: 0.9,
+  },
+  projectImageWrap: {
+    minHeight: 214,
+  },
+  projectTitle: {
+    color: colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  stationCount: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing[1],
+  },
+  stationCountText: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 999,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0],
+  },
+  statusBadgeText: {
+    color: colors.background,
+    fontSize: 12,
+    fontWeight: '900',
   },
   subtitle: {
     color: colors.textSecondary,
-    fontSize: typography.fontSizeBody - 1,
-    marginTop: spacing[0],
+    fontSize: typography.fontSizeBody,
+    lineHeight: 22,
   },
   title: {
     color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
   },
 });

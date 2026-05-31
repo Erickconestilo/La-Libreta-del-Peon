@@ -9,6 +9,7 @@ import { colors } from '@/src/theme';
 
 const ENTITY_LABELS: Record<EntityType, string> = {
   guide_entry: 'Guía',
+  project: 'Obra',
   prism: 'Prisma',
   station: 'Estación'
 };
@@ -18,6 +19,7 @@ const FIELD_LABELS: Record<string, string> = {
   category: 'Categoría',
   created: 'Creación',
   deleted: 'Borrado',
+  image_url: 'Imagen',
   title: 'Título'
 };
 

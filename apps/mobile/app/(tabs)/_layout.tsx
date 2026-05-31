@@ -33,8 +33,8 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Lista',
-            tabBarIcon: ({ color }) => <MaterialIcons color={color} name="format-list-bulleted" size={24} />,
+            title: 'Obras',
+            tabBarIcon: ({ color }) => <MaterialIcons color={color} name="folder" size={24} />,
           }}
         />
         <Tabs.Screen

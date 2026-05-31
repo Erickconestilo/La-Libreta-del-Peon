@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { createSignedPhotoUpload, createStationPhotoStoragePath } from '../lib/photo-storage.js';
+import { createProjectPhotoStoragePath, createSignedPhotoUpload, createStationPhotoStoragePath } from '../lib/photo-storage.js';
 import { sendSuccess } from '../lib/api-response.js';
+import { getProjectById } from '../models/projects.model.js';
 import { getStationById } from '../models/stations.model.js';
 import { MAX_PHOTO_UPLOAD_BYTES, validateSignedPhotoUploadInput } from '../utils/photo-validation.js';
 
@@ -10,13 +11,21 @@ export const createSignedPhotoUploadController = async (request: Request, respon
   try {
     const input = validateSignedPhotoUploadInput(request.body);
 
-    const station = await getStationById(input.entityId);
+    const entity = input.entityType === 'station'
+      ? await getStationById(input.entityId)
+      : await getProjectById(input.entityId);
 
-    if (!station) {
-      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    if (!entity) {
+      throw new AppError(
+        input.entityType === 'station' ? 'Station not found' : 'Project not found',
+        404,
+        input.entityType === 'station' ? 'STATION_NOT_FOUND' : 'PROJECT_NOT_FOUND'
+      );
     }
 
-    const storagePath = createStationPhotoStoragePath(input.entityId, input.contentType);
+    const storagePath = input.entityType === 'station'
+      ? createStationPhotoStoragePath(input.entityId, input.contentType)
+      : createProjectPhotoStoragePath(input.entityId, input.contentType);
     const signedUpload = await createSignedPhotoUpload(storagePath);
 
     sendSuccess(response, {

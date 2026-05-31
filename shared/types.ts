@@ -5,7 +5,7 @@ export type StationStatus = 'active' | 'replaced' | 'incident';
 export type IncidentStatus = 'open' | 'resolved';
 export type IncidentType = 'obstaculo_estacionamiento' | 'prisma_no_visible' | 'otro';
 export type SuggestionKind = 'new_station' | 'alternate_prism' | 'free_note';
-export type EntityType = 'station' | 'prism' | 'guide_entry';
+export type EntityType = 'station' | 'prism' | 'guide_entry' | 'project';
 export type DeviceType = 'leica' | 'trimble';
 export type ReadingSource = 'gps_offline' | 'mobile_network';
 export type StationMapStatus = 'approximate' | 'verified' | 'resolved';
@@ -18,9 +18,14 @@ export interface Project {
   code: string;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProjectSummary extends Project {
+  stationCount: number;
 }
 
 export interface User {
@@ -211,7 +216,7 @@ export interface ChangeLog {
   changedAt: string;
 }
 
-export type PhotoUploadEntityType = 'station';
+export type PhotoUploadEntityType = 'station' | 'project';
 export type PhotoContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 export interface SignedPhotoUpload {

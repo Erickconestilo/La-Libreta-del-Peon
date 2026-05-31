@@ -13,11 +13,15 @@ const allowedPhotoContentTypes = ['image/jpeg', 'image/png', 'image/webp'] as co
 const signedPhotoUploadSchema = z.object({
   contentType: z.enum(allowedPhotoContentTypes),
   entityId: z.string().uuid(),
-  entityType: z.enum(['station']),
+  entityType: z.enum(['station', 'project']),
   fileSizeBytes: z.number().int().positive().max(MAX_PHOTO_UPLOAD_BYTES)
 });
 
 const attachStationPhotoSchema = z.object({
+  storagePath: z.string().trim().min(1).max(500).nullable()
+});
+
+const attachProjectPhotoSchema = z.object({
   storagePath: z.string().trim().min(1).max(500).nullable()
 });
 
@@ -31,6 +35,7 @@ const createStationPhotoSchema = z.object({
 
 export type SignedPhotoUploadInput = z.infer<typeof signedPhotoUploadSchema>;
 export type AttachStationPhotoInput = z.infer<typeof attachStationPhotoSchema>;
+export type AttachProjectPhotoInput = z.infer<typeof attachProjectPhotoSchema>;
 export type CreateStationPhotoInput = z.infer<typeof createStationPhotoSchema>;
 export type PhotoContentType = (typeof allowedPhotoContentTypes)[number];
 
@@ -49,6 +54,16 @@ export const validateAttachStationPhotoInput = (input: unknown) => {
 
   if (!parsedInput.success) {
     throw new AppError('Invalid station photo payload', 400, 'INVALID_STATION_PHOTO_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateAttachProjectPhotoInput = (input: unknown) => {
+  const parsedInput = attachProjectPhotoSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid project photo payload', 400, 'INVALID_PROJECT_PHOTO_PAYLOAD', parsedInput.error.flatten());
   }
 
   return parsedInput.data;
@@ -79,6 +94,13 @@ export const getPhotoExtension = (contentType: PhotoContentType) => {
 export const isValidStationPhotoPath = (stationId: string, storagePath: string) => {
   const escapedStationId = stationId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`^stations/${escapedStationId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
+
+  return pattern.test(storagePath);
+};
+
+export const isValidProjectPhotoPath = (projectId: string, storagePath: string) => {
+  const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^projects/${escapedProjectId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
 
   return pattern.test(storagePath);
 };
