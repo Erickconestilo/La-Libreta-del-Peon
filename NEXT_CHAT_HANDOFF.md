@@ -16,6 +16,7 @@
 - `6a494de` - commit vacío para intentar forzar redeploy Render.
 - `e5c87d4` - health expone commit Render y forzó redeploy real del backend.
 - `10c91b8` - hardening backend: auth local por tabla `users`, rutas GET con token invitado, rate limit, guardas de scripts y migración `011`.
+- `3e721a1` - hardening móvil: token en SecureStore, API production solo HTTPS, CORS restringido, permisos Android reducidos y aviso antes de abrir Google Maps externo.
 
 ## APK Actual
 
@@ -23,6 +24,7 @@
 - URL APK: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
 - Archivo local: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`.
 - Instalado en Galaxy por ADB con resultado `Success`.
+- Nota: este APK fue construido antes de `3e721a1`; para probar SecureStore, permisos reducidos, aviso de Google Maps y mejoras locales de croquis/perfil hace falta una nueva build EAS.
 
 ## Lo Que Ya Está Hecho
 
@@ -34,20 +36,25 @@
 - Croquis de prismas usa `react-native-svg`, ángulo horizontal y distancia inclinada.
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
-- Render ya despliega `e5c87d4` y sirve las rutas nuevas.
+- Render ya despliega `3e721a1` y sirve las rutas nuevas protegidas.
+- Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
+- Cambios locales pendientes de build: croquis con zona táctil mayor y campo de token con altura fija/submit por teclado.
 
 ## Estado Backend Render
 
 Render fue redeployado manualmente con cache limpio desde `main`:
 
-- `GET /health`: 200 con `commit: e5c87d48800b1b564d6828eab9e705c59b65e12a`
-- `GET /projects`: 200
-- `GET /guide-entries`: 200
-- `GET /prisms/coverage/CN1`: 200
+- `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
+- `GET /projects` sin token: 401
+- `GET /guide-entries` sin token: 401
+- `GET /prisms/coverage/CN1` sin token: 401
+- `GET /projects` con `GUEST_PUBLIC_TOKEN`: 200
+- `GET /guide-entries` con `GUEST_PUBLIC_TOKEN`: 200
+- `GET /prisms/coverage/CN1` con `GUEST_PUBLIC_TOKEN`: 200
 - `PATCH /prisms/:prismId/photo` sin token: 401, no 404
 - `POST /uploads/photos/sign` sin token: 401, no 404
 
-Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma hace falta token `admin` o `topografo`.
+Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma en móvil hace falta sesión `admin` o `topografo`.
 
 ## Hardening Backend Hecho Localmente
 
@@ -59,19 +66,14 @@ Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegi
 - Scripts de escritura contra producción quedan bloqueados salvo `TOPOFIELD_ALLOW_PRODUCTION_WRITE=<script>`.
 - Verificado localmente: `npm run build --workspace apps/backend`, `npx tsc --noEmit --project apps/mobile/tsconfig.json`, `npm run verify:guide-admin --workspace apps/backend`, `npm audit --workspace apps/backend --json`.
 
-Pendiente tras push/deploy: confirmar en Render que `GET /health` expone el commit nuevo y repetir las rutas anteriores con/sin token.
+Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen token.
 
 ## Siguiente Paso Recomendado
 
-1. Reprobar en Galaxy con el APK ya instalado:
-   - guías offline
-   - flujo `Obras -> Estacionamientos`
-   - detalle de estación
-   - croquis de prismas
-   - foto de prisma con token `admin` o `topografo`
-2. Verificar Render después del redeploy del hardening `10c91b8`.
-3. Si se quiere automatizar desde el PC, reinstalar o localizar `adb.exe`; en esta sesión no apareció en `PATH`, `Downloads`, `AppData\Local` ni `Documents`.
-4. Si la foto de prisma falla ahora, mirar primero el rol/token y la respuesta exacta, porque ya no es un 404 de ruta inexistente.
+1. Commit/push de las mejoras locales de croquis/perfil.
+2. Lanzar nueva EAS preview para incluir `3e721a1` y los cambios locales.
+3. Reinstalar APK nuevo en Galaxy y repetir QA de token técnico/foto de prisma.
+4. Si la foto de prisma falla ahora, mirar primero rol/token, firma de subida y payload; ya no es un 404 de ruta inexistente.
 
 ## Nota Técnica Sobre Prismas
 

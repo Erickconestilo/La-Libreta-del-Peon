@@ -42,10 +42,14 @@ export default function ProfileScreen() {
           autoComplete="off"
           autoCapitalize="none"
           autoCorrect={false}
+          blurOnSubmit
           importantForAutofill="no"
+          multiline={false}
           onChangeText={setTokenInput}
+          onSubmitEditing={() => void handleConnect()}
           placeholder={storedToken ? 'Token guardado en este dispositivo' : 'Token de acceso'}
           placeholderTextColor="#64748b"
+          returnKeyType="done"
           secureTextEntry
           style={styles.input}
           textContentType="none"
@@ -147,8 +151,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     color: colors.textPrimary,
-    minHeight: 56,
+    height: 56,
     padding: 12,
+    textAlignVertical: 'center',
   },
   primaryButton: {
     alignItems: 'center',

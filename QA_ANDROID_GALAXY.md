@@ -8,16 +8,20 @@
 - Backend usado: `https://la-libreta-del-peon-1.onrender.com/api/v1`
 - Perfil EAS: `preview`
 - Commit incluido en APK: `805fb6197a98ecdb358ff5839d6fbecbfe85b31d`
-- Commit backend desplegado en Render: `e5c87d48800b1b564d6828eab9e705c59b65e12a`
+- Commit backend desplegado en Render: `3e721a14a713fb2dc609c519305df3cfaeff757e`
 - Instalación ADB en Galaxy: `Success`
+- Nota: el APK actual no incluye todavía el hardening móvil de `3e721a1` ni los cambios locales posteriores de croquis/perfil.
 
 ## Estado backend Render
 
-- `GET /health`: 200 con `commit: e5c87d48800b1b564d6828eab9e705c59b65e12a`
+- `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
 - `GET /stations`: 200
-- `GET /projects`: 200
-- `GET /guide-entries`: 200
-- `GET /prisms/coverage/CN1`: 200
+- `GET /projects` sin token: 401
+- `GET /guide-entries` sin token: 401
+- `GET /prisms/coverage/CN1` sin token: 401
+- `GET /projects` con `GUEST_PUBLIC_TOKEN`: 200
+- `GET /guide-entries` con `GUEST_PUBLIC_TOKEN`: 200
+- `GET /prisms/coverage/CN1` con `GUEST_PUBLIC_TOKEN`: 200
 - `PATCH /prisms/:prismId/photo` sin token: 401, no 404
 - `POST /uploads/photos/sign` sin token: 401, no 404
 - Interpretacion: Render ya sirve backend nuevo. Si la foto de prisma falla en Galaxy, ya no es por ruta inexistente; revisar token/rol, firma de subida o payload.
@@ -27,6 +31,26 @@
 - Después del redeploy de `10c91b8` o posterior, las rutas `GET /stations`, `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` deben probarse con `Authorization: Bearer $GUEST_PUBLIC_TOKEN`.
 - Sin token deben responder 401. Esto es correcto.
 - El APK actual incluye token visitante público, por lo que la prueba normal desde la app no debería cambiar.
+
+## Resultado QA real en Galaxy — 2026-05-31
+
+- Dispositivo: `SM_S938B`, ADB id `R5CY21X6FLE`.
+- APK `cc43f0f1` reinstalado por ADB y abierto correctamente.
+- `Obras` carga en modo visitante.
+- Obra `Sarrià` abre con 4 estacionamientos.
+- Detalle `Estacionamiento Norte Sarria E02` abre correctamente.
+- Croquis de prismas visible con puntos PN/PS/RS; seleccionar PN1 y PN2 cambia la ficha.
+- El modo visitante bloquea correctamente fotos de estación, memoria visual y foto de prisma.
+- `Guía` muestra manuales y abre `Guía Leica de estación` con páginas offline.
+- `Mapa` funciona en fallback sin Google Maps API key, con filtros por obra y coordenadas.
+- `Perfil` vuelve a modo visitante y queda sin token visible tras reinicio.
+- `logcat` filtrado por PID de TopoField: sin `FATAL EXCEPTION`, sin `AndroidRuntime`, sin `ReactNativeJS`.
+
+### Pendiente de QA móvil
+
+- Probar sesión real `admin`/`topografo` pegando token manualmente o con una build nueva que incluya el campo de token corregido.
+- Probar subida real de foto de prisma desde Galaxy.
+- Probar la mejora local del croquis: zona táctil ampliada y gráfico ligeramente mayor.
 
 ## Instalación en Galaxy
 
