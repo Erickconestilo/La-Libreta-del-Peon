@@ -131,6 +131,23 @@ export interface UpdateStationNotesInput {
   notes: string | null;
 }
 
+export interface StationMessage {
+  id: string;
+  stationId: string;
+  body: string;
+  createdBy: string;
+  createdByUser: {
+    email: string;
+    fullName: string;
+    role: UserRole;
+  } | null;
+  createdAt: string;
+}
+
+export interface CreateStationMessageInput {
+  body: string;
+}
+
 export interface StationPhoto {
   id: string;
   stationId: string;
@@ -251,6 +268,15 @@ export interface Incident {
   status: IncidentStatus;
   suggestion: IncidentSuggestion | null;
   updatedAt: string;
+}
+
+export interface CreateIncidentInput {
+  stationId?: string | null;
+  prismId?: string | null;
+  type: IncidentType;
+  description: string;
+  photoUrl?: string | null;
+  suggestion?: IncidentSuggestion | null;
 }
 
 export interface GuideEntry {

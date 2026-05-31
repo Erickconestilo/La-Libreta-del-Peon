@@ -12,6 +12,10 @@ import {
   deleteStationPhotoController,
   listStationPhotosController
 } from '../controllers/station-photos.controller.js';
+import {
+  createStationMessageController,
+  listStationMessagesController
+} from '../controllers/station-messages.controller.js';
 import { listStationPrismsController } from '../controllers/prisms.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
@@ -30,6 +34,18 @@ stationsRouter.delete(
   requireAuth,
   requireRole(['admin', 'topografo']),
   deleteStationPhotoController
+);
+stationsRouter.get(
+  '/:stationId/messages',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  listStationMessagesController
+);
+stationsRouter.post(
+  '/:stationId/messages',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  createStationMessageController
 );
 stationsRouter.get('/:stationId/prisms', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listStationPrismsController);
 stationsRouter.get('/:stationId', requireAuth, requireRole(['admin', 'topografo', 'visitante']), getStationByIdController);

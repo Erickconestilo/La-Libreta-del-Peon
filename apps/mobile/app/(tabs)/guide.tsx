@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useGuideEntries } from '@/hooks/use-guide';
@@ -14,18 +14,32 @@ export default function GuideScreen() {
   const { data, errorMessage, isLoading } = useGuideEntries();
   const entries = data ?? [];
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const categories = useMemo(() => {
     return Array.from(new Set(entries.map((entry) => entry.category))).sort();
   }, [entries]);
 
   const filteredEntries = useMemo(() => {
-    if (!categoryFilter) {
-      return entries;
+    const normalizedSearch = normalizeSearch(searchText);
+    let nextEntries = entries;
+
+    if (categoryFilter) {
+      nextEntries = nextEntries.filter((entry) => entry.category === categoryFilter);
     }
 
-    return entries.filter((entry) => entry.category === categoryFilter);
-  }, [categoryFilter, entries]);
+    if (normalizedSearch) {
+      nextEntries = nextEntries.filter((entry) => {
+        return normalizeSearch(`${entry.title} ${entry.body} ${entry.category}`).includes(normalizedSearch);
+      });
+    }
+
+    return nextEntries;
+  }, [categoryFilter, entries, searchText]);
+
+  const groupedEntries = useMemo(() => {
+    return groupGuideEntriesByInstrument(filteredEntries);
+  }, [filteredEntries]);
 
   return (
     <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 112 + insets.bottom }]} style={styles.container}>
@@ -70,6 +84,16 @@ export default function GuideScreen() {
         <Text style={styles.sectionHint}>Lectura directa: no abren otra pantalla.</Text>
       </View>
 
+      <TextInput
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={setSearchText}
+        placeholder="Buscar por instrumento, tarea o problema"
+        placeholderTextColor="#64748b"
+        style={styles.searchInput}
+        value={searchText}
+      />
+
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
           <FilterChip
@@ -106,20 +130,25 @@ export default function GuideScreen() {
         <View style={styles.card}>
           <Text style={styles.title}>Sin entradas</Text>
           <Text style={styles.body}>
-            {entries.length === 0
+            {entries.length === 0 && !searchText
               ? 'Todavía no hay contenido publicado en la guía.'
-              : 'No hay entradas para la categoría seleccionada.'}
+              : 'No hay fichas para ese filtro o búsqueda.'}
           </Text>
         </View>
       ) : null}
 
-      {filteredEntries.map((entry) => (
-        <QuickGuideCard
-          body={entry.body}
-          category={entry.category}
-          key={entry.id}
-          title={entry.title}
-        />
+      {groupedEntries.map((group) => (
+        <View key={group.title} style={styles.quickGroup}>
+          <Text style={styles.quickGroupTitle}>{group.title}</Text>
+          {group.entries.map((entry) => (
+            <QuickGuideCard
+              body={entry.body}
+              category={entry.category}
+              key={entry.id}
+              title={entry.title}
+            />
+          ))}
+        </View>
       ))}
     </ScrollView>
   );
@@ -145,6 +174,11 @@ type QuickGuideCardProps = {
   title: string;
 };
 
+type QuickGuideGroup = {
+  entries: Array<QuickGuideCardProps & { id: string }>;
+  title: string;
+};
+
 function QuickGuideCard({ body, category, title }: QuickGuideCardProps) {
   return (
     <View style={styles.quickCard}>
@@ -157,6 +191,45 @@ function QuickGuideCard({ body, category, title }: QuickGuideCardProps) {
 
 const formatCategoryLabel = (category: string) => {
   return category.replace(/\s+/g, ' ').trim();
+};
+
+const normalizeSearch = (value: string) => {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+};
+
+const getInstrumentGroupTitle = (category: string) => {
+  const normalizedCategory = normalizeSearch(category);
+
+  if (normalizedCategory.includes('ls10') || normalizedCategory.includes('nivel')) {
+    return 'Nivel Leica LS10';
+  }
+
+  if (normalizedCategory.includes('prisma')) {
+    return 'Prismas';
+  }
+
+  return 'Estación total';
+};
+
+const groupGuideEntriesByInstrument = (entries: Array<QuickGuideCardProps & { id: string }>) => {
+  const groups = new Map<string, QuickGuideGroup>();
+
+  for (const entry of entries) {
+    const title = getInstrumentGroupTitle(entry.category);
+    const currentGroup = groups.get(title);
+
+    if (currentGroup) {
+      currentGroup.entries.push(entry);
+    } else {
+      groups.set(title, { entries: [entry], title });
+    }
+  }
+
+  return Array.from(groups.values()).sort((first, second) => first.title.localeCompare(second.title));
 };
 
 const styles = StyleSheet.create({
@@ -324,6 +397,24 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
+  },
+  quickGroup: {
+    gap: spacing[1],
+  },
+  quickGroupTitle: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  searchInput: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 14,
+    borderWidth: 1,
+    color: colors.textPrimary,
+    fontSize: 15,
+    height: 52,
+    paddingHorizontal: spacing[3],
   },
   sectionHeader: {
     gap: spacing[0],
