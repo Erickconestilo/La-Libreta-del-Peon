@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { sendError } from '../lib/api-response.js';
 import { supabaseAdmin } from '../lib/supabase.js';
+import { getUserProjectIds } from '../models/project-memberships.model.js';
 import { getUserProfileById } from '../models/users.model.js';
 
 const extractBearerToken = (request: Request) => {
@@ -29,7 +30,8 @@ export const authenticateRequest = async (request: Request, _response: Response,
         authProvider: 'guest',
         email: null,
         id: 'guest',
-        role: 'visitante'
+        role: 'visitante',
+        projectIds: null
       };
 
       next();
@@ -52,7 +54,8 @@ export const authenticateRequest = async (request: Request, _response: Response,
       authProvider: 'supabase',
       email: userProfile.email ?? data.user.email ?? null,
       id: data.user.id,
-      role: userProfile.role
+      role: userProfile.role,
+      projectIds: userProfile.role === 'admin' ? null : await getUserProjectIds(userProfile.id)
     };
 
     next();

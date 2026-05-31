@@ -3,6 +3,26 @@ import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import { createChangeLog } from './change-logs.model.js';
 import type { CreateStationPhotoInput } from '../utils/photo-validation.js';
 
+type StationPhotoScope = {
+  params: unknown[];
+  clause: string;
+};
+
+const buildStationScopeCondition = (projectIds: string[] | null, baseOffset: number): StationPhotoScope => {
+  if (projectIds === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectIds.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectIds],
+    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])`
+  };
+};
+
 const mapStationPhotoRow = (row: Record<string, unknown>) => {
   return {
     id: row.id,
@@ -18,26 +38,34 @@ const mapStationPhotoRow = (row: Record<string, unknown>) => {
   };
 };
 
-export const listStationPhotos = async (stationId: string, limit = 50) => {
+export const listStationPhotos = async (
+  stationId: string,
+  limit = 50,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildStationScopeCondition(projectScope, 3);
+
   const result = await pool.query(
     `
       SELECT
-        id,
-        station_id,
-        storage_path,
-        public_url,
-        kind,
-        title,
-        notes,
-        uploaded_by,
-        uploaded_at,
-        is_primary
-      FROM station_photos
-      WHERE station_id = $1
+        sp.id,
+        sp.station_id,
+        sp.storage_path,
+        sp.public_url,
+        sp.kind,
+        sp.title,
+        sp.notes,
+        sp.uploaded_by,
+        sp.uploaded_at,
+        sp.is_primary
+      FROM station_photos sp
+      INNER JOIN stations s ON s.id = sp.station_id
+      WHERE sp.station_id = $1
+      ${scope.clause}
       ORDER BY is_primary DESC, uploaded_at DESC
       LIMIT $2
     `,
-    [stationId, limit]
+    [stationId, limit, ...scope.params]
   );
 
   return result.rows.map(mapStationPhotoRow);
@@ -46,21 +74,24 @@ export const listStationPhotos = async (stationId: string, limit = 50) => {
 export const createStationPhoto = async (
   stationId: string,
   input: CreateStationPhotoInput,
-  uploadedBy: string
+  uploadedBy: string,
+  projectScope: string[] | null = null
 ) => {
   const client = await pool.connect();
+  const scope = buildStationScopeCondition(projectScope, 2);
 
   try {
     await client.query('BEGIN');
 
     const stationResult = await client.query(
       `
-        SELECT id
-        FROM stations
-        WHERE id = $1
+        SELECT s.id
+        FROM stations s
+        WHERE s.id = $1
+        ${scope.clause}
         FOR UPDATE
       `,
-      [stationId]
+      [stationId, ...scope.params]
     );
 
     if (stationResult.rowCount === 0) {
@@ -151,21 +182,25 @@ export const createStationPhoto = async (
 export const deleteStationPhoto = async (
   stationId: string,
   stationPhotoId: string,
-  changedBy: string
+  changedBy: string,
+  projectScope: string[] | null = null
 ) => {
   const client = await pool.connect();
+  const scope = buildStationScopeCondition(projectScope, 3);
 
   try {
     await client.query('BEGIN');
 
     const currentResult = await client.query(
       `
-        SELECT id, title, kind, public_url, is_primary
-        FROM station_photos
-        WHERE id = $1 AND station_id = $2
+        SELECT sp.id, sp.title, sp.kind, sp.public_url, sp.is_primary
+        FROM station_photos sp
+        INNER JOIN stations s ON s.id = sp.station_id
+        WHERE sp.id = $1 AND sp.station_id = $2
+        ${scope.clause}
         FOR UPDATE
       `,
-      [stationPhotoId, stationId]
+      [stationPhotoId, stationId, ...scope.params]
     );
 
     if (currentResult.rowCount === 0) {

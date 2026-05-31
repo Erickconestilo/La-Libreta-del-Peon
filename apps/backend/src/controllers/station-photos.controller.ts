@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
+import { shouldUsePublicDto, toPublicStationPhoto } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createStationPhoto, deleteStationPhoto, listStationPhotos } from '../models/station-photos.model.js';
 import { isValidStationPhotoPath, validateCreateStationPhotoInput } from '../utils/photo-validation.js';
@@ -32,8 +34,13 @@ export const listStationPhotosController = async (request: Request, response: Re
     }
 
     const limit = parseLimit(request.query.limit);
-    const photos = await listStationPhotos(stationId, limit);
-    sendSuccess(response, photos, 200, {
+    const projectScope = getActorProjectScope(request.user);
+    const photos = await listStationPhotos(stationId, limit, projectScope);
+    const payload = shouldUsePublicDto(request.user)
+      ? photos.map(toPublicStationPhoto)
+      : photos;
+
+    sendSuccess(response, payload, 200, {
       limit
     });
   } catch (error) {
@@ -72,12 +79,13 @@ export const createStationPhotoController = async (request: Request, response: R
     }
 
     const input = validateCreateStationPhotoInput(request.body);
+    const projectScope = getActorProjectScope(request.user);
 
     if (!isValidStationPhotoPath(stationId, input.storagePath)) {
       throw new AppError('Invalid station photo path', 400, 'INVALID_STATION_PHOTO_PATH');
     }
 
-    const photo = await createStationPhoto(stationId, input, request.user.id);
+    const photo = await createStationPhoto(stationId, input, request.user.id, projectScope);
 
     if (!photo) {
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
@@ -120,7 +128,8 @@ export const deleteStationPhotoController = async (request: Request, response: R
       throw new AppError('Station id and photo id are required', 400, 'STATION_PHOTO_ID_REQUIRED');
     }
 
-    const deleted = await deleteStationPhoto(stationId, stationPhotoId, request.user.id);
+    const projectScope = getActorProjectScope(request.user);
+    const deleted = await deleteStationPhoto(stationId, stationPhotoId, request.user.id, projectScope);
 
     if (!deleted) {
       throw new AppError('Station photo not found', 404, 'STATION_PHOTO_NOT_FOUND');

@@ -4,6 +4,26 @@ import { pool } from '../db/pool.js';
 import { AppError } from '../lib/app-error.js';
 import { createChangeLog } from './change-logs.model.js';
 
+type StationMessageScope = {
+  params: unknown[];
+  clause: string;
+};
+
+const buildStationScopeCondition = (projectIds: string[] | null, baseOffset: number): StationMessageScope => {
+  if (projectIds === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectIds.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectIds],
+    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])`
+  };
+};
+
 const mapStationMessageRow = (row: QueryResultRow) => {
   return {
     body: row.body,
@@ -21,8 +41,14 @@ const mapStationMessageRow = (row: QueryResultRow) => {
   };
 };
 
-export const listStationMessages = async (stationId: string, limit = 50) => {
+export const listStationMessages = async (
+  stationId: string,
+  limit = 50,
+  projectScope: string[] | null = null
+) => {
   const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const scope = buildStationScopeCondition(projectScope, 2);
+
   const result = await pool.query(
     `
       SELECT
@@ -35,18 +61,25 @@ export const listStationMessages = async (stationId: string, limit = 50) => {
         u.full_name AS created_by_full_name,
         u.role AS created_by_role
       FROM station_messages sm
+      INNER JOIN stations s ON s.id = sm.station_id
       LEFT JOIN users u ON u.id = sm.created_by
       WHERE sm.station_id = $1
+      ${scope.clause}
       ORDER BY sm.created_at DESC, sm.id DESC
       LIMIT $2
     `,
-    [stationId, safeLimit]
+    [stationId, safeLimit, ...scope.params]
   );
 
   return result.rows.map(mapStationMessageRow);
 };
 
-const getStationMessageById = async (messageId: string) => {
+const getStationMessageById = async (
+  messageId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildStationScopeCondition(projectScope, 2);
+
   const result = await pool.query(
     `
       SELECT
@@ -60,21 +93,37 @@ const getStationMessageById = async (messageId: string) => {
         u.role AS created_by_role
       FROM station_messages sm
       LEFT JOIN users u ON u.id = sm.created_by
+      INNER JOIN stations s ON s.id = sm.station_id
       WHERE sm.id = $1
+      ${scope.clause}
     `,
-    [messageId]
+    [messageId, ...scope.params]
   );
 
   return result.rowCount === 0 ? null : mapStationMessageRow(result.rows[0]);
 };
 
-export const createStationMessage = async (stationId: string, body: string, createdBy: string) => {
+export const createStationMessage = async (
+  stationId: string,
+  body: string,
+  createdBy: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildStationScopeCondition(projectScope, 2);
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    const stationResult = await client.query('SELECT id FROM stations WHERE id = $1', [stationId]);
+    const stationResult = await client.query(
+      `
+        SELECT s.id
+        FROM stations s
+        WHERE s.id = $1
+        ${scope.clause}
+      `,
+      [stationId, ...scope.params]
+    );
 
     if (stationResult.rowCount === 0) {
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
@@ -107,7 +156,7 @@ export const createStationMessage = async (stationId: string, body: string, crea
 
     await client.query('COMMIT');
 
-    return getStationMessageById(result.rows[0].id as string);
+    return getStationMessageById(result.rows[0].id as string, projectScope);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

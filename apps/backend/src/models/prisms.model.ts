@@ -2,6 +2,26 @@ import { pool } from '../db/pool.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import { createChangeLog } from './change-logs.model.js';
 
+type PrismScope = {
+  params: unknown[];
+  clause: string;
+};
+
+const buildPrismScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
+  if (projectIds === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectIds.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectIds],
+    clause: `AND p.project_id = ANY($${baseOffset}::uuid[])`
+  };
+};
+
 const mapPrismRow = (row: Record<string, unknown>) => {
   return {
     code: row.code,
@@ -48,7 +68,9 @@ const mapObservationRow = (row: Record<string, unknown>) => {
   };
 };
 
-export const listPrismsByStationId = async (stationId: string) => {
+export const listPrismsByStationId = async (stationId: string, projectScope: string[] | null = null) => {
+  const scope = buildPrismScopeCondition(projectScope, 2);
+
   const query = `
     SELECT
       p.id,
@@ -74,11 +96,15 @@ export const listPrismsByStationId = async (stationId: string) => {
     FROM prism_observations po
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE po.station_id = $1
+    ${scope.clause}
     GROUP BY p.id
     ORDER BY p.code ASC
   `;
 
-  const result = await pool.query(query, [stationId]);
+  const result = await pool.query(
+    query,
+    [stationId, ...scope.params]
+  );
 
   return result.rows.map((row) => ({
     ...mapPrismRow(row),
@@ -88,7 +114,9 @@ export const listPrismsByStationId = async (stationId: string) => {
   }));
 };
 
-export const getPrismById = async (prismId: string) => {
+export const getPrismById = async (prismId: string, projectScope: string[] | null = null) => {
+  const scope = buildPrismScopeCondition(projectScope, 2);
+
   const result = await pool.query(
     `
       SELECT
@@ -109,10 +137,11 @@ export const getPrismById = async (prismId: string) => {
         created_at,
         updated_at,
         status
-      FROM prisms
-      WHERE id = $1
+      FROM prisms p
+      WHERE p.id = $1
+      ${scope.clause}
     `,
-    [prismId]
+    [prismId, ...scope.params]
   );
 
   if (result.rowCount === 0) {
@@ -125,8 +154,10 @@ export const getPrismById = async (prismId: string) => {
 export const updatePrismPhoto = async (
   prismId: string,
   storagePath: string | null,
-  changedBy: string
+  changedBy: string,
+  projectScope: string[] | null = null
 ) => {
+  const scope = buildPrismScopeCondition(projectScope, 2);
   const client = await pool.connect();
 
   try {
@@ -134,12 +165,13 @@ export const updatePrismPhoto = async (
 
     const currentResult = await client.query(
       `
-        SELECT id, photo_url
-        FROM prisms
-        WHERE id = $1
+        SELECT p.id, p.photo_url
+        FROM prisms p
+        WHERE p.id = $1
+        ${scope.clause}
         FOR UPDATE
       `,
-      [prismId]
+      [prismId, ...scope.params]
     );
 
     if (currentResult.rowCount === 0) {
@@ -175,7 +207,7 @@ export const updatePrismPhoto = async (
 
     await client.query('COMMIT');
 
-    return getPrismById(prismId);
+    return getPrismById(prismId, projectScope);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -184,7 +216,13 @@ export const updatePrismPhoto = async (
   }
 };
 
-export const listPrismObservationsByStationId = async (stationId: string, limit = 200) => {
+export const listPrismObservationsByStationId = async (
+  stationId: string,
+  limit = 200,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildPrismScopeCondition(projectScope, 3);
+
   const query = `
     SELECT
       po.id,
@@ -210,11 +248,15 @@ export const listPrismObservationsByStationId = async (stationId: string, limit 
     FROM prism_observations po
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE po.station_id = $1
+    ${scope.clause}
     ORDER BY p.code ASC, po.measured_at ASC NULLS LAST
     LIMIT $2
   `;
 
-  const result = await pool.query(query, [stationId, limit]);
+  const result = await pool.query(
+    query,
+    [stationId, limit, ...scope.params]
+  );
 
   return result.rows.map((row) => ({
     ...mapObservationRow(row),
@@ -374,7 +416,9 @@ export const reconcilePrismObservationsForExistingStations = async () => {
   };
 };
 
-export const getPrismCoverageByGroupCode = async (groupCode: string) => {
+export const getPrismCoverageByGroupCode = async (groupCode: string, projectScope: string[] | null = null) => {
+  const scope = buildPrismScopeCondition(projectScope, 2);
+
   const query = `
     SELECT
       po.station_code,
@@ -386,6 +430,7 @@ export const getPrismCoverageByGroupCode = async (groupCode: string) => {
     WHERE
       po.station_code = $1
       OR starts_with(po.station_code, $1 || '.')
+      ${scope.clause}
     ORDER BY po.station_code ASC, p.code ASC
   `;
 
@@ -394,7 +439,7 @@ export const getPrismCoverageByGroupCode = async (groupCode: string) => {
     source_file: string;
     station_code: string | null;
     station_id: string | null;
-  }>(query, [groupCode]);
+  }>(query, [groupCode, ...scope.params]);
 
   const allPrisms = Array.from(new Set(result.rows.map((row) => row.prism_code))).sort();
   const stationCodes = Array.from(

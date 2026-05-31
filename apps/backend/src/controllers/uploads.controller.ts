@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
 import {
   createPrismPhotoStoragePath,
   createProjectPhotoStoragePath,
@@ -16,12 +17,13 @@ import { MAX_PHOTO_UPLOAD_BYTES, validateSignedPhotoUploadInput } from '../utils
 export const createSignedPhotoUploadController = async (request: Request, response: Response) => {
   try {
     const input = validateSignedPhotoUploadInput(request.body);
+    const projectScope = getActorProjectScope(request.user);
 
     const entity = input.entityType === 'station'
-      ? await getStationById(input.entityId)
+      ? await getStationById(input.entityId, projectScope)
       : input.entityType === 'project'
-        ? await getProjectById(input.entityId)
-        : await getPrismById(input.entityId);
+        ? await getProjectById(input.entityId, projectScope)
+        : await getPrismById(input.entityId, projectScope);
 
     if (!entity) {
       const entityLabel = input.entityType === 'station'

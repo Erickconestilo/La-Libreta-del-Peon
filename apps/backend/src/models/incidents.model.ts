@@ -5,6 +5,26 @@ import { AppError } from '../lib/app-error.js';
 import { createChangeLog } from './change-logs.model.js';
 import type { ValidatedCreateIncidentInput } from '../utils/incidents-validation.js';
 
+type IncidentScope = {
+  params: unknown[];
+  clause: string;
+};
+
+const buildIncidentScopeCondition = (projectScope: string[] | null, baseOffset: number): IncidentScope => {
+  if (projectScope === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectScope.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectScope],
+    clause: `AND (s.project_id = ANY($${baseOffset}::uuid[]) OR p.project_id = ANY($${baseOffset}::uuid[]))`
+  };
+};
+
 const mapIncidentRow = (row: QueryResultRow) => {
   return {
     description: row.description,
@@ -24,13 +44,17 @@ const mapIncidentRow = (row: QueryResultRow) => {
 export const listIncidents = async ({
   limit = 50,
   stationId,
-  status
+  status,
+  projectScope = null
 }: {
   limit?: number | null;
   stationId?: string | null;
   status?: 'open' | 'resolved' | null;
+  projectScope?: string[] | null;
 } = {}) => {
   const safeLimit = Math.min(Math.max(limit ?? 50, 1), 100);
+  const scope = buildIncidentScopeCondition(projectScope, 4);
+
   const result = await pool.query(
     `
       SELECT
@@ -45,13 +69,16 @@ export const listIncidents = async ({
         status,
         suggestion,
         updated_at
-      FROM incidents
-      WHERE ($1::uuid IS NULL OR station_id = $1::uuid)
-        AND ($2::text IS NULL OR status = $2::text)
-      ORDER BY reported_at DESC, id DESC
+      FROM incidents i
+      LEFT JOIN stations s ON s.id = i.station_id
+      LEFT JOIN prisms p ON p.id = i.prism_id
+      WHERE ($1::uuid IS NULL OR i.station_id = $1::uuid)
+        AND ($2::text IS NULL OR i.status = $2::text)
+        ${scope.clause}
+      ORDER BY i.reported_at DESC, i.id DESC
       LIMIT $3
     `,
-    [stationId ?? null, status ?? null, safeLimit]
+    [stationId ?? null, status ?? null, safeLimit, ...scope.params]
   );
 
   return result.rows.map(mapIncidentRow);

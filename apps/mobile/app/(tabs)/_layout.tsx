@@ -40,14 +40,21 @@ export default function TabLayout() {
         <Tabs.Screen
           name="map"
           options={{
-            title: 'Mapa',
+            title: 'Mapas',
             tabBarIcon: ({ color }) => <MaterialIcons color={color} name="map" size={24} />,
+          }}
+        />
+        <Tabs.Screen
+          name="conversations"
+          options={{
+            title: 'Conversación',
+            tabBarIcon: ({ color }) => <MaterialIcons color={color} name="chat-bubble-outline" size={24} />,
           }}
         />
         <Tabs.Screen
           name="guide"
           options={{
-            title: 'Guía',
+            title: 'Guías',
             tabBarIcon: ({ color }) => <MaterialIcons color={color} name="menu-book" size={24} />,
           }}
         />

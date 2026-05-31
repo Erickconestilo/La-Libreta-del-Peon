@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createStationMessage, listStationMessages } from '../models/station-messages.model.js';
 import { validateCreateStationMessageInput } from '../utils/station-messages-validation.js';
@@ -11,7 +12,8 @@ export const listStationMessagesController = async (request: Request, response: 
       ? request.params.stationId[0]
       : request.params.stationId;
     const limit = typeof request.query.limit === 'string' ? Number(request.query.limit) : 50;
-    const messages = await listStationMessages(stationId, Number.isFinite(limit) ? limit : 50);
+    const projectScope = getActorProjectScope(request.user);
+    const messages = await listStationMessages(stationId, Number.isFinite(limit) ? limit : 50, projectScope);
 
     sendSuccess(response, messages);
   } catch {
@@ -40,7 +42,8 @@ export const createStationMessageController = async (request: Request, response:
     }
 
     const input = validateCreateStationMessageInput(request.body);
-    const message = await createStationMessage(stationId, input.body, request.user.id);
+    const projectScope = getActorProjectScope(request.user);
+    const message = await createStationMessage(stationId, input.body, request.user.id, projectScope);
 
     sendSuccess(response, message, 201);
   } catch (error) {

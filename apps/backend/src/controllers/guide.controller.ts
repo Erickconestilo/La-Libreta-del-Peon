@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { shouldUsePublicDto, toPublicGuideEntry } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import {
   createGuideEntry,
@@ -18,8 +19,11 @@ export const listGuideEntriesController = async (request: Request, response: Res
   try {
     const category = typeof request.query.category === 'string' ? request.query.category : null;
     const entries = await listGuideEntries(category);
+    const payload = shouldUsePublicDto(request.user)
+      ? entries.map(toPublicGuideEntry)
+      : entries;
 
-    sendSuccess(response, entries);
+    sendSuccess(response, payload);
   } catch {
     response.status(500).json({
       data: null,
@@ -47,7 +51,7 @@ export const getGuideEntryByIdController = async (request: Request, response: Re
       throw new AppError('Guide entry not found', 404, 'GUIDE_ENTRY_NOT_FOUND');
     }
 
-    sendSuccess(response, entry);
+    sendSuccess(response, shouldUsePublicDto(request.user) ? toPublicGuideEntry(entry) : entry);
   } catch (error) {
     if (error instanceof AppError) {
       response.status(error.statusCode).json({
