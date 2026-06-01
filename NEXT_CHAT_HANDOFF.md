@@ -99,7 +99,7 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
 - Motivo: validan escritura real end to end y no son visibles para `visitante`.
 - Si se limpian más adelante, usar IDs exactos y registrar la acción; no borrar por texto `QA`.
 
-## Cambios móviles locales pendientes de APK
+## Cambios móviles recientes y APK actual
 
 - `apps/mobile/app/guide/[manualId].tsx`: el lector de guías deja de renderizar todas las páginas en una lista; ahora muestra una página cada vez con navegación, zoom y arrastre.
 - `apps/mobile/components/prism-sketch.tsx`: el croquis mantiene una ventana fija, permite pan cuando hay zoom y los botones de zoom centran el prisma seleccionado cuando existe.
@@ -109,22 +109,22 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
 - Backend local: nuevo `GET /api/v1/stations/messages` para mensajes recientes con scope por proyecto.
 - Verificado: `npm run build --workspace apps/backend` y `npx tsc --noEmit --project apps/mobile/tsconfig.json`.
 - EAS preview Android `cdf499a0-0fef-4ccd-856e-2952ded918ee` fue cancelado porque quedó obsoleto antes de compilar tras añadir Bitácora.
-- EAS preview Android actual: `a8ab7d91-abd4-4d74-a445-641ee09e7b73`, estado `FINISHED`.
-- APK actual: https://expo.dev/artifacts/eas/mQ2DDR7pdsqeyhSDfkhZYg.apk
-- APK local descargada: `C:\Users\guill\Downloads\topofield-a8ab7d91-bitacora-guides-prisms.apk`.
-- Esta APK queda obsoleta si se quiere probar el icono nuevo: el tab `Bitácora` cambia a icono de brújula (`explore`) y el icono de app se reemplaza por una brújula/topografía generada localmente.
+- EAS preview Android anterior `a8ab7d91-abd4-4d74-a445-641ee09e7b73` quedó obsoleto por el cambio posterior de iconos.
+- EAS preview Android actual: `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`, estado `FINISHED`, commit `983f481eb7cc74b565256987d32e937a6987a855`.
+- APK actual: https://expo.dev/artifacts/eas/5stxhvFJC7q6yr86WGKjco.apk
+- APK local descargada: `C:\Users\guill\Downloads\topofield-2416dd4a-icons-bitacora.apk` (`120299919` bytes).
+- Incluye: tab `Bitácora` con icono de brújula (`explore`) y app icon/splash/favicon reemplazados por brújula/topografía generada localmente.
 - Nuevo script móvil: `npm run generate:icons --workspace apps/mobile`, genera `icon.png`, adaptive icon Android, monochrome, favicon y splash sin usar imágenes externas.
 - Verificado tras el cambio de iconos: `npx tsc --noEmit --project apps/mobile/tsconfig.json` y `git diff --check`.
 - Pendiente real: validar en Galaxy que las páginas de guía se leen mejor y que un prisma alejado, por ejemplo `626`, se puede seleccionar, ampliar y recorrer sin quedar limitado al centro.
 - Backend ya desplegado en `c866c73`; `GET /stations/messages` validado: anónimo 401, visitante 403, topógrafo 200.
-- Pendiente real adicional: lanzar nueva EAS preview si se quiere validar también el icono nuevo en Android.
+- Pendiente real adicional: instalar APK nueva en Galaxy cuando ADB detecte el dispositivo.
 
 ## Siguiente Paso Recomendado
 
-1. Lanzar nueva EAS preview porque hay cambio móvil real de iconos.
-2. Conectar Galaxy por ADB, instalar la APK nueva.
-3. Probar en Galaxy el lector de guías, el pan/zoom del croquis, la pestaña `Bitácora` y el icono de app.
-4. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
+1. Conectar Galaxy por ADB e instalar `C:\Users\guill\Downloads\topofield-2416dd4a-icons-bitacora.apk`.
+2. Probar en Galaxy el lector de guías, el pan/zoom del croquis, la pestaña `Bitácora` y el icono de app.
+3. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
 
