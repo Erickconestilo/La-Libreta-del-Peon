@@ -58,17 +58,17 @@ export const listIncidents = async ({
   const result = await pool.query(
     `
       SELECT
-        id,
-        station_id,
-        prism_id,
-        type,
-        description,
-        photo_url,
-        reported_by,
-        reported_at,
-        status,
-        suggestion,
-        updated_at
+        i.id,
+        i.station_id,
+        i.prism_id,
+        i.type,
+        i.description,
+        i.photo_url,
+        i.reported_by,
+        i.reported_at,
+        i.status,
+        i.suggestion,
+        i.updated_at
       FROM incidents i
       LEFT JOIN stations s ON s.id = i.station_id
       LEFT JOIN prisms p ON p.id = i.prism_id
