@@ -2,6 +2,85 @@
 
 ## APK actual
 
+- Build EAS pendiente: `71a232a3-2f87-4e85-a71e-75ad0681269a`
+- Estado actual: `IN_QUEUE`
+- Commit incluido: `59878ef93985c4f47070649224100d0e92d8c425`
+- URL build: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/71a232a3-2f87-4e85-a71e-75ad0681269a
+- Objetivo de esta build: validar en Galaxy las pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico y escrituras reales contra Render actualizado.
+
+## ADB local
+
+- `adb.exe` disponible en: `C:\Program Files (x86)\Vidmore\Vidmore Screen Recorder\adb\adb.exe`
+- Dispositivo detectado: `R5CY21X6FLE`
+- Modelo: `SM_S938B`
+- Package Android: `com.ciudadanoinusual.topofield`
+
+Comandos preparados:
+
+```powershell
+$ADB = "C:\Program Files (x86)\Vidmore\Vidmore Screen Recorder\adb\adb.exe"
+& $ADB devices -l
+& $ADB install -r "C:\Users\guill\Downloads\topofield-71a232a3-preview.apk"
+& $ADB shell monkey -p com.ciudadanoinusual.topofield -c android.intent.category.LAUNCHER 1
+& $ADB shell pidof com.ciudadanoinusual.topofield
+& $ADB logcat -c
+```
+
+Para revisar errores tras abrir la app:
+
+```powershell
+$ADB = "C:\Program Files (x86)\Vidmore\Vidmore Screen Recorder\adb\adb.exe"
+$PID = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
+& $ADB logcat --pid=$PID ReactNativeJS:V AndroidRuntime:E '*:S'
+```
+
+## Checklist rápida próxima APK
+
+### Visitante
+
+- Abrir la app sin pantalla blanca ni cierre.
+- Confirmar pestañas visibles: `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`.
+- `Obras`: carga tarjetas de obra.
+- Entrar en `Campus Nord`, `Sanllehy` o `Sarrià`.
+- Abrir una estación y confirmar detalle, foto principal si existe y croquis.
+- `Guías`: muestra solo manuales offline Leica estación y Leica LS10 como entradas principales.
+- Abrir ambos manuales y pasar páginas.
+- `Mapas`: muestra estaciones o fallback operativo sin crash.
+- `Conversación`: visitante no debe poder ver mensajes internos reales ni crear mensajes.
+- `Perfil`: rol `visitante`, sin token visible.
+
+### Topógrafo
+
+- En `Perfil`, pegar token técnico desde `topofield-session-tokens.local` sin mostrarlo en pantalla compartida.
+- Validar token y confirmar rol `topografo`.
+- Abrir `Ver historial de cambios`; debe responder sin error.
+- Abrir una estación con `Mensajes del equipo`.
+- Crear mensaje temporal corto: `QA mensaje Galaxy`.
+- Confirmar que aparece con autor/fecha.
+- Crear propuesta provisional con nombre/motivo temporal.
+- Confirmar que queda `Abierta`.
+- Probar foto de prisma desde una estación con croquis.
+- Probar foto de obra desde tarjeta/pantalla de obra.
+- Volver a visitante y confirmar que mensajes/propuestas internas no se muestran.
+
+### Logcat
+
+- Durante cada bloque, revisar que no aparezca:
+  - `FATAL EXCEPTION`
+  - `AndroidRuntime`
+  - `ReactNativeJS`
+  - `TypeError`
+  - `ReferenceError`
+
+### Si falla algo
+
+- Anotar pantalla exacta.
+- Anotar acción exacta.
+- Anotar código HTTP o mensaje visible.
+- Guardar las últimas líneas relevantes de `logcat`.
+
+---
+
 - Build EAS: `247704f1-2316-483f-bb9e-62adee8714cd`
 - APK: https://expo.dev/artifacts/eas/5vayQrWGeBVzi8V8SdCfit.apk
 - APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-247704f1-team-messages.apk`
