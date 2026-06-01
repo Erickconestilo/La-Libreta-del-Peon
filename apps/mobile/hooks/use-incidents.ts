@@ -29,6 +29,11 @@ const fetchStationIncidents = async (stationId: string) => {
   return response.data;
 };
 
+const fetchRecentIncidents = async () => {
+  const response = await apiFetch<ApiEnvelope<Incident[]>>('/incidents?limit=100');
+  return response.data;
+};
+
 const createIncident = async (input: CreateIncidentInput) => {
   const response = await apiFetch<ApiEnvelope<Incident>>('/incidents', {
     body: JSON.stringify(input),
@@ -52,6 +57,20 @@ export const useStationIncidents = (stationId: string | null) => {
   };
 };
 
+export const useRecentIncidents = (enabled = true) => {
+  const query = useQuery({
+    enabled,
+    queryFn: fetchRecentIncidents,
+    queryKey: ['incidents-feed'],
+    staleTime: 1000 * 60
+  });
+
+  return {
+    ...query,
+    errorMessage: query.error ? getErrorMessage(query.error) : null
+  };
+};
+
 export const useCreateIncident = (stationId: string | null) => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -59,6 +78,7 @@ export const useCreateIncident = (stationId: string | null) => {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['station-incidents', stationId] }),
+        queryClient.invalidateQueries({ queryKey: ['incidents-feed'] }),
         queryClient.invalidateQueries({ queryKey: ['change-logs'] })
       ]);
     }

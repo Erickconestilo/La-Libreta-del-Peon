@@ -3,8 +3,26 @@ import type { Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
-import { createStationMessage, listStationMessages } from '../models/station-messages.model.js';
+import { createStationMessage, listRecentStationMessages, listStationMessages } from '../models/station-messages.model.js';
 import { validateCreateStationMessageInput } from '../utils/station-messages-validation.js';
+
+export const listRecentStationMessagesController = async (request: Request, response: Response) => {
+  try {
+    const limit = typeof request.query.limit === 'string' ? Number(request.query.limit) : 100;
+    const projectScope = getActorProjectScope(request.user);
+    const messages = await listRecentStationMessages(Number.isFinite(limit) ? limit : 100, projectScope);
+
+    sendSuccess(response, messages);
+  } catch {
+    response.status(500).json({
+      data: null,
+      error: {
+        code: 'STATION_MESSAGES_FEED_FAILED',
+        message: 'Unable to load station messages feed'
+      }
+    });
+  }
+};
 
 export const listStationMessagesController = async (request: Request, response: Response) => {
   try {

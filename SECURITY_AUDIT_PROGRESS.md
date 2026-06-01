@@ -50,7 +50,7 @@
 - No se encontró bypass directo para que `visitante` escriba mensajes, incidencias, fotos o guía.
 - Decisión de producto cerrada para Fase 1: `visitante` puede ver coordenadas, notas y fotos públicas; esto no se trata como vulnerabilidad del MVP.
 - Hallazgos corregidos, empujados y verificados en Render: historial de cambios con scope por proyecto para `topografo`, endpoints de prismas por estación anclados a la obra de la estación, y bug funcional de foto de proyecto para `topografo` por alias SQL.
-- Hallazgo pendiente de decisión operativa: auto-asignación inicial de todos los topógrafos a todas las obras; no se puede cerrar sin una matriz real usuario-obra.
+- Hallazgo de membresías acotado operativamente: `PROJECT_MEMBERSHIPS_MATRIX.md` deja claro que la auto-asignación global solo aplica al usuario técnico de QA y no es política para usuarios reales. Sigue pendiente rellenar la matriz nominal antes de alta real de usuarios.
 - La revisión queda en estado de auditoría aplicada (no certificación), con pasos de hardening pendiente.
 
 ## Hallazgos y Riesgos Vigentes
@@ -71,7 +71,7 @@ Propuesta: pasar a bucket privado con URLs firmadas de lectura cuando la app dej
 
 Ahora mitigado parcialmente: el acceso en backend se filtra por `projectIds` del usuario.
 
-Estado actual: `project_memberships` existe y se aplica en scope; pendiente validar la distribución real de membresías (evitar auto-asignación global de topógrafos si no procede).
+Estado actual: `project_memberships` existe y se aplica en scope. La política operativa queda documentada en `PROJECT_MEMBERSHIPS_MATRIX.md`; falta rellenar la matriz nominal antes de usuarios reales.
 
 ### Riesgo 4 - Moderados en tooling móvil
 
@@ -83,7 +83,7 @@ Propuesta: seguir ruta oficial de patch de Expo SDK y revisar advisories antes d
 
 Algunas rutas confían en PostgreSQL para castear UUIDs. Un UUID malformado puede acabar como error 500 genérico en vez de 400 controlado.
 
-Estado: mitigado en código con middleware centralizado de UUID. Pendiente de verificar deploy en producción.
+Estado: mitigado en código con middleware centralizado de UUID y verificado en producción en rutas públicas revisadas.
 
 ### Riesgo 6 - Historial sin scope por proyecto
 
@@ -105,14 +105,13 @@ QA: `topografo` recibe `200` en `/stations/:id/prisms`.
 
 La migración `013_project_memberships.sql` asigna todos los topógrafos existentes a todas las obras. Esto sirve para no romper QA, pero no demuestra aislamiento real entre equipos.
 
-Propuesta: añadir una migración correctiva o script administrativo para dejar membresías explícitas por obra cuando existan usuarios reales.
+Estado: decisión operativa documentada en `PROJECT_MEMBERSHIPS_MATRIX.md`. El usuario técnico `topofield-topografo@topofield.local` puede seguir con acceso a todas las obras para QA. Ningún usuario real debe copiar ese patrón; antes de alta real hay que rellenar la matriz usuario-obra y aplicar membresías explícitas.
 
 ### Riesgo 9 - Bug funcional en foto de proyecto para topógrafo
 
 `updateProjectPhoto` reutiliza una condición con alias `p.id`, pero la query de bloqueo usa `FROM projects` sin alias. Para `admin` no aparece porque no hay scope; para `topografo` puede acabar en 500.
 
-Estado: corregido y desplegado aliasando `FROM projects p`.
-Pendiente: prueba funcional de foto de obra con `topografo` en Galaxy, porque no se hizo una mutación de producción desde la auditoría.
+Estado: corregido y validado en Galaxy con `topografo` mediante subida firmada real + `PATCH /projects/:id/photo`; la foto QA se restauró después.
 
 ## Propuestas Backend
 
@@ -128,7 +127,7 @@ Pendiente: prueba funcional de foto de obra con `topografo` en Galaxy, porque no
 
 - Mostrar claramente si se está en modo visitante, topógrafo o admin.
 - En modo visitante, ocultar tarjetas internas/acciones y mostrar flujo operativo simplificado.
-- En Guía, mantener búsqueda y agrupación por instrumento; añadir favoritos o “usadas recientemente” si crece el contenido.
+- En Guía, mantener los manuales offline como entrada principal; añadir favoritos o usadas recientemente solo si crece el contenido.
 - En estacionamiento, separar visualmente: datos oficiales, mensajes internos, propuestas provisionales y memoria visual.
 - Para croquis de prismas, añadir más tolerancia de interacción y límites de zoom ya aplicados; considerar librería de mapa operativo si se decide georreferencia real en fase posterior.
 - En Perfil, nunca mostrar el token guardado; ya se usa `SecureStore`, mantenerlo así.
@@ -137,9 +136,10 @@ Pendiente: prueba funcional de foto de obra con `topografo` en Galaxy, porque no
 
 - Alcance técnico completado: scope por proyecto, autorización consistente y hardening de mutaciones.
 - Pendiente de producto futuro: revisar Storage firmado si el producto deja de tratar fotos/coordenadas como públicas para visitante.
-- Pendiente operativo: validar escritura real en Galaxy con token técnico.
+- Escritura real validada en Galaxy con token técnico: mensaje, propuesta provisional, foto de prisma y foto de obra.
+- Pendiente operativo: rellenar la matriz real de `project_memberships` antes de usuarios reales.
 
 ## Bloqueos Operativos
 
-- EAS Android sigue condicionado por la cuota del plan Free para generar una APK nueva.
-- En Galaxy queda probar escritura real de mensajes, propuesta provisional, foto de prisma, foto de obra y token técnico.
+- No lanzar otra EAS salvo cambio móvil real.
+- No hay bloqueo técnico actual para QA validada; la siguiente decisión operativa es la matriz real de usuarios y obras.

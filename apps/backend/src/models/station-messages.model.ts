@@ -37,6 +37,18 @@ const mapStationMessageRow = (row: QueryResultRow) => {
         }
       : null,
     id: row.id,
+    station: row.station_name
+      ? {
+          id: row.station_id,
+          name: row.station_name,
+          project: row.project_code
+            ? {
+                code: row.project_code,
+                name: row.project_name
+              }
+            : null
+        }
+      : null,
     stationId: row.station_id
   };
 };
@@ -57,11 +69,15 @@ export const listStationMessages = async (
         sm.body,
         sm.created_by,
         sm.created_at,
+        s.name AS station_name,
+        pr.code AS project_code,
+        pr.name AS project_name,
         u.email AS created_by_email,
         u.full_name AS created_by_full_name,
         u.role AS created_by_role
       FROM station_messages sm
       INNER JOIN stations s ON s.id = sm.station_id
+      LEFT JOIN projects pr ON pr.id = s.project_id
       LEFT JOIN users u ON u.id = sm.created_by
       WHERE sm.station_id = $1
       ${scope.clause}
@@ -88,12 +104,16 @@ const getStationMessageById = async (
         sm.body,
         sm.created_by,
         sm.created_at,
+        s.name AS station_name,
+        pr.code AS project_code,
+        pr.name AS project_name,
         u.email AS created_by_email,
         u.full_name AS created_by_full_name,
         u.role AS created_by_role
       FROM station_messages sm
       LEFT JOIN users u ON u.id = sm.created_by
       INNER JOIN stations s ON s.id = sm.station_id
+      LEFT JOIN projects pr ON pr.id = s.project_id
       WHERE sm.id = $1
       ${scope.clause}
     `,
@@ -101,6 +121,42 @@ const getStationMessageById = async (
   );
 
   return result.rowCount === 0 ? null : mapStationMessageRow(result.rows[0]);
+};
+
+export const listRecentStationMessages = async (
+  limit = 100,
+  projectScope: string[] | null = null
+) => {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const scope = buildStationScopeCondition(projectScope, 2);
+
+  const result = await pool.query(
+    `
+      SELECT
+        sm.id,
+        sm.station_id,
+        sm.body,
+        sm.created_by,
+        sm.created_at,
+        s.name AS station_name,
+        pr.code AS project_code,
+        pr.name AS project_name,
+        u.email AS created_by_email,
+        u.full_name AS created_by_full_name,
+        u.role AS created_by_role
+      FROM station_messages sm
+      INNER JOIN stations s ON s.id = sm.station_id
+      LEFT JOIN projects pr ON pr.id = s.project_id
+      LEFT JOIN users u ON u.id = sm.created_by
+      WHERE 1=1
+      ${scope.clause}
+      ORDER BY sm.created_at DESC, sm.id DESC
+      LIMIT $1
+    `,
+    [safeLimit, ...scope.params]
+  );
+
+  return result.rows.map(mapStationMessageRow);
 };
 
 export const createStationMessage = async (
