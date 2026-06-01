@@ -14,6 +14,7 @@ import {
 } from '../controllers/station-photos.controller.js';
 import {
   createStationMessageController,
+  listRecentStationMessagesController,
   listStationMessagesController
 } from '../controllers/station-messages.controller.js';
 import { listStationPrismsController } from '../controllers/prisms.controller.js';
@@ -28,6 +29,12 @@ stationsRouter.get(
   requireRole(['admin', 'topografo', 'visitante']),
   validateOptionalUuidQuery('projectId'),
   listStationsController
+);
+stationsRouter.get(
+  '/messages',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  listRecentStationMessagesController
 );
 stationsRouter.get(
   '/:stationId/photos',

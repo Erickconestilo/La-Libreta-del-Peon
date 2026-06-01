@@ -141,6 +141,14 @@ export interface StationMessage {
     fullName: string;
     role: UserRole;
   } | null;
+  station?: {
+    id: string;
+    name: string;
+    project: {
+      code: string;
+      name: string;
+    } | null;
+  } | null;
   createdAt: string;
 }
 

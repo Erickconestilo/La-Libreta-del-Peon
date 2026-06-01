@@ -25,16 +25,18 @@
 - Commit posterior - validación centralizada de UUIDs en rutas backend para evitar errores SQL por params/query malformados.
 - `c33e812` - hardening por proyecto, DTO público visitante, Guías/Mapas/Conversación y croquis con pinza.
 - `5c5752c` - corrige scope de topógrafo en listado de mensajes de estación.
+- `0a4f523` - corrige `GET /incidents?stationId=...&status=open` cualificando columnas `i.*`.
+- `7dfa919` - documenta QA topógrafo y prioridades de APIs no climáticas.
 
 ## APK Actual
 
-- EAS build: `247704f1-2316-483f-bb9e-62adee8714cd`.
-- URL APK: https://expo.dev/artifacts/eas/5vayQrWGeBVzi8V8SdCfit.apk
-- Archivo local: `C:\Users\guill\Downloads\topofield-247704f1-team-messages.apk`.
+- EAS build: `71a232a3-2f87-4e85-a71e-75ad0681269a`.
+- URL APK: https://expo.dev/artifacts/eas/f2RvG2T6oYbB47KVm1cQ4U.apk
+- Archivo local: `C:\Users\guill\Downloads\topofield-71a232a3-preview.apk`.
 - Instalado en Galaxy por ADB con resultado `Success`.
-- Commit incluido en APK: `32b825d4d8a954dcfb28cc07302f493bc4c44804`.
-- Incluye hardening móvil previo, guía con búsqueda/agrupación, mensajes internos, propuestas provisionales, croquis con zona táctil mayor y campo de token corregido.
-- No incluye commits backend-only posteriores (`af21658`, `416840d`, `13e7b8b`), pero eso no requiere otra APK.
+- Commit incluido en APK: `59878ef93985c4f47070649224100d0e92d8c425`.
+- Incluye pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico corregido y hardening móvil vigente.
+- QA visitante y topógrafo validada en Galaxy; no lanzar otra EAS salvo cambio móvil real.
 
 ## APK Anterior
 
@@ -53,16 +55,16 @@
 - Al tocar un prisma se muestra código, estado, distancia, ángulo, observaciones, última lectura, constante y foto.
 - Backend local compila con endpoint `PATCH /prisms/:prismId/photo`.
 - Backend local compila con validación UUID previa a SQL en rutas de estaciones, proyectos, guía, prismas, incidencias e historial.
-- Render público todavía sirve `3e721a1`; GitHub `main` ya tiene commits posteriores, por lo que falta redeploy manual/auto-deploy efectivo.
-- Galaxy validado por ADB como visitante: Obras, obra `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante.
-- APK `247704f1` validada por ADB: abre sin crash, Guía muestra búsqueda/agrupación, Campus Nord abre estaciones y el detalle contiene `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.
-- Estacionamiento queda pendiente de Render actualizado para probar escritura real de mensajes y propuestas provisionales; ambos flujos son internos y requieren rol `admin` o `topografo`.
+- Render público verificado en `0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
+- Galaxy validado por ADB como visitante: Obras, Mapas, Guías, Perfil y Conversación sin pantalla blanca ni crash.
+- Galaxy validado con rol `topografo`: token técnico, mensajes internos, propuesta provisional, foto de prisma y foto de obra.
+- Los flujos internos de mensajes/propuestas quedan restringidos a `admin` y `topografo`; `visitante` no los ve.
 
 ## Estado Backend Render
 
-Render fue redeployado manualmente con cache limpio desde `main` en una tanda previa:
+Render público verificado el 2026-06-01:
 
-- `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
+- `GET /health`: 200 con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`
 - `GET /projects` sin token: 401
 - `GET /guide-entries` sin token: 401
 - `GET /prisms/coverage/CN1` sin token: 401
@@ -71,10 +73,11 @@ Render fue redeployado manualmente con cache limpio desde `main` en una tanda pr
 - `GET /prisms/coverage/CN1` con `GUEST_PUBLIC_TOKEN`: 200
 - `PATCH /prisms/:prismId/photo` sin token: 401, no 404
 - `POST /uploads/photos/sign` sin token: 401, no 404
+- `GET /incidents?stationId=...&status=open` corregido tras el fallo de SQL ambiguo.
 
-Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen; para probar foto de prisma en móvil hace falta sesión `admin` o `topografo`.
+Interpretación: el bloqueo de backend antiguo queda resuelto. Las rutas protegidas existen y la escritura real ya fue probada con sesión `topografo` en Galaxy.
 
-Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, así que Render aún no ha publicado `32b825d`/`af21658`/`416840d` ni los commits de documentación posteriores. Mensajes e incidencias nuevas necesitan ese redeploy.
+Estado actual: Render publica el backend usado para la QA topógrafo y el fix de incidencias `0a4f523`.
 
 ## Hardening Backend Hecho Localmente
 
@@ -86,22 +89,43 @@ Estado actual tras nuevos commits: `GET /health` sigue devolviendo `3e721a1`, as
 - Scripts de escritura contra producción quedan bloqueados salvo `TOPOFIELD_ALLOW_PRODUCTION_WRITE=<script>`.
 - Verificado localmente: `npm run build --workspace apps/backend`, `npx tsc --noEmit --project apps/mobile/tsconfig.json`, `npm run verify:guide-admin --workspace apps/backend`, `npm audit --workspace apps/backend --json`.
 
-Confirmado tras push/deploy: Render expone `3e721a1` y las rutas GET ya exigen token.
+Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen token.
+
+## Decisión Datos QA
+
+- Se dejan como trazabilidad aceptada:
+  - Mensaje QA: `e1037d58-f6e6-42c2-a222-c8e8fc389003`.
+  - Propuesta provisional QA: `1f8153e3-d956-48c7-9ad6-00c0322c16cf`.
+- Motivo: validan escritura real end to end y no son visibles para `visitante`.
+- Si se limpian más adelante, usar IDs exactos y registrar la acción; no borrar por texto `QA`.
+
+## Cambios móviles locales pendientes de APK
+
+- `apps/mobile/app/guide/[manualId].tsx`: el lector de guías deja de renderizar todas las páginas en una lista; ahora muestra una página cada vez con navegación, zoom y arrastre.
+- `apps/mobile/components/prism-sketch.tsx`: el croquis mantiene una ventana fija, permite pan cuando hay zoom y los botones de zoom centran el prisma seleccionado cuando existe.
+- `apps/mobile/app/(tabs)/_layout.tsx`: la pestaña `Conversación` pasa a llamarse `Bitácora`.
+- `apps/mobile/app/(tabs)/conversations.tsx`: la pantalla ahora muestra una bitácora de notas, incidencias y mensajes con fecha/hora.
+- `apps/mobile/hooks/use-station-messages.ts` y `apps/mobile/hooks/use-incidents.ts`: hooks de feed reciente para bitácora.
+- Backend local: nuevo `GET /api/v1/stations/messages` para mensajes recientes con scope por proyecto.
+- Verificado: `npm run build --workspace apps/backend` y `npx tsc --noEmit --project apps/mobile/tsconfig.json`.
+- EAS preview Android `cdf499a0-0fef-4ccd-856e-2952ded918ee` fue cancelado porque quedó obsoleto antes de compilar tras añadir Bitácora.
+- Pendiente real: validar en Galaxy que las páginas de guía se leen mejor y que un prisma alejado, por ejemplo `626`, se puede seleccionar, ampliar y recorrer sin quedar limitado al centro.
+- Pendiente real adicional: desplegar backend antes de generar APK, porque Bitácora depende del endpoint nuevo `/stations/messages`.
 
 ## Siguiente Paso Recomendado
 
-1. Esperar a que EAS libere cuota Android Free y lanzar nueva APK preview.
-2. Instalar APK nueva en Galaxy y validar que pestañas sean `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`.
-3. Con token `admin` o `topografo`, probar mensajes reales, propuesta provisional y foto de prisma.
-4. Revisar en Galaxy si el croquis permite zoom de pinza suficiente; si no, migrar a `react-native-gesture-handler`.
-5. Continuar auditoría aplicada: decidir privacidad de coordenadas/fotos/notas para visitante y Storage privado/URLs firmadas de lectura.
+1. Desplegar backend y hacer smoke test de `GET /stations/messages` con token `topografo`.
+2. Lanzar nueva EAS preview con Guías + croquis + Bitácora.
+3. Probar en Galaxy el lector de guías, el pan/zoom del croquis y la pestaña `Bitácora`.
+4. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
 
-- `GET /health`: `5c5752c9e7d6417e759165c0a45061fb8f10167d`.
+- `GET /health`: `0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
 - Rutas visitante principales con token: 200.
 - Rutas GET protegidas sin token: 401.
 - Mensajes de estación: admin 200, topógrafo 200, visitante 403.
+- Incidencias filtradas por estación/estado: corregidas tras `0a4f523`.
 - DTO visitante: no expone `createdBy` en estaciones/guías ni `sourceFiles` en prismas.
 
 ## Nota Técnica Sobre Prismas

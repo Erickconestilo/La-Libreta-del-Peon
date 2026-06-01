@@ -27,6 +27,11 @@ const fetchStationMessages = async (stationId: string) => {
   return response.data;
 };
 
+const fetchRecentStationMessages = async () => {
+  const response = await apiFetch<ApiEnvelope<StationMessage[]>>('/stations/messages?limit=100');
+  return response.data;
+};
+
 const createStationMessage = async ({
   input,
   stationId
@@ -56,6 +61,20 @@ export const useStationMessages = (stationId: string | null) => {
   };
 };
 
+export const useRecentStationMessages = (enabled = true) => {
+  const query = useQuery({
+    enabled,
+    queryFn: fetchRecentStationMessages,
+    queryKey: ['station-messages-feed'],
+    staleTime: 1000 * 60
+  });
+
+  return {
+    ...query,
+    errorMessage: query.error ? getErrorMessage(query.error) : null
+  };
+};
+
 export const useCreateStationMessage = (stationId: string | null) => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -68,6 +87,7 @@ export const useCreateStationMessage = (stationId: string | null) => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['station-messages', stationId] });
+      await queryClient.invalidateQueries({ queryKey: ['station-messages-feed'] });
       await queryClient.invalidateQueries({ queryKey: ['change-logs'] });
     }
   });

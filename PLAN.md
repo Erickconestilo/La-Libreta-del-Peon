@@ -34,7 +34,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Historial de cambios / auditoría
 - Foco en equipo pequeño y uso real de campo
 
-## Estado Actual - 2026-05-31
+## Estado Actual - 2026-06-01
 
 - Flujo móvil principal ya entra por `Obras -> Estacionamientos`.
 - Guías Leica están embebidas como lector offline con páginas JPG optimizadas: `Guía Leica de estación` y `Nivel Leica LS10`.
@@ -42,10 +42,10 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Detalle de estación incluye foto principal, memoria visual, notas editables por rol y datos técnicos colapsados.
 - Mapa sin Google API key usa vista operativa/fallback con coordenadas y enlaces externos, evitando crash de `react-native-maps`.
 - Prismas por estación tienen croquis operativo con `react-native-svg`, basado en ángulo horizontal y distancia inclinada. No representa coordenadas geográficas absolutas.
-- Ficha de prisma permite preparar foto de prisma mediante Supabase Storage; Render ya publica el backend nuevo en commit `3e721a14a713fb2dc609c519305df3cfaeff757e`.
-- APK final de la tanda: EAS `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`, URL `https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk`, instalado por ADB en Galaxy.
+- Ficha de prisma permite foto de prisma mediante subida firmada a Supabase Storage y `PATCH /prisms/:id/photo`; validado en Galaxy con rol `topografo`.
+- APK actual: EAS `71a232a3-2f87-4e85-a71e-75ad0681269a`, archivo local `C:\Users\guill\Downloads\topofield-71a232a3-preview.apk`, instalado por ADB en Galaxy.
 - Hardening backend aplicado en `10c91b8`: roles ya no salen de metadata mutable, usuarios Supabase se validan contra tabla local `users`, lecturas GET requieren token invitado, hay rate limit básico, scripts de escritura requieren autorización explícita y `PATCH /projects/:id/photo` queda corregido por migración `011`.
-- Hardening móvil aplicado en `3e721a1` pero pendiente de nueva APK: token técnico en SecureStore, API production solo HTTPS, permisos Android reducidos y aviso antes de abrir Google Maps externo.
+- Hardening móvil incluido en la APK actual: token técnico en SecureStore, API production solo HTTPS, permisos Android reducidos y aviso antes de abrir Google Maps externo.
 - QA Galaxy visitante validada: Obras, `Sarrià`, detalle de estación, croquis PN1/PN2, Guía offline, Mapa fallback y Perfil visitante sin errores de app en `logcat`.
 - Guía mejorada con búsqueda y agrupación de fichas rápidas por instrumento.
 - Estacionamiento empieza a funcionar como unidad operativa: mensajes/bitácora por estación y propuestas de estacionamiento provisional como incidencias con sugerencia `new_station`; son flujos internos para `admin/topografo`, no públicos para visitante.
@@ -53,15 +53,18 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Backend Docker/Render usa `npm ci` con lockfile propio para builds reproducibles.
 - APK EAS `247704f1-2316-483f-bb9e-62adee8714cd` instalada en Galaxy: valida Guía con búsqueda/agrupación, Obra `Campus Nord`, detalle de estación y presencia de mensajes/provisionales/croquis sin errores nativos ni JS.
 - Backend añade validación centralizada de UUIDs en params/query para devolver `400` controlado antes de SQL.
+- APK EAS `71a232a3-2f87-4e85-a71e-75ad0681269a` instalada en Galaxy: visitante validado en Obras, Mapas, Guías, Perfil y Conversación; topógrafo validado con mensaje real, propuesta provisional, foto de prisma y foto de obra.
+- Los registros QA de mensaje/propuesta se dejan como trazabilidad aceptada; no son visibles para visitante.
+- La política real de `project_memberships` queda documentada en `PROJECT_MEMBERSHIPS_MATRIX.md`: el topógrafo técnico de QA puede tener todas las obras, pero usuarios reales requieren matriz explícita usuario-obra.
 
 ## Estado Backend Render
 
-- Render fue redeployado manualmente desde `main` con cache limpio.
-- `GET /health` responde 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`.
+- Render fue redeployado desde `main`.
+- `GET /health` responde 200 con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 401 sin token y 200 con `GUEST_PUBLIC_TOKEN`.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Estado actual: GitHub `main` ya contiene commits posteriores a `3e721a1`, pero Render público aún responde `3e721a1`; falta redeploy manual/auto-deploy efectivo.
-- Siguiente acción real: forzar/verificar Render, y con token técnico probar foto de prisma, mensajes de estación y propuesta provisional en Galaxy.
+- Estado actual: Render público responde `GET /health` con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
+- Siguiente acción real: definir usuarios reales y su matriz de obras antes de alta real; no lanzar otra EAS salvo cambio móvil.
 
 ## Principios de Implementación
 - Una feature cada vez
@@ -340,6 +343,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Desfase entre APK y backend Render si auto-deploy no publica los commits nuevos
 - Confundir croquis de prismas por ángulo/distancia con mapa geográfico real
 - Tratar `GUEST_PUBLIC_TOKEN` como privado. Es falso: va dentro de la APK y solo sirve para lectura pública controlada, no para confidencialidad.
+- Copiar el acceso global del topógrafo técnico de QA a usuarios reales. Esa asignación solo existe para pruebas; los usuarios reales deben tener membresías explícitas por obra.
 
 ## Secuencia Recomendada de Trabajo
 1. Documentos finales

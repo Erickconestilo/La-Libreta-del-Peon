@@ -22,6 +22,7 @@
   - Foto de obra validada con subida firmada + `PATCH /projects/:id/photo`; se restauró la imagen anterior/null para no dejar portada QA.
   - `logcat` tras la prueba: sin `AndroidRuntime`, sin error JS; solo `ReactNativeJS: Running "main"`.
 - Hallazgo corregido durante QA: `GET /incidents?stationId=...&status=open` devolvía `500 INCIDENTS_LIST_FAILED` por columna `id` ambigua en SQL; fix `0a4f523` cualifica columnas con alias `i`.
+- Decisión post-QA: se dejan el mensaje `e1037d58-f6e6-42c2-a222-c8e8fc389003` y la propuesta `1f8153e3-d956-48c7-9ad6-00c0322c16cf` como trazabilidad aceptada de prueba. No son visibles para `visitante`.
 - Objetivo de esta build: validar en Galaxy las pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico y escrituras reales contra Render actualizado.
 
 ## ADB local
@@ -55,14 +56,14 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 ### Visitante
 
 - Abrir la app sin pantalla blanca ni cierre.
-- Confirmar pestañas visibles: `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`.
+- Confirmar pestañas visibles: `Obras`, `Mapas`, `Bitácora`, `Guías`, `Perfil`.
 - `Obras`: carga tarjetas de obra.
 - Entrar en `Campus Nord`, `Sanllehy` o `Sarrià`.
 - Abrir una estación y confirmar detalle, foto principal si existe y croquis.
 - `Guías`: muestra solo manuales offline Leica estación y Leica LS10 como entradas principales.
 - Abrir ambos manuales y pasar páginas.
 - `Mapas`: muestra estaciones o fallback operativo sin crash.
-- `Conversación`: visitante no debe poder ver mensajes internos reales ni crear mensajes.
+- `Bitácora`: visitante no debe poder ver mensajes internos reales ni incidencias internas.
 - `Perfil`: rol `visitante`, sin token visible.
 
 ### Topógrafo
@@ -70,6 +71,7 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - En `Perfil`, pegar token técnico desde `topofield-session-tokens.local` sin mostrarlo en pantalla compartida.
 - Validar token y confirmar rol `topografo`.
 - Abrir `Ver historial de cambios`; debe responder sin error.
+- Abrir `Bitácora`; debe mostrar notas, incidencias y mensajes con fecha/hora.
 - Abrir una estación con `Mensajes del equipo`.
 - Crear mensaje temporal corto: `QA mensaje Galaxy`.
 - Confirmar que aparece con autor/fecha.
@@ -116,23 +118,18 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 
 ## Estado backend Render
 
-- `GET /health`: 200 con `commit: 3e721a14a713fb2dc609c519305df3cfaeff757e`
-- `GET /stations`: 200
-- `GET /projects` sin token: 401
-- `GET /guide-entries` sin token: 401
-- `GET /prisms/coverage/CN1` sin token: 401
-- `GET /projects` con `GUEST_PUBLIC_TOKEN`: 200
-- `GET /guide-entries` con `GUEST_PUBLIC_TOKEN`: 200
-- `GET /prisms/coverage/CN1` con `GUEST_PUBLIC_TOKEN`: 200
+- `GET /health`: 200 con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`
+- `/projects`, `/stations`, `/guide-entries` y `/prisms/coverage/CN1` sin token: 401
+- `/projects`, `/stations`, `/guide-entries` y `/prisms/coverage/CN1` con `GUEST_PUBLIC_TOKEN`: 200
 - `PATCH /prisms/:prismId/photo` sin token: 401, no 404
 - `POST /uploads/photos/sign` sin token: 401, no 404
-- Interpretacion: Render ya sirve backend nuevo. Si la foto de prisma falla en Galaxy, ya no es por ruta inexistente; revisar token/rol, firma de subida o payload.
+- Escrituras reales con `topografo` validadas en Galaxy: mensaje, propuesta provisional, foto de prisma y foto de obra.
 
 ### Estado actual tras nuevos commits
 
-- GitHub `main`: contiene commits posteriores a `3e721a1`
-- Render `GET /health`: todavía `3e721a14a713fb2dc609c519305df3cfaeff757e`
-- Pendiente: redeploy Render para publicar mensajes de estación, incidencias/propuestas provisionales, hardening de incidencias y lockfile de backend.
+- GitHub `main`: contiene el fix `0a4f523`.
+- Render `GET /health`: `0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
+- Mensajes de estación, incidencias/propuestas provisionales y fotos reales ya fueron validados en Galaxy con rol `topografo`.
 
 ### Nota tras hardening backend `10c91b8`
 
@@ -165,16 +162,18 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - `Campus Nord Estacionamiento CN2` abre correctamente.
 - En detalle de estación aparecen las secciones `Mensajes del equipo`, `Estacionamientos provisionales` y `Croquis de prismas`.
 - `logcat` filtrado por PID de TopoField: sin `FATAL EXCEPTION`, sin `AndroidRuntime`, sin `ReactNativeJS`, sin `TypeError` y sin `ReferenceError`.
-- Limitación: no se probó escritura real de mensajes/provisionales/foto de prisma porque Render público sigue en `3e721a1`.
+- Limitación histórica: esta build no probó escritura real en esa tanda. La APK posterior `71a232a3` sí validó mensajes, propuesta provisional, foto de prisma y foto de obra.
 
-### Pendiente de QA móvil
+### Pendiente de QA móvil fina
 
-- Nueva build Android preview tras cambios de Guías/Mapas/Conversación/croquis: intento con `npx eas-cli build -p android --profile preview --non-interactive` bloqueado por cuota mensual Android del plan Free. Expo indicó reinicio de cuota en unas 6 horas, lunes 2026-06-01.
-- Probar sesión real `admin`/`topografo` pegando token manualmente o con una build nueva que incluya el campo de token corregido.
-- Probar subida real de foto de prisma desde Galaxy.
-- Probar `Mensajes del equipo` creando un mensaje real cuando Render esté redeployado.
-- Probar `Estacionamientos provisionales` creando una propuesta real cuando Render esté redeployado.
-- Confirmar primero que Render ya no sirve `3e721a1`; si sigue en ese commit, mensajes/provisionales fallarán aunque la APK sea correcta.
+- Build EAS `cdf499a0-0fef-4ccd-856e-2952ded918ee` cancelado porque quedó obsoleto tras añadir Bitácora.
+- Antes de la próxima APK: desplegar backend con `GET /stations/messages`.
+- Validar lector de guías corregido: una página cada vez, navegación de páginas, zoom y arrastre legible.
+- Validar croquis corregido: seleccionar un prisma alejado, por ejemplo `626`, ampliar y arrastrar por todo el croquis sin quedar limitado al centro.
+- Validar pestaña `Bitácora`: muestra notas, incidencias y mensajes con fecha/hora para `admin/topografo`, y queda bloqueada para `visitante`.
+- Revisar historial visible con rol técnico si se toca esa pantalla.
+- Revisar errores manuales de roles/scope si se crean usuarios reales.
+- Hay cambio móvil real pendiente de APK; lanzar EAS preview solo después de comprobar TypeScript y decidir que la UX local queda lista.
 
 ## Resultado QA backend Render `5c5752c` — 2026-05-31
 

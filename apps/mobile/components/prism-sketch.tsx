@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PanResponder,
@@ -25,100 +26,51 @@ type PrismSketchProps = {
   selectedCode: string | null;
 };
 
-const VIEWBOX_SIZE = 320;
-const CENTER = VIEWBOX_SIZE / 2;
-const MAX_RADIUS = 124;
-const PRISM_TOUCH_RADIUS = 34;
-const SELECTED_PRISM_TOUCH_RADIUS = 46;
-const MIN_SCALE = 0.4;
-const MAX_SCALE = 5;
-const SCALE_STEP = 0.2;
+type PanPoint = {
+  x: number;
+  y: number;
+};
 
 type TouchPoint = {
   pageX: number;
   pageY: number;
 };
 
+type PrismGestureState = {
+  baseDistance: number | null;
+  basePan: PanPoint;
+  baseScale: number;
+};
+
+const VIEWBOX_SIZE = 320;
+const CENTER = VIEWBOX_SIZE / 2;
+const MAX_RADIUS = 124;
+const PRISM_TOUCH_RADIUS = 34;
+const SELECTED_PRISM_TOUCH_RADIUS = 46;
+const MIN_SCALE = 1;
+const MAX_SCALE = 5;
+const SCALE_STEP = 0.35;
+
 export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps) {
   const { width } = useWindowDimensions();
   const chartSize = Math.min(width - spacing[3] * 4, 340);
   const [scale, setScale] = useState(1);
-  const scaleRef = useRef(1);
-  const pinchRef = useRef<{ baseScale: number; baseDistance: number } | null>(null);
+  const [pan, setPan] = useState<PanPoint>({ x: 0, y: 0 });
+  const scaleRef = useRef(scale);
+  const panRef = useRef(pan);
+  const gestureRef = useRef<PrismGestureState | null>(null);
 
   useEffect(() => {
     scaleRef.current = scale;
   }, [scale]);
 
+  useEffect(() => {
+    panRef.current = pan;
+  }, [pan]);
+
   const maxDistance = useMemo(() => {
     return Math.max(...items.map((item) => item.distanceM), 1);
   }, [items]);
-
-  const scaledChartSize = Math.max(220, Math.round(chartSize * scale));
-  const zoomIn = () => {
-    setScale((current) => {
-      const next = current + SCALE_STEP;
-      return Number(Math.min(MAX_SCALE, next).toFixed(2));
-    });
-  };
-  const zoomOut = () => {
-    setScale((current) => {
-      const next = current - SCALE_STEP;
-      return Number(Math.max(MIN_SCALE, next).toFixed(2));
-    });
-  };
-  const resetZoom = () => {
-    setScale(1);
-  };
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
-        onStartShouldSetPanResponder: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
-        onMoveShouldSetPanResponderCapture: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
-        onMoveShouldSetPanResponder: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
-        onPanResponderGrant: (event) => {
-          const touches = (event.nativeEvent.touches as unknown as TouchPoint[]) ?? [];
-          const distance = getTouchesDistance(touches);
-
-          if (!distance) {
-            pinchRef.current = null;
-            return;
-          }
-
-          pinchRef.current = {
-            baseScale: scaleRef.current,
-            baseDistance: distance
-          };
-        },
-        onPanResponderMove: (event) => {
-          if (!pinchRef.current) {
-            return;
-          }
-
-          const touches = (event.nativeEvent.touches as unknown as TouchPoint[]) ?? [];
-          const distance = getTouchesDistance(touches);
-
-          if (!distance) {
-            return;
-          }
-
-          const ratio = distance / pinchRef.current.baseDistance;
-          const nextScale = clampScale(pinchRef.current.baseScale * ratio);
-          setScale(nextScale);
-        },
-        onPanResponderRelease: () => {
-          pinchRef.current = null;
-        },
-        onPanResponderTerminate: () => {
-          pinchRef.current = null;
-        },
-        onPanResponderTerminationRequest: () => false,
-        onShouldBlockNativeResponder: () => true
-      }),
-    []
-  );
 
   const plotItems = useMemo(() => {
     return items.map((item, index) => {
@@ -136,6 +88,121 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
       };
     });
   }, [items, maxDistance]);
+
+  const selectedPlotItem = plotItems.find((item) => item.code === selectedCode) ?? null;
+
+  const clampSketchPan = (nextPan: PanPoint, nextScale = scaleRef.current) => {
+    return clampPan(nextPan, chartSize, nextScale);
+  };
+
+  const getFocusedPan = (item: typeof selectedPlotItem, nextScale: number) => {
+    if (!item) {
+      return clampSketchPan(panRef.current, nextScale);
+    }
+
+    const centerPx = chartSize / 2;
+    const itemPx = {
+      x: (item.x / VIEWBOX_SIZE) * chartSize,
+      y: (item.y / VIEWBOX_SIZE) * chartSize
+    };
+
+    return clampSketchPan(
+      {
+        x: -(itemPx.x - centerPx) * nextScale,
+        y: -(itemPx.y - centerPx) * nextScale
+      },
+      nextScale
+    );
+  };
+
+  const setScaleWithFocus = (nextScale: number) => {
+    const clampedScale = clampScale(nextScale);
+    setScale(clampedScale);
+    setPan(selectedPlotItem ? getFocusedPan(selectedPlotItem, clampedScale) : clampSketchPan(panRef.current, clampedScale));
+  };
+
+  const zoomIn = () => {
+    setScaleWithFocus(scaleRef.current + SCALE_STEP);
+  };
+
+  const zoomOut = () => {
+    setScaleWithFocus(scaleRef.current - SCALE_STEP);
+  };
+
+  const resetZoom = () => {
+    setScale(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  useEffect(() => {
+    if (!selectedPlotItem || scaleRef.current <= 1) {
+      return;
+    }
+
+    setPan(getFocusedPan(selectedPlotItem, scaleRef.current));
+  }, [selectedPlotItem?.code]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
+        onStartShouldSetPanResponderCapture: (_event, gestureState) => gestureState.numberActiveTouches >= 2,
+        onMoveShouldSetPanResponder: (_event, gestureState) => {
+          return (
+            gestureState.numberActiveTouches >= 2 ||
+            (scaleRef.current > 1 && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3))
+          );
+        },
+        onMoveShouldSetPanResponderCapture: (_event, gestureState) => {
+          return (
+            gestureState.numberActiveTouches >= 2 ||
+            (scaleRef.current > 1 && (Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3))
+          );
+        },
+        onPanResponderGrant: (event) => {
+          const touches = (event.nativeEvent.touches as unknown as TouchPoint[]) ?? [];
+
+          gestureRef.current = {
+            baseDistance: getTouchesDistance(touches),
+            basePan: panRef.current,
+            baseScale: scaleRef.current
+          };
+        },
+        onPanResponderMove: (event, gestureState) => {
+          const gesture = gestureRef.current;
+
+          if (!gesture) {
+            return;
+          }
+
+          const touches = (event.nativeEvent.touches as unknown as TouchPoint[]) ?? [];
+          const distance = getTouchesDistance(touches);
+
+          if (distance && gesture.baseDistance) {
+            const nextScale = clampScale(gesture.baseScale * (distance / gesture.baseDistance));
+            setScale(nextScale);
+            setPan(clampSketchPan(gesture.basePan, nextScale));
+            return;
+          }
+
+          setPan(
+            clampSketchPan({
+              x: gesture.basePan.x + gestureState.dx,
+              y: gesture.basePan.y + gestureState.dy
+            })
+          );
+        },
+        onPanResponderRelease: () => {
+          gestureRef.current = null;
+        },
+        onPanResponderTerminate: () => {
+          gestureRef.current = null;
+        },
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true
+      }),
+    [chartSize, selectedPlotItem?.code]
+  );
 
   if (items.length === 0) {
     return (
@@ -156,9 +223,9 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
           onPress={zoomOut}
           style={({ pressed }) => [styles.zoomButton, scale <= MIN_SCALE && styles.zoomButtonDisabled, pressed ? styles.zoomButtonPressed : null]}
         >
-          <Text style={styles.zoomButtonText}>-</Text>
+          <MaterialIcons color={colors.textPrimary} name="remove" size={22} />
         </Pressable>
-        <Pressable onPress={resetZoom} style={styles.zoomButton}>
+        <Pressable onPress={resetZoom} style={({ pressed }) => [styles.zoomValueButton, pressed ? styles.zoomButtonPressed : null]}>
           <Text style={styles.zoomButtonText}>{Math.round(scale * 100)}%</Text>
         </Pressable>
         <Pressable
@@ -166,98 +233,124 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
           onPress={zoomIn}
           style={({ pressed }) => [styles.zoomButton, scale >= MAX_SCALE && styles.zoomButtonDisabled, pressed ? styles.zoomButtonPressed : null]}
         >
-          <Text style={styles.zoomButtonText}>+</Text>
+          <MaterialIcons color={colors.textPrimary} name="add" size={22} />
         </Pressable>
       </View>
 
-      <View collapsable={false} style={styles.gestureLayer} {...panResponder.panHandlers}>
-        <Svg
-          height={scaledChartSize}
-          style={styles.canvas}
-          viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
-          width={scaledChartSize}
+      <View
+        collapsable={false}
+        style={[styles.viewport, { height: chartSize, width: chartSize }]}
+        {...panResponder.panHandlers}
+      >
+        <View
+          style={[
+            styles.canvasMove,
+            {
+              height: chartSize,
+              transform: [{ translateX: pan.x }, { translateY: pan.y }],
+              width: chartSize
+            }
+          ]}
         >
-          <Circle cx={CENTER} cy={CENTER} fill="#111827" r={150} />
-          {[0.25, 0.5, 0.75, 1].map((ratio) => (
-            <G key={ratio}>
-              <Circle
-                cx={CENTER}
-                cy={CENTER}
-                fill="none"
-                r={MAX_RADIUS * ratio}
-                stroke="rgba(148, 163, 184, 0.22)"
-                strokeDasharray={ratio === 1 ? undefined : "4 6"}
-                strokeWidth={1}
-              />
-              <SvgText
-                fill="rgba(148, 163, 184, 0.72)"
-                fontSize={9}
-                fontWeight="700"
-                x={CENTER + 6}
-                y={CENTER - MAX_RADIUS * ratio + 12}
-              >
-                {Math.round(maxDistance * ratio)}m
-              </SvgText>
-            </G>
-          ))}
-
-          <Line stroke="rgba(245, 158, 11, 0.62)" strokeWidth={1.5} x1={CENTER} x2={CENTER} y1={18} y2={VIEWBOX_SIZE - 18} />
-          <Line stroke="rgba(245, 158, 11, 0.28)" strokeWidth={1} x1={18} x2={VIEWBOX_SIZE - 18} y1={CENTER} y2={CENTER} />
-          <SvgText fill={colors.amber} fontSize={10} fontWeight="900" x={CENTER - 7} y={28}>0°</SvgText>
-
-          {plotItems.map((item) => {
-            const selected = item.code === selectedCode;
-            const hitRadius = Math.min(
-              Math.max(PRISM_TOUCH_RADIUS, Math.round(PRISM_TOUCH_RADIUS / Math.max(scale, 0.45))),
-              56
-            );
-            const selectedHitRadius = Math.max(hitRadius + 10, SELECTED_PRISM_TOUCH_RADIUS);
-
-            return (
-              <G key={`${item.code}-${item.angle}-${item.distanceM}`} onPress={() => onSelect(item.code)}>
-                <Circle
-                  cx={item.x}
-                  cy={item.y}
-                  fill="rgba(255, 255, 255, 0.01)"
-                  r={selected ? selectedHitRadius : hitRadius}
-                />
-                {selected ? (
-                  <Line
-                    stroke="rgba(250, 204, 21, 0.5)"
-                    strokeWidth={2}
-                    x1={CENTER}
-                    x2={item.x}
-                    y1={CENTER}
-                    y2={item.y}
+          <View
+            style={[
+              styles.canvasTransform,
+              {
+                height: chartSize,
+                transform: [{ scale }],
+                width: chartSize
+              }
+            ]}
+          >
+            <Svg
+              height={chartSize}
+              style={styles.canvas}
+              viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
+              width={chartSize}
+            >
+              <Circle cx={CENTER} cy={CENTER} fill="#111827" r={150} />
+              {[0.25, 0.5, 0.75, 1].map((ratio) => (
+                <G key={ratio}>
+                  <Circle
+                    cx={CENTER}
+                    cy={CENTER}
+                    fill="none"
+                    r={MAX_RADIUS * ratio}
+                    stroke="rgba(148, 163, 184, 0.22)"
+                    strokeDasharray={ratio === 1 ? undefined : '4 6'}
+                    strokeWidth={1}
                   />
-                ) : null}
-                <Circle
-                  cx={item.x}
-                  cy={item.y}
-                  fill={getPrismColor(item.status, selected)}
-                  r={selected ? 8 : 6}
-                  stroke={selected ? '#FEF08A' : '#0F1117'}
-                  strokeWidth={selected ? 2 : 1.5}
-                />
-                <SvgText
-                  fill={selected ? '#FEF08A' : '#E2E8F0'}
-                  fontSize={selected ? 11 : 9}
-                  fontWeight="900"
-                  x={item.x + 8}
-                  y={item.y - 8}
-                >
-                  {item.code}
-                </SvgText>
-              </G>
-            );
-          })}
+                  <SvgText
+                    fill="rgba(148, 163, 184, 0.72)"
+                    fontSize={9}
+                    fontWeight="700"
+                    x={CENTER + 6}
+                    y={CENTER - MAX_RADIUS * ratio + 12}
+                  >
+                    {Math.round(maxDistance * ratio)}m
+                  </SvgText>
+                </G>
+              ))}
 
-          <Circle cx={CENTER} cy={CENTER} fill="#0F1117" r={17} stroke={colors.accentGreen} strokeWidth={3} />
-          <Circle cx={CENTER} cy={CENTER} fill={colors.accentGreen} r={5} />
-          <SvgText fill={colors.textPrimary} fontSize={10} fontWeight="900" x={CENTER - 23} y={CENTER + 34}>
-            EST
-          </SvgText>
-        </Svg>
+              <Line stroke="rgba(245, 158, 11, 0.62)" strokeWidth={1.5} x1={CENTER} x2={CENTER} y1={18} y2={VIEWBOX_SIZE - 18} />
+              <Line stroke="rgba(245, 158, 11, 0.28)" strokeWidth={1} x1={18} x2={VIEWBOX_SIZE - 18} y1={CENTER} y2={CENTER} />
+              <SvgText fill={colors.amber} fontSize={10} fontWeight="900" x={CENTER - 7} y={28}>0°</SvgText>
+
+              {plotItems.map((item) => {
+                const selected = item.code === selectedCode;
+                const hitRadius = Math.min(
+                  Math.max(PRISM_TOUCH_RADIUS, Math.round(PRISM_TOUCH_RADIUS / Math.max(scale, 1))),
+                  56
+                );
+                const selectedHitRadius = Math.max(hitRadius + 10, SELECTED_PRISM_TOUCH_RADIUS);
+
+                return (
+                  <G key={`${item.code}-${item.angle}-${item.distanceM}`} onPress={() => onSelect(item.code)}>
+                    <Circle
+                      cx={item.x}
+                      cy={item.y}
+                      fill="rgba(255, 255, 255, 0.01)"
+                      r={selected ? selectedHitRadius : hitRadius}
+                    />
+                    {selected ? (
+                      <Line
+                        stroke="rgba(250, 204, 21, 0.5)"
+                        strokeWidth={2}
+                        x1={CENTER}
+                        x2={item.x}
+                        y1={CENTER}
+                        y2={item.y}
+                      />
+                    ) : null}
+                    <Circle
+                      cx={item.x}
+                      cy={item.y}
+                      fill={getPrismColor(item.status, selected)}
+                      r={selected ? 8 : 6}
+                      stroke={selected ? '#FEF08A' : '#0F1117'}
+                      strokeWidth={selected ? 2 : 1.5}
+                    />
+                    <SvgText
+                      fill={selected ? '#FEF08A' : '#E2E8F0'}
+                      fontSize={selected ? 11 : 9}
+                      fontWeight="900"
+                      x={item.x + 8}
+                      y={item.y - 8}
+                    >
+                      {item.code}
+                    </SvgText>
+                  </G>
+                );
+              })}
+
+              <Circle cx={CENTER} cy={CENTER} fill="#0F1117" r={17} stroke={colors.accentGreen} strokeWidth={3} />
+              <Circle cx={CENTER} cy={CENTER} fill={colors.accentGreen} r={5} />
+              <SvgText fill={colors.textPrimary} fontSize={10} fontWeight="900" x={CENTER - 23} y={CENTER + 34}>
+                EST
+              </SvgText>
+            </Svg>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -273,6 +366,15 @@ const getTouchesDistance = (touches: TouchPoint[]) => {
 
 const clampScale = (value: number) => {
   return Number(Math.min(MAX_SCALE, Math.max(MIN_SCALE, value)).toFixed(2));
+};
+
+const clampPan = (point: PanPoint, chartSize: number, scale: number) => {
+  const maxPan = Math.max(0, (chartSize * scale - chartSize) / 2);
+
+  return {
+    x: Math.min(maxPan, Math.max(-maxPan, point.x)),
+    y: Math.min(maxPan, Math.max(-maxPan, point.y))
+  };
 };
 
 const normalizeAngle = (angle: number) => {
@@ -299,6 +401,17 @@ const getPrismColor = (status: string, selected: boolean) => {
 };
 
 const styles = StyleSheet.create({
+  canvas: {
+    alignSelf: 'center',
+  },
+  canvasMove: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  canvasTransform: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyBody: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -307,7 +420,7 @@ const styles = StyleSheet.create({
   emptySketch: {
     backgroundColor: '#111827',
     borderColor: '#2a2f3a',
-    borderRadius: 18,
+    borderRadius: 8,
     borderWidth: 1,
     gap: spacing[1],
     padding: spacing[3],
@@ -317,34 +430,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
+  viewport: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   wrapper: {
     alignItems: 'center',
     backgroundColor: '#111827',
     borderColor: '#2a2f3a',
-    borderRadius: 22,
+    borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
     paddingVertical: spacing[2],
-  },
-  zoomControls: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing[1],
-    marginBottom: spacing[2],
-  },
-  gestureLayer: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   zoomButton: {
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
     borderColor: '#334155',
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
-    minWidth: 56,
-    paddingHorizontal: spacing[2],
-    paddingVertical: 8,
+    height: 42,
+    justifyContent: 'center',
+    width: 48,
   },
   zoomButtonDisabled: {
     opacity: 0.45,
@@ -354,10 +462,24 @@ const styles = StyleSheet.create({
   },
   zoomButtonText: {
     color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
   },
-  canvas: {
-    alignSelf: 'center',
+  zoomControls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing[1],
+    marginBottom: spacing[2],
+  },
+  zoomValueButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderColor: '#334155',
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 42,
+    justifyContent: 'center',
+    minWidth: 62,
+    paddingHorizontal: spacing[1],
   },
 });
