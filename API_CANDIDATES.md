@@ -4,9 +4,11 @@ Fecha de revisión: 2026-06-01
 
 Este documento resume APIs públicas o free tier que pueden aportar valor real a TopoField. No es una lista de APIs "interesantes"; es una selección filtrada por utilidad en obra, coste, riesgo, compatibilidad con offline-first y facilidad de mantener en free tier.
 
+Corrección de criterio tras feedback del usuario: **clima no es prioridad**. El clima ya se puede consultar fácilmente desde el móvil y no diferencia TopoField. Las APIs realmente interesantes para este producto son las que aportan cartografía, catastro, ortofoto, contexto urbano, rutas de acceso, elevación aproximada o datos geográficos que ayuden a trabajar una obra.
+
 ## Criterio de decisión
 
-- Aporta información útil en campo: clima, mapa, cartografía, rutas, contexto municipal o datos oficiales.
+- Aporta información útil en campo: mapa, cartografía, catastro, ortofoto, rutas, contexto municipal o datos oficiales.
 - No rompe el flujo principal si la API externa cae.
 - No obliga a pagar pronto.
 - No expone claves privadas dentro de la app móvil.
@@ -17,16 +19,99 @@ Este documento resume APIs públicas o free tier que pueden aportar valor real a
 
 | Prioridad | API | Uso recomendado | Decisión |
 | --- | --- | --- | --- |
-| P1 | Open-Meteo | Clima por obra/estación: lluvia, viento, temperatura | Prototipar primero |
-| P1 | AEMET OpenData | Avisos y dato meteorológico oficial España | Integrar después de Open-Meteo si aporta más confianza |
-| P1 | ICGC WMS/WMTS | Cartografía/ortofoto Catalunya para mapa | Estudiar como mejora fuerte de mapa |
-| P2 | Open Data Barcelona / AMB / Diputació | Contexto municipal, movilidad, calles, equipamientos | Usar como importación/admin, no como dependencia móvil directa |
-| P2 | datos.gob.es | Buscar datasets oficiales españoles | Usar para investigación/importación, no runtime móvil |
-| P2 | openrouteservice | Rutas, distancias, isocronas, elevación | Solo si se crea módulo de acceso/logística |
-| P3 | RainViewer | Radar de lluvia sobre mapa | Opcional visual, no crítico |
-| P3 | Geoapify | Geocoding/búsqueda por dirección | Solo si se necesita crear obras desde dirección postal |
+| P1 | ICGC WMS/WMTS | Cartografía, ortofoto y mapa base Catalunya | Prueba técnica prioritaria para `Mapas` |
+| P1 | PNOA/IGN-CNIG WMS/WMTS | Ortofotos oficiales España | Buena alternativa nacional a Google Maps |
+| P1 | Catastro INSPIRE/WMS | Parcelas y referencia catastral | Muy útil como capa contextual, no como verdad topográfica |
+| P2 | CartoCiudad | Geocodificación oficial de direcciones España | Crear obra desde dirección o ubicar dirección aproximada |
+| P2 | Overpass API / OSM | Accesos, viales, puertas, servicios cercanos | Usar desde backend con caché, no directo en móvil |
+| P2 | openrouteservice | Rutas, distancias, isocronas, POI y elevación | Útil para logística de acceso a obra |
+| P2 | Open Topo Data / Open-Elevation | Elevación aproximada por coordenada | Solo apoyo visual; no usar como cota topográfica |
+| P2 | Open Data Barcelona / AMB / Diputació | Contexto municipal, movilidad, calles, equipamientos | Usar como importación/admin, no runtime móvil directo |
+| P3 | Mapillary API | Imágenes a pie de calle para reconocer accesos | Investigar términos y cobertura antes de integrar |
+| P3 | datos.gob.es | Buscar datasets oficiales españoles | Usar para investigación/importación, no runtime móvil |
+| P4 | Open-Meteo / AEMET / RainViewer | Clima y radar | Descartado por ahora; no diferencia la app |
+| P3 | Geoapify | Geocoding/búsqueda por dirección | Solo si CartoCiudad no cubre bien el caso |
 | P4 | Nominatim público | Geocoding OpenStreetMap | Evitar en móvil; usar solo con backend/caché y muy bajo volumen |
 | P4 | OSM public tiles | Teselas base de mapa | No usar directamente en producción móvil |
+
+## APIs no climáticas más interesantes
+
+### A. ICGC WMS/WMTS
+
+Valor: mapa base, ortofoto y cartografía oficial en Catalunya. Para obras en Barcelona/Catalunya es probablemente la API/capa más alineada con TopoField.
+
+Uso propuesto: capa opcional de `Mapas`, vista de obra o pantalla técnica. Mantener fallback actual si la capa no carga.
+
+Fuente: https://www.icgc.cat/ca/Geoinformacio-i-mapes/Servei-de-Mapa-Base
+
+### B. PNOA / IGN-CNIG
+
+Valor: ortofotos oficiales de España por servicios WMS/WMTS. Es más serio para obra que un mapa genérico.
+
+Uso propuesto: vista de ortofoto nacional como capa base. Para Catalunya comparar con ICGC y elegir la que cargue mejor en móvil.
+
+Fuente: https://pnoa.ign.es/pnoa-imagen/visualizadores-y-servicios-web
+
+### C. Catastro INSPIRE/WMS
+
+Valor: parcelas catastrales, referencia catastral y contexto de límites. Puede ayudar a ubicar una obra respecto a fincas/parcela sin convertir TopoField en herramienta legal.
+
+Uso propuesto: capa contextual consultable, no editable. Mostrar advertencia: "Dato catastral orientativo; no sustituye levantamiento ni documentación oficial".
+
+Fuentes:
+
+- https://www.catastro.hacienda.gob.es/webinspire/index.html
+- https://www.catastro.hacienda.gob.es/es-ES/wms.html
+
+### D. CartoCiudad
+
+Valor: geocodificación oficial de direcciones, topónimos y entidades de población en España.
+
+Uso propuesto: crear obra desde dirección o buscar una dirección cercana a coordenadas. Mejor que Nominatim para España si encaja bien.
+
+Fuente: https://www.cartociudad.es/web/portal/servicios
+
+### E. Overpass API / OpenStreetMap
+
+Valor: consultar elementos cercanos a una obra: viales, accesos, puertas, parkings, estaciones de transporte, barreras, caminos o servicios.
+
+Uso propuesto: botón interno "Contexto alrededor de obra" que el backend calcula y cachea. No llamar desde móvil en cada render.
+
+Fuentes:
+
+- https://dev.overpass-api.de/overpass-doc/en/
+- https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL
+
+### F. openrouteservice
+
+Valor: rutas, distancias, isocronas, POIs, matrices y elevación. Aporta más que abrir Google Maps si se quiere planificar acceso de equipo o estimar tiempos.
+
+Uso propuesto: "Cómo llegar a obra", tiempo aproximado, ruta peatonal desde aparcamiento o zona alcanzable en 10-15 minutos.
+
+Fuentes:
+
+- https://openrouteservice.org/dev/
+- https://openrouteservice.org/restrictions/
+- https://staging.openrouteservice.org/plans/
+
+### G. Open Topo Data / Open-Elevation
+
+Valor: elevación aproximada por coordenada. Puede servir como contexto visual o sanity check, pero no como cota de trabajo.
+
+Uso propuesto: mostrar "elevación aproximada externa" en una sección secundaria. Nunca mezclarla con observaciones topográficas propias.
+
+Fuentes:
+
+- https://www.opentopodata.org/api/
+- https://open-elevation.com/
+
+### H. Mapillary API
+
+Valor: imágenes de calle cercanas a accesos, vallas, fachadas o referencias visibles. Puede ayudar antes de ir a obra.
+
+Uso propuesto: abrir imagen externa o mini-panel "vista de acceso" si hay cobertura. Requiere revisar términos, token y atribución.
+
+Fuente: https://help.mapillary.com/hc/en-us/articles/360010234680-Accessing-imagery-and-data-through-the-Mapillary-API
 
 ## Candidatas detalladas
 
@@ -60,7 +145,7 @@ Este documento resume APIs públicas o free tier que pueden aportar valor real a
 
 **Veredicto**
 
-Primera integración recomendada. Es barata, visible y útil.
+No es prioridad ahora. Es fácil, pero el usuario confirma que el clima ya lo resuelve con el móvil y busca APIs con más valor diferencial.
 
 Fuente: https://open-meteo.com/
 
@@ -91,7 +176,7 @@ Fuente: https://open-meteo.com/
 
 **Veredicto**
 
-Recomendada como segunda fase meteorológica.
+No prioritaria ahora. Puede servir para avisos oficiales, pero no debe desplazar cartografía, catastro o contexto de obra.
 
 Fuentes:
 
@@ -351,33 +436,39 @@ Fuente: https://operations.osmfoundation.org/policies/tiles/
 
 ## Propuesta de implementación
 
-### Paso 1 — Clima por obra con Open-Meteo
-
-Feature pequeña y útil:
-
-- Backend: `GET /api/v1/projects/:projectId/weather`.
-- Cache en memoria o tabla simple con TTL de 30-60 minutos.
-- Mobile: mostrar resumen en tarjetas de obra y pantalla de obra.
-- Fallback: "Clima no disponible".
-- Sin escritura en BD de datos críticos.
-
-Es la mejor primera prueba porque aporta valor visible sin tocar permisos sensibles.
-
-### Paso 2 — Prueba técnica ICGC
+### Paso 1 — Prueba técnica ICGC / PNOA
 
 Objetivo:
 
-- Ver si podemos mostrar una capa base/ortofoto ICGC en `Mapas`.
+- Ver si podemos mostrar una capa base/ortofoto oficial en `Mapas`.
+- Comparar ICGC contra PNOA/IGN-CNIG en carga, legibilidad y compatibilidad Expo.
 - Mantener fallback actual si no funciona.
 - No prometer precisión topográfica; usarlo como apoyo visual.
 
-### Paso 3 — Exploración de datasets Barcelona/AMB
+Es el camino con más valor real para TopoField porque mejora la lectura espacial de la obra.
+
+### Paso 2 — Catastro como capa contextual
 
 Objetivo:
 
-- Buscar 3-5 datasets concretos que ayuden a obras reales.
-- Crear una tabla de datasets candidatos con URL, formato, licencia, frecuencia y utilidad.
-- Integrar solo mediante importación/backend cacheado.
+- Probar consulta/capa WMS/INSPIRE de Catastro cerca de una obra.
+- Mostrar parcelas o referencia solo como contexto.
+- Evitar que el usuario confunda catastro con levantamiento topográfico.
+
+### Paso 3 — Contexto alrededor de obra
+
+Objetivo:
+
+- Usar Overpass o datos municipales para sacar accesos, viales, transporte, parkings o referencias cercanas.
+- Cachear por obra desde backend.
+- No llamar APIs externas desde cada render móvil.
+
+### Paso 4 — Rutas/logística si aporta valor
+
+Objetivo:
+
+- Evaluar openrouteservice para rutas a obra, isocronas y distancia.
+- Mantener Google Maps externo como fallback simple.
 
 ## Reglas técnicas si se integran APIs externas
 
@@ -392,13 +483,12 @@ Objetivo:
 
 ## Decisión recomendada
 
-La mejor mejora inmediata es **clima por obra con Open-Meteo**, porque:
+La mejor mejora inmediata es **cartografía oficial en Mapas**, empezando por ICGC y comparando PNOA/IGN-CNIG, porque:
 
-- no exige clave,
-- no rompe el free tier,
-- aporta valor real en campo,
-- se implementa con poco riesgo,
-- se puede cachear fácil,
-- y no toca datos sensibles.
+- aporta valor diferencial real frente a mirar el tiempo en el móvil,
+- encaja con topografía y obra,
+- mejora la pantalla central del producto,
+- puede funcionar como capa/fallback sin tocar datos propios,
+- y mantiene la app orientada a campo, no a información genérica.
 
-La segunda mejora con más valor de producto es **cartografía ICGC**, pero requiere una prueba técnica antes de prometerla.
+La segunda mejora es **Catastro como contexto**, con una advertencia visible de que no sustituye trabajo topográfico ni documentación oficial. La tercera es **Overpass/datos municipales** para detectar accesos y referencias alrededor de la obra.

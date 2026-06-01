@@ -12,6 +12,16 @@
 - Arranque inicial: proceso Android activo y `logcat` básico sin `AndroidRuntime` ni error JS; aparece `ReactNativeJS: Running "main"`.
 - QA visitante rápida por ADB: `Obras`, `Mapas`, `Guías`, `Perfil` y `Conversación` cargan sin pantalla blanca ni crash.
 - Restricción visitante visible: `Conversación` muestra acceso de equipo solo con sesión admin/topógrafo; `Perfil` muestra modo visitante y campo de token técnico.
+- QA topógrafo:
+  - Token técnico fresco validado en Galaxy; `Perfil` muestra rol `Topógrafo` y cuenta técnica.
+  - `Conversación` muestra hilos de estaciones para equipo.
+  - Render `0a4f523169d1a64c1a28b2e92ddea8f95fce2d33` probado con rol `topografo`.
+  - Mensaje creado y confirmado en `Campus Nord Estacionamiento CN2`: `e1037d58-f6e6-42c2-a222-c8e8fc389003`.
+  - Propuesta provisional creada y visible como `Abierta`: `1f8153e3-d956-48c7-9ad6-00c0322c16cf`.
+  - Foto de prisma validada con subida firmada + `PATCH /prisms/:id/photo`; se restauró la foto anterior/null para no dejar imagen QA.
+  - Foto de obra validada con subida firmada + `PATCH /projects/:id/photo`; se restauró la imagen anterior/null para no dejar portada QA.
+  - `logcat` tras la prueba: sin `AndroidRuntime`, sin error JS; solo `ReactNativeJS: Running "main"`.
+- Hallazgo corregido durante QA: `GET /incidents?stationId=...&status=open` devolvía `500 INCIDENTS_LIST_FAILED` por columna `id` ambigua en SQL; fix `0a4f523` cualifica columnas con alias `i`.
 - Objetivo de esta build: validar en Galaxy las pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico y escrituras reales contra Render actualizado.
 
 ## ADB local
