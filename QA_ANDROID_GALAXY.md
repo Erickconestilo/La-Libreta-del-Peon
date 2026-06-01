@@ -167,10 +167,18 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 ### Pendiente de QA móvil fina
 
 - Build EAS `cdf499a0-0fef-4ccd-856e-2952ded918ee` cancelado porque quedó obsoleto tras añadir Bitácora.
-- Antes de la próxima APK: desplegar backend con `GET /stations/messages`.
+- Build EAS actual: `a8ab7d91-abd4-4d74-a445-641ee09e7b73`, estado `FINISHED`.
+- APK: https://expo.dev/artifacts/eas/mQ2DDR7pdsqeyhSDfkhZYg.apk
+- APK local: `C:\Users\guill\Downloads\topofield-a8ab7d91-bitacora-guides-prisms.apk`.
+- APK `a8ab7d91` no incluye el cambio posterior de iconos.
+- Cambio móvil posterior: icono de tab `Bitácora` pasa a brújula (`explore`) y los assets de launcher/splash/favicon pasan a una brújula topográfica generada localmente.
+- Verificado para iconos: `npm run generate:icons --workspace apps/mobile`, `npx tsc --noEmit --project apps/mobile/tsconfig.json`, `git diff --check`.
+- Backend desplegado con `GET /stations/messages`; smoke test: anónimo 401, visitante 403, topógrafo 200.
+- Pendiente: lanzar nueva EAS preview para validar también icono de app en Galaxy.
 - Validar lector de guías corregido: una página cada vez, navegación de páginas, zoom y arrastre legible.
 - Validar croquis corregido: seleccionar un prisma alejado, por ejemplo `626`, ampliar y arrastrar por todo el croquis sin quedar limitado al centro.
 - Validar pestaña `Bitácora`: muestra notas, incidencias y mensajes con fecha/hora para `admin/topografo`, y queda bloqueada para `visitante`.
+- Validar icono: Android debe mostrar brújula/topografía, no la libreta antigua.
 - Revisar historial visible con rol técnico si se toca esa pantalla.
 - Revisar errores manuales de roles/scope si se crean usuarios reales.
 - Hay cambio móvil real pendiente de APK; lanzar EAS preview solo después de comprobar TypeScript y decidir que la UX local queda lista.
