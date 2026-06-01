@@ -2,10 +2,16 @@
 
 ## APK actual
 
-- Build EAS pendiente: `71a232a3-2f87-4e85-a71e-75ad0681269a`
-- Estado actual: `IN_QUEUE`
+- Build EAS actual: `71a232a3-2f87-4e85-a71e-75ad0681269a`
+- Estado actual: `FINISHED`
 - Commit incluido: `59878ef93985c4f47070649224100d0e92d8c425`
 - URL build: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/71a232a3-2f87-4e85-a71e-75ad0681269a
+- APK: https://expo.dev/artifacts/eas/f2RvG2T6oYbB47KVm1cQ4U.apk
+- APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-71a232a3-preview.apk`
+- Instalación ADB en Galaxy: `Success`
+- Arranque inicial: proceso Android activo y `logcat` básico sin `AndroidRuntime` ni error JS; aparece `ReactNativeJS: Running "main"`.
+- QA visitante rápida por ADB: `Obras`, `Mapas`, `Guías`, `Perfil` y `Conversación` cargan sin pantalla blanca ni crash.
+- Restricción visitante visible: `Conversación` muestra acceso de equipo solo con sesión admin/topógrafo; `Perfil` muestra modo visitante y campo de token técnico.
 - Objetivo de esta build: validar en Galaxy las pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico y escrituras reales contra Render actualizado.
 
 ## ADB local
@@ -21,7 +27,7 @@ Comandos preparados:
 $ADB = "C:\Program Files (x86)\Vidmore\Vidmore Screen Recorder\adb\adb.exe"
 & $ADB devices -l
 & $ADB install -r "C:\Users\guill\Downloads\topofield-71a232a3-preview.apk"
-& $ADB shell monkey -p com.ciudadanoinusual.topofield -c android.intent.category.LAUNCHER 1
+& $ADB shell am start -n com.ciudadanoinusual.topofield/.MainActivity
 & $ADB shell pidof com.ciudadanoinusual.topofield
 & $ADB logcat -c
 ```
@@ -30,8 +36,8 @@ Para revisar errores tras abrir la app:
 
 ```powershell
 $ADB = "C:\Program Files (x86)\Vidmore\Vidmore Screen Recorder\adb\adb.exe"
-$PID = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
-& $ADB logcat --pid=$PID ReactNativeJS:V AndroidRuntime:E '*:S'
+$AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
+& $ADB logcat --pid=$AppPid ReactNativeJS:V AndroidRuntime:E '*:S'
 ```
 
 ## Checklist rápida próxima APK
