@@ -57,6 +57,17 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Los registros QA de mensaje/propuesta se dejan como trazabilidad aceptada; no son visibles para visitante.
 - La política real de `project_memberships` queda documentada en `PROJECT_MEMBERSHIPS_MATRIX.md`: el topógrafo técnico de QA puede tener todas las obras, pero usuarios reales requieren matriz explícita usuario-obra.
 
+## Actualización Operativa - 2026-06-02
+
+- APK móvil actual real: EAS `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`, instalada en Galaxy `SM_S938B / R5CY21X6FLE`.
+- La app ya muestra `Bitácora` en vez de `Conversación`, con icono de brújula.
+- El icono de app actual es brújula/topografía, no la libreta antigua.
+- El lector de guías muestra una página cada vez con navegación y zoom; validado en Galaxy de `1/20` a `2/20`.
+- El Galaxy queda con sesión `topografo` activa y persistida tras relanzar la app.
+- El usuario quiere empezar a meter datos reales y trabajar con ambos roles: `topografo` para campo/fotos y `admin` para gestión.
+- Riesgo actual: la app solo guarda una sesión técnica activa; activar `admin` sustituye `topografo`.
+- Nueva necesidad antes de carga real sostenida: diseñar sesión técnica estable para `admin` y `topografo`, con selector de perfil o login/refresh, sin depender de pegar JWTs largos que caducan.
+
 ## Estado Backend Render
 
 - Render fue redeployado desde `main`.
@@ -65,6 +76,7 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
 - Estado actual: Render público responde `GET /health` con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
 - Siguiente acción real: definir usuarios reales y su matriz de obras antes de alta real; no lanzar otra EAS salvo cambio móvil.
+- Siguiente acción real adicional: resolver el flujo de sesión técnica admin/topógrafo antes de usar el móvil como herramienta de carga diaria.
 
 ## Principios de Implementación
 - Una feature cada vez
