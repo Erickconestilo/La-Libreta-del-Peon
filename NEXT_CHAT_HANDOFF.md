@@ -116,15 +116,22 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
 - Incluye: tab `Bitácora` con icono de brújula (`explore`) y app icon/splash/favicon reemplazados por brújula/topografía generada localmente.
 - Nuevo script móvil: `npm run generate:icons --workspace apps/mobile`, genera `icon.png`, adaptive icon Android, monochrome, favicon y splash sin usar imágenes externas.
 - Verificado tras el cambio de iconos: `npx tsc --noEmit --project apps/mobile/tsconfig.json` y `git diff --check`.
+- APK instalada por ADB en Galaxy `SM_S938B / R5CY21X6FLE` el 2026-06-02.
+- Mini-QA Galaxy:
+  - App abre sin crash; `logcat` filtrado solo muestra `ReactNativeJS: Running "main"`.
+  - `Bitácora` muestra icono de brújula en tab y visitante queda bloqueado con `Acceso de equipo`.
+  - `Guías` carga tarjetas offline; lector Leica abre una página cada vez y navegación `1/20 -> 2/20` funciona.
+  - Perfil tenía token técnico viejo inválido guardado; se limpió con `Volver a visitante` y quedó `Modo visitante`.
 - Pendiente real: validar en Galaxy que las páginas de guía se leen mejor y que un prisma alejado, por ejemplo `626`, se puede seleccionar, ampliar y recorrer sin quedar limitado al centro.
 - Backend ya desplegado en `c866c73`; `GET /stations/messages` validado: anónimo 401, visitante 403, topógrafo 200.
-- Pendiente real adicional: instalar APK nueva en Galaxy cuando ADB detecte el dispositivo.
+- Pendiente real adicional: QA topógrafo con token técnico fresco y croquis del prisma `626`.
 
 ## Siguiente Paso Recomendado
 
-1. Conectar Galaxy por ADB e instalar `C:\Users\guill\Downloads\topofield-2416dd4a-icons-bitacora.apk`.
-2. Probar en Galaxy el lector de guías, el pan/zoom del croquis, la pestaña `Bitácora` y el icono de app.
-3. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
+1. Pegar token técnico fresco en Perfil y validar rol `Topógrafo`.
+2. Probar `Bitácora` como topógrafo: notas/incidencias/mensajes con fecha/hora.
+3. Probar croquis: seleccionar prisma alejado, por ejemplo `626`, zoom y arrastre por todo el croquis.
+4. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
 

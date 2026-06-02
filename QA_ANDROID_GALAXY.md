@@ -177,7 +177,11 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - Cambio móvil incluido: icono de tab `Bitácora` pasa a brújula (`explore`) y los assets de launcher/splash/favicon pasan a una brújula topográfica generada localmente.
 - Verificado para iconos: `npm run generate:icons --workspace apps/mobile`, `npx tsc --noEmit --project apps/mobile/tsconfig.json`, `git diff --check`.
 - Backend desplegado con `GET /stations/messages`; smoke test: anónimo 401, visitante 403, topógrafo 200.
-- Pendiente: instalar APK actual en Galaxy cuando ADB detecte el dispositivo.
+- APK actual instalada por ADB en Galaxy `SM_S938B / R5CY21X6FLE` el 2026-06-02.
+- App abre sin crash; `logcat` filtrado por PID solo muestra `ReactNativeJS: Running "main"`.
+- `Bitácora` validada como visitante: tab con icono de brújula y pantalla bloqueada con `Acceso de equipo`.
+- `Guías` validada como visitante: tarjetas offline cargan; lector Leica muestra página única y navegación `1/20 -> 2/20` funciona.
+- Perfil tenía token técnico viejo inválido; se limpió con `Volver a visitante` y quedó `Modo visitante`.
 - Validar lector de guías corregido: una página cada vez, navegación de páginas, zoom y arrastre legible.
 - Validar croquis corregido: seleccionar un prisma alejado, por ejemplo `626`, ampliar y arrastrar por todo el croquis sin quedar limitado al centro.
 - Validar pestaña `Bitácora`: muestra notas, incidencias y mensajes con fecha/hora para `admin/topografo`, y queda bloqueada para `visitante`.
