@@ -16,6 +16,9 @@
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
 - No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
 - Próximo bloque recomendado: validar `Bitácora` como topógrafo, revisar croquis del prisma `626`, y si hoy se toman fotos, verificar que el token no haya caducado antes de culpar al flujo de fotos.
+- Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
+- Importante: la app móvil actual solo guarda una sesión técnica activa en SecureStore. Guardar `admin` en el Galaxy sustituiría la sesión `topografo`; no hay selector de perfiles todavía.
+- Necesidad nueva a diseñar antes de meter datos reales: sesión técnica estable para `admin` y `topografo`, idealmente con selector de perfil técnico o login/refresh, evitando depender de access tokens pegados a mano que caducan.
 
 ## Últimos Commits Importantes
 
@@ -149,17 +152,22 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
   - Tras `force-stop` y relanzar app, Perfil sigue en `Topógrafo`; sesión persistida en el Galaxy.
   - `logcat` tras relanzar solo muestra `ReactNativeJS: Running "main"`.
   - Nota: el access token técnico caduca; si se prueban fotos mucho más tarde y aparece `Invalid authentication token`, regenerar/pegar token o implementar refresh de sesión.
+- Sesión `admin`:
+  - El script `create-session-tokens` también genera token técnico `admin`, validable igual contra `/auth/me`.
+  - No se dejó `admin` activo en el Galaxy porque reemplazaría la sesión `topografo` que el usuario quiere usar para fotos/campo.
+  - Próxima decisión: si el usuario necesita operar desde móvil como admin, implementar un mecanismo claro de cambio de perfil técnico o renovar el flujo de login para que admin/topógrafo no dependan de pegar JWTs largos.
 - Pendiente real: validar en Galaxy que las páginas de guía se leen mejor y que un prisma alejado, por ejemplo `626`, se puede seleccionar, ampliar y recorrer sin quedar limitado al centro.
 - Backend ya desplegado en `c866c73`; `GET /stations/messages` validado: anónimo 401, visitante 403, topógrafo 200.
-- Pendiente real adicional: QA topógrafo de Bitácora y croquis del prisma `626`.
+- Pendiente real adicional: QA topógrafo de Bitácora y croquis del prisma `626`; definir flujo estable de sesión admin/topógrafo antes de empezar carga real de datos.
 
 ## Siguiente Paso Recomendado
 
 1. En local con el Galaxy: probar `Bitácora` como topógrafo y confirmar notas/incidencias/mensajes con fecha/hora.
 2. En local con el Galaxy: probar croquis, seleccionar prisma alejado `626`, usar zoom y arrastrar por todo el croquis.
 3. Si hoy se toman fotos y aparece `Invalid authentication token`, regenerar sesión técnica antes de culpar al flujo de fotos.
-4. En Codex Cloud: preparar el siguiente bloque MVP sin depender de ADB, por ejemplo matriz real de `project_memberships`, pulido de Bitácora o auditoría de roles/scope.
-5. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
+4. En Codex Cloud: preparar el flujo estable para trabajar con `admin` y `topografo` sin romper la sesión de campo; opción conservadora: selector de perfil técnico o login/refresh.
+5. En Codex Cloud: preparar el siguiente bloque MVP sin depender de ADB, por ejemplo matriz real de `project_memberships`, pulido de Bitácora o auditoría de roles/scope.
+6. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
 
