@@ -182,6 +182,12 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - `Bitácora` validada como visitante: tab con icono de brújula y pantalla bloqueada con `Acceso de equipo`.
 - `Guías` validada como visitante: tarjetas offline cargan; lector Leica muestra página única y navegación `1/20 -> 2/20` funciona.
 - Perfil tenía token técnico viejo inválido; se limpió con `Volver a visitante` y quedó `Modo visitante`.
+- Tokens técnicos regenerados con `TOPOFIELD_ALLOW_PRODUCTION_WRITE=create-session-tokens`; token `topografo` validado contra Render con rol `topografo`.
+- ADB no pegó correctamente el JWT en tramos largos; se introdujo carácter a carácter.
+- Perfil validado como `Topógrafo`, cuenta `topofield-topografo@topofield.local`.
+- Persistencia validada: tras `force-stop` y relanzar la app, Perfil sigue en `Topógrafo`.
+- `logcat` tras relanzar: solo `ReactNativeJS: Running "main"`.
+- Nota para fotos: si se prueban mucho más tarde y aparece `Invalid authentication token`, el access token técnico puede haber caducado.
 - Validar lector de guías corregido: una página cada vez, navegación de páginas, zoom y arrastre legible.
 - Validar croquis corregido: seleccionar un prisma alejado, por ejemplo `626`, ampliar y arrastrar por todo el croquis sin quedar limitado al centro.
 - Validar pestaña `Bitácora`: muestra notas, incidencias y mensajes con fecha/hora para `admin/topografo`, y queda bloqueada para `visitante`.

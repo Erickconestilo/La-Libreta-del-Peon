@@ -122,15 +122,23 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
   - `Bitácora` muestra icono de brújula en tab y visitante queda bloqueado con `Acceso de equipo`.
   - `Guías` carga tarjetas offline; lector Leica abre una página cada vez y navegación `1/20 -> 2/20` funciona.
   - Perfil tenía token técnico viejo inválido guardado; se limpió con `Volver a visitante` y quedó `Modo visitante`.
+- Sesión `topografo`:
+  - Tokens técnicos regenerados con `TOPOFIELD_ALLOW_PRODUCTION_WRITE=create-session-tokens`.
+  - Token `topografo` validado contra Render `GET /auth/me`: rol `topografo`.
+  - ADB `input text` completo/tramos largos truncaba o alteraba el JWT; se introdujo carácter a carácter.
+  - Perfil muestra `Topógrafo`, cuenta `topofield-topografo@topofield.local`.
+  - Tras `force-stop` y relanzar app, Perfil sigue en `Topógrafo`; sesión persistida en el Galaxy.
+  - `logcat` tras relanzar solo muestra `ReactNativeJS: Running "main"`.
+  - Nota: el access token técnico caduca; si se prueban fotos mucho más tarde y aparece `Invalid authentication token`, regenerar/pegar token o implementar refresh de sesión.
 - Pendiente real: validar en Galaxy que las páginas de guía se leen mejor y que un prisma alejado, por ejemplo `626`, se puede seleccionar, ampliar y recorrer sin quedar limitado al centro.
 - Backend ya desplegado en `c866c73`; `GET /stations/messages` validado: anónimo 401, visitante 403, topógrafo 200.
-- Pendiente real adicional: QA topógrafo con token técnico fresco y croquis del prisma `626`.
+- Pendiente real adicional: QA topógrafo de Bitácora y croquis del prisma `626`.
 
 ## Siguiente Paso Recomendado
 
-1. Pegar token técnico fresco en Perfil y validar rol `Topógrafo`.
-2. Probar `Bitácora` como topógrafo: notas/incidencias/mensajes con fecha/hora.
-3. Probar croquis: seleccionar prisma alejado, por ejemplo `626`, zoom y arrastre por todo el croquis.
+1. Probar `Bitácora` como topógrafo: notas/incidencias/mensajes con fecha/hora.
+2. Probar croquis: seleccionar prisma alejado, por ejemplo `626`, zoom y arrastre por todo el croquis.
+3. Si se prueban fotos más tarde y el token caducó, regenerar sesión técnica antes de culpar al flujo de fotos.
 4. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
