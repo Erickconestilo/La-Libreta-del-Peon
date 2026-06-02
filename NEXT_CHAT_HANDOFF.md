@@ -8,6 +8,15 @@
 - Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` este disponible.
 
+## Para Continuar en Codex Cloud
+
+- Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
+- Último estado empujado a `main`: sesión `topografo` activa en el Galaxy local y documentación actualizada.
+- Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
+- Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
+- No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
+- Próximo bloque recomendado: validar `Bitácora` como topógrafo, revisar croquis del prisma `626`, y si hoy se toman fotos, verificar que el token no haya caducado antes de culpar al flujo de fotos.
+
 ## Últimos Commits Importantes
 
 - `4b6af89` - lector offline de guías PDF renderizadas.
@@ -27,19 +36,29 @@
 - `5c5752c` - corrige scope de topógrafo en listado de mensajes de estación.
 - `0a4f523` - corrige `GET /incidents?stationId=...&status=open` cualificando columnas `i.*`.
 - `7dfa919` - documenta QA topógrafo y prioridades de APIs no climáticas.
+- `c866c73` - añade feed `Bitácora`, lector de guías corregido y croquis de prismas con pan/zoom.
+- `983f481` - refresca iconos móviles: app icon de brújula y tab `Bitácora` con brújula.
+- `333b2d0` - documenta instalación y mini-QA Galaxy de la APK refrescada.
+- `0dc9c78` - documenta sesión persistida de topógrafo en Galaxy.
 
 ## APK Actual
 
-- EAS build: `71a232a3-2f87-4e85-a71e-75ad0681269a`.
-- URL APK: https://expo.dev/artifacts/eas/f2RvG2T6oYbB47KVm1cQ4U.apk
-- Archivo local: `C:\Users\guill\Downloads\topofield-71a232a3-preview.apk`.
+- EAS build: `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`.
+- URL APK: https://expo.dev/artifacts/eas/5stxhvFJC7q6yr86WGKjco.apk
+- Archivo local: `C:\Users\guill\Downloads\topofield-2416dd4a-icons-bitacora.apk`.
 - Instalado en Galaxy por ADB con resultado `Success`.
-- Commit incluido en APK: `59878ef93985c4f47070649224100d0e92d8c425`.
-- Incluye pestañas `Obras`, `Mapas`, `Conversación`, `Guías`, `Perfil`, croquis con pinza, token técnico corregido y hardening móvil vigente.
-- QA visitante y topógrafo validada en Galaxy; no lanzar otra EAS salvo cambio móvil real.
+- Commit incluido en APK: `983f481eb7cc74b565256987d32e937a6987a855`.
+- Incluye pestañas `Obras`, `Mapas`, `Bitácora`, `Guías`, `Perfil`, lector de guías a página única, croquis con pan/zoom, app icon de brújula y sesión técnica persistible.
+- QA visitante validada en Galaxy; sesión topógrafo queda activa y persistida tras reiniciar app.
+- No lanzar otra EAS salvo cambio móvil real.
 
 ## APK Anterior
 
+- EAS build anterior con Bitácora sin icono nuevo: `a8ab7d91-abd4-4d74-a445-641ee09e7b73`.
+- URL APK anterior: https://expo.dev/artifacts/eas/mQ2DDR7pdsqeyhSDfkhZYg.apk
+- Archivo local anterior: `C:\Users\guill\Downloads\topofield-a8ab7d91-bitacora-guides-prisms.apk`.
+- EAS build histórico: `71a232a3-2f87-4e85-a71e-75ad0681269a`.
+- Archivo local histórico: `C:\Users\guill\Downloads\topofield-71a232a3-preview.apk`.
 - EAS build anterior: `cc43f0f1-ff3e-43da-b574-ec09dedfa4e4`.
 - URL APK anterior: https://expo.dev/artifacts/eas/rdY4AEzq4WTnj9rCXAD4mG.apk
 - Archivo local anterior: `C:\Users\guill\Downloads\topofield-cc43f0f1-guides-icon-prisms.apk`.
@@ -136,10 +155,11 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
 
 ## Siguiente Paso Recomendado
 
-1. Probar `Bitácora` como topógrafo: notas/incidencias/mensajes con fecha/hora.
-2. Probar croquis: seleccionar prisma alejado, por ejemplo `626`, zoom y arrastre por todo el croquis.
-3. Si se prueban fotos más tarde y el token caducó, regenerar sesión técnica antes de culpar al flujo de fotos.
-4. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
+1. En local con el Galaxy: probar `Bitácora` como topógrafo y confirmar notas/incidencias/mensajes con fecha/hora.
+2. En local con el Galaxy: probar croquis, seleccionar prisma alejado `626`, usar zoom y arrastrar por todo el croquis.
+3. Si hoy se toman fotos y aparece `Invalid authentication token`, regenerar sesión técnica antes de culpar al flujo de fotos.
+4. En Codex Cloud: preparar el siguiente bloque MVP sin depender de ADB, por ejemplo matriz real de `project_memberships`, pulido de Bitácora o auditoría de roles/scope.
+5. Mantener pendiente la matriz real usuario-obra en `PROJECT_MEMBERSHIPS_MATRIX.md` antes de crear usuarios reales.
 
 ## Estado Render Tras Último Push
 
