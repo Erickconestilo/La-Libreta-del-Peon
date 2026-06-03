@@ -11,14 +11,13 @@
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Último estado empujado a `main`: `035d247` con creación de obra solo admin, lector de guías ajustado a página completa y zoom/pan de croquis mejorado para prismas alejados.
+- Último estado empujado a `main`: `d58a842`, documentación sobre el backend de creación de obra; el último commit funcional incluido en la APK instalada es `035d247`.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
 - No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
-- Próximo bloque recomendado: esperar o revisar EAS `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`; si finaliza, descargar/instalar APK y validar `Nueva obra` como admin, `Bitácora`, login admin/topógrafo, guías y croquis del prisma `626`.
+- Próximo bloque recomendado: validar en Galaxy la APK `dbcb7a7b`: `Nueva obra` como admin, cambio admin/topógrafo, `Bitácora`, guías y croquis del prisma `626`.
 - Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
-- Importante: la APK instalada `2416dd4a` no contiene todavía el login por cuenta/refresh, creación de obra ni los últimos ajustes de guías/croquis. El código actual en `main` sí contiene multi-sesión técnica, login con refresh para `admin/topografo`, creación de obra admin, Bitácora tipo chat y los fixes de Guías/croquis.
-- Antes de meter datos reales de forma sostenida, instalar una APK generada desde `035d247` o posterior.
+- APK instalada actual: `dbcb7a7b`; contiene multi-sesión técnica, login con refresh para `admin/topografo`, creación de obra admin, Bitácora tipo chat y los fixes de Guías/croquis.
 
 ## Últimos Commits Importantes
 
@@ -51,9 +50,11 @@
 
 ## APK Actual
 
-- EAS build nueva en cola: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`.
+- EAS build actual: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`.
 - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/dbcb7a7b-47a5-4abb-a643-c76d63bb5960
-- Estado al 2026-06-03: `IN_QUEUE`, sin APK descargable todavía.
+- URL APK: https://expo.dev/artifacts/eas/t9c1vSLmGMPKCiiBgbJ6Um.apk
+- Archivo local: `C:\Users\guill\Downloads\topofield-dbcb7a7b-admin-project.apk`.
+- Estado al 2026-06-03: `FINISHED` e instalada por ADB en Galaxy `SM_S938B / R5CY21X6FLE`.
 - Commit de la build nueva: `035d247a56164330fec279069fe5ce5fe4d37595`.
 - Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, creación de obra solo admin, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
 - EAS `13ee9092-da34-4145-9971-1049244e571f` fue cancelada porque quedó obsoleta al añadir `Nueva obra`.
@@ -64,7 +65,7 @@
 - `POST /api/v1/projects` con admin y payload inválido responde `400 INVALID_PROJECT_PAYLOAD`, confirmando que la ruta nueva existe sin crear datos.
 - `POST /api/v1/projects` con topógrafo responde `403 FORBIDDEN`, confirmando que crear obra queda solo para `admin`.
 
-## APK Instalada En Galaxy
+## APK Anterior Instalada En Galaxy
 
 - EAS build: `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`.
 - URL APK: https://expo.dev/artifacts/eas/5stxhvFJC7q6yr86WGKjco.apk
