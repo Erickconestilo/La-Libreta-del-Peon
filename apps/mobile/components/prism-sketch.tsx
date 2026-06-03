@@ -50,6 +50,8 @@ const SELECTED_PRISM_TOUCH_RADIUS = 46;
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const SCALE_STEP = 0.35;
+const SELECTED_FOCUS_SCALE = 2.25;
+const PAN_EDGE_PADDING_RATIO = 0.35;
 
 export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps) {
   const { width } = useWindowDimensions();
@@ -122,7 +124,11 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
   };
 
   const zoomIn = () => {
-    setScaleWithFocus(scaleRef.current + SCALE_STEP);
+    const nextScale = selectedPlotItem
+      ? Math.max(scaleRef.current + SCALE_STEP, SELECTED_FOCUS_SCALE)
+      : scaleRef.current + SCALE_STEP;
+
+    setScaleWithFocus(nextScale);
   };
 
   const zoomOut = () => {
@@ -369,7 +375,8 @@ const clampScale = (value: number) => {
 };
 
 const clampPan = (point: PanPoint, chartSize: number, scale: number) => {
-  const maxPan = Math.max(0, (chartSize * scale - chartSize) / 2);
+  const edgePadding = scale > 1 ? chartSize * PAN_EDGE_PADDING_RATIO : 0;
+  const maxPan = Math.max(0, (chartSize * scale - chartSize) / 2 + edgePadding);
 
   return {
     x: Math.min(maxPan, Math.max(-maxPan, point.x)),

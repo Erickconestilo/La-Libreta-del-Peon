@@ -83,7 +83,7 @@ export default function GuideManualScreen() {
   const currentPage = pages[pageIndex];
   const viewerWidth = Math.min(width - spacing[3] * 2, 720);
   const viewerHeight = Math.max(360, Math.min(height - insets.top - insets.bottom - 230, 640));
-  const pageWidth = viewerWidth;
+  const pageWidth = Math.min(viewerWidth, viewerHeight * PAGE_ASPECT_RATIO);
   const pageHeight = pageWidth / PAGE_ASPECT_RATIO;
 
   const clampViewerPan = (nextPan: PanPoint, nextScale = scaleRef.current) => {
