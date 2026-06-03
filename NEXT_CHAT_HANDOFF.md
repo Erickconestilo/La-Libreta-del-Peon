@@ -11,13 +11,15 @@
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Último estado empujado a `main`: `d58a842`, documentación sobre el backend de creación de obra; el último commit funcional incluido en la APK instalada es `035d247`.
+- Último estado empujado a `main`: `e39a01d`, fix móvil para que login/refresh por cuenta no manden un bearer viejo o visitante.
+- Último commit funcional incluido en la APK instalada sigue siendo `035d247`; la build nueva con `e39a01d` está lanzada en EAS pero aún no instalada mientras termina.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
 - No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
-- Próximo bloque recomendado: validar en Galaxy la APK `dbcb7a7b`: `Nueva obra` como admin, cambio admin/topógrafo, `Bitácora`, guías y croquis del prisma `626`.
+- Próximo bloque recomendado: esperar la build `01e691fc`, instalarla en Galaxy y validar login por cuenta `admin/topografo`, cambio de sesión, `Nueva obra`, `Bitácora`, guías y croquis del prisma `626`.
 - Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
-- APK instalada actual: `dbcb7a7b`; contiene multi-sesión técnica, login con refresh para `admin/topografo`, creación de obra admin, Bitácora tipo chat y los fixes de Guías/croquis.
+- APK instalada actual: `dbcb7a7b`; contiene multi-sesión técnica, creación de obra admin, Bitácora tipo chat y los fixes de Guías/croquis, pero se detectó que el login por cuenta podía fallar si había un token viejo/inválido en memoria.
+- Workaround actual en Galaxy: sesión `admin` activa por token técnico temporal. No tratarla como sesión larga definitiva; la nueva APK debe permitir entrar con correo/clave y guardar refresh token.
 
 ## Últimos Commits Importantes
 
@@ -47,8 +49,17 @@
 - `ce7ff12` - añade login por cuenta técnica y refresh token para sesiones móviles.
 - `1ef2f3d` - corrige ajuste inicial de Guías y zoom/pan del croquis de prismas seleccionados.
 - `035d247` - añade flujo admin de creación de obra: `POST /projects` y pantalla móvil `Nueva obra`.
+- `e39a01d` - corrige login móvil por cuenta para que `/auth/login` y `/auth/refresh` no envíen un bearer viejo/inválido.
 
 ## APK Actual
+
+- EAS build nueva pendiente: `01e691fc-5e23-4c71-86ae-b1d06e37ec6c`.
+- Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/01e691fc-5e23-4c71-86ae-b1d06e37ec6c
+- Estado al 2026-06-03: `IN_QUEUE`.
+- Commit de la build nueva: `e39a01db5901c07e6bf6380c095c2e877c97af25`.
+- Motivo de la build: corregir login por correo/clave cuando la app conserva un bearer viejo o inválido.
+
+## APK Instalada En Galaxy
 
 - EAS build actual: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`.
 - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/dbcb7a7b-47a5-4abb-a643-c76d63bb5960
@@ -57,6 +68,7 @@
 - Estado al 2026-06-03: `FINISHED` e instalada por ADB en Galaxy `SM_S938B / R5CY21X6FLE`.
 - Commit de la build nueva: `035d247a56164330fec279069fe5ce5fe4d37595`.
 - Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, creación de obra solo admin, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
+- Hallazgo posterior: el flujo de login por cuenta en esta APK puede fallar porque `apiFetch` adjunta bearer viejo/inválido también en `/auth/login`; corregido en `e39a01d` y pendiente de instalación en la build `01e691fc`.
 - EAS `13ee9092-da34-4145-9971-1049244e571f` fue cancelada porque quedó obsoleta al añadir `Nueva obra`.
 
 ## Estado Backend Actual
