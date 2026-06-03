@@ -16,6 +16,15 @@ type ApiEnvelope<T> = {
   meta?: Record<string, unknown>;
 };
 
+type AuthLoginPayload = {
+  session: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: string | null;
+  };
+  user: AuthSessionUser;
+};
+
 type StoredTechSession = {
   createdAt: string;
   email: string | null;
@@ -23,6 +32,7 @@ type StoredTechSession = {
   id: string;
   label: string;
   lastUsedAt: string;
+  refreshToken?: string | null;
   role: AuthSessionUser['role'];
   token: string;
 };
@@ -34,6 +44,7 @@ type SessionStore = {
 
 type SessionContextValue = {
   activateSession: (sessionId: string) => Promise<void>;
+  connectWithCredentials: (email: string, password: string) => Promise<void>;
   connectWithToken: (token: string) => Promise<void>;
   currentUser: AuthSessionUser | null;
   errorMessage: string | null;
@@ -56,6 +67,8 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 const nowIso = () => new Date().toISOString();
 const newSessionId = () => `${Date.now().toString(36)}-${Math.floor(Math.random() * 10000)}`;
+
+const isTechnicalRole = (role: AuthSessionUser['role']) => role === 'admin' || role === 'topografo';
 
 const roleLabel = (role: AuthSessionUser['role']) => {
   if (role === 'admin') return 'Administrador';
@@ -106,6 +119,7 @@ const parseSessionStore = (raw: string | null): SessionStore => {
             id: String(entry.id),
             label: String(entry.label),
             lastUsedAt: String(entry.lastUsedAt),
+            refreshToken: typeof entry.refreshToken === 'string' ? entry.refreshToken : null,
             role: entry.role,
             token: String(entry.token)
           }))
@@ -254,9 +268,30 @@ const isAuthError = (message?: string) => {
   );
 };
 
-const fetchAuthUser = async () => {
+const getAuthMe = async () => {
   const response = await apiFetch<ApiEnvelope<{ user: AuthSessionUser }>>('/auth/me');
   return response.data.user;
+};
+
+const loginWithCredentialsRequest = async (email: string, password: string) => {
+  const response = await apiFetch<ApiEnvelope<AuthLoginPayload>>('/auth/login', {
+    body: JSON.stringify({
+      email,
+      password
+    }),
+    method: 'POST'
+  });
+
+  return response.data;
+};
+
+const refreshSessionRequest = async (refreshToken: string) => {
+  const response = await apiFetch<ApiEnvelope<AuthLoginPayload>>('/auth/refresh', {
+    body: JSON.stringify({ refreshToken }),
+    method: 'POST'
+  });
+
+  return response.data;
 };
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
@@ -273,10 +308,54 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     void hydrateSession();
   }, []);
 
+  const applyPersistedSessions = async (state: SessionStore) => {
+    const normalized = await persistState(state);
+    setSavedSessions(normalized.sessions);
+    return normalized;
+  };
+
   const loadCurrentUser = async () => {
-    const response = await apiFetch<ApiEnvelope<{ user: AuthSessionUser }>>('/auth/me');
-    setCurrentUser(response.data.user);
-    return response.data.user;
+    const user = await getAuthMe();
+    setCurrentUser(user);
+    return user;
+  };
+
+  const createSessionFromPayload = (payload: AuthLoginPayload, existing: StoredTechSession | undefined) => {
+    const now = nowIso();
+    return {
+      ...existing,
+      createdAt: existing?.createdAt ?? now,
+      email: payload.user.email,
+      fullName: payload.user.fullName,
+      id: existing?.id ?? newSessionId(),
+      label: normalizeLabel(payload.user.role, payload.user.fullName),
+      lastUsedAt: now,
+      refreshToken: payload.session.refreshToken,
+      role: payload.user.role,
+      token: payload.session.accessToken
+    } satisfies StoredTechSession;
+  };
+
+  const buildActivePayloadFromSession = async (session: StoredTechSession) => {
+    const tokenInfo = getTokenWarning(session.token);
+    if (!tokenInfo.isExpired) {
+      return { session, refreshed: false };
+    }
+
+    if (!session.refreshToken) {
+      return { session: { ...session, token: '' }, refreshed: false };
+    }
+
+    const refreshed = await refreshSessionRequest(session.refreshToken);
+    return {
+      session: {
+        ...session,
+        token: refreshed.session.accessToken,
+        refreshToken: refreshed.session.refreshToken,
+        lastUsedAt: nowIso()
+      },
+      refreshed: true
+    };
   };
 
   const applySession = async (
@@ -284,21 +363,60 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     sessions: StoredTechSession[],
     options: { swallowAuthError?: boolean } = {}
   ): Promise<boolean> => {
-    const token = sessions.find((session) => session.id === sessionId)?.token ?? null;
+    const storedSession = sessions.find((entry) => entry.id === sessionId) ?? null;
+    if (!storedSession) {
+      setActiveSessionId(null);
+      setStoredToken(null);
+      setApiBearerToken(null);
+      setCurrentUser(null);
+      setSessionWarning(null);
+      setIsSessionInvalid(false);
+      return false;
+    }
+
+    let nextSession = storedSession;
+    let nextSessions = sessions;
+
+    try {
+      const refreshedPayload = await buildActivePayloadFromSession(storedSession);
+      nextSession = refreshedPayload.session;
+
+      if (refreshedPayload.refreshed) {
+        nextSessions = sessions.map((session) =>
+          session.id === storedSession.id ? nextSession : session
+        );
+        const normalized = await applyPersistedSessions({ sessions: nextSessions, activeSessionId: sessionId });
+        nextSessions = normalized.sessions;
+        nextSession = normalized.sessions.find((session) => session.id === sessionId) ?? nextSession;
+      }
+    } catch {
+      nextSession = {
+        ...storedSession,
+        token: ''
+      };
+      nextSessions = sessions.map((session) =>
+        session.id === storedSession.id ? nextSession : session
+      );
+      await applyPersistedSessions({
+        sessions: nextSessions,
+        activeSessionId: sessionId
+      });
+    }
+
+    const token = nextSession.token;
     const tokenInfo = getTokenWarning(token);
 
     setActiveSessionId(sessionId);
-    setStoredToken(token);
-    setApiBearerToken(token);
+    setStoredToken(token || null);
+    setApiBearerToken(token || null);
     setSessionWarning(tokenInfo.warning);
     setIsSessionInvalid(!token || tokenInfo.isExpired);
 
     if (!token || tokenInfo.isExpired) {
       setCurrentUser(null);
       if (!token) {
-        setSessionWarning('No hay sesión técnica activa.');
+        setSessionWarning('La sesión técnica es inválida. Repite el token.');
       }
-
       return false;
     }
 
@@ -306,6 +424,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       await loadCurrentUser();
       setErrorMessage(null);
       setIsSessionInvalid(false);
+      setSavedSessions(nextSessions);
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
@@ -331,14 +450,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       const state = await loadStateFromStorage();
       loadedState = state;
-      const nextState = await persistState(state);
+      const nextState = await applyPersistedSessions(state);
 
-      setSavedSessions(nextState.sessions);
       await applySession(nextState.activeSessionId, nextState.sessions, { swallowAuthError: true });
 
       if (nextState.activeSessionId) {
         try {
-          const user = await fetchAuthUser();
+          const user = await getAuthMe();
           const now = nowIso();
           const resolvedSession = nextState.sessions.find((session) => session.id === nextState.activeSessionId);
 
@@ -355,8 +473,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             const sessions = nextState.sessions.map((session) =>
               session.id === mergedSession.id ? mergedSession : session
             );
-            const normalized = await persistState({ ...nextState, sessions });
-            setSavedSessions(normalized.sessions);
+            const normalized = await applyPersistedSessions({ ...nextState, sessions });
             await applySession(normalized.activeSessionId, normalized.sessions, { swallowAuthError: true });
           }
         } catch {
@@ -374,7 +491,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setApiBearerToken(null);
       setSessionWarning('No se pudo validar la sesión técnica guardada.');
       setIsSessionInvalid(false);
-      await persistState({ activeSessionId: null, sessions: fallbackSessions });
+      await applyPersistedSessions({ activeSessionId: null, sessions: fallbackSessions });
     } finally {
       setIsLoading(false);
     }
@@ -393,9 +510,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setApiBearerToken(trimmedToken);
-      const authenticatedUser = await fetchAuthUser();
+      const authenticatedUser = await getAuthMe();
 
-      if (authenticatedUser.role === 'visitante') {
+      if (!isTechnicalRole(authenticatedUser.role)) {
         throw new Error('El token debe ser de admin o topógrafo.');
       }
 
@@ -425,7 +542,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const nextSessions = existingSession
         ? previousSessions.map((session) => (session.id === mergedSession.id ? mergedSession : session))
         : [...previousSessions, mergedSession];
-      const normalized = await persistState({ sessions: nextSessions, activeSessionId: mergedSession.id });
+      const normalized = await applyPersistedSessions({ sessions: nextSessions, activeSessionId: mergedSession.id });
 
       setSavedSessions(normalized.sessions);
       await Storage.removeItemAsync(LEGACY_SESSION_KEY);
@@ -452,6 +569,59 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const connectWithCredentials = async (email: string, password: string) => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      throw new Error('Introduce correo y contraseña.');
+    }
+
+    setIsLoading(true);
+    const previousSessions = savedSessions;
+    const previousActiveSessionId = activeSessionId;
+    const previousStoredToken = storedToken;
+
+    try {
+      const payload = await loginWithCredentialsRequest(trimmedEmail, password);
+      const user = payload.user;
+
+      if (!isTechnicalRole(user.role)) {
+        throw new Error('La cuenta debe ser admin o topógrafo.');
+      }
+
+      const now = nowIso();
+      const existingSession = previousSessions.find((session) => session.role === user.role);
+      const mergedSession = createSessionFromPayload(payload, existingSession);
+      mergedSession.label = normalizeLabel(user.role, user.fullName);
+      mergedSession.lastUsedAt = now;
+
+      const nextSessions = existingSession
+        ? previousSessions.map((session) => (session.id === mergedSession.id ? mergedSession : session))
+        : [...previousSessions, mergedSession];
+
+      const normalized = await applyPersistedSessions({ sessions: nextSessions, activeSessionId: mergedSession.id });
+      setSavedSessions(normalized.sessions);
+      const isValid = await applySession(normalized.activeSessionId, normalized.sessions);
+      await Storage.removeItemAsync(LEGACY_SESSION_KEY);
+      await SecureStore.deleteItemAsync(LEGACY_SESSION_KEY);
+
+      const tokenInfo = getTokenWarning(payload.session.accessToken);
+      setSessionWarning(isValid ? tokenInfo.warning : 'La sesión técnica es inválida. Revalida o pega un token nuevo.');
+      setErrorMessage(null);
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
+      setStoredToken(previousStoredToken);
+      setActiveSessionId(previousActiveSessionId);
+      setSavedSessions(previousSessions);
+      setApiBearerToken(previousStoredToken);
+      await applySession(previousActiveSessionId, previousSessions, { swallowAuthError: true });
+      setErrorMessage(message);
+      throw new Error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const activateSession = async (sessionId: string) => {
     setIsLoading(true);
 
@@ -465,7 +635,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         entry.id === sessionId ? { ...entry, lastUsedAt: nowIso() } : entry
       );
 
-      const normalized = await persistState({ sessions: nextSessions, activeSessionId: sessionId });
+      const normalized = await applyPersistedSessions({ sessions: nextSessions, activeSessionId: sessionId });
       setSavedSessions(normalized.sessions);
       await applySession(normalized.activeSessionId, normalized.sessions, { swallowAuthError: true });
       setErrorMessage(null);
@@ -486,13 +656,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const shouldResetToken = sessionId === activeSessionId;
 
       if (nextSessions.length === 0) {
-        await persistState({ sessions: [], activeSessionId: null });
+        await applyPersistedSessions({ sessions: [], activeSessionId: null });
         setSavedSessions([]);
         await applySession(null, []);
         return;
       }
 
-      const normalized = await persistState({
+      const normalized = await applyPersistedSessions({
         sessions: nextSessions,
         activeSessionId: shouldResetToken ? nextSessions[0].id : activeSessionId
       });
@@ -513,16 +683,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      const normalized = await persistState({ sessions: savedSessions, activeSessionId: null });
+      const normalized = await applyPersistedSessions({ sessions: savedSessions, activeSessionId: null });
       setSavedSessions(normalized.sessions);
       setActiveSessionId(null);
       setStoredToken(null);
       setApiBearerToken(null);
       setSessionWarning(null);
       setIsSessionInvalid(false);
-      await loadCurrentUser();
+      setCurrentUser(null);
       await SecureStore.deleteItemAsync(LEGACY_SESSION_KEY);
-      await Storage.removeItemAsync(LEGACY_SESSION_KEY);
+      await Storage.removeItemAsync(SESSION_STATE_KEY);
       setErrorMessage(null);
     } catch (error) {
       setCurrentUser(null);
@@ -545,9 +715,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const nowSessions = savedSessions.map((session) =>
         session.id === activeSessionId ? { ...session, lastUsedAt: nowIso() } : session
       );
-      const normalized = await persistState({ sessions: nowSessions, activeSessionId });
-
-      setSavedSessions(normalized.sessions);
+      const normalized = await applyPersistedSessions({ sessions: nowSessions, activeSessionId });
       const isValid = await applySession(normalized.activeSessionId, normalized.sessions, { swallowAuthError: true });
       setErrorMessage(isValid ? null : 'La sesión técnica es inválida. Repite el token.');
       if (isValid) {
@@ -565,6 +733,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<SessionContextValue>(
     () => ({
       activateSession,
+      connectWithCredentials,
       connectWithToken,
       currentUser,
       errorMessage,
