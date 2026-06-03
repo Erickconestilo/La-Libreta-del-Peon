@@ -63,6 +63,12 @@ function RootLayoutNav() {
                 }}
               />
               <Stack.Screen
+                name="projects/new"
+                options={{
+                  title: 'Nueva obra'
+                }}
+              />
+              <Stack.Screen
                 name="station/[stationId]"
                 options={{
                   title: 'Detalle de estación'

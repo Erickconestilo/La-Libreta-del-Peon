@@ -20,6 +20,7 @@ export default function ProjectsScreen() {
     uploadProjectPhoto
   } = useProjectPhotoMutations(null);
   const projects = data ?? [];
+  const canCreateProject = currentUser?.role === 'admin';
   const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
 
   const handleEditProjectImage = (project: ProjectSummary) => {
@@ -60,6 +61,12 @@ export default function ProjectsScreen() {
         <Text style={styles.eyebrow}>La Libreta del Peón</Text>
         <Text style={styles.title}>Seleccionar obra</Text>
         <Text style={styles.subtitle}>Elige una obra activa para consultar o registrar datos de campo.</Text>
+        {canCreateProject ? (
+          <Pressable onPress={() => router.push('/projects/new' as never)} style={styles.createProjectButton}>
+            <MaterialIcons color={colors.background} name="add" size={19} />
+            <Text style={styles.createProjectButtonText}>Nueva obra</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {errorMessage ? (
@@ -191,6 +198,22 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,
     flex: 1,
+  },
+  createProjectButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: spacing[0],
+    marginTop: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  createProjectButtonText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: '900',
   },
   emptyBody: {
     color: colors.textSecondary,

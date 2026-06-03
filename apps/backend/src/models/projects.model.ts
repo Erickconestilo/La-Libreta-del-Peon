@@ -1,3 +1,5 @@
+import type { PoolClient } from 'pg';
+
 import { pool } from '../db/pool.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import { createChangeLog } from './change-logs.model.js';
@@ -5,6 +7,13 @@ import { createChangeLog } from './change-logs.model.js';
 type ProjectScope = {
   params: unknown[];
   clause: string;
+};
+
+type CreateProjectInput = {
+  code?: string | null;
+  description?: string | null;
+  isActive?: boolean;
+  name: string;
 };
 
 const buildProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): ProjectScope => {
@@ -33,6 +42,33 @@ const mapProjectRow = (row: Record<string, unknown>) => ({
   stationCount: Number(row.station_count ?? 0),
   updatedAt: row.updated_at
 });
+
+const slugifyProjectCode = (value: string) => {
+  const slug = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 72);
+
+  return slug || `obra-${Date.now()}`;
+};
+
+const resolveUniqueProjectCode = async (client: PoolClient, input: CreateProjectInput) => {
+  const baseCode = slugifyProjectCode(input.code?.trim() || input.name);
+
+  for (let index = 0; index < 25; index += 1) {
+    const candidate = index === 0 ? baseCode : `${baseCode}-${index + 1}`;
+    const result = await client.query('SELECT 1 FROM projects WHERE code = $1 LIMIT 1', [candidate]);
+
+    if (result.rowCount === 0) {
+      return candidate;
+    }
+  }
+
+  return `${baseCode}-${Date.now()}`;
+};
 
 export const listProjects = async (projectScope: string[] | null = null) => {
   const scope = buildProjectScopeCondition(projectScope, 1);
@@ -87,6 +123,51 @@ export const getProjectById = async (projectId: string, projectScope: string[] |
   }
 
   return mapProjectRow(result.rows[0]);
+};
+
+export const createProject = async (input: CreateProjectInput, createdBy: string) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const code = await resolveUniqueProjectCode(client, input);
+    const result = await client.query(
+      `
+        INSERT INTO projects (code, name, description, is_active)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+      `,
+      [
+        code,
+        input.name.trim(),
+        input.description?.trim() ? input.description.trim() : null,
+        input.isActive ?? true
+      ]
+    );
+    const projectId = result.rows[0].id as string;
+
+    await createChangeLog(
+      {
+        entityId: projectId,
+        entityType: 'project',
+        fieldChanged: 'created',
+        newValue: input.name.trim(),
+        oldValue: null
+      },
+      createdBy,
+      client
+    );
+
+    await client.query('COMMIT');
+
+    return getProjectById(projectId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 export const updateProjectPhoto = async (
