@@ -58,6 +58,12 @@
 - Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, creación de obra solo admin, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
 - EAS `13ee9092-da34-4145-9971-1049244e571f` fue cancelada porque quedó obsoleta al añadir `Nueva obra`.
 
+## Estado Backend Actual
+
+- Render expone `035d247a56164330fec279069fe5ce5fe4d37595`.
+- `POST /api/v1/projects` con admin y payload inválido responde `400 INVALID_PROJECT_PAYLOAD`, confirmando que la ruta nueva existe sin crear datos.
+- `POST /api/v1/projects` con topógrafo responde `403 FORBIDDEN`, confirmando que crear obra queda solo para `admin`.
+
 ## APK Instalada En Galaxy
 
 - EAS build: `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`.
