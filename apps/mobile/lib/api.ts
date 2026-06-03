@@ -5,11 +5,15 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() || (
 const GUEST_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_GUEST_PUBLIC_TOKEN ?? '';
 let runtimeBearerToken: string | null = null;
 
+type ApiFetchInit = RequestInit & {
+  skipAuth?: boolean;
+};
+
 export const setApiBearerToken = (token: string | null) => {
   runtimeBearerToken = token?.trim() ? token.trim() : null;
 };
 
-export const apiFetch = async <T>(path: string, init?: RequestInit) => {
+export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
   if (!API_BASE_URL) {
     throw new Error('La URL de API no está configurada para esta versión de la app.');
   }
@@ -18,12 +22,13 @@ export const apiFetch = async <T>(path: string, init?: RequestInit) => {
     throw new Error('La URL de API debe usar HTTPS en builds de producción.');
   }
 
-  const headers = new Headers(init?.headers);
+  const { skipAuth, ...requestInit } = init ?? {};
+  const headers = new Headers(requestInit.headers);
   headers.set('Content-Type', 'application/json');
 
   const authToken = runtimeBearerToken ?? GUEST_PUBLIC_TOKEN;
 
-  if (authToken) {
+  if (!skipAuth && authToken) {
     headers.set('Authorization', `Bearer ${authToken}`);
   }
 
@@ -31,7 +36,7 @@ export const apiFetch = async <T>(path: string, init?: RequestInit) => {
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
-      ...init,
+      ...requestInit,
       headers
     });
   } catch {
