@@ -11,7 +11,8 @@
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Último estado empujado a `main`: `e39a01d`, fix móvil para que login/refresh por cuenta no manden un bearer viejo o visitante.
+- Último estado empujado a `main`: `ed5c36f`, documentación del handoff de la build de login por cuenta.
+- Último commit funcional móvil: `e39a01d`, fix para que login/refresh por cuenta no manden un bearer viejo o visitante.
 - Último commit funcional incluido en la APK instalada sigue siendo `035d247`; la build nueva con `e39a01d` está lanzada en EAS pero aún no instalada mientras termina.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
