@@ -11,14 +11,14 @@
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Último estado empujado a `main`: `1ef2f3d` con lector de guías ajustado a página completa y zoom/pan de croquis mejorado para prismas alejados.
+- Último estado empujado a `main`: `035d247` con creación de obra solo admin, lector de guías ajustado a página completa y zoom/pan de croquis mejorado para prismas alejados.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
 - No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
-- Próximo bloque recomendado: esperar o revisar EAS `13ee9092-da34-4145-9971-1049244e571f`; si finaliza, descargar/instalar APK y validar `Bitácora`, login admin/topógrafo, guías y croquis del prisma `626`.
+- Próximo bloque recomendado: esperar o revisar EAS `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`; si finaliza, descargar/instalar APK y validar `Nueva obra` como admin, `Bitácora`, login admin/topógrafo, guías y croquis del prisma `626`.
 - Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
-- Importante: la APK instalada `2416dd4a` no contiene todavía el login por cuenta/refresh ni los últimos ajustes de guías/croquis. El código actual en `main` sí contiene multi-sesión técnica, login con refresh para `admin/topografo`, Bitácora tipo chat y los fixes de Guías/croquis.
-- Antes de meter datos reales de forma sostenida, instalar una APK generada desde `1ef2f3d` o posterior.
+- Importante: la APK instalada `2416dd4a` no contiene todavía el login por cuenta/refresh, creación de obra ni los últimos ajustes de guías/croquis. El código actual en `main` sí contiene multi-sesión técnica, login con refresh para `admin/topografo`, creación de obra admin, Bitácora tipo chat y los fixes de Guías/croquis.
+- Antes de meter datos reales de forma sostenida, instalar una APK generada desde `035d247` o posterior.
 
 ## Últimos Commits Importantes
 
@@ -47,14 +47,16 @@
 - `275ae7d` - rediseña `Bitácora` como timeline tipo chat con etiquetas.
 - `ce7ff12` - añade login por cuenta técnica y refresh token para sesiones móviles.
 - `1ef2f3d` - corrige ajuste inicial de Guías y zoom/pan del croquis de prismas seleccionados.
+- `035d247` - añade flujo admin de creación de obra: `POST /projects` y pantalla móvil `Nueva obra`.
 
 ## APK Actual
 
-- EAS build nueva en cola: `13ee9092-da34-4145-9971-1049244e571f`.
-- Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/13ee9092-da34-4145-9971-1049244e571f
+- EAS build nueva en cola: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`.
+- Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/dbcb7a7b-47a5-4abb-a643-c76d63bb5960
 - Estado al 2026-06-03: `IN_QUEUE`, sin APK descargable todavía.
-- Commit de la build nueva: `1ef2f3d7714e24e74106835b88ffcb719d7a84c5`.
-- Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
+- Commit de la build nueva: `035d247a56164330fec279069fe5ce5fe4d37595`.
+- Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, creación de obra solo admin, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
+- EAS `13ee9092-da34-4145-9971-1049244e571f` fue cancelada porque quedó obsoleta al añadir `Nueva obra`.
 
 ## APK Instalada En Galaxy
 
