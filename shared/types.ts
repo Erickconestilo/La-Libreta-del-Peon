@@ -28,6 +28,13 @@ export interface ProjectSummary extends Project {
   stationCount: number;
 }
 
+export interface CreateProjectInput {
+  code?: string | null;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+}
+
 export interface User {
   id: string;
   email: string;

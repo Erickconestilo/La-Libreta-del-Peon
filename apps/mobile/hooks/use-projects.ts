@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { PhotoContentType, ProjectSummary, SignedPhotoUpload, Station } from '@shared/types';
+import type { CreateProjectInput, PhotoContentType, ProjectSummary, SignedPhotoUpload, Station } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
 import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
@@ -108,6 +108,15 @@ const updateProjectPhoto = async ({
   return response.data;
 };
 
+const createProjectRequest = async (input: CreateProjectInput) => {
+  const response = await apiFetch<ApiEnvelope<ProjectSummary>>('/projects', {
+    body: JSON.stringify(input),
+    method: 'POST'
+  });
+
+  return response.data;
+};
+
 export const useProjects = () => {
   const query = useQuery({
     queryFn: fetchProjects,
@@ -118,6 +127,26 @@ export const useProjects = () => {
   return {
     ...query,
     errorMessage: query.error ? getErrorMessage(query.error) : null
+  };
+};
+
+export const useCreateProject = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: createProjectRequest,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['change-logs'] })
+      ]);
+    }
+  });
+
+  return {
+    createProject: mutation.mutateAsync,
+    errorMessage: mutation.error ? getErrorMessage(mutation.error) : null,
+    isCreating: mutation.isPending
   };
 };
 
