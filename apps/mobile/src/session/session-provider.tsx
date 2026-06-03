@@ -279,7 +279,8 @@ const loginWithCredentialsRequest = async (email: string, password: string) => {
       email,
       password
     }),
-    method: 'POST'
+    method: 'POST',
+    skipAuth: true
   });
 
   return response.data;
@@ -288,7 +289,8 @@ const loginWithCredentialsRequest = async (email: string, password: string) => {
 const refreshSessionRequest = async (refreshToken: string) => {
   const response = await apiFetch<ApiEnvelope<AuthLoginPayload>>('/auth/refresh', {
     body: JSON.stringify({ refreshToken }),
-    method: 'POST'
+    method: 'POST',
+    skipAuth: true
   });
 
   return response.data;
