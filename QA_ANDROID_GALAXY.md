@@ -1,5 +1,26 @@
 # QA_ANDROID_GALAXY.md — Prueba APK TopoField
 
+## Estado operativo actual — 2026-06-03
+
+- APK instalada en Galaxy: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`, archivo `C:\Users\guill\Downloads\topofield-dbcb7a7b-admin-project.apk`.
+- Nueva build EAS lanzada: `01e691fc-5e23-4c71-86ae-b1d06e37ec6c`, commit `e39a01db5901c07e6bf6380c095c2e877c97af25`.
+- Estado de la nueva build al crear esta nota: `IN_QUEUE`.
+- Motivo: corregir el login por correo/clave para que `/auth/login` y `/auth/refresh` no envíen un bearer viejo/inválido junto a la petición.
+- Galaxy conectado por ADB: `SM_S938B / R5CY21X6FLE`.
+- Sesión actual en Galaxy: `admin` activo mediante token técnico temporal. Sirve como workaround inmediato, pero no sustituye a la sesión larga con refresh token que debe validarse en la nueva APK.
+- Validación previa al build: `npx tsc -p apps/mobile/tsconfig.json --noEmit` OK y `git diff --check` OK.
+
+### QA pendiente para la build `01e691fc`
+
+- Descargar e instalar la APK cuando EAS termine.
+- Confirmar arranque sin crash con `logcat`.
+- Entrar con `topofield-admin@topofield.local` usando la pantalla de cuenta, no token pegado.
+- Confirmar `Administrador · Admin TopoField`, estado `Activa` y refresh persistido tras relanzar.
+- Añadir o revalidar sesión `topografo` por cuenta para alternar ambos roles.
+- Probar `Nueva obra` como `admin`.
+- Probar que `topografo` no puede crear obra.
+- Revisar `Bitácora`, lector de `Guías` y croquis del prisma `626`.
+
 ## APK actual
 
 - Build EAS actual: `71a232a3-2f87-4e85-a71e-75ad0681269a`
