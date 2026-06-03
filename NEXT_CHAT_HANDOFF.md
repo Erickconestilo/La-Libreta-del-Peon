@@ -11,14 +11,14 @@
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Último estado empujado a `main`: sesión `topografo` activa en el Galaxy local y documentación actualizada.
+- Último estado empujado a `main`: `1ef2f3d` con lector de guías ajustado a página completa y zoom/pan de croquis mejorado para prismas alejados.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
 - Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
 - No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
-- Próximo bloque recomendado: validar `Bitácora` como topógrafo, revisar croquis del prisma `626`, y si hoy se toman fotos, verificar que el token no haya caducado antes de culpar al flujo de fotos.
+- Próximo bloque recomendado: esperar o revisar EAS `13ee9092-da34-4145-9971-1049244e571f`; si finaliza, descargar/instalar APK y validar `Bitácora`, login admin/topógrafo, guías y croquis del prisma `626`.
 - Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
-- Importante: la app móvil actual solo guarda una sesión técnica activa en SecureStore. Guardar `admin` en el Galaxy sustituiría la sesión `topografo`; no hay selector de perfiles todavía.
-- Necesidad nueva a diseñar antes de meter datos reales: sesión técnica estable para `admin` y `topografo`, idealmente con selector de perfil técnico o login/refresh, evitando depender de access tokens pegados a mano que caducan.
+- Importante: la APK instalada `2416dd4a` no contiene todavía el login por cuenta/refresh ni los últimos ajustes de guías/croquis. El código actual en `main` sí contiene multi-sesión técnica, login con refresh para `admin/topografo`, Bitácora tipo chat y los fixes de Guías/croquis.
+- Antes de meter datos reales de forma sostenida, instalar una APK generada desde `1ef2f3d` o posterior.
 
 ## Últimos Commits Importantes
 
@@ -43,8 +43,20 @@
 - `983f481` - refresca iconos móviles: app icon de brújula y tab `Bitácora` con brújula.
 - `333b2d0` - documenta instalación y mini-QA Galaxy de la APK refrescada.
 - `0dc9c78` - documenta sesión persistida de topógrafo en Galaxy.
+- `26f9dd2` - endurece sesión móvil con multi-sesión, aviso de expiración y revalidación.
+- `275ae7d` - rediseña `Bitácora` como timeline tipo chat con etiquetas.
+- `ce7ff12` - añade login por cuenta técnica y refresh token para sesiones móviles.
+- `1ef2f3d` - corrige ajuste inicial de Guías y zoom/pan del croquis de prismas seleccionados.
 
 ## APK Actual
+
+- EAS build nueva en cola: `13ee9092-da34-4145-9971-1049244e571f`.
+- Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/13ee9092-da34-4145-9971-1049244e571f
+- Estado al 2026-06-03: `IN_QUEUE`, sin APK descargable todavía.
+- Commit de la build nueva: `1ef2f3d7714e24e74106835b88ffcb719d7a84c5`.
+- Esta build nueva debe incluir: login admin/topógrafo con refresh, multi-sesión técnica, Bitácora tipo chat, Guías encajadas en página completa y zoom/pan mejorado del croquis.
+
+## APK Instalada En Galaxy
 
 - EAS build: `2416dd4a-27a2-47ac-bdf2-5933af2d83d4`.
 - URL APK: https://expo.dev/artifacts/eas/5stxhvFJC7q6yr86WGKjco.apk
