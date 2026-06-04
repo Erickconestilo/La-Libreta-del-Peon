@@ -21,6 +21,23 @@
 - Probar que `topografo` no puede crear obra.
 - Revisar `Bitácora`, lector de `Guías` y croquis del prisma `626`.
 
+## Resultado instalación APK `01e691fc` — 2026-06-04
+
+- Build EAS: `01e691fc-5e23-4c71-86ae-b1d06e37ec6c`.
+- Estado EAS: `FINISHED`.
+- Commit incluido: `e39a01db5901c07e6bf6380c095c2e877c97af25`.
+- APK: https://expo.dev/artifacts/eas/eBxdN7oXYd7j51pEcraew.apk
+- APK local instalado por ADB: `C:\Users\guill\Downloads\topofield-01e691fc-credential-login.apk`.
+- Instalación ADB en Galaxy `SM_S938B / R5CY21X6FLE`: `Success`.
+- App arranca tras instalar; proceso activo.
+- `logcat` filtrado: sin `AndroidRuntime`, sin errores JS; solo `ReactNativeJS: Running "main"`.
+- `Obras` carga datos reales tras instalar; visible `Campus Nord` y `Maragall`.
+- Perfil detectó una sesión técnica vieja inválida, que era el caso esperado para probar el fix.
+- Login por cuenta `admin` validado desde la app: Perfil muestra `Administrador · Admin TopoField`, correo admin y estado `Activa`.
+- Interpretación: el fix de `apiFetch(skipAuth)` para `/auth/login` queda validado en Galaxy; el login por cuenta ya no queda bloqueado por bearer viejo/inválido.
+- Intento de automatizar alta de `topografo` por ADB no se completó limpiamente por foco/teclado virtual; se deja `admin` activo. El usuario puede añadir `topografo` manualmente desde Perfil usando cuenta técnica.
+- No registrar contraseñas en GitHub ni docs. Las credenciales técnicas deben manejarse fuera del repo.
+
 ## APK actual
 
 - Build EAS actual: `71a232a3-2f87-4e85-a71e-75ad0681269a`
