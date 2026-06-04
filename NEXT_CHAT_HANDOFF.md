@@ -61,7 +61,7 @@
 - Estado al 2026-06-04: `FINISHED` e instalada por ADB en Galaxy `SM_S938B / R5CY21X6FLE`.
 - Commit de la build nueva: `e39a01db5901c07e6bf6380c095c2e877c97af25`.
 - Motivo de la build: corregir login por correo/clave cuando la app conserva un bearer viejo o inválido.
-- QA realizada: app arranca, `Obras` carga, login `admin` por cuenta funciona y Perfil muestra `Administrador · Admin TopoField` como `Activa`. `logcat` filtrado solo muestra `ReactNativeJS: Running "main"`.
+- QA realizada: app arranca, `Obras` carga, login `admin` por cuenta funciona y Perfil muestra `Administrador · Admin TopoField` como `Activa`. Tras `force-stop` y relanzar, Perfil sigue mostrando `Administrador`. `logcat` filtrado solo muestra `ReactNativeJS: Running "main"`.
 
 ## APK Anterior Instalada En Galaxy
 
