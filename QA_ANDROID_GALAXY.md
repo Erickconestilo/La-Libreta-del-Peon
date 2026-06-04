@@ -34,6 +34,7 @@
 - `Obras` carga datos reales tras instalar; visible `Campus Nord` y `Maragall`.
 - Perfil detectó una sesión técnica vieja inválida, que era el caso esperado para probar el fix.
 - Login por cuenta `admin` validado desde la app: Perfil muestra `Administrador · Admin TopoField`, correo admin y estado `Activa`.
+- Persistencia validada: tras `force-stop` y relanzar la app, Perfil sigue mostrando `Administrador` y `Cuenta: topofield-admin@topofield.local`.
 - Interpretación: el fix de `apiFetch(skipAuth)` para `/auth/login` queda validado en Galaxy; el login por cuenta ya no queda bloqueado por bearer viejo/inválido.
 - Intento de automatizar alta de `topografo` por ADB no se completó limpiamente por foco/teclado virtual; se deja `admin` activo. El usuario puede añadir `topografo` manualmente desde Perfil usando cuenta técnica.
 - No registrar contraseñas en GitHub ni docs. Las credenciales técnicas deben manejarse fuera del repo.
