@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +14,7 @@ export default function ProjectsScreen() {
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
   const { data, errorMessage, isLoading, isRefetching, refetch } = useProjects();
+  const [isLoadTakingLong, setIsLoadTakingLong] = useState(false);
   const {
     errorMessage: photoErrorMessage,
     isMutating: isPhotoMutating,
@@ -22,6 +24,19 @@ export default function ProjectsScreen() {
   const projects = data ?? [];
   const canCreateProject = currentUser?.role === 'admin';
   const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsLoadTakingLong(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setIsLoadTakingLong(true);
+    }, 7000);
+
+    return () => clearTimeout(timeoutId);
+  }, [isLoading]);
 
   const handleEditProjectImage = (project: ProjectSummary) => {
     Alert.alert('Imagen de obra', `Actualiza la portada de ${project.name}.`, [
@@ -104,6 +119,15 @@ export default function ProjectsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>{isLoading ? 'Cargando obras...' : 'Sin obras disponibles'}</Text>
+            {isLoadTakingLong ? (
+              <>
+                <Text style={styles.emptyBody}>El servidor está tardando más de lo normal.</Text>
+                <Pressable disabled={isRefetching} onPress={() => void refetch()} style={[styles.retryButton, isRefetching ? styles.disabledButton : null]}>
+                  <MaterialIcons color={colors.background} name="refresh" size={17} />
+                  <Text style={styles.retryButtonText}>{isRefetching ? 'Reintentando...' : 'Reintentar'}</Text>
+                </Pressable>
+              </>
+            ) : null}
             {!isLoading ? <Text style={styles.emptyBody}>No hay proyectos activos o estaciones asociadas todavía.</Text> : null}
           </View>
         }
