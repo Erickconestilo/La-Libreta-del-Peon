@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { CreateProjectInput, PhotoContentType, ProjectSummary, SignedPhotoUpload, Station } from '@shared/types';
 
-import { apiFetch } from '@/lib/api';
+import { apiFetch, isApiRequestError } from '@/lib/api';
+import { fetchWithTimeout } from '@/lib/fetch-timeout';
 import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
 
 type StationListItem = Station & {
@@ -65,7 +66,11 @@ const fetchProjects = async () => {
   try {
     const response = await apiFetch<ApiEnvelope<ProjectSummary[]>>('/projects');
     return response.data;
-  } catch {
+  } catch (error) {
+    if (!isApiRequestError(error) || error.status !== 404) {
+      throw error;
+    }
+
     const fallback = await apiFetch<ApiEnvelope<StationListItem[]>>('/stations');
     return buildProjectsFromStations(fallback.data);
   }
@@ -180,14 +185,16 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
         projectId: resolvedProjectId
       });
 
-      const uploadResponse = await fetch(signedUpload.signedUrl, {
+      const uploadResponse = await fetchWithTimeout(signedUpload.signedUrl, {
         body: preparedPhoto.blob,
         headers: {
           'cache-control': 'max-age=31536000',
           'content-type': preparedPhoto.contentType,
           'x-upsert': 'false'
         },
-        method: 'PUT'
+        method: 'PUT',
+        timeoutMessage: 'La subida de la imagen tardó demasiado. Reintenta con buena conexión.',
+        timeoutMs: 60000
       });
 
       if (!uploadResponse.ok) {

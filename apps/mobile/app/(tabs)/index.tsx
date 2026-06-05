@@ -73,6 +73,10 @@ export default function ProjectsScreen() {
         <View style={styles.errorCard}>
           <Text style={styles.errorTitle}>No se pudieron cargar las obras</Text>
           <Text style={styles.errorBody}>{errorMessage}</Text>
+          <Pressable disabled={isRefetching} onPress={() => void refetch()} style={[styles.retryButton, isRefetching ? styles.disabledButton : null]}>
+            <MaterialIcons color={colors.background} name="refresh" size={17} />
+            <Text style={styles.retryButtonText}>{isRefetching ? 'Reintentando...' : 'Reintentar'}</Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -314,6 +318,22 @@ const styles = StyleSheet.create({
   projectTitle: {
     color: colors.textPrimary,
     fontSize: 22,
+    fontWeight: '900',
+  },
+  retryButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: spacing[0],
+    marginTop: spacing[2],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  retryButtonText: {
+    color: colors.background,
+    fontSize: 13,
     fontWeight: '900',
   },
   stationCount: {
