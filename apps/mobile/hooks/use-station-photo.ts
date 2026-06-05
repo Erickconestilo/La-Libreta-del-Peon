@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PhotoContentType, SignedPhotoUpload, Station } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { fetchWithTimeout } from '@/lib/fetch-timeout';
 import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
 
 type ApiEnvelope<T> = {
@@ -91,14 +92,16 @@ export const useStationPhotoMutations = (stationId: string | null) => {
         stationId
       });
 
-      const uploadResponse = await fetch(signedUpload.signedUrl, {
+      const uploadResponse = await fetchWithTimeout(signedUpload.signedUrl, {
         body: preparedPhoto.blob,
         headers: {
           'cache-control': 'max-age=31536000',
           'content-type': preparedPhoto.contentType,
           'x-upsert': 'false'
         },
-        method: 'PUT'
+        method: 'PUT',
+        timeoutMessage: 'La subida de la foto tardó demasiado. Reintenta con buena conexión.',
+        timeoutMs: 60000
       });
 
       if (!uploadResponse.ok) {

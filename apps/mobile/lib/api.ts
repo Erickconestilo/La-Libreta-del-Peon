@@ -1,13 +1,32 @@
+import { fetchWithTimeout } from './fetch-timeout';
+
 const DEFAULT_DEV_API_BASE_URL = 'http://localhost:3000/api/v1';
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() || (
   process.env.NODE_ENV === 'production' ? '' : DEFAULT_DEV_API_BASE_URL
 );
 const GUEST_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_GUEST_PUBLIC_TOKEN ?? '';
+const API_REQUEST_TIMEOUT_MS = Number.parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT_MS ?? '18000', 10);
 let runtimeBearerToken: string | null = null;
 
 type ApiFetchInit = RequestInit & {
   skipAuth?: boolean;
 };
+
+export class ApiRequestError extends Error {
+  code?: string;
+  rawMessage?: string | null;
+  status: number;
+
+  constructor(status: number, message: string, options: { code?: string; rawMessage?: string | null } = {}) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.code = options.code;
+    this.rawMessage = options.rawMessage;
+    this.status = status;
+  }
+}
+
+export const isApiRequestError = (error: unknown): error is ApiRequestError => error instanceof ApiRequestError;
 
 export const setApiBearerToken = (token: string | null) => {
   runtimeBearerToken = token?.trim() ? token.trim() : null;
@@ -35,11 +54,17 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
       ...requestInit,
-      headers
+      headers,
+      timeoutMessage: 'El servidor tardó demasiado en responder. Reintenta en unos segundos.',
+      timeoutMs: API_REQUEST_TIMEOUT_MS
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('tardó demasiado')) {
+      throw error;
+    }
+
     throw new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.');
   }
 
@@ -50,12 +75,20 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
     }
   }))) as T & {
     error?: {
+      code?: string;
       message?: string;
     } | null;
   };
 
   if (!response.ok) {
-    throw new Error(getFriendlyApiErrorMessage(response.status, json.error?.message));
+    throw new ApiRequestError(
+      response.status,
+      getFriendlyApiErrorMessage(response.status, json.error?.message),
+      {
+        code: json.error?.code,
+        rawMessage: json.error?.message
+      }
+    );
   }
 
   return json;
