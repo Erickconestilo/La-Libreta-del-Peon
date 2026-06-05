@@ -361,9 +361,9 @@ export const updateStationPhoto = async (
 
     const currentResult = await client.query(
       `
-        SELECT id, photo_url
-        FROM stations
-        WHERE id = $1
+        SELECT s.id, s.photo_url
+        FROM stations s
+        WHERE s.id = $1
         ${scopeClause}
         FOR UPDATE
       `,
@@ -429,9 +429,9 @@ export const updateStationNotes = async (
 
     const currentResult = await client.query(
       `
-        SELECT id, notes
-        FROM stations
-        WHERE id = $1
+        SELECT s.id, s.notes
+        FROM stations s
+        WHERE s.id = $1
         ${scopeClause}
         FOR UPDATE
       `,
