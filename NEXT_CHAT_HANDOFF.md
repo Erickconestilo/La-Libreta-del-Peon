@@ -29,7 +29,10 @@
   - `c7bdea4` corrige `PATCH /stations/:id/photo` y `/notes` para `topografo` declarando alias `stations s`; también agrupa el `OR` en `/prisms/coverage/:groupCode` para respetar scope por obra.
 - Render desplegado y verificado en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
 - Smoke backend tras deploy: health 200, lecturas visitante 200, escritura sin token 401, y prueba topógrafo no destructiva OK (`/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200, `PATCH /stations/:id/notes` 200).
-- Build móvil nueva lanzada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`, estado inicial `IN_QUEUE`. Pendiente descargar/instalar cuando termine.
+- Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
+- APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
+- APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
+- Pendiente instalar en Galaxy porque ADB no detectó dispositivo al terminar la descarga.
 
 ## Últimos Commits Importantes
 
@@ -64,12 +67,14 @@
 - `c15a462` - muestra recuperación cuando `Obras` tarda demasiado y desactiva retry silencioso.
 - `c7bdea4` - corrige scope backend de foto/notas de estación y cobertura de prismas.
 
-## APK En Build Pendiente
+## APK Pendiente de Instalar
 
 - EAS build: `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`.
 - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657
+- APK: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
+- APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
 - Commit móvil incluido: `c15a462295ca9f8352245f54a1c676afd83e80c1`.
-- Estado al lanzarse: `IN_QUEUE`.
+- Estado: `FINISHED`.
 - Incluye:
   - timeout de API de 18 s con error visible,
   - timeout de subidas de fotos de 60 s,
@@ -77,6 +82,7 @@
   - aviso si Obras tarda más de 7 s,
   - desactivación del retry automático silencioso de React Query.
 - No incluye el commit backend `c7bdea4` dentro del APK, porque ese cambio vive en Render y ya está desplegado.
+- Pendiente: conectar Galaxy, instalar por ADB, abrir app, validar Obras y probar foto real.
 
 ## APK Actual
 
