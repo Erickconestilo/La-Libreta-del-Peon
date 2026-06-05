@@ -445,8 +445,10 @@ export const getPrismCoverageByGroupCode = async (groupCode: string, projectScop
     FROM prism_observations po
     INNER JOIN prisms p ON p.id = po.prism_id
     WHERE
-      po.station_code = $1
-      OR starts_with(po.station_code, $1 || '.')
+      (
+        po.station_code = $1
+        OR starts_with(po.station_code, $1 || '.')
+      )
       ${scope.clause}
     ORDER BY po.station_code ASC, p.code ASC
   `;
