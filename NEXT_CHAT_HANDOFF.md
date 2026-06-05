@@ -21,6 +21,15 @@
 - APK instalada actual: `01e691fc`; contiene multi-sesión técnica, creación de obra admin, Bitácora tipo chat, fixes de Guías/croquis y el fix de login por cuenta sin bearer viejo.
 - Galaxy queda con sesión `admin` activa por correo/clave con refresh token. El usuario puede usar el móvil para crear datos como admin.
 - No se guardan contraseñas en docs ni GitHub. Si se necesita recordatorio, usar canal privado del usuario; no commitear secretos.
+- El usuario reportó el 2026-06-05 que la app se quedaba a menudo en `Cargando obras...` y que no pudo agregar fotos.
+- Fix móvil aplicado y empujado:
+  - `ce03884` añade timeout a `apiFetch` y a subidas de foto, y evita ocultar errores reales de `/projects` con fallback a `/stations`.
+  - `c15a462` muestra recuperación si `Obras` tarda más de 7 s y desactiva retry silencioso global de React Query.
+- Fix backend aplicado y empujado:
+  - `c7bdea4` corrige `PATCH /stations/:id/photo` y `/notes` para `topografo` declarando alias `stations s`; también agrupa el `OR` en `/prisms/coverage/:groupCode` para respetar scope por obra.
+- Render desplegado y verificado en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
+- Smoke backend tras deploy: health 200, lecturas visitante 200, escritura sin token 401, y prueba topógrafo no destructiva OK (`/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200, `PATCH /stations/:id/notes` 200).
+- Build móvil nueva lanzada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`, estado inicial `IN_QUEUE`. Pendiente descargar/instalar cuando termine.
 
 ## Últimos Commits Importantes
 
@@ -51,6 +60,23 @@
 - `1ef2f3d` - corrige ajuste inicial de Guías y zoom/pan del croquis de prismas seleccionados.
 - `035d247` - añade flujo admin de creación de obra: `POST /projects` y pantalla móvil `Nueva obra`.
 - `e39a01d` - corrige login móvil por cuenta para que `/auth/login` y `/auth/refresh` no envíen un bearer viejo/inválido.
+- `ce03884` - añade timeouts móviles para carga de campo y subidas de fotos.
+- `c15a462` - muestra recuperación cuando `Obras` tarda demasiado y desactiva retry silencioso.
+- `c7bdea4` - corrige scope backend de foto/notas de estación y cobertura de prismas.
+
+## APK En Build Pendiente
+
+- EAS build: `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`.
+- Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657
+- Commit móvil incluido: `c15a462295ca9f8352245f54a1c676afd83e80c1`.
+- Estado al lanzarse: `IN_QUEUE`.
+- Incluye:
+  - timeout de API de 18 s con error visible,
+  - timeout de subidas de fotos de 60 s,
+  - botón `Reintentar` cuando Obras falla,
+  - aviso si Obras tarda más de 7 s,
+  - desactivación del retry automático silencioso de React Query.
+- No incluye el commit backend `c7bdea4` dentro del APK, porque ese cambio vive en Render y ya está desplegado.
 
 ## APK Actual
 
