@@ -60,9 +60,11 @@
 - Build móvil lanzada:
   - EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`.
   - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657
+  - APK: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
+  - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
   - Commit APK: `c15a462295ca9f8352245f54a1c676afd83e80c1`.
-  - Estado inicial: `IN_QUEUE`.
-  - Pendiente: descargar, instalar en Galaxy y probar Obras + fotos reales.
+  - Estado: `FINISHED`.
+  - Pendiente: instalar en Galaxy y probar Obras + fotos reales. Al terminar la descarga, ADB no detectó dispositivo conectado.
 
 ## APK actual
 
