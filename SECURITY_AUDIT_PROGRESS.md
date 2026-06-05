@@ -53,6 +53,17 @@
 - Hallazgo de membresías acotado operativamente: `PROJECT_MEMBERSHIPS_MATRIX.md` deja claro que la auto-asignación global solo aplica al usuario técnico de QA y no es política para usuarios reales. Sigue pendiente rellenar la matriz nominal antes de alta real de usuarios.
 - La revisión queda en estado de auditoría aplicada (no certificación), con pasos de hardening pendiente.
 
+## Actualización de Auditoría - 2026-06-05
+
+- Hallazgo funcional/security corregido en `c7bdea4`: `PATCH /stations/:stationId/photo` y `/notes` fallaban para `topografo` porque el scope generaba `s.project_id` pero la query usaba `FROM stations` sin alias. Ahora usan `FROM stations s`.
+- Hallazgo de scope corregido en `c7bdea4`: `/prisms/coverage/:groupCode` agrupaba mal el `OR`, permitiendo que una coincidencia exacta por `station_code` no quedara cubierta por el scope por proyecto. Ahora aplica `(station_code exacto OR prefijo) AND scope`.
+- Verificación:
+  - `npm run build --workspace apps/backend`: OK.
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`: OK.
+  - SQL no destructivo con scope de topógrafo: foto/notas de estación devuelven fila.
+  - Render health en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
+  - Smoke topógrafo no destructivo: firma de foto 201, `PATCH /stations/:id/photo` 200 y `/notes` 200.
+
 ## Hallazgos y Riesgos Vigentes
 
 ### Riesgo 1 - Visitante no es privado
@@ -100,6 +111,12 @@ Con datos actuales parece coherente, pero el control debe estar en el ancla de l
 
 Estado: corregido y desplegado. El controlador valida `getStationById(stationId, projectScope)` y las queries por estación filtran por `s.project_id`.
 QA: `topografo` recibe `200` en `/stations/:id/prisms`.
+
+### Riesgo 7b - Scope de cobertura de prismas por grupo
+
+`GET /prisms/coverage/:groupCode` tenía una condición `OR` sin agrupar. PostgreSQL podía interpretar `station_code = grupo OR (starts_with(...) AND scope)`, dejando la coincidencia exacta fuera del scope por proyecto.
+
+Estado: corregido y desplegado en `c7bdea4`; ahora el scope se aplica a ambas ramas del `OR`.
 
 ### Riesgo 8 - Membresías iniciales demasiado amplias
 

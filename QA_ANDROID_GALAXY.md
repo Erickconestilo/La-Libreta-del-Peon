@@ -39,6 +39,31 @@
 - Intento de automatizar alta de `topografo` por ADB no se completó limpiamente por foco/teclado virtual; se deja `admin` activo. El usuario puede añadir `topografo` manualmente desde Perfil usando cuenta técnica.
 - No registrar contraseñas en GitHub ni docs. Las credenciales técnicas deben manejarse fuera del repo.
 
+## Fix carga de obras/fotos — 2026-06-05
+
+- Reporte del usuario: la app se queda muchas veces en `Cargando obras...` y no pudo agregar fotos en móvil.
+- Auditoría con agentes:
+  - Frontend: petición sin timeout claro y retry silencioso podían hacer parecer la pantalla congelada.
+  - Funciones/backend: `PATCH /stations/:stationId/photo` y `/notes` fallaban para `topografo` por alias SQL `s.project_id` sin `FROM stations s`.
+  - Backend/security: `/prisms/coverage/:groupCode` tenía un `OR` sin paréntesis que podía saltarse parte del scope por obra.
+- Fix móvil:
+  - `ce03884` añade `fetchWithTimeout`, timeout API de 18 s y timeout de subida de fotos de 60 s.
+  - `c15a462` añade aviso tras 7 s en Obras, botón `Reintentar` y desactiva retry automático silencioso.
+  - Verificación: `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK.
+- Fix backend:
+  - `c7bdea4` corrige alias en foto/notas de estación y agrupa scope de cobertura de prismas.
+  - Verificación local: `npm run build --workspace apps/backend` OK.
+  - Verificación SQL no destructiva: consultas de foto/notas con scope de topógrafo devuelven 1 fila.
+  - Render `GET /health` ya expone `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
+  - Smoke Render: health 200; `/projects`, `/stations`, `/guide-entries`, `/prisms/coverage/CN1` con visitante 200; `PATCH /stations/:id/photo` sin token 401.
+  - Smoke topógrafo no destructivo: `/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200 y `PATCH /stations/:id/notes` 200 sobre estación sin foto.
+- Build móvil lanzada:
+  - EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`.
+  - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657
+  - Commit APK: `c15a462295ca9f8352245f54a1c676afd83e80c1`.
+  - Estado inicial: `IN_QUEUE`.
+  - Pendiente: descargar, instalar en Galaxy y probar Obras + fotos reales.
+
 ## APK actual
 
 - Build EAS actual: `71a232a3-2f87-4e85-a71e-75ad0681269a`
