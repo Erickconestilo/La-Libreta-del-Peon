@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AuthSessionUser } from '@shared/types';
 import * as SecureStore from 'expo-secure-store';
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { apiFetch, setApiBearerToken } from '@/lib/api';
+import { queryClient } from '@/lib/query-client';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -305,6 +306,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [storedToken, setStoredToken] = useState<string | null>(null);
   const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [isSessionInvalid, setIsSessionInvalid] = useState(false);
+  const authCacheKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     void hydrateSession();
@@ -320,6 +322,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const user = await getAuthMe();
     setCurrentUser(user);
     return user;
+  };
+
+  const clearServerCacheIfAuthChanged = (cacheKey: string) => {
+    if (authCacheKeyRef.current === cacheKey) {
+      return;
+    }
+
+    authCacheKeyRef.current = cacheKey;
+    queryClient.removeQueries();
   };
 
   const createSessionFromPayload = (payload: AuthLoginPayload, existing: StoredTechSession | undefined) => {
@@ -367,6 +378,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   ): Promise<boolean> => {
     const storedSession = sessions.find((entry) => entry.id === sessionId) ?? null;
     if (!storedSession) {
+      clearServerCacheIfAuthChanged('guest');
       setActiveSessionId(null);
       setStoredToken(null);
       setApiBearerToken(null);
@@ -407,6 +419,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const token = nextSession.token;
     const tokenInfo = getTokenWarning(token);
+    clearServerCacheIfAuthChanged(token ? `session:${nextSession.id}:${token}` : `invalid:${nextSession.id}`);
 
     setActiveSessionId(sessionId);
     setStoredToken(token || null);
