@@ -1,6 +1,7 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { File, UploadType } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 
 import type { PhotoContentType } from '@shared/types';
 
@@ -17,6 +18,7 @@ export type PhotoSource = 'camera' | 'library';
 const MAX_IMAGE_WIDTH = 1600;
 const JPEG_QUALITY = 0.72;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60000;
+const CONTENT_URI_PREFIX = 'content://';
 
 const buildResizeActions = (width: number) => {
   if (!width || width <= MAX_IMAGE_WIDTH) {
@@ -60,6 +62,10 @@ const launchPhotoSource = async (source: PhotoSource) => {
     selectionLimit: 1
   };
 
+  if (source === 'library') {
+    options.legacy = true;
+  }
+
   if (source === 'camera') {
     return ImagePicker.launchCameraAsync(options);
   }
@@ -67,10 +73,66 @@ const launchPhotoSource = async (source: PhotoSource) => {
   return ImagePicker.launchImageLibraryAsync(options);
 };
 
+const buildTemporaryPhotoUri = () => {
+  if (!LegacyFileSystem.cacheDirectory) {
+    throw new Error('No se pudo acceder a la caché local para preparar la imagen.');
+  }
+
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${LegacyFileSystem.cacheDirectory}topofield-photo-source-${uniqueSuffix}.jpg`;
+};
+
+const prepareAssetUriForCompression = async (uri: string) => {
+  if (!uri.startsWith(CONTENT_URI_PREFIX)) {
+    return {
+      shouldDelete: false,
+      uri
+    };
+  }
+
+  const localUri = buildTemporaryPhotoUri();
+
+  try {
+    await LegacyFileSystem.copyAsync({
+      from: uri,
+      to: localUri
+    });
+  } catch (error) {
+    throw new Error('No se pudo copiar la imagen seleccionada desde Galería. Prueba con otra foto o con Cámara.');
+  }
+
+  return {
+    shouldDelete: true,
+    uri: localUri
+  };
+};
+
+const deleteTemporaryUri = async (uri: string) => {
+  try {
+    await LegacyFileSystem.deleteAsync(uri, {
+      idempotent: true
+    });
+  } catch {
+    // Temporary gallery copies are safe to leave if Android refuses cleanup.
+  }
+};
+
 export const pickAndCompressPhoto = async (source: PhotoSource): Promise<PreparedPhoto | null> => {
   await requestPhotoPermission(source);
 
-  const pickerResult = await launchPhotoSource(source);
+  let pickerResult: ImagePicker.ImagePickerResult;
+
+  try {
+    pickerResult = await launchPhotoSource(source);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+
+    if (message.includes("Uri lacks 'file' scheme") || message.includes('ExponentImagePicker.launchImageLibraryAsync')) {
+      throw new Error('No se pudo abrir la imagen seleccionada. Reintenta desde Galería o haz una foto nueva.');
+    }
+
+    throw error;
+  }
 
   if (pickerResult.canceled) {
     return null;
@@ -82,14 +144,23 @@ export const pickAndCompressPhoto = async (source: PhotoSource): Promise<Prepare
     throw new Error('No se pudo leer la imagen seleccionada.');
   }
 
-  const compressed = await ImageManipulator.manipulateAsync(
-    asset.uri,
-    buildResizeActions(asset.width),
-    {
-      compress: JPEG_QUALITY,
-      format: ImageManipulator.SaveFormat.JPEG
+  const sourceForCompression = await prepareAssetUriForCompression(asset.uri);
+  let compressed: ImageManipulator.ImageResult;
+
+  try {
+    compressed = await ImageManipulator.manipulateAsync(
+      sourceForCompression.uri,
+      buildResizeActions(asset.width),
+      {
+        compress: JPEG_QUALITY,
+        format: ImageManipulator.SaveFormat.JPEG
+      }
+    );
+  } finally {
+    if (sourceForCompression.shouldDelete) {
+      await deleteTemporaryUri(sourceForCompression.uri);
     }
-  );
+  }
 
   const compressedFile = new File(compressed.uri);
 

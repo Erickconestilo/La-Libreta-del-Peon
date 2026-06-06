@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProjectSummary } from '@shared/types';
@@ -149,6 +149,11 @@ function ProjectCard({
   onPress: () => void;
   project: ProjectSummary;
 }) {
+  const handleEditImagePress = (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    onEditImage();
+  };
+
   const content = (
     <>
       <View style={styles.statusBadge}>
@@ -167,7 +172,7 @@ function ProjectCard({
         <MaterialIcons color={colors.accentGreen} name="arrow-forward" size={24} />
       </View>
       {canEditImage ? (
-        <Pressable disabled={isEditingImage} onPress={onEditImage} style={[styles.editImageButton, isEditingImage ? styles.disabledButton : null]}>
+        <Pressable disabled={isEditingImage} onPress={handleEditImagePress} style={[styles.editImageButton, isEditingImage ? styles.disabledButton : null]}>
           <MaterialIcons color={colors.background} name="photo-camera" size={17} />
           <Text style={styles.editImageButtonText}>{isEditingImage ? 'Procesando...' : project.imageUrl ? 'Cambiar imagen' : 'Añadir imagen'}</Text>
         </Pressable>
