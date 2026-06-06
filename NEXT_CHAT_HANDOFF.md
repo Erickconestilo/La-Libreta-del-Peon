@@ -32,7 +32,9 @@
 - Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
 - APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
 - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
-- Pendiente instalar en Galaxy porque ADB no detectó dispositivo al terminar la descarga.
+- Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
+- Mini-QA Galaxy tras instalar: app arranca, Obras carga, visibles `Campus Nord` y `Maragall`, sesión admin persistida, `logcat` limpio.
+- Pendiente probar foto real desde cámara/galería.
 
 ## Últimos Commits Importantes
 
@@ -82,7 +84,8 @@
   - aviso si Obras tarda más de 7 s,
   - desactivación del retry automático silencioso de React Query.
 - No incluye el commit backend `c7bdea4` dentro del APK, porque ese cambio vive en Render y ya está desplegado.
-- Pendiente: conectar Galaxy, instalar por ADB, abrir app, validar Obras y probar foto real.
+- Estado Galaxy: instalada por ADB y validada en arranque/Obras/logcat.
+- Pendiente: probar foto real.
 
 ## APK Actual
 

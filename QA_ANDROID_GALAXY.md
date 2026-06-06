@@ -64,7 +64,11 @@
   - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
   - Commit APK: `c15a462295ca9f8352245f54a1c676afd83e80c1`.
   - Estado: `FINISHED`.
-  - Pendiente: instalar en Galaxy y probar Obras + fotos reales. Al terminar la descarga, ADB no detectó dispositivo conectado.
+  - Instalación ADB en Galaxy `SM_S938B / R5CY21X6FLE`: `Success`.
+  - Mini-QA tras instalar: app arranca, proceso activo, `Obras` carga sin quedarse en `Cargando obras...`, visibles `Campus Nord` y `Maragall`.
+  - Sesión admin persistida: se ve acción `Nueva obra` y botones `Añadir imagen`.
+  - `logcat` filtrado: sin `AndroidRuntime`, sin errores JS; solo `ReactNativeJS: Running "main"`.
+  - Pendiente: probar foto real desde cámara/galería con el usuario presente.
 
 ## APK actual
 
