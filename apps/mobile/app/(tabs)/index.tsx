@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, ImageBackground, Pressable, RefreshControl, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Alert, FlatList, ImageBackground, Modal, Pressable, RefreshControl, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProjectSummary } from '@shared/types';
@@ -21,6 +21,7 @@ export default function ProjectsScreen() {
     removeProjectPhoto,
     uploadProjectPhoto
   } = useProjectPhotoMutations(null);
+  const [imageActionProject, setImageActionProject] = useState<ProjectSummary | null>(null);
   const projects = data ?? [];
   const canCreateProject = currentUser?.role === 'admin';
   const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
@@ -39,33 +40,45 @@ export default function ProjectsScreen() {
   }, [isLoading]);
 
   const handleEditProjectImage = (project: ProjectSummary) => {
-    Alert.alert('Imagen de obra', `Actualiza la portada de ${project.name}.`, [
+    setImageActionProject(project);
+  };
+
+  const handleCloseImageActions = () => {
+    setImageActionProject(null);
+  };
+
+  const handleUploadProjectImage = (source: 'camera' | 'library') => {
+    const projectId = imageActionProject?.id;
+    handleCloseImageActions();
+
+    if (!projectId) {
+      return;
+    }
+
+    setTimeout(() => {
+      void uploadProjectPhoto(source, projectId).catch(() => undefined);
+    }, 250);
+  };
+
+  const handleRemoveProjectImage = () => {
+    const project = imageActionProject;
+    handleCloseImageActions();
+
+    if (!project) {
+      return;
+    }
+
+    Alert.alert('Quitar imagen', `La tarjeta de ${project.name} volverá al fondo gráfico por defecto.`, [
       {
-        onPress: () => {
-          void uploadProjectPhoto('camera', project.id).catch(() => undefined);
-        },
-        text: 'Cámara'
-      },
-      {
-        onPress: () => {
-          void uploadProjectPhoto('library', project.id).catch(() => undefined);
-        },
-        text: 'Galería'
-      },
-      ...(project.imageUrl
-        ? [
-            {
-              onPress: () => {
-                void removeProjectPhoto(project.id).catch(() => undefined);
-              },
-              style: 'destructive' as const,
-              text: 'Quitar imagen'
-            }
-          ]
-        : []),
-      {
-        style: 'cancel' as const,
+        style: 'cancel',
         text: 'Cancelar'
+      },
+      {
+        onPress: () => {
+          void removeProjectPhoto(project.id).catch(() => undefined);
+        },
+        style: 'destructive',
+        text: 'Quitar imagen'
       }
     ]);
   };
@@ -132,6 +145,59 @@ export default function ProjectsScreen() {
           </View>
         }
       />
+
+      <Modal
+        animationType="fade"
+        onRequestClose={handleCloseImageActions}
+        transparent
+        visible={Boolean(imageActionProject)}
+      >
+        <Pressable onPress={handleCloseImageActions} style={styles.modalBackdrop}>
+          <Pressable style={styles.imageActionSheet}>
+            <Text style={styles.imageActionTitle}>Imagen de obra</Text>
+            <Text style={styles.imageActionBody}>
+              {imageActionProject ? `Actualiza la portada de ${imageActionProject.name}.` : ''}
+            </Text>
+
+            <Pressable
+              disabled={isPhotoMutating}
+              onPress={() => handleUploadProjectImage('camera')}
+              style={[styles.imageActionButton, isPhotoMutating ? styles.disabledButton : null]}
+            >
+              <MaterialIcons color={colors.background} name="photo-camera" size={19} />
+              <Text style={styles.imageActionButtonText}>Cámara</Text>
+            </Pressable>
+
+            <Pressable
+              disabled={isPhotoMutating}
+              onPress={() => handleUploadProjectImage('library')}
+              style={[styles.imageActionButton, isPhotoMutating ? styles.disabledButton : null]}
+            >
+              <MaterialIcons color={colors.background} name="photo-library" size={19} />
+              <Text style={styles.imageActionButtonText}>Galería</Text>
+            </Pressable>
+
+            {imageActionProject?.imageUrl ? (
+              <Pressable
+                disabled={isPhotoMutating}
+                onPress={handleRemoveProjectImage}
+                style={[styles.imageActionDangerButton, isPhotoMutating ? styles.disabledButton : null]}
+              >
+                <MaterialIcons color={colors.red} name="delete-outline" size={19} />
+                <Text style={styles.imageActionDangerText}>Quitar imagen</Text>
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              disabled={isPhotoMutating}
+              onPress={handleCloseImageActions}
+              style={[styles.imageActionCancelButton, isPhotoMutating ? styles.disabledButton : null]}
+            >
+              <Text style={styles.imageActionCancelText}>Cancelar</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -321,8 +387,76 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing[3],
   },
+  imageActionBody: {
+    color: colors.textSecondary,
+    fontSize: typography.fontSizeBody - 1,
+    lineHeight: 20,
+  },
+  imageActionButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: spacing[1],
+    justifyContent: 'center',
+    paddingVertical: spacing[2],
+  },
+  imageActionButtonText: {
+    color: colors.background,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  imageActionCancelButton: {
+    alignItems: 'center',
+    borderColor: '#2a2f3a',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: spacing[2],
+  },
+  imageActionCancelText: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  imageActionDangerButton: {
+    alignItems: 'center',
+    borderColor: 'rgba(239, 68, 68, 0.55)',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[1],
+    justifyContent: 'center',
+    paddingVertical: spacing[2],
+  },
+  imageActionDangerText: {
+    color: colors.red,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  imageActionSheet: {
+    backgroundColor: colors.card,
+    borderColor: '#2a2f3a',
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: spacing[2],
+    marginHorizontal: spacing[3],
+    padding: spacing[3],
+    width: '88%',
+  },
+  imageActionTitle: {
+    color: colors.textPrimary,
+    fontSize: typography.fontSizeTitle,
+    fontWeight: '900',
+  },
   listContent: {
     gap: spacing[2],
+    padding: spacing[3],
+  },
+  modalBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    flex: 1,
+    justifyContent: 'center',
     padding: spacing[3],
   },
   projectCard: {
