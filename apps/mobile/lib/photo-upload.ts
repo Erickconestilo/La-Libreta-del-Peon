@@ -1,14 +1,14 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { File, UploadType } from 'expo-file-system';
 
 import type { PhotoContentType } from '@shared/types';
 
 export interface PreparedPhoto {
-  blob: Blob;
   contentType: PhotoContentType;
   fileSizeBytes: number;
   height: number;
+  localUri: string;
   width: number;
 }
 
@@ -16,6 +16,7 @@ export type PhotoSource = 'camera' | 'library';
 
 const MAX_IMAGE_WIDTH = 1600;
 const JPEG_QUALITY = 0.72;
+const DEFAULT_UPLOAD_TIMEOUT_MS = 60000;
 
 const buildResizeActions = (width: number) => {
   if (!width || width <= MAX_IMAGE_WIDTH) {
@@ -90,18 +91,76 @@ export const pickAndCompressPhoto = async (source: PhotoSource): Promise<Prepare
     }
   );
 
-  try {
-    const blobResponse = await fetch(compressed.uri);
-    const blob = await blobResponse.blob();
+  const compressedFile = new File(compressed.uri);
 
-    return {
-      blob,
-      contentType: 'image/jpeg',
-      fileSizeBytes: blob.size,
-      height: compressed.height,
-      width: compressed.width
-    };
+  if (!compressedFile.exists || compressedFile.size <= 0) {
+    throw new Error('No se pudo preparar la imagen comprimida.');
+  }
+
+  return {
+    contentType: 'image/jpeg',
+    fileSizeBytes: compressedFile.size,
+    height: compressed.height,
+    localUri: compressedFile.uri,
+    width: compressed.width
+  };
+};
+
+export const deletePreparedPhoto = async (preparedPhoto: PreparedPhoto | null) => {
+  try {
+    if (!preparedPhoto) {
+      return;
+    }
+
+    const file = new File(preparedPhoto.localUri);
+
+    if (file.exists) {
+      file.delete();
+    }
+  } catch {
+    // Temporary camera/cache files are safe to leave if Android refuses cleanup.
+  }
+};
+
+export const uploadPreparedPhotoToSignedUrl = async (
+  signedUrl: string,
+  preparedPhoto: PreparedPhoto,
+  options?: {
+    timeoutMessage?: string;
+    timeoutMs?: number;
+  }
+) => {
+  const uploadFile = new File(preparedPhoto.localUri);
+
+  if (!uploadFile.exists) {
+    throw new Error('No se encontró el archivo temporal de la imagen para subirlo.');
+  }
+
+  const controller = new AbortController();
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS;
+  const timeoutMessage = options?.timeoutMessage ?? 'La subida de la imagen tardó demasiado. Reintenta con buena conexión.';
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await uploadFile.upload(signedUrl, {
+      headers: {
+        'cache-control': 'max-age=31536000',
+        'content-type': preparedPhoto.contentType,
+        'x-upsert': 'false'
+      },
+      httpMethod: 'PUT',
+      signal: controller.signal,
+      uploadType: UploadType.BINARY_CONTENT
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(timeoutMessage);
+    }
+
+    throw error;
   } finally {
-    await FileSystem.deleteAsync(compressed.uri, { idempotent: true }).catch(() => undefined);
+    clearTimeout(timeoutId);
   }
 };

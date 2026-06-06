@@ -3,8 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateProjectInput, PhotoContentType, ProjectSummary, SignedPhotoUpload, Station } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
-import { fetchWithTimeout } from '@/lib/fetch-timeout';
-import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
+import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
 
 type StationListItem = Station & {
   project?: {
@@ -179,32 +178,29 @@ export const useProjectPhotoMutations = (projectId: string | null) => {
         return null;
       }
 
-      const signedUpload = await requestSignedProjectPhotoUpload({
-        contentType: preparedPhoto.contentType,
-        fileSizeBytes: preparedPhoto.fileSizeBytes,
-        projectId: resolvedProjectId
-      });
+      try {
+        const signedUpload = await requestSignedProjectPhotoUpload({
+          contentType: preparedPhoto.contentType,
+          fileSizeBytes: preparedPhoto.fileSizeBytes,
+          projectId: resolvedProjectId
+        });
 
-      const uploadResponse = await fetchWithTimeout(signedUpload.signedUrl, {
-        body: preparedPhoto.blob,
-        headers: {
-          'cache-control': 'max-age=31536000',
-          'content-type': preparedPhoto.contentType,
-          'x-upsert': 'false'
-        },
-        method: 'PUT',
-        timeoutMessage: 'La subida de la imagen tardó demasiado. Reintenta con buena conexión.',
-        timeoutMs: 60000
-      });
+        const uploadResponse = await uploadPreparedPhotoToSignedUrl(signedUpload.signedUrl, preparedPhoto, {
+          timeoutMessage: 'La subida de la imagen tardó demasiado. Reintenta con buena conexión.',
+          timeoutMs: 60000
+        });
 
-      if (!uploadResponse.ok) {
-        throw new Error(`No se pudo subir la imagen a Storage (${uploadResponse.status}).`);
+        if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+          throw new Error(`No se pudo subir la imagen a Storage (${uploadResponse.status}).`);
+        }
+
+        return updateProjectPhoto({
+          projectId: resolvedProjectId,
+          storagePath: signedUpload.path
+        });
+      } finally {
+        await deletePreparedPhoto(preparedPhoto);
       }
-
-      return updateProjectPhoto({
-        projectId: resolvedProjectId,
-        storagePath: signedUpload.path
-      });
     },
     onSuccess: invalidateProjects
   });

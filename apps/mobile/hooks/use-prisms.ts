@@ -3,8 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PhotoContentType, Prism, PrismCoverageGroup, PrismObservation, SignedPhotoUpload } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
-import { fetchWithTimeout } from '@/lib/fetch-timeout';
-import { pickAndCompressPhoto, type PhotoSource } from '@/lib/photo-upload';
+import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -119,32 +118,29 @@ export const usePrismPhotoMutations = (stationId: string | null) => {
         return null;
       }
 
-      const signedUpload = await requestSignedPrismPhotoUpload({
-        contentType: preparedPhoto.contentType,
-        fileSizeBytes: preparedPhoto.fileSizeBytes,
-        prismId
-      });
+      try {
+        const signedUpload = await requestSignedPrismPhotoUpload({
+          contentType: preparedPhoto.contentType,
+          fileSizeBytes: preparedPhoto.fileSizeBytes,
+          prismId
+        });
 
-      const uploadResponse = await fetchWithTimeout(signedUpload.signedUrl, {
-        body: preparedPhoto.blob,
-        headers: {
-          'cache-control': 'max-age=31536000',
-          'content-type': preparedPhoto.contentType,
-          'x-upsert': 'false'
-        },
-        method: 'PUT',
-        timeoutMessage: 'La subida de la foto del prisma tardó demasiado. Reintenta con buena conexión.',
-        timeoutMs: 60000
-      });
+        const uploadResponse = await uploadPreparedPhotoToSignedUrl(signedUpload.signedUrl, preparedPhoto, {
+          timeoutMessage: 'La subida de la foto del prisma tardó demasiado. Reintenta con buena conexión.',
+          timeoutMs: 60000
+        });
 
-      if (!uploadResponse.ok) {
-        throw new Error(`No se pudo subir la foto del prisma a Storage (${uploadResponse.status}).`);
+        if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+          throw new Error(`No se pudo subir la foto del prisma a Storage (${uploadResponse.status}).`);
+        }
+
+        return attachPrismPhoto({
+          prismId,
+          storagePath: signedUpload.path
+        });
+      } finally {
+        await deletePreparedPhoto(preparedPhoto);
       }
-
-      return attachPrismPhoto({
-        prismId,
-        storagePath: signedUpload.path
-      });
     },
     onSuccess: invalidatePrisms
   });
