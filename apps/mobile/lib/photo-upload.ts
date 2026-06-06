@@ -1,5 +1,6 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { File, UploadType } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { Image, Platform } from 'react-native';
@@ -25,6 +26,25 @@ type PickedPhoto = {
   extension?: string;
   uri: string;
   width?: number;
+};
+
+const getFileExtension = (value?: string | null) => {
+  const extension = value?.split(/[?#]/)[0]?.split('.').pop();
+  return extension && extension !== value ? extension : undefined;
+};
+
+const getExtensionFromMimeType = (mimeType?: string | null) => {
+  switch (mimeType) {
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    case 'image/jpg':
+    case 'image/jpeg':
+      return 'jpg';
+    default:
+      return undefined;
+  }
 };
 
 const buildResizeActions = (width: number) => {
@@ -81,21 +101,25 @@ const launchPhotoSource = async (source: PhotoSource) => {
 };
 
 const pickAndroidLibraryPhoto = async (): Promise<PickedPhoto | null> => {
-  const result = await File.pickFileAsync({
-    mimeTypes: ['image/*']
+  const result = await DocumentPicker.getDocumentAsync({
+    copyToCacheDirectory: true,
+    multiple: false,
+    type: 'image/*'
   });
 
   if (result.canceled) {
     return null;
   }
 
-  if (!result.result?.uri) {
+  const asset = result.assets[0];
+
+  if (!asset?.uri) {
     throw new Error('No se pudo leer la imagen seleccionada.');
   }
 
   return {
-    extension: result.result.extension,
-    uri: result.result.uri
+    extension: getFileExtension(asset.name) ?? getExtensionFromMimeType(asset.mimeType) ?? getFileExtension(asset.uri),
+    uri: asset.uri
   };
 };
 
@@ -125,7 +149,7 @@ const pickImagePickerPhoto = async (source: PhotoSource): Promise<PickedPhoto | 
   }
 
   return {
-    extension: asset.fileName?.split('.').pop(),
+    extension: getFileExtension(asset.fileName) ?? getFileExtension(asset.uri),
     uri: asset.uri,
     width: asset.width
   };
