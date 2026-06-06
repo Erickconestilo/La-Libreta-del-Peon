@@ -22,6 +22,7 @@ const DEFAULT_UPLOAD_TIMEOUT_MS = 60000;
 const CONTENT_URI_PREFIX = 'content://';
 
 type PickedPhoto = {
+  extension?: string;
   uri: string;
   width?: number;
 };
@@ -93,6 +94,7 @@ const pickAndroidLibraryPhoto = async (): Promise<PickedPhoto | null> => {
   }
 
   return {
+    extension: result.result.extension,
     uri: result.result.uri
   };
 };
@@ -123,6 +125,7 @@ const pickImagePickerPhoto = async (source: PhotoSource): Promise<PickedPhoto | 
   }
 
   return {
+    extension: asset.fileName?.split('.').pop(),
     uri: asset.uri,
     width: asset.width
   };
@@ -136,16 +139,32 @@ const pickPhotoSource = async (source: PhotoSource): Promise<PickedPhoto | null>
   return pickImagePickerPhoto(source);
 };
 
-const buildTemporaryPhotoUri = () => {
+const normalizeImageExtension = (extension?: string) => {
+  const normalizedExtension = extension?.replace(/^\./, '').toLowerCase();
+
+  if (normalizedExtension === 'png') {
+    return 'png';
+  }
+
+  if (normalizedExtension === 'webp') {
+    return 'webp';
+  }
+
+  return 'jpg';
+};
+
+const buildTemporaryPhotoUri = (extension?: string) => {
   if (!LegacyFileSystem.cacheDirectory) {
     throw new Error('No se pudo acceder a la caché local para preparar la imagen.');
   }
 
   const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `${LegacyFileSystem.cacheDirectory}topofield-photo-source-${uniqueSuffix}.jpg`;
+  return `${LegacyFileSystem.cacheDirectory}topofield-photo-source-${uniqueSuffix}.${normalizeImageExtension(extension)}`;
 };
 
-const prepareAssetUriForCompression = async (uri: string) => {
+const prepareAssetUriForCompression = async (pickedPhoto: PickedPhoto) => {
+  const { extension, uri } = pickedPhoto;
+
   if (!uri.startsWith(CONTENT_URI_PREFIX)) {
     return {
       shouldDelete: false,
@@ -153,7 +172,7 @@ const prepareAssetUriForCompression = async (uri: string) => {
     };
   }
 
-  const localUri = buildTemporaryPhotoUri();
+  const localUri = buildTemporaryPhotoUri(extension);
 
   try {
     await LegacyFileSystem.copyAsync({
@@ -202,20 +221,30 @@ export const pickAndCompressPhoto = async (source: PhotoSource): Promise<Prepare
     return null;
   }
 
-  const sourceForCompression = await prepareAssetUriForCompression(pickedPhoto.uri);
+  const sourceForCompression = await prepareAssetUriForCompression(pickedPhoto);
   let compressed: ImageManipulator.ImageResult;
 
   try {
     const imageWidth = pickedPhoto.width ?? (await getImageWidth(sourceForCompression.uri));
 
-    compressed = await ImageManipulator.manipulateAsync(
-      sourceForCompression.uri,
-      buildResizeActions(imageWidth),
-      {
-        compress: JPEG_QUALITY,
-        format: ImageManipulator.SaveFormat.JPEG
+    try {
+      compressed = await ImageManipulator.manipulateAsync(
+        sourceForCompression.uri,
+        buildResizeActions(imageWidth),
+        {
+          compress: JPEG_QUALITY,
+          format: ImageManipulator.SaveFormat.JPEG
+        }
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+
+      if (message.includes('Context.renderAsync') || message.includes('Loading bitmap failed')) {
+        throw new Error('No se pudo preparar la imagen seleccionada. Prueba con otra foto o usa Cámara.');
       }
-    );
+
+      throw error;
+    }
   } finally {
     if (sourceForCompression.shouldDelete) {
       await deleteTemporaryUri(sourceForCompression.uri);
