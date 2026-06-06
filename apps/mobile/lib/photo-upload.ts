@@ -2,6 +2,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { File, UploadType } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
+import { Image, Platform } from 'react-native';
 
 import type { PhotoContentType } from '@shared/types';
 
@@ -19,6 +20,11 @@ const MAX_IMAGE_WIDTH = 1600;
 const JPEG_QUALITY = 0.72;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60000;
 const CONTENT_URI_PREFIX = 'content://';
+
+type PickedPhoto = {
+  uri: string;
+  width?: number;
+};
 
 const buildResizeActions = (width: number) => {
   if (!width || width <= MAX_IMAGE_WIDTH) {
@@ -45,6 +51,10 @@ const requestPhotoPermission = async (source: PhotoSource) => {
     return;
   }
 
+  if (Platform.OS === 'android') {
+    return;
+  }
+
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync(false);
 
   if (!permission.granted) {
@@ -58,19 +68,72 @@ const launchPhotoSource = async (source: PhotoSource) => {
     base64: false,
     exif: false,
     mediaTypes: ['images'],
-    quality: 0.9,
+    quality: 1,
     selectionLimit: 1
   };
-
-  if (source === 'library') {
-    options.legacy = true;
-  }
 
   if (source === 'camera') {
     return ImagePicker.launchCameraAsync(options);
   }
 
   return ImagePicker.launchImageLibraryAsync(options);
+};
+
+const pickAndroidLibraryPhoto = async (): Promise<PickedPhoto | null> => {
+  const result = await File.pickFileAsync({
+    mimeTypes: ['image/*']
+  });
+
+  if (result.canceled) {
+    return null;
+  }
+
+  if (!result.result?.uri) {
+    throw new Error('No se pudo leer la imagen seleccionada.');
+  }
+
+  return {
+    uri: result.result.uri
+  };
+};
+
+const pickImagePickerPhoto = async (source: PhotoSource): Promise<PickedPhoto | null> => {
+  let pickerResult: ImagePicker.ImagePickerResult;
+
+  try {
+    pickerResult = await launchPhotoSource(source);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+
+    if (message.includes("Uri lacks 'file' scheme") || message.includes('ExponentImagePicker.launchImageLibraryAsync')) {
+      throw new Error('No se pudo abrir la imagen seleccionada. Reintenta desde Galería o haz una foto nueva.');
+    }
+
+    throw error;
+  }
+
+  if (pickerResult.canceled) {
+    return null;
+  }
+
+  const asset = pickerResult.assets[0];
+
+  if (!asset?.uri) {
+    throw new Error('No se pudo leer la imagen seleccionada.');
+  }
+
+  return {
+    uri: asset.uri,
+    width: asset.width
+  };
+};
+
+const pickPhotoSource = async (source: PhotoSource): Promise<PickedPhoto | null> => {
+  if (source === 'library' && Platform.OS === 'android') {
+    return pickAndroidLibraryPhoto();
+  }
+
+  return pickImagePickerPhoto(source);
 };
 
 const buildTemporaryPhotoUri = () => {
@@ -117,40 +180,37 @@ const deleteTemporaryUri = async (uri: string) => {
   }
 };
 
+const getImageWidth = async (uri: string) =>
+  new Promise<number>((resolve) => {
+    Image.getSize(
+      uri,
+      (width) => {
+        resolve(width);
+      },
+      () => {
+        resolve(0);
+      }
+    );
+  });
+
 export const pickAndCompressPhoto = async (source: PhotoSource): Promise<PreparedPhoto | null> => {
   await requestPhotoPermission(source);
 
-  let pickerResult: ImagePicker.ImagePickerResult;
+  const pickedPhoto = await pickPhotoSource(source);
 
-  try {
-    pickerResult = await launchPhotoSource(source);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '';
-
-    if (message.includes("Uri lacks 'file' scheme") || message.includes('ExponentImagePicker.launchImageLibraryAsync')) {
-      throw new Error('No se pudo abrir la imagen seleccionada. Reintenta desde Galería o haz una foto nueva.');
-    }
-
-    throw error;
-  }
-
-  if (pickerResult.canceled) {
+  if (!pickedPhoto) {
     return null;
   }
 
-  const asset = pickerResult.assets[0];
-
-  if (!asset?.uri) {
-    throw new Error('No se pudo leer la imagen seleccionada.');
-  }
-
-  const sourceForCompression = await prepareAssetUriForCompression(asset.uri);
+  const sourceForCompression = await prepareAssetUriForCompression(pickedPhoto.uri);
   let compressed: ImageManipulator.ImageResult;
 
   try {
+    const imageWidth = pickedPhoto.width ?? (await getImageWidth(sourceForCompression.uri));
+
     compressed = await ImageManipulator.manipulateAsync(
       sourceForCompression.uri,
-      buildResizeActions(asset.width),
+      buildResizeActions(imageWidth),
       {
         compress: JPEG_QUALITY,
         format: ImageManipulator.SaveFormat.JPEG
