@@ -68,6 +68,14 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Riesgo actual: la app solo guarda una sesión técnica activa; activar `admin` sustituye `topografo`.
 - Nueva necesidad antes de carga real sostenida: diseñar sesión técnica estable para `admin` y `topografo`, con selector de perfil o login/refresh, sin depender de pegar JWTs largos que caducan.
 
+## Actualización Operativa - 2026-06-06
+
+- APK móvil actual instalada: EAS `2d6ad87a-41d4-4774-838f-30f1e67d3c2f`, commit `ac09f3a`.
+- Motivo: corregir el error Android/Expo `Creating blobs from ArrayBuffer and ArrayBufferView are not supported` al agregar fotos.
+- Decisión técnica: las fotos comprimidas ya no se convierten a `Blob`; se suben como archivo local con `expo-file-system` `File.upload` al signed URL de Supabase Storage.
+- Verificado: TypeScript móvil OK, app instalada por ADB, `Obras` carga y `logcat` limpio.
+- Pendiente MVP inmediato: prueba real de cámara/galería en campo para confirmar subida de fotos y continuar con matriz de membresías/roles reales.
+
 ## Estado Backend Render
 
 - Render fue redeployado desde `main`.

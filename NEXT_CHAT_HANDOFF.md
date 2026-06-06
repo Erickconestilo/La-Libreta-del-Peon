@@ -34,7 +34,18 @@
 - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
 - Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
 - Mini-QA Galaxy tras instalar: app arranca, Obras carga, visibles `Campus Nord` y `Maragall`, sesión admin persistida, `logcat` limpio.
-- Pendiente probar foto real desde cámara/galería.
+- El usuario reportó después el error móvil `Creating blobs from ArrayBuffer and ArrayBufferView are not supported` al intentar agregar fotos.
+- Fix móvil aplicado y empujado:
+  - `ac09f3a` elimina la ruta `Blob` en subida de fotos.
+  - `pickAndCompressPhoto` devuelve un archivo local comprimido y las subidas usan `expo-file-system` `File.upload` con `PUT` al signed URL de Supabase Storage.
+  - Afecta fotos de obra, foto principal de estación, galería de estación y foto de prisma.
+  - Verificación local: `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK; búsqueda confirma que no quedan `preparedPhoto.blob`, `blob()` ni `fetch(compressed.uri)` en rutas de foto.
+- Build móvil actual finalizada: EAS `2d6ad87a-41d4-4774-838f-30f1e67d3c2f`, commit `ac09f3abe0c93db75ffb606322b6cdbcbe2cdd3f`.
+- APK URL: https://expo.dev/artifacts/eas/6BhqtjX6KFRS9mfhFTDcfx.apk
+- APK local: `C:\Users\guill\Downloads\topofield-2d6ad87a-photo-file-upload-fix.apk`.
+- Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
+- Mini-QA Galaxy tras instalar: app arranca, `Obras` carga, visibles `Campus Nord`, `Maragall`, `Nueva obra` y `Añadir imagen`; sesión admin persistida; `logcat` limpio.
+- Pendiente: probar foto real desde cámara/galería con el usuario presente para confirmar que ya no aparece el error de `Blob`.
 
 ## Últimos Commits Importantes
 
@@ -68,6 +79,7 @@
 - `ce03884` - añade timeouts móviles para carga de campo y subidas de fotos.
 - `c15a462` - muestra recuperación cuando `Obras` tarda demasiado y desactiva retry silencioso.
 - `c7bdea4` - corrige scope backend de foto/notas de estación y cobertura de prismas.
+- `ac09f3a` - sube fotos móviles desde archivo local con `File.upload`, sin `Blob`.
 
 ## APK Pendiente de Instalar
 

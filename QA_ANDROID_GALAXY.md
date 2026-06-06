@@ -70,6 +70,34 @@
   - `logcat` filtrado: sin `AndroidRuntime`, sin errores JS; solo `ReactNativeJS: Running "main"`.
   - Pendiente: probar foto real desde cámara/galería con el usuario presente.
 
+## Fix subida de fotos sin Blob — 2026-06-06
+
+- Reporte del usuario tras instalar la APK anterior: al agregar foto aparece `Creating blobs from ArrayBuffer and ArrayBufferView are not supported`.
+- Diagnóstico: no era un fallo primario de usuario/clave; el mensaje apunta a la conversión móvil `fetch(compressed.uri).blob()` antes de subir a Supabase Storage.
+- Fix móvil:
+  - Commit `ac09f3a fix(mobile): upload photos from local files`.
+  - `apps/mobile/lib/photo-upload.ts` deja de crear `Blob`; ahora conserva el archivo JPEG comprimido como URI local.
+  - Las subidas usan `expo-file-system` `File.upload` con `PUT` al signed URL.
+  - Rutas afectadas: foto de obra, foto principal de estación, memoria visual de estación y foto de prisma.
+  - El archivo temporal se borra al terminar la operación.
+- Verificación local:
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK.
+  - Búsqueda sin restos de `preparedPhoto.blob`, `blob()` ni `fetch(compressed.uri)` en rutas móviles de foto.
+- Build EAS:
+  - ID: `2d6ad87a-41d4-4774-838f-30f1e67d3c2f`.
+  - Logs: https://expo.dev/accounts/ciudadanoinusual/projects/topofield/builds/2d6ad87a-41d4-4774-838f-30f1e67d3c2f
+  - APK: https://expo.dev/artifacts/eas/6BhqtjX6KFRS9mfhFTDcfx.apk
+  - APK local: `C:\Users\guill\Downloads\topofield-2d6ad87a-photo-file-upload-fix.apk`.
+  - Commit APK: `ac09f3abe0c93db75ffb606322b6cdbcbe2cdd3f`.
+  - Estado: `FINISHED`.
+- Instalación Galaxy:
+  - Dispositivo: `SM_S938B / R5CY21X6FLE`.
+  - `adb install -r`: `Success`.
+  - App arranca con PID activo.
+  - `logcat` filtrado: sin `AndroidRuntime`, sin errores JS; solo `ReactNativeJS: Running "main"`.
+  - Mini-QA: `Obras` carga con `Campus Nord`, `Maragall`, `Nueva obra` y `Añadir imagen`; sesión admin persistida.
+- Pendiente real: prueba manual de subir foto desde cámara/galería para confirmar que desaparece el error de `Blob`. No se dejó foto QA automática para no ensuciar datos reales.
+
 ## APK actual
 
 - Build EAS actual: `71a232a3-2f87-4e85-a71e-75ad0681269a`
