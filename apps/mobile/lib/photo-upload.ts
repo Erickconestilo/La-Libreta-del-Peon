@@ -24,9 +24,13 @@ const CONTENT_URI_PREFIX = 'content://';
 
 type PickedPhoto = {
   extension?: string;
+  shouldDeleteAfterCompression?: boolean;
   uri: string;
   width?: number;
 };
+
+const SUPPORTED_GALLERY_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
+const SUPPORTED_GALLERY_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
 const getFileExtension = (value?: string | null) => {
   const extension = value?.split(/[?#]/)[0]?.split('.').pop();
@@ -44,6 +48,20 @@ const getExtensionFromMimeType = (mimeType?: string | null) => {
       return 'jpg';
     default:
       return undefined;
+  }
+};
+
+const normalizeRawExtension = (extension?: string | null) => extension?.replace(/^\./, '').toLowerCase();
+
+const assertSupportedGalleryImage = (extension?: string, mimeType?: string | null) => {
+  const normalizedExtension = normalizeRawExtension(extension);
+
+  if (mimeType && !SUPPORTED_GALLERY_MIME_TYPES.has(mimeType)) {
+    throw new Error('Formato de imagen no compatible. Usa JPG, PNG, WebP o haz una foto con Cámara.');
+  }
+
+  if (normalizedExtension && !SUPPORTED_GALLERY_EXTENSIONS.has(normalizedExtension)) {
+    throw new Error('Formato de imagen no compatible. Usa JPG, PNG, WebP o haz una foto con Cámara.');
   }
 };
 
@@ -117,8 +135,12 @@ const pickAndroidLibraryPhoto = async (): Promise<PickedPhoto | null> => {
     throw new Error('No se pudo leer la imagen seleccionada.');
   }
 
+  const extension = getFileExtension(asset.name) ?? getExtensionFromMimeType(asset.mimeType) ?? getFileExtension(asset.uri);
+  assertSupportedGalleryImage(extension, asset.mimeType);
+
   return {
-    extension: getFileExtension(asset.name) ?? getExtensionFromMimeType(asset.mimeType) ?? getFileExtension(asset.uri),
+    extension,
+    shouldDeleteAfterCompression: true,
     uri: asset.uri
   };
 };
@@ -164,7 +186,7 @@ const pickPhotoSource = async (source: PhotoSource): Promise<PickedPhoto | null>
 };
 
 const normalizeImageExtension = (extension?: string) => {
-  const normalizedExtension = extension?.replace(/^\./, '').toLowerCase();
+  const normalizedExtension = normalizeRawExtension(extension);
 
   if (normalizedExtension === 'png') {
     return 'png';
@@ -187,11 +209,11 @@ const buildTemporaryPhotoUri = (extension?: string) => {
 };
 
 const prepareAssetUriForCompression = async (pickedPhoto: PickedPhoto) => {
-  const { extension, uri } = pickedPhoto;
+  const { extension, shouldDeleteAfterCompression, uri } = pickedPhoto;
 
   if (!uri.startsWith(CONTENT_URI_PREFIX)) {
     return {
-      shouldDelete: false,
+      shouldDelete: Boolean(shouldDeleteAfterCompression),
       uri
     };
   }
