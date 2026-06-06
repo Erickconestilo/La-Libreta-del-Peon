@@ -45,7 +45,14 @@
 - APK local: `C:\Users\guill\Downloads\topofield-2d6ad87a-photo-file-upload-fix.apk`.
 - Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
 - Mini-QA Galaxy tras instalar: app arranca, `Obras` carga, visibles `Campus Nord`, `Maragall`, `Nueva obra` y `Añadir imagen`; sesión admin persistida; `logcat` limpio.
-- Pendiente: probar foto real desde cámara/galería con el usuario presente para confirmar que ya no aparece el error de `Blob`.
+- QA foto real de obra completada con usuario presente:
+  - Obra usada: `Maragall`.
+  - Se añadió imagen inicial.
+  - Se cambió por otra imagen desde galería.
+  - Se cambió de nuevo con foto tomada desde cámara.
+  - Se quitó la imagen al final.
+  - Resultado: sin error `Creating blobs from ArrayBuffer and ArrayBufferView are not supported`; `logcat` filtrado sin `ReactNativeJS` ni `AndroidRuntime`; backend confirma `Maragall hasImage=False` tras limpiar la prueba.
+- Hallazgo posterior en pantalla de obra/estacionamientos: si queda una sesión técnica inválida, la app puede mostrar `Invalid authentication token` también en lecturas públicas como estaciones de una obra. Fix local preparado en `apps/mobile/lib/api.ts`: las lecturas públicas GET reintentan con `GUEST_PUBLIC_TOKEN` cuando el bearer técnico devuelve `401 INVALID_TOKEN`. Las escrituras siguen requiriendo revalidar sesión.
 
 ## Últimos Commits Importantes
 
@@ -265,3 +272,32 @@ Confirmado tras push/deploy: Render expone `0a4f523` y las rutas GET ya exigen t
 ## Nota Técnica Sobre Prismas
 
 No hay coordenadas absolutas de prismas. Hay 171 prismas y 1889 observaciones, con ángulo horizontal y distancia inclinada, pero 0 prismas con coordenadas propias. Por eso el croquis es correcto como vista operativa desde la estación, no como mapa geográfico.
+
+## Actualización QA Fotos y Campo — 2026-06-06
+
+- APK instalada en Galaxy `SM_S938B / R5CY21X6FLE`: `C:\Users\guill\Downloads\topofield-c18d559-document-picker.apk`.
+- EAS preview Android: `bf496a96-dfe8-4b4a-bd43-ba72379d0d53`.
+- APK URL: `https://expo.dev/artifacts/eas/pC1Juo2vpJwiZB1nBzdFPz.apk`.
+- Commits de corrección de fotos:
+  - `236e864 fix(mobile): preserve picked image extension`
+  - `34698cc fix(mobile): use document picker for Android gallery`
+  - `c18d559 fix(mobile): validate gallery image formats`
+- Causa corregida del bug de fotos: Android/Expo fallaba al preparar/subir fotos de galería con rutas `content://`, extensiones perdidas y Blob/ArrayBuffer. La app ahora usa `expo-document-picker`, copia a caché, conserva extensión real y valida JPG/PNG/WebP antes de comprimir.
+- QA real en Galaxy con sesión `admin` activa:
+  - Arranque en frío: `Obras` cargó Campus Nord y Maragall sin quedarse en `Cargando` ni pedir `Revalidar token`.
+  - Foto de obra: cambio de imagen con JPG válido desde galería pasó; se restauró Campus Nord usando historial de `project.image_url`.
+  - Foto principal de estación `Campus Nord Estacionamiento CN2`: añadir desde galería pasó; luego se quitó y volvió a `Sin foto`.
+  - Memoria visual CN2: añadir foto pasó; luego se borró y volvió a `Sin memoria visual`.
+  - Prisma `626`: seleccionar, añadir foto desde galería y quitar foto pasó; volvió a `Sin foto de prisma`.
+  - Bitácora, Mapas, Guías, Perfil y Obras cargan sin pantalla blanca.
+  - Perfil confirma sesión `Administrador` con `topofield-admin@topofield.local`.
+  - Guía Leica abre una página por vez; 100% legible y zoom a 125% funciona.
+  - Croquis: seleccionar `626` y pulsar `+` enfoca el prisma y sube a 225%.
+- `logcat` tras pruebas: sin `FATAL EXCEPTION`, sin errores JS, sin `ArrayBuffer/Blob` de subida; solo ruido normal de `uiautomator/monkey` y `ReactNativeJS: Running "main"`.
+- Verificación técnica local:
+  - `npm run build --workspace apps/backend`
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`
+- Pendiente real:
+  - No se probó crear obra para no dejar basura permanente; falta endpoint/flujo de limpieza o crear una obra real deliberadamente.
+  - La foto PNG diminuta de 256 B usada como fixture falló al prepararse; con JPG válido de tamaño normal pasó. Recomendación: en campo usar Cámara/JPG o fotos normales de galería.
+  - Unificar UX de fotos en estación/prisma con el modal de obra sería mejora, no bloqueo.

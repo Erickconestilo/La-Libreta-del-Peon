@@ -96,7 +96,16 @@
   - App arranca con PID activo.
   - `logcat` filtrado: sin `AndroidRuntime`, sin errores JS; solo `ReactNativeJS: Running "main"`.
   - Mini-QA: `Obras` carga con `Campus Nord`, `Maragall`, `Nueva obra` y `Añadir imagen`; sesión admin persistida.
-- Pendiente real: prueba manual de subir foto desde cámara/galería para confirmar que desaparece el error de `Blob`. No se dejó foto QA automática para no ensuciar datos reales.
+- QA real completada con usuario presente:
+  - Obra usada: `Maragall`.
+  - Añadir imagen de obra funcionó.
+  - Cambiar imagen desde galería funcionó.
+  - Cambiar imagen desde cámara funcionó.
+  - Quitar imagen funcionó.
+  - `logcat` filtrado tras la prueba: sin `ReactNativeJS` ni `AndroidRuntime`.
+  - Backend tras limpiar: `Maragall hasImage=False`.
+  - Interpretación: el fix sin `Blob` queda validado para foto de obra, incluyendo reemplazo.
+- Tras toquetear el flujo, la pantalla de `Maragall` mostró `Invalid authentication token` en `Imagen de obra` y en carga de estaciones, pese a que backend visitante respondía OK. Diagnóstico: bearer técnico caducado/ inválido bloqueando lecturas públicas. Fix local preparado: `apiFetch` reintenta GET públicos con token visitante si recibe `401 INVALID_TOKEN`.
 
 ## APK actual
 
@@ -414,3 +423,34 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - Lecturas visitantes fallan con 401 dentro de la app tras redeploy; indicaría que el APK no está enviando `GUEST_PUBLIC_TOKEN`.
 - Token técnico no cambia el rol.
 - Historial no refleja acciones recientes.
+
+## Resultado QA Galaxy — 2026-06-06
+
+- APK instalada: `C:\Users\guill\Downloads\topofield-c18d559-document-picker.apk`.
+- Build EAS: `bf496a96-dfe8-4b4a-bd43-ba72379d0d53`.
+- Sesión activa detectada en móvil: `Administrador`, cuenta `topofield-admin@topofield.local`.
+- `Obras` tras arranque en frío: cargó Campus Nord y Maragall; no se reprodujo cuelgue infinito en `Cargando obras`.
+- Pestañas validadas por ADB:
+  - `Obras`: lista de obras visible.
+  - `Mapas`: fallback sin Google Maps key visible, estaciones listadas con acción `Abrir mapa`.
+  - `Bitácora`: feed con notas/incidencias/mensajes y fecha/hora visible.
+  - `Guías`: manuales offline visibles; Leica abre página `1 / 20`.
+  - `Perfil`: sesión admin visible.
+- Fotos validadas con JPG QA válido desde galería:
+  - Imagen de obra: subida y PATCH pasaron. Campus Nord se restauró después con historial de `project.image_url`.
+  - Foto principal de estación CN2: añadir y quitar pasaron.
+  - Memoria visual CN2: añadir y borrar pasaron.
+  - Foto de prisma `626`: añadir y quitar pasaron.
+- Croquis de prismas:
+  - Selección de `626` confirmada.
+  - Zoom `+` con `626` seleccionado sube a `225%` y enfoca el prisma.
+- Guías:
+  - Leica a `100%` se ve legible en Galaxy.
+  - Zoom `+` sube a `125%`.
+- `logcat`:
+  - Sin `FATAL EXCEPTION`.
+  - Sin errores JS.
+  - Sin error `creating blobs from ArrayBuffer...`.
+  - Sin `Uri lacks file scheme`.
+- Prueba no ejecutada a propósito:
+  - Crear obra nueva. Motivo: no hay borrado/archivado claro para limpiar una obra QA; probarlo crearía basura real. Probar solo cuando se vaya a crear una obra real o exista limpieza controlada.
