@@ -501,6 +501,34 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
   - sin `FATAL EXCEPTION`;
   - sin error JS atribuible a TopoField en la prueba final.
 
+## Resultado QA memoria visual con cámara — 2026-06-07
+
+- Build local Android recompilada e instalada de nuevo desde `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+- Fix validado en Galaxy sobre `Campus Nord Estacionamiento CN2`.
+- Flujo repetido de extremo a extremo:
+  - abrir `Campus Nord`;
+  - abrir estación `CN2`;
+  - entrar en `Memoria visual del estacionamiento`;
+  - pulsar `Cámara`;
+  - disparar foto en la cámara Samsung;
+  - pulsar `Aceptar`.
+- Resultado observado:
+  - la app vuelve al detalle correcto de `Campus Nord Estacionamiento CN2`;
+  - no cae en `Crear estación`;
+  - no cae en `Obras`;
+  - la foto aparece creada dentro de `Memoria visual del estacionamiento`;
+  - se muestra como tarjeta nueva con tipo `GENERAL`, título por defecto `Foto sin título`, marca temporal de subida y acción `Borrar de memoria`.
+- Evidencia local:
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_after_accept.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_after_accept.xml`
+- Lectura rigurosa de `logcat`:
+  - sí aparecen líneas `AndroidRuntime`, pero corresponden al proceso de `uiautomator dump` (`UiAutomationService already registered`);
+  - no son crashes de `com.ciudadanoinusual.topofield`;
+  - en esta pasada no quedó evidencia de `FATAL EXCEPTION` ni crash atribuible a la app.
+- Conclusión:
+  - el bug real de retorno post-captura en memoria visual queda cerrado para el flujo probado en Galaxy;
+  - la creación de foto de memoria visual desde cámara queda validada end-to-end.
+
 ### Capturas de referencia
 
 - Login correcto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_login_07_after_real_login.png`

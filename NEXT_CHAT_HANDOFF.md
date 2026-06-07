@@ -196,8 +196,32 @@
 - Verificación de código cerrada:
   - `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK.
   - `npx expo export --platform android` OK.
-- Verificación pendiente real:
-  - instalar una build nueva en Galaxy y repetir el flujo `Memoria visual -> Cámara -> disparar -> volver` para confirmar que ya queda en el detalle correcto y sube la foto.
+- Verificación real cerrada en Galaxy:
+  - build local Android recompilada e instalada por ADB;
+  - flujo `Memoria visual -> Cámara -> disparar -> Aceptar` repetido en `Campus Nord Estacionamiento CN2`;
+  - la app volvió al detalle correcto;
+  - no cayó en `Crear estación` ni en `Obras`;
+  - la foto quedó creada y visible en la tarjeta de memoria visual.
+- Evidencia local del cierre:
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_after_accept.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_after_accept.xml`
+- Lectura rigurosa de logs:
+  - el `AndroidRuntime` visto en esta tanda proviene de `uiautomator dump` y no de TopoField;
+  - no quedó crash atribuible a `com.ciudadanoinusual.topofield` en el flujo validado.
+- Estado del fix:
+  - el bug de retorno post-captura de memoria visual queda cerrado para el caso probado en Galaxy.
+
+## Estado local pendiente de commit
+
+- Cambios listos para guardar:
+  - `apps/mobile/app/station/[stationId].tsx`
+  - `apps/mobile/lib/photo-upload.ts`
+  - `QA_ANDROID_GALAXY.md`
+  - `NEXT_CHAT_HANDOFF.md`
+- Cambio local previo no relacionado y no incluido:
+  - `apps/mobile/package.json`
+- Siguiente paso recomendable:
+  - commit aislado del fix de memoria visual/cámara y de la actualización documental, sin arrastrar `apps/mobile/package.json`.
 
 ## APK Anterior Instalada En Galaxy
 
