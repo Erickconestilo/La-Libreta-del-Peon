@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { PhotoContentType, SignedPhotoUpload, StationPhoto, StationPhotoKind } from '@shared/types';
+import type { PhotoContentType, SignedPhotoUpload, Station, StationPhoto, StationPhotoKind } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
 import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
@@ -115,6 +115,26 @@ export const useStationPhotos = (stationId: string | null) => {
 export const useStationPhotoGalleryMutations = (stationId: string | null) => {
   const queryClient = useQueryClient();
 
+  const updateStationPhotoUrlCaches = (photoUrl: string | null) => {
+    if (!stationId) {
+      return;
+    }
+
+    queryClient.setQueryData<Station & Record<string, unknown>>(
+      ['station-detail', stationId],
+      (currentStation) => currentStation ? { ...currentStation, photoUrl } : currentStation
+    );
+
+    queryClient.setQueriesData<Station[]>(
+      { queryKey: ['stations'] },
+      (currentStations) => Array.isArray(currentStations)
+        ? currentStations.map((currentStation) => currentStation.id === stationId
+          ? { ...currentStation, photoUrl }
+          : currentStation)
+        : currentStations
+    );
+  };
+
   const invalidateStationPhotos = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['station-photos', stationId] }),
@@ -161,7 +181,13 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
         await deletePreparedPhoto(preparedPhoto);
       }
     },
-    onSuccess: invalidateStationPhotos
+    onSuccess: async (photo) => {
+      if (photo?.isPrimary) {
+        updateStationPhotoUrlCaches(photo.publicUrl);
+      }
+
+      await invalidateStationPhotos();
+    }
   });
 
   const deleteMutation = useMutation({
@@ -175,7 +201,19 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
         stationPhotoId
       });
     },
-    onSuccess: invalidateStationPhotos
+    onMutate: (stationPhotoId) => {
+      const currentPhotos = queryClient.getQueryData<StationPhoto[]>(['station-photos', stationId]);
+      const deletedPhoto = currentPhotos?.find((photo) => photo.id === stationPhotoId) ?? null;
+
+      return { deletedPhoto };
+    },
+    onSuccess: async (_result, _stationPhotoId, context) => {
+      if (context?.deletedPhoto?.isPrimary) {
+        updateStationPhotoUrlCaches(null);
+      }
+
+      await invalidateStationPhotos();
+    }
   });
 
   const error = createMutation.error ?? deleteMutation.error ?? null;

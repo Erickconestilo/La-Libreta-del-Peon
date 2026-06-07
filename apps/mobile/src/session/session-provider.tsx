@@ -4,7 +4,7 @@ import type { AuthSessionUser } from '@shared/types';
 import * as SecureStore from 'expo-secure-store';
 import { Storage } from 'expo-sqlite/kv-store';
 
-import { apiFetch, setApiBearerToken } from '@/lib/api';
+import { apiFetch, isApiRequestError, setApiAuthFailureHandler, setApiBearerToken } from '@/lib/api';
 import { queryClient } from '@/lib/query-client';
 
 type ApiEnvelope<T> = {
@@ -257,7 +257,18 @@ const getTokenWarning = (token: string | null) => {
   };
 };
 
-const isAuthError = (message?: string) => {
+const isAuthError = (error: unknown) => {
+  if (isApiRequestError(error)) {
+    return (
+      error.status === 401 ||
+      error.code === 'INVALID_TOKEN' ||
+      error.code === 'UNAUTHORIZED' ||
+      error.code === 'INVALID_REFRESH_TOKEN'
+    );
+  }
+
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : undefined;
+
   if (!message) {
     return false;
   }
@@ -265,7 +276,8 @@ const isAuthError = (message?: string) => {
   return (
     message.includes('Invalid authentication token') ||
     message.includes('Authentication required') ||
-    message.includes('La sesión técnica es inválida')
+    message.includes('La sesión técnica es inválida') ||
+    message.includes('Necesitas una sesión técnica válida')
   );
 };
 
@@ -311,6 +323,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void hydrateSession();
   }, []);
+
+  useEffect(() => {
+    setApiAuthFailureHandler(() => {
+      setCurrentUser(null);
+      setStoredToken(null);
+      setIsSessionInvalid(Boolean(activeSessionId));
+      setSessionWarning('La sesión técnica es inválida. Revalida o entra de nuevo.');
+      setErrorMessage('La sesión técnica es inválida. Revalida o entra de nuevo.');
+      queryClient.removeQueries();
+    });
+
+    return () => setApiAuthFailureHandler(null);
+  }, [activeSessionId]);
 
   const applyPersistedSessions = async (state: SessionStore) => {
     const normalized = await persistState(state);
@@ -419,15 +444,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const token = nextSession.token;
     const tokenInfo = getTokenWarning(token);
-    clearServerCacheIfAuthChanged(token ? `session:${nextSession.id}:${token}` : `invalid:${nextSession.id}`);
+    const canUseToken = Boolean(token) && !tokenInfo.isExpired;
+    clearServerCacheIfAuthChanged(canUseToken ? `session:${nextSession.id}:${token}` : `invalid:${nextSession.id}`);
 
     setActiveSessionId(sessionId);
-    setStoredToken(token || null);
-    setApiBearerToken(token || null);
+    setStoredToken(canUseToken ? token : null);
+    setApiBearerToken(canUseToken ? token : null);
     setSessionWarning(tokenInfo.warning);
-    setIsSessionInvalid(!token || tokenInfo.isExpired);
+    setIsSessionInvalid(!canUseToken);
 
-    if (!token || tokenInfo.isExpired) {
+    if (!canUseToken) {
       setCurrentUser(null);
       if (!token) {
         setSessionWarning('La sesión técnica es inválida. Repite el token.');
@@ -445,8 +471,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
       setCurrentUser(null);
       setIsSessionInvalid(true);
+      setStoredToken(null);
+      setApiBearerToken(null);
+      clearServerCacheIfAuthChanged(`invalid:${nextSession.id}`);
 
-      if (isAuthError(message) || options.swallowAuthError) {
+      if (isAuthError(error) || options.swallowAuthError) {
         if (!options.swallowAuthError) {
           setErrorMessage('La sesión técnica es inválida. Revalida o pega un token nuevo.');
         }

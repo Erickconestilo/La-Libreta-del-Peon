@@ -65,6 +65,26 @@ const attachStationPhoto = async ({
 export const useStationPhotoMutations = (stationId: string | null) => {
   const queryClient = useQueryClient();
 
+  const updateStationPhotoCaches = (station: Station | null) => {
+    if (!station || !stationId) {
+      return;
+    }
+
+    queryClient.setQueryData<Station & Record<string, unknown>>(
+      ['station-detail', stationId],
+      (currentStation) => currentStation ? { ...currentStation, ...station } : currentStation
+    );
+
+    queryClient.setQueriesData<Station[]>(
+      { queryKey: ['stations'] },
+      (currentStations) => Array.isArray(currentStations)
+        ? currentStations.map((currentStation) => currentStation.id === station.id
+          ? { ...currentStation, ...station }
+          : currentStation)
+        : currentStations
+    );
+  };
+
   const invalidateStation = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['station-detail', stationId] }),
@@ -109,7 +129,10 @@ export const useStationPhotoMutations = (stationId: string | null) => {
         await deletePreparedPhoto(preparedPhoto);
       }
     },
-    onSuccess: invalidateStation
+    onSuccess: async (station) => {
+      updateStationPhotoCaches(station);
+      await invalidateStation();
+    }
   });
 
   const removeMutation = useMutation({
@@ -123,7 +146,10 @@ export const useStationPhotoMutations = (stationId: string | null) => {
         storagePath: null
       });
     },
-    onSuccess: invalidateStation
+    onSuccess: async (station) => {
+      updateStationPhotoCaches(station);
+      await invalidateStation();
+    }
   });
 
   const error = uploadMutation.error ?? removeMutation.error ?? null;

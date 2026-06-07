@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 
 import type { ChangeLog, EntityType } from '@shared/types';
 
+import { useCurrentSession } from '@/hooks/use-auth';
 import { useChangeLogs } from '@/hooks/use-change-logs';
 import { colors } from '@/src/theme';
 
@@ -88,8 +89,22 @@ const ChangeLogCard = ({ changeLog }: { changeLog: ChangeLog }) => {
 };
 
 export default function HistoryScreen() {
-  const { data, errorMessage, isFetching, refetch } = useChangeLogs({ limit: 50 });
+  const { currentUser } = useCurrentSession();
+  const canViewHistory = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const { data, errorMessage, isFetching, refetch } = useChangeLogs({
+    enabled: canViewHistory,
+    limit: 50
+  });
   const changeLogs = useMemo(() => data ?? [], [data]);
+
+  if (!canViewHistory) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.screenTitle}>Historial</Text>
+        <Text style={styles.screenSubtitle}>Solo admin y topógrafo pueden revisar cambios operativos.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -130,6 +145,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between'
+  },
+  centered: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    flex: 1,
+    gap: 10,
+    justifyContent: 'center',
+    padding: 24
   },
   container: {
     backgroundColor: colors.background,
