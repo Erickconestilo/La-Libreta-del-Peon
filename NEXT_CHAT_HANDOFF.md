@@ -32,8 +32,8 @@
 - Render desplegado y verificado en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
 - Smoke backend tras deploy: health 200, lecturas visitante 200, escritura sin token 401, y prueba topógrafo no destructiva OK (`/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200, `PATCH /stations/:id/notes` 200).
 - Estado repo/backend verificado el 2026-06-07:
-  - `origin/main` y local en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
-  - Render `GET /health` publica ese mismo commit.
+  - `origin/main` y local estaban en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`; luego se empujó `3a689bc` con `verify:pre-apk`.
+  - Render `GET /health` publicaba `2fd2eb2` en la comprobación previa al push.
   - `npm run verify:pre-apk` pasa completo: build backend, TypeScript móvil, `verify:project-memberships` y `expo export --platform android`.
 - Commits posteriores relevantes al handoff anterior:
   - `14b8549` aplica scope real por `project_memberships` y añade `sync:project-memberships`.
@@ -43,8 +43,15 @@
 - Estado actual de matriz técnica:
   - `topofield-topografo@topofield.local` queda limitado a `campus-nord` y `maragall` según `data/project-memberships.json`.
 - Cambio local preparado y aún sin commit en esta sesión:
-  - `package.json` añade script raíz `verify:pre-apk`.
-  - Nuevo archivo `scripts/verify-pre-apk.mjs`.
+  - Ya no pendiente: quedó guardado en commit `3a689bc` (`chore(repo): add pre-apk verification`) y empujado a `origin/main`.
+- Operación de membresías ejecutada el 2026-06-07:
+  - `TOPOFIELD_ALLOW_PRODUCTION_WRITE=sync-project-memberships npm run sync:project-memberships --workspace apps/backend`
+  - Resultado: 1 cuenta sincronizada, 1 fila actualizada, 0 membresías nuevas, 0 desactivadas.
+- Intento de APK nueva el 2026-06-07:
+  - `npx eas-cli build --platform android --profile preview --non-interactive`
+  - La subida del proyecto y credenciales Android fueron correctas.
+  - Bloqueo real: cuota mensual de Android builds agotada en el plan free de Expo.
+  - Reset indicado por EAS: `2026-07-01`.
 - Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
 - APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
 - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
