@@ -32,6 +32,11 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 - `npm run verify:pre-apk` pasa completo: build backend, TypeScript móvil, verificación real de `project_memberships` y export Android.
 - `topofield-topografo@topofield.local` queda limitado a `campus-nord` y `maragall`.
 - La sincronización real de membresías se ejecutó sin efectos laterales: `1` fila actualizada, `0` altas, `0` bajas.
+- Build Android local sin coste validada en Windows:
+  - instalar `android-clt` y `temurin17-jdk` con `scoop`,
+  - usar la ruta corta `C:\tf`,
+  - ejecutar `npm run mobile:build-local-android`.
+- APK local generada correctamente en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
 
 ## Siguiente paso
 
@@ -39,3 +44,8 @@ Resolver una de estas dos rutas:
 
 - Esperar al reset de cuota de Expo o usar build local propia para sacar una APK nueva con el código actual.
 - Definir usuarios reales y ampliar `data/project-memberships.json` antes de alta operativa real.
+
+Nota importante:
+
+- La APK local compilada con Gradle queda firmada con una clave distinta a la APK instalada desde EAS, así que `adb install -r` falla con `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+- Para instalar encima sin desinstalar hace falta firmar localmente con la misma keystore de EAS o compilar desde un entorno que la reutilice.
