@@ -52,6 +52,15 @@
   - La subida del proyecto y credenciales Android fueron correctas.
   - Bloqueo real: cuota mensual de Android builds agotada en el plan free de Expo.
   - Reset indicado por EAS: `2026-07-01`.
+- Ruta local Windows resuelta el 2026-06-07:
+  - Instalado `android-clt` con `scoop`.
+  - Instalado `temurin17-jdk` con `scoop`.
+  - `expo prebuild --clean --platform android --no-install` funciona.
+  - Build Gradle local reproducible validada con ruta corta `C:\tf` y ABI `arm64-v8a`.
+  - Wrapper añadido: `npm run mobile:build-local-android`.
+  - APK generada en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+  - Intento de instalar sobre la APK EAS existente falla con `INSTALL_FAILED_UPDATE_INCOMPATIBLE` porque la build local usa otra firma.
+  - `eas build --local` no sirve en este Windows: el CLI exige macOS o Linux para Android local.
 - Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
 - APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
 - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
