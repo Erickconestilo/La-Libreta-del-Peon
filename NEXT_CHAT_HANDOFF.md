@@ -8,6 +8,8 @@
 - Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` este disponible.
 - Estado actual: backend con script de matriz real de membresías (`npm run sync:project-memberships`) listo para operar en local.
+- Build local Android Windows operativa: `npm run mobile:build-local-android`.
+- APK local actual generada en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
 
 ## Para Continuar en Codex Cloud
 
@@ -148,6 +150,35 @@
 - Commit de la build nueva: `e39a01db5901c07e6bf6380c095c2e877c97af25`.
 - Motivo de la build: corregir login por correo/clave cuando la app conserva un bearer viejo o inválido.
 - QA realizada: app arranca, `Obras` carga, login `admin` por cuenta funciona y Perfil muestra `Administrador · Admin TopoField` como `Activa`. Tras `force-stop` y relanzar, Perfil sigue mostrando `Administrador`. `logcat` filtrado solo muestra `ReactNativeJS: Running "main"`.
+
+## Actualización QA técnica real — 2026-06-07
+
+- La build local Windows se instaló y probó en Galaxy.
+- Login real por correo/clave validado con `topofield-topografo@topofield.local`.
+- Resultado validado:
+  - sesión técnica activa;
+  - rol `Topógrafo` visible;
+  - `Campus Nord` visible;
+  - acciones de edición visibles.
+- Flujos probados con cuenta técnica:
+  - cambio de foto principal de estación por galería: OK;
+  - modal de apertura externa y salto a Google Maps: OK;
+  - apertura de cámara desde memoria visual: OK;
+  - edición de notas: UI y botón `Guardar nota` visibles.
+- Hallazgo importante:
+  - tras disparar la cámara desde memoria visual, el retorno no vuelve limpio al mismo flujo;
+  - la app aterrizó en `Crear estación` y luego en `Obras`;
+  - debe tratarse como bug real sospechoso de navegación post-captura hasta demostrar lo contrario.
+- Lo que falta cerrar de forma rigurosa:
+  - persistencia end-to-end de `Guardar nota`;
+  - creación completa de memoria visual con cámara o galería y guardado final;
+  - revisión de código del retorno de cámara en memoria visual.
+- Evidencia local relevante:
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_login_07_after_real_login.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_resume_01.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_memory_02_buttons.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_camera_01_after_shutter.png`
+  - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_03_google_maps.png`
 
 ## APK Anterior Instalada En Galaxy
 

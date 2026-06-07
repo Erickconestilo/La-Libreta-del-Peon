@@ -464,3 +464,52 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - Se ejecutó `npm run verify:pre-apk` con resultado OK.
 - Se intentó generar una APK nueva por EAS preview, pero Expo rechazó la build por cuota mensual Android agotada en el plan free.
 - Conclusión QA: la última APK validada sigue siendo útil para operación actual, pero no representa todavía el estado exacto del código más reciente.
+
+## Resultado QA técnico real en Galaxy — 2026-06-07
+
+- APK local instalada y probada en Galaxy `SM_S938B / R5CY21X6FLE`: `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+- Flujo de login por cuenta real validado con `topofield-topografo@topofield.local`.
+- Perfil tras login:
+  - rol visible `Topógrafo`;
+  - cuenta visible `topofield-topografo@topofield.local`;
+  - sesión activa sin crash en arranque.
+- Obras con sesión técnica:
+  - `Campus Nord` visible y navegable;
+  - acciones de edición visibles para rol técnico.
+- Edición técnica validada:
+  - foto principal de estación `Campus Nord Estacionamiento CN2` cambiada desde galería con éxito;
+  - la estación volvió a mostrarse con la imagen nueva al regresar al detalle.
+- Memoria visual:
+  - el formulario abre correctamente;
+  - campos de título, nota, tipo y toggle de foto principal visibles;
+  - botones `Cámara` y `Galería` visibles y accesibles.
+- Permisos/flujo de cámara:
+  - al pulsar `Cámara` desde memoria visual se abre la app de cámara de Samsung;
+  - esto valida el permiso/intent de cámara;
+  - hallazgo: tras disparar la foto, la app no volvió limpiamente al flujo de memoria visual y cayó en `Crear estación`, y después en `Obras`;
+  - interpretación rigurosa: esto parece un bug real de retorno/navegación post-captura y no debe darse por cerrado.
+- Apertura externa de mapas:
+  - `Mapas` muestra el modal de aviso `Abrir fuera de la app`;
+  - al confirmar `ABRIR`, Google Maps se abre correctamente con las coordenadas de la estación;
+  - al volver atrás, TopoField recupera la pantalla de mapas.
+- Notas de estación:
+  - `Editar notas` abre el modo edición;
+  - el campo editable y el botón `Guardar nota` son visibles;
+  - no se cerró todavía una validación limpia end-to-end de persistencia en esta misma tanda.
+- `logcat` en la pasada final:
+  - sin `AndroidRuntime`;
+  - sin `FATAL EXCEPTION`;
+  - sin error JS atribuible a TopoField en la prueba final.
+
+### Capturas de referencia
+
+- Login correcto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_login_07_after_real_login.png`
+- Obras con topógrafo: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_edit_00_obras_logged_in.png`
+- Estación CN2 abierta: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_edit_04_station_cn3_exact.png`
+- Foto principal cambiada por galería: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_resume_01.png`
+- Formulario memoria visual: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_memory_02_buttons.png`
+- Cámara abierta: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_camera_00_launch.png`
+- Retorno incorrecto tras disparo: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_camera_01_after_shutter.png`
+- Modal apertura externa: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_02_external.png`
+- Google Maps abierto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_03_google_maps.png`
+- Edición de notas visible: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_note_04_edit_mode.png`

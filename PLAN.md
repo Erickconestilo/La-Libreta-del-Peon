@@ -85,6 +85,21 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Render seguía publicando `2fd2eb2` en `GET /health` en la última comprobación tras el push documental.
 - Intento de nueva EAS Android preview bloqueado por cuota mensual agotada del plan free de Expo hasta `2026-07-01`.
 - Consecuencia práctica: el código actual va por delante de la última APK instalada; para probar `daily-report` y los commits posteriores hay que esperar cuota o compilar localmente.
+- La ruta correcta para seguir sin Expo cloud ya quedó resuelta en Windows:
+  - `expo prebuild` + Gradle local;
+  - wrapper `npm run mobile:build-local-android`;
+  - APK local reproducible en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+- QA técnica real con la build local:
+  - login real `topografo` por correo/clave: OK;
+  - cambio de foto principal de estación por galería: OK;
+  - apertura externa a Google Maps: OK;
+  - cámara desde memoria visual abre: OK;
+  - retorno tras disparo desde memoria visual: sospecha de bug de navegación, no cerrado.
+- Siguiente trabajo de mayor valor:
+  - depurar y corregir el retorno de cámara/memoria visual;
+  - revalidar guardado completo de memoria visual;
+  - revalidar persistencia de notas editadas;
+  - después sí cerrar una APK/release coherente.
 
 ## Estado Backend Render
 
