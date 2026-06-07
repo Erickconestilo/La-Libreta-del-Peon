@@ -76,15 +76,25 @@ Construir TopoField como una aplicación móvil de campo para equipos pequeños 
 - Verificado: TypeScript móvil OK, app instalada por ADB, `Obras` carga y `logcat` limpio.
 - Pendiente MVP inmediato: prueba real de cámara/galería en campo para confirmar subida de fotos y continuar con matriz de membresías/roles reales.
 
+## Actualización Operativa - 2026-06-07
+
+- Repo y remoto quedaron alineados y luego avanzaron con commits documentales `3a689bc` y `c91682a`.
+- Se añadió y verificó `npm run verify:pre-apk` en raíz para dejar un chequeo repetible antes de sacar APK.
+- `verify:project-memberships` confirma que el topógrafo técnico solo ve `campus-nord` y `maragall`.
+- La sincronización real de `project_memberships` se ejecutó contra la base actual con guarda explícita y sin efectos laterales.
+- Render seguía publicando `2fd2eb2` en `GET /health` en la última comprobación tras el push documental.
+- Intento de nueva EAS Android preview bloqueado por cuota mensual agotada del plan free de Expo hasta `2026-07-01`.
+- Consecuencia práctica: el código actual va por delante de la última APK instalada; para probar `daily-report` y los commits posteriores hay que esperar cuota o compilar localmente.
+
 ## Estado Backend Render
 
 - Render fue redeployado desde `main`.
 - `GET /health` responde 200 con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
 - `GET /projects`, `GET /guide-entries` y `GET /prisms/coverage/CN1` responden 401 sin token y 200 con `GUEST_PUBLIC_TOKEN`.
 - `PATCH /prisms/:prismId/photo` sin token responde 401, no 404; la ruta existe y queda protegida por rol.
-- Estado actual: Render público responde `GET /health` con `commit: 0a4f523169d1a64c1a28b2e92ddea8f95fce2d33`.
-- Siguiente acción real: definir usuarios reales y su matriz de obras antes de alta real; no lanzar otra EAS salvo cambio móvil.
-- Siguiente acción real adicional: resolver el flujo de sesión técnica admin/topógrafo antes de usar el móvil como herramienta de carga diaria.
+- Estado público verificado más reciente desde este entorno: `GET /health` respondió `commit: 2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
+- Siguiente acción real: definir usuarios reales y su matriz de obras antes de alta real.
+- Siguiente acción real adicional: elegir ruta de build sin depender de la cuota mensual de Expo.
 
 ## Principios de Implementación
 - Una feature cada vez

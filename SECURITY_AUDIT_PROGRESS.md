@@ -160,3 +160,11 @@ Estado: corregido y validado en Galaxy con `topografo` mediante subida firmada r
 
 - No lanzar otra EAS salvo cambio móvil real.
 - No hay bloqueo técnico actual para QA validada; la siguiente decisión operativa es la matriz real de usuarios y obras.
+
+## Actualización de Auditoría - 2026-06-07
+
+- No aparecieron hallazgos nuevos en la verificación más reciente.
+- Se añadió un smoke test repetible `verify:project-memberships` y quedó integrado en `npm run verify:pre-apk`.
+- La sincronización real de la matriz técnica se ejecutó con la guarda `TOPOFIELD_ALLOW_PRODUCTION_WRITE=sync-project-memberships`; no produjo ampliación accidental de permisos.
+- Estado de Render observado en la última comprobación local: `GET /health` seguía en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
+- Riesgo operativo nuevo, no de seguridad: la cuota mensual de Android builds del plan free de Expo está agotada, así que la validación APK del código más reciente requiere build local o esperar al reset.

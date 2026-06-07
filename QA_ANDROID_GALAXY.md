@@ -454,3 +454,13 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
   - Sin `Uri lacks file scheme`.
 - Prueba no ejecutada a propósito:
   - Crear obra nueva. Motivo: no hay borrado/archivado claro para limpiar una obra QA; probarlo crearía basura real. Probar solo cuando se vaya a crear una obra real o exista limpieza controlada.
+
+## Actualización Operativa — 2026-06-07
+
+- El repo actual ya incluye commits posteriores a la APK validada en Galaxy:
+  - `076e866` recuperación ante sesión técnica inválida.
+  - `b628573` pantalla `Parte diario`.
+  - `2fd2eb2` smoke test backend `verify:project-memberships`.
+- Se ejecutó `npm run verify:pre-apk` con resultado OK.
+- Se intentó generar una APK nueva por EAS preview, pero Expo rechazó la build por cuota mensual Android agotada en el plan free.
+- Conclusión QA: la última APK validada sigue siendo útil para operación actual, pero no representa todavía el estado exacto del código más reciente.

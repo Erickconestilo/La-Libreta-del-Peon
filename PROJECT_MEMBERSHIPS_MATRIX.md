@@ -87,3 +87,19 @@ Comportamiento:
 - `topografo`: se normaliza la matriz contra `projects.code` explícito.
 - Membresías anteriores del usuario que no estén en la lista nueva quedan en `is_active = FALSE` (no se borran).
 - `admin` y `visitante` no se tocan aquí.
+
+## Estado aplicado - 2026-06-07
+
+- Se ejecutó la sincronización real con guarda explícita:
+
+```bash
+TOPOFIELD_ALLOW_PRODUCTION_WRITE=sync-project-memberships npm run sync:project-memberships --workspace apps/backend
+```
+
+- Resultado:
+  - `1` cuenta sincronizada.
+  - `1` fila actualizada.
+  - `0` nuevas membresías.
+  - `0` membresías desactivadas.
+
+Interpretación: la base quedó alineada con `data/project-memberships.json` y el usuario técnico `topofield-topografo@topofield.local` sigue acotado a `campus-nord` y `maragall`.
