@@ -15,6 +15,7 @@ type ApiEnvelope<T> = {
 };
 
 interface UseChangeLogsOptions {
+  enabled?: boolean;
   entityId?: string | null;
   entityType?: EntityType | null;
   limit?: number;
@@ -47,6 +48,7 @@ const fetchChangeLogs = async ({ entityId, entityType, limit = 50 }: UseChangeLo
 
 export const useChangeLogs = (options: UseChangeLogsOptions = {}) => {
   const query = useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () => fetchChangeLogs(options),
     queryKey: ['change-logs', options.entityType ?? null, options.entityId ?? null, options.limit ?? 50],
     staleTime: 1000 * 30
