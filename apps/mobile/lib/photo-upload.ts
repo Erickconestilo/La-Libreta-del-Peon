@@ -29,6 +29,8 @@ type PickedPhoto = {
   width?: number;
 };
 
+type PendingImagePickerResult = Awaited<ReturnType<typeof ImagePicker.getPendingResultAsync>>;
+
 const SUPPORTED_GALLERY_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
 const SUPPORTED_GALLERY_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
@@ -177,6 +179,30 @@ const pickImagePickerPhoto = async (source: PhotoSource): Promise<PickedPhoto | 
   };
 };
 
+const isImagePickerErrorResult = (
+  result: PendingImagePickerResult
+): result is ImagePicker.ImagePickerErrorResult => {
+  return result !== null && typeof result === 'object' && 'code' in result && 'message' in result;
+};
+
+const getPickedPhotoFromImagePickerResult = (result: ImagePicker.ImagePickerResult): PickedPhoto | null => {
+  if (result.canceled) {
+    return null;
+  }
+
+  const asset = result.assets[0];
+
+  if (!asset?.uri) {
+    throw new Error('No se pudo leer la imagen seleccionada.');
+  }
+
+  return {
+    extension: getFileExtension(asset.fileName) ?? getFileExtension(asset.uri),
+    uri: asset.uri,
+    width: asset.width
+  };
+};
+
 const pickPhotoSource = async (source: PhotoSource): Promise<PickedPhoto | null> => {
   if (source === 'library' && Platform.OS === 'android') {
     return pickAndroidLibraryPhoto();
@@ -258,15 +284,7 @@ const getImageWidth = async (uri: string) =>
     );
   });
 
-export const pickAndCompressPhoto = async (source: PhotoSource): Promise<PreparedPhoto | null> => {
-  await requestPhotoPermission(source);
-
-  const pickedPhoto = await pickPhotoSource(source);
-
-  if (!pickedPhoto) {
-    return null;
-  }
-
+const preparePhotoForUpload = async (pickedPhoto: PickedPhoto): Promise<PreparedPhoto> => {
   const sourceForCompression = await prepareAssetUriForCompression(pickedPhoto);
   let compressed: ImageManipulator.ImageResult;
 
@@ -310,6 +328,42 @@ export const pickAndCompressPhoto = async (source: PhotoSource): Promise<Prepare
     localUri: compressedFile.uri,
     width: compressed.width
   };
+};
+
+export const recoverPendingImagePickerPhoto = async (): Promise<PreparedPhoto | null> => {
+  if (Platform.OS !== 'android') {
+    return null;
+  }
+
+  const pendingResult = await ImagePicker.getPendingResultAsync();
+
+  if (!pendingResult) {
+    return null;
+  }
+
+  if (isImagePickerErrorResult(pendingResult)) {
+    throw new Error(pendingResult.message || 'No se pudo recuperar la foto pendiente de Android.');
+  }
+
+  const pickedPhoto = getPickedPhotoFromImagePickerResult(pendingResult);
+
+  if (!pickedPhoto) {
+    return null;
+  }
+
+  return preparePhotoForUpload(pickedPhoto);
+};
+
+export const pickAndCompressPhoto = async (source: PhotoSource): Promise<PreparedPhoto | null> => {
+  await requestPhotoPermission(source);
+
+  const pickedPhoto = await pickPhotoSource(source);
+
+  if (!pickedPhoto) {
+    return null;
+  }
+
+  return preparePhotoForUpload(pickedPhoto);
 };
 
 export const deletePreparedPhoto = async (preparedPhoto: PreparedPhoto | null) => {

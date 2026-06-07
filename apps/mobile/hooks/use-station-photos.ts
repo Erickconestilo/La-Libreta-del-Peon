@@ -3,7 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { PhotoContentType, SignedPhotoUpload, Station, StationPhoto, StationPhotoKind } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
-import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
+import {
+  deletePreparedPhoto,
+  pickAndCompressPhoto,
+  uploadPreparedPhotoToSignedUrl,
+  type PhotoSource,
+  type PreparedPhoto
+} from '@/lib/photo-upload';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -98,6 +104,37 @@ const deleteStationPhoto = async ({
   return response.data;
 };
 
+const uploadPreparedStationVisualPhoto = async ({
+  input,
+  preparedPhoto,
+  stationId
+}: {
+  input: Omit<CreateStationVisualPhotoInput, 'source'>;
+  preparedPhoto: PreparedPhoto;
+  stationId: string;
+}) => {
+  const signedUpload = await requestSignedStationPhotoUpload({
+    contentType: preparedPhoto.contentType,
+    fileSizeBytes: preparedPhoto.fileSizeBytes,
+    stationId
+  });
+
+  const uploadResponse = await uploadPreparedPhotoToSignedUrl(signedUpload.signedUrl, preparedPhoto, {
+    timeoutMessage: 'La subida de la foto tardó demasiado. Reintenta con buena conexión.',
+    timeoutMs: 60000
+  });
+
+  if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+    throw new Error(`No se pudo subir la foto a Storage (${uploadResponse.status}).`);
+  }
+
+  return createStationPhoto({
+    input,
+    stationId,
+    storagePath: signedUpload.path
+  });
+};
+
 export const useStationPhotos = (stationId: string | null) => {
   const query = useQuery({
     enabled: Boolean(stationId),
@@ -157,25 +194,15 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
       }
 
       try {
-        const signedUpload = await requestSignedStationPhotoUpload({
-          contentType: preparedPhoto.contentType,
-          fileSizeBytes: preparedPhoto.fileSizeBytes,
+        return uploadPreparedStationVisualPhoto({
+          input: {
+            isPrimary: input.isPrimary,
+            kind: input.kind,
+            notes: input.notes,
+            title: input.title
+          },
+          preparedPhoto,
           stationId
-        });
-
-        const uploadResponse = await uploadPreparedPhotoToSignedUrl(signedUpload.signedUrl, preparedPhoto, {
-          timeoutMessage: 'La subida de la foto tardó demasiado. Reintenta con buena conexión.',
-          timeoutMs: 60000
-        });
-
-        if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
-          throw new Error(`No se pudo subir la foto a Storage (${uploadResponse.status}).`);
-        }
-
-        return createStationPhoto({
-          input,
-          stationId,
-          storagePath: signedUpload.path
         });
       } finally {
         await deletePreparedPhoto(preparedPhoto);
@@ -216,12 +243,44 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
     }
   });
 
-  const error = createMutation.error ?? deleteMutation.error ?? null;
+  const resumeMutation = useMutation({
+    mutationFn: async ({
+      input,
+      preparedPhoto
+    }: {
+      input: Omit<CreateStationVisualPhotoInput, 'source'>;
+      preparedPhoto: PreparedPhoto;
+    }) => {
+      if (!stationId) {
+        throw new Error('Falta el id de estación para recuperar la foto pendiente.');
+      }
+
+      try {
+        return await uploadPreparedStationVisualPhoto({
+          input,
+          preparedPhoto,
+          stationId
+        });
+      } finally {
+        await deletePreparedPhoto(preparedPhoto);
+      }
+    },
+    onSuccess: async (photo) => {
+      if (photo?.isPrimary) {
+        updateStationPhotoUrlCaches(photo.publicUrl);
+      }
+
+      await invalidateStationPhotos();
+    }
+  });
+
+  const error = createMutation.error ?? resumeMutation.error ?? deleteMutation.error ?? null;
 
   return {
     addStationPhoto: createMutation.mutateAsync,
     deleteStationPhoto: deleteMutation.mutateAsync,
     errorMessage: error ? getErrorMessage(error) : null,
-    isMutating: createMutation.isPending || deleteMutation.isPending
+    isMutating: createMutation.isPending || resumeMutation.isPending || deleteMutation.isPending,
+    resumePendingStationPhoto: resumeMutation.mutateAsync
   };
 };
