@@ -25,7 +25,7 @@ import {
   getPendingStationVisualPhoto,
   setPendingStationVisualPhoto
 } from '@/lib/pending-station-visual-photo';
-import { recoverPendingImagePickerPhoto } from '@/lib/photo-upload';
+import { pickAndCompressPhoto, recoverPendingImagePickerPhoto } from '@/lib/photo-upload';
 import { getStationDisplayName } from '@/lib/station-display';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
@@ -37,6 +37,8 @@ const PHOTO_KINDS: Array<{ label: string; value: StationPhotoKind }> = [
   { label: 'Obstáculo', value: 'obstacle' },
   { label: 'Otro', value: 'other' }
 ];
+
+let activeInlineCameraUploadStationId: string | null = null;
 
 export default function StationDetailScreen() {
   const router = useRouter();
@@ -143,7 +145,12 @@ export default function StationDetailScreen() {
   }, [prismSketchItems, selectedPrismCode]);
 
   useEffect(() => {
-    if (!stationId || !canEditPhotos || isRecoveringPendingVisualPhotoRef.current) {
+    if (
+      !stationId ||
+      !canEditPhotos ||
+      isRecoveringPendingVisualPhotoRef.current ||
+      activeInlineCameraUploadStationId === stationId
+    ) {
       return;
     }
 
@@ -227,11 +234,29 @@ export default function StationDetailScreen() {
     };
 
     void (async () => {
-      if (source === 'camera') {
-        await setPendingStationVisualPhoto(pendingContext);
+      if (source === 'library') {
+        return addStationPhoto(input);
       }
 
-      return addStationPhoto(input);
+      activeInlineCameraUploadStationId = stationId;
+      await setPendingStationVisualPhoto(pendingContext);
+
+      const preparedPhoto = await pickAndCompressPhoto('camera');
+
+      if (!preparedPhoto) {
+        await clearPendingStationVisualPhoto();
+        return null;
+      }
+
+      return resumePendingStationPhoto({
+        input: {
+          isPrimary: input.isPrimary,
+          kind: input.kind,
+          notes: input.notes,
+          title: input.title
+        },
+        preparedPhoto
+      });
     })()
       .then((photo) => {
         if (photo) {
@@ -242,6 +267,7 @@ export default function StationDetailScreen() {
       })
       .finally(() => {
         if (source === 'camera') {
+          activeInlineCameraUploadStationId = null;
           void clearPendingStationVisualPhoto();
         }
       })

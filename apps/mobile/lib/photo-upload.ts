@@ -284,6 +284,21 @@ const getImageWidth = async (uri: string) =>
     );
   });
 
+const persistCompressedPhoto = async (compressedUri: string) => {
+  const persistentUri = buildTemporaryPhotoUri('jpg');
+
+  try {
+    await LegacyFileSystem.copyAsync({
+      from: compressedUri,
+      to: persistentUri
+    });
+  } catch {
+    throw new Error('No se pudo conservar la imagen preparada para subirla.');
+  }
+
+  return persistentUri;
+};
+
 const preparePhotoForUpload = async (pickedPhoto: PickedPhoto): Promise<PreparedPhoto> => {
   const sourceForCompression = await prepareAssetUriForCompression(pickedPhoto);
   let compressed: ImageManipulator.ImageResult;
@@ -315,7 +330,13 @@ const preparePhotoForUpload = async (pickedPhoto: PickedPhoto): Promise<Prepared
     }
   }
 
-  const compressedFile = new File(compressed.uri);
+  const persistentCompressedUri = await persistCompressedPhoto(compressed.uri);
+
+  if (persistentCompressedUri !== compressed.uri) {
+    await deleteTemporaryUri(compressed.uri);
+  }
+
+  const compressedFile = new File(persistentCompressedUri);
 
   if (!compressedFile.exists || compressedFile.size <= 0) {
     throw new Error('No se pudo preparar la imagen comprimida.');
