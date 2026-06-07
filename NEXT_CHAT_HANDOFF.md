@@ -31,6 +31,20 @@
   - `c7bdea4` corrige `PATCH /stations/:id/photo` y `/notes` para `topografo` declarando alias `stations s`; también agrupa el `OR` en `/prisms/coverage/:groupCode` para respetar scope por obra.
 - Render desplegado y verificado en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
 - Smoke backend tras deploy: health 200, lecturas visitante 200, escritura sin token 401, y prueba topógrafo no destructiva OK (`/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200, `PATCH /stations/:id/notes` 200).
+- Estado repo/backend verificado el 2026-06-07:
+  - `origin/main` y local en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
+  - Render `GET /health` publica ese mismo commit.
+  - `npm run verify:pre-apk` pasa completo: build backend, TypeScript móvil, `verify:project-memberships` y `expo export --platform android`.
+- Commits posteriores relevantes al handoff anterior:
+  - `14b8549` aplica scope real por `project_memberships` y añade `sync:project-memberships`.
+  - `076e866` recupera lecturas públicas si hay sesión técnica inválida.
+  - `b628573` añade pantalla móvil `daily-report`.
+  - `2fd2eb2` añade `verify:project-memberships` como smoke test backend real.
+- Estado actual de matriz técnica:
+  - `topofield-topografo@topofield.local` queda limitado a `campus-nord` y `maragall` según `data/project-memberships.json`.
+- Cambio local preparado y aún sin commit en esta sesión:
+  - `package.json` añade script raíz `verify:pre-apk`.
+  - Nuevo archivo `scripts/verify-pre-apk.mjs`.
 - Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
 - APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
 - APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
