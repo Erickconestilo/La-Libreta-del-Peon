@@ -21,6 +21,7 @@ type DailyEvent = {
   id: string;
   kind: 'Nota' | 'Incidencia' | 'Mensaje';
   meta: string;
+  status?: 'open' | 'resolved';
   time: string;
 };
 
@@ -82,6 +83,7 @@ export default function DailyReportScreen() {
           id: `incident-${incident.id}`,
           kind: 'Incidencia',
           meta: `${station ? getStationDisplayName(station) : 'Sin estación'} · ${incident.status === 'open' ? 'Abierta' : 'Resuelta'}`,
+          status: incident.status,
           time: formatTime(incident.reportedAt)
         };
       });
@@ -109,6 +111,12 @@ export default function DailyReportScreen() {
   }, [selectedProject, stationsQuery.data]);
 
   const openIncidents = dailyEvents.filter((event) => event.kind === 'Incidencia' && event.meta.includes('Abierta')).length;
+  const resolvedIncidents = dailyEvents.filter((event) => event.kind === 'Incidencia' && event.status === 'resolved').length;
+  const noteCount = dailyEvents.filter((event) => event.kind === 'Nota').length;
+  const messageCount = dailyEvents.filter((event) => event.kind === 'Mensaje').length;
+  const stationPhotoCount = projectStations.filter((station) => Boolean(station.photoUrl)).length;
+  const isChecklistComplete = checklist.completedCount === checklist.totalCount;
+  const canCloseDay = isChecklistComplete && openIncidents === 0;
   const isLoading = projectsQuery.isLoading || stationsQuery.isLoading || incidentsQuery.isLoading || messagesQuery.isLoading;
   const errorMessage = projectsQuery.errorMessage ?? stationsQuery.errorMessage ?? incidentsQuery.errorMessage ?? messagesQuery.errorMessage;
 
@@ -148,7 +156,30 @@ export default function DailyReportScreen() {
       <View style={styles.metrics}>
         <Metric icon="place" label="Estaciones" value={`${projectStations.length}`} />
         <Metric icon="report-problem" label="Abiertas" value={`${openIncidents}`} tone={openIncidents > 0 ? colors.red : colors.accentGreen} />
+        <Metric icon="photo-camera" label="Con foto" value={`${stationPhotoCount}`} />
         <Metric icon="checklist" label="Checklist" value={`${checklist.completedCount}/${checklist.totalCount}`} />
+      </View>
+
+      <View style={[styles.statusCard, canCloseDay ? styles.statusCardReady : styles.statusCardPending]}>
+        <MaterialIcons
+          color={canCloseDay ? colors.accentGreen : colors.amber}
+          name={canCloseDay ? 'task-alt' : 'pending-actions'}
+          size={22}
+        />
+        <View style={styles.statusTextBlock}>
+          <Text style={styles.statusTitle}>{canCloseDay ? 'Parte listo para cierre' : 'Parte pendiente de cierre'}</Text>
+          <Text style={styles.statusBody}>
+            {canCloseDay
+              ? 'Checklist completo y sin incidencias abiertas para esta obra.'
+              : buildPendingCloseMessage(openIncidents, checklist.totalCount - checklist.completedCount)}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.summaryGrid}>
+        <SummaryPill label="Notas" value={noteCount} />
+        <SummaryPill label="Mensajes" value={messageCount} />
+        <SummaryPill label="Resueltas" value={resolvedIncidents} />
       </View>
 
       <View style={styles.card}>
@@ -213,6 +244,27 @@ const Metric = ({
     <Text style={styles.metricLabel}>{label}</Text>
   </View>
 );
+
+const SummaryPill = ({ label, value }: { label: string; value: number }) => (
+  <View style={styles.summaryPill}>
+    <Text style={styles.summaryValue}>{value}</Text>
+    <Text style={styles.summaryLabel}>{label}</Text>
+  </View>
+);
+
+const buildPendingCloseMessage = (openIncidents: number, pendingChecklistItems: number) => {
+  const parts: string[] = [];
+
+  if (pendingChecklistItems > 0) {
+    parts.push(`${pendingChecklistItems} comprobaciones pendientes`);
+  }
+
+  if (openIncidents > 0) {
+    parts.push(`${openIncidents} incidencias abiertas`);
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : 'Revisa el parte antes de cerrar la jornada.';
+};
 
 const isToday = (value: string) => {
   const date = new Date(value);
@@ -387,6 +439,60 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.textPrimary,
     fontSize: typography.fontSizeTitle,
+    fontWeight: '900'
+  },
+  statusBody: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19
+  },
+  statusCard: {
+    alignItems: 'flex-start',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[2],
+    padding: spacing[3]
+  },
+  statusCardPending: {
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderColor: 'rgba(251, 191, 36, 0.4)'
+  },
+  statusCardReady: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderColor: 'rgba(34, 197, 94, 0.4)'
+  },
+  statusTextBlock: {
+    flex: 1,
+    gap: 3
+  },
+  statusTitle: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '900'
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2]
+  },
+  summaryLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800'
+  },
+  summaryPill: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 10,
+    borderWidth: 1,
+    minWidth: 96,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 10
+  },
+  summaryValue: {
+    color: colors.textPrimary,
+    fontSize: 18,
     fontWeight: '900'
   },
   title: {

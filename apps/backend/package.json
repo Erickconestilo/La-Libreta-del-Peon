@@ -14,7 +14,8 @@
     "reconcile:prism-observations": "tsx src/scripts/reconcile-prism-observations.ts",
     "create:session-tokens": "tsx src/scripts/create-session-tokens.ts",
     "sync:project-memberships": "tsx src/scripts/sync-project-memberships.ts",
-    "verify:guide-admin": "tsx src/scripts/verify-guide-admin.ts"
+    "verify:guide-admin": "tsx src/scripts/verify-guide-admin.ts",
+    "verify:project-memberships": "tsx src/scripts/verify-project-memberships.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
