@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -7,6 +7,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { getPendingStationVisualPhoto } from '@/lib/pending-station-visual-photo';
 import { queryClient } from '@/lib/query-client';
 import { SessionProvider } from '@/src/session/session-provider';
 
@@ -48,6 +49,30 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const restorePendingVisualPhotoRoute = async () => {
+      const pendingVisualPhoto = await getPendingStationVisualPhoto();
+
+      if (!pendingVisualPhoto || cancelled) {
+        return;
+      }
+
+      if (pathname !== pendingVisualPhoto.returnPath) {
+        router.replace(pendingVisualPhoto.returnPath as never);
+      }
+    };
+
+    void restorePendingVisualPhotoRoute();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, router]);
 
   return (
     <SafeAreaProvider>

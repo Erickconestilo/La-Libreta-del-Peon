@@ -180,6 +180,25 @@
   - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_camera_01_after_shutter.png`
   - `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_03_google_maps.png`
 
+## Fix en curso ya aplicado — memoria visual/cámara
+
+- Se implementó un fix específico para el retorno Android al sacar foto desde memoria visual de estación.
+- Piezas nuevas:
+  - `apps/mobile/lib/pending-station-visual-photo.ts`
+  - recuperación en `apps/mobile/lib/photo-upload.ts` usando `ImagePicker.getPendingResultAsync()`
+  - reanudación de subida/alta en `apps/mobile/hooks/use-station-photos.ts`
+  - restauración de ruta en `apps/mobile/app/_layout.tsx`
+  - recuperación del flujo en `apps/mobile/app/station/[stationId].tsx`
+- Qué intenta corregir:
+  - que Android destruya la actividad mientras la cámara está abierta;
+  - que al volver la app caiga en una ruta incorrecta;
+  - que se pierda la foto pendiente si `expo-image-picker` deja resultado pendiente.
+- Verificación de código cerrada:
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK.
+  - `npx expo export --platform android` OK.
+- Verificación pendiente real:
+  - instalar una build nueva en Galaxy y repetir el flujo `Memoria visual -> Cámara -> disparar -> volver` para confirmar que ya queda en el detalle correcto y sube la foto.
+
 ## APK Anterior Instalada En Galaxy
 
 - EAS build anterior: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`.

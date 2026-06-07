@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,12 @@ import {
   useStationPhotos
 } from '@/hooks/use-station-photos';
 import { useStationPhotoMutations } from '@/hooks/use-station-photo';
+import {
+  clearPendingStationVisualPhoto,
+  getPendingStationVisualPhoto,
+  setPendingStationVisualPhoto
+} from '@/lib/pending-station-visual-photo';
+import { recoverPendingImagePickerPhoto } from '@/lib/photo-upload';
 import { getStationDisplayName } from '@/lib/station-display';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
@@ -70,7 +76,8 @@ export default function StationDetailScreen() {
     addStationPhoto,
     deleteStationPhoto,
     errorMessage: stationPhotoMutationErrorMessage,
-    isMutating: isStationPhotoMutating
+    isMutating: isStationPhotoMutating,
+    resumePendingStationPhoto
   } = useStationPhotoGalleryMutations(stationId ?? null);
   const {
     data: prismData,
@@ -118,6 +125,7 @@ export default function StationDetailScreen() {
   const canEditStation = canUseTeamTools;
   const canViewTechnical = canUseTeamTools;
   const [showTechnicalData, setShowTechnicalData] = useState(false);
+  const isRecoveringPendingVisualPhotoRef = useRef(false);
 
   useEffect(() => {
     setNotesDraft(data?.notes ?? '');
@@ -134,19 +142,107 @@ export default function StationDetailScreen() {
     }
   }, [prismSketchItems, selectedPrismCode]);
 
+  useEffect(() => {
+    if (!stationId || !canEditPhotos || isRecoveringPendingVisualPhotoRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const recoverPendingVisualPhoto = async () => {
+      const pendingVisualPhoto = await getPendingStationVisualPhoto();
+
+      if (!pendingVisualPhoto || pendingVisualPhoto.stationId !== stationId || pendingVisualPhoto.source !== 'camera') {
+        return;
+      }
+
+      isRecoveringPendingVisualPhotoRef.current = true;
+
+      try {
+        const preparedPhoto = await recoverPendingImagePickerPhoto();
+
+        if (!preparedPhoto) {
+          await clearPendingStationVisualPhoto();
+          return;
+        }
+
+        const photo = await resumePendingStationPhoto({
+          input: {
+            isPrimary: pendingVisualPhoto.isPrimary,
+            kind: pendingVisualPhoto.kind,
+            notes: pendingVisualPhoto.notes,
+            title: pendingVisualPhoto.title
+          },
+          preparedPhoto
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (photo) {
+          setVisualPhotoNotes('');
+          setVisualPhotoTitle('');
+          setSetAsPrimary(false);
+        }
+
+        await clearPendingStationVisualPhoto();
+      } catch {
+        if (!cancelled) {
+          await clearPendingStationVisualPhoto();
+        }
+      } finally {
+        isRecoveringPendingVisualPhotoRef.current = false;
+      }
+    };
+
+    void recoverPendingVisualPhoto();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canEditPhotos, resumePendingStationPhoto, stationId]);
+
   const handleAddVisualPhoto = (source: 'camera' | 'library') => {
-    void addStationPhoto({
+    if (!stationId) {
+      return;
+    }
+
+    const input = {
       isPrimary: setAsPrimary,
       kind: visualPhotoKind,
       notes: visualPhotoNotes.trim() ? visualPhotoNotes.trim() : null,
       source,
       title: visualPhotoTitle.trim() ? visualPhotoTitle.trim() : null
-    })
+    } as const;
+
+    const pendingContext = {
+      isPrimary: input.isPrimary,
+      kind: input.kind,
+      notes: input.notes,
+      returnPath: `/station/${stationId}`,
+      source: input.source,
+      stationId,
+      title: input.title
+    };
+
+    void (async () => {
+      if (source === 'camera') {
+        await setPendingStationVisualPhoto(pendingContext);
+      }
+
+      return addStationPhoto(input);
+    })()
       .then((photo) => {
         if (photo) {
           setVisualPhotoNotes('');
           setVisualPhotoTitle('');
           setSetAsPrimary(false);
+        }
+      })
+      .finally(() => {
+        if (source === 'camera') {
+          void clearPendingStationVisualPhoto();
         }
       })
       .catch(() => undefined);
