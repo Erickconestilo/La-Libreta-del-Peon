@@ -4,10 +4,11 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Incident, StationMessage } from '@shared/types';
+import type { Incident, ProjectSummary, StationMessage } from '@shared/types';
 
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useRecentIncidents } from '@/hooks/use-incidents';
+import { useProjects } from '@/hooks/use-projects';
 import { useRecentStationMessages } from '@/hooks/use-station-messages';
 import { useStations } from '@/hooks/use-stations';
 import { getStationDisplayName } from '@/lib/station-display';
@@ -64,12 +65,23 @@ export default function BitacoraScreen() {
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
   const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const projectsQuery = useProjects();
   const stationsQuery = useStations();
   const incidentsQuery = useRecentIncidents(canUseTeamTools);
   const messagesQuery = useRecentStationMessages(canUseTeamTools);
 
   const [selectedScope, setSelectedScope] = useState<BitacoraScope>('all');
   const [selectedTags, setSelectedTags] = useState<BitacoraTag[]>(['Incidencia', 'Mensaje', 'Nota', 'Propuesta']);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  const projects = projectsQuery.data ?? [];
+  const selectedProject = useMemo<ProjectSummary | null>(() => {
+    if (!selectedProjectId) {
+      return null;
+    }
+
+    return projects.find((project) => project.id === selectedProjectId) ?? null;
+  }, [projects, selectedProjectId]);
 
   const stationById = useMemo(() => {
     return new Map((stationsQuery.data ?? []).map((station) => [station.id, station]));
@@ -81,8 +93,12 @@ export default function BitacoraScreen() {
     }
 
     const nowUserId = currentUser?.id ?? null;
+    const allowedStationIds = selectedProjectId
+      ? new Set((stationsQuery.data ?? []).filter((station) => station.projectId === selectedProjectId).map((station) => station.id))
+      : null;
 
     const noteEntries: BitacoraEntry[] = (stationsQuery.data ?? [])
+      .filter((station) => !selectedProjectId || station.projectId === selectedProjectId)
       .filter((station) => Boolean(station.notes?.trim()))
       .map((station) => {
         const stationName = getStationDisplayName(station);
@@ -103,69 +119,73 @@ export default function BitacoraScreen() {
         };
       });
 
-    const incidentEntries: BitacoraEntry[] = (incidentsQuery.data ?? []).map((incident) => {
-      const station = incident.stationId ? stationById.get(incident.stationId) : null;
-      const isOpen = incident.status === 'open';
-      const labels: BitacoraTag[] = ['Incidencia', isOpen ? 'Abierta' : 'Cerrada'];
-      const suggestionText = incident.suggestion?.notes ? ` Propuesta: ${incident.suggestion.notes}` : '';
+    const incidentEntries: BitacoraEntry[] = (incidentsQuery.data ?? [])
+      .filter((incident) => !allowedStationIds || (incident.stationId ? allowedStationIds.has(incident.stationId) : false))
+      .map((incident) => {
+        const station = incident.stationId ? stationById.get(incident.stationId) : null;
+        const isOpen = incident.status === 'open';
+        const labels: BitacoraTag[] = ['Incidencia', isOpen ? 'Abierta' : 'Cerrada'];
+        const suggestionText = incident.suggestion?.notes ? ` Propuesta: ${incident.suggestion.notes}` : '';
 
-      if (incident.type === 'obstaculo_estacionamiento') {
-        labels.push('Urgente');
-      }
+        if (incident.type === 'obstaculo_estacionamiento') {
+          labels.push('Urgente');
+        }
 
-      if (incident.suggestion?.notes) {
-        labels.push('Propuesta');
-      }
+        if (incident.suggestion?.notes) {
+          labels.push('Propuesta');
+        }
 
-      if (incident.photoUrl) {
-        labels.push('Foto');
-      }
+        if (incident.photoUrl) {
+          labels.push('Foto');
+        }
 
-      return {
-        body: `${incident.description}${suggestionText}`,
-        createdBy: incident.reportedBy === nowUserId ? 'Tú' : 'Equipo',
-        createdById: incident.reportedBy,
-        date: incident.reportedAt,
-        dateText: formatDateTime(incident.reportedAt),
-        icon: isOpen ? 'report-problem' : 'task-alt',
-        id: `incident-${incident.id}`,
-        isMine: incident.reportedBy === nowUserId,
-        labels,
-        meta: buildMeta(station ? getStationDisplayName(station) : 'Sin estación asociada', station?.project?.name ?? null),
-        stationId: incident.stationId,
-        title: `${incidentTypeLabels[incident.type]} · ${isOpen ? 'Abierta' : 'Cerrada'}`
-      };
-    });
+        return {
+          body: `${incident.description}${suggestionText}`,
+          createdBy: incident.reportedBy === nowUserId ? 'Tú' : 'Equipo',
+          createdById: incident.reportedBy,
+          date: incident.reportedAt,
+          dateText: formatDateTime(incident.reportedAt),
+          icon: isOpen ? 'report-problem' : 'task-alt',
+          id: `incident-${incident.id}`,
+          isMine: incident.reportedBy === nowUserId,
+          labels,
+          meta: buildMeta(station ? getStationDisplayName(station) : 'Sin estación asociada', station?.project?.name ?? null),
+          stationId: incident.stationId,
+          title: `${incidentTypeLabels[incident.type]} · ${isOpen ? 'Abierta' : 'Cerrada'}`
+        };
+      });
 
-    const messageEntries: BitacoraEntry[] = (messagesQuery.data ?? []).map((message: StationMessage) => {
-      const station = message.stationId ? stationById.get(message.stationId) : null;
-      const stationName = message.station?.name ?? (station ? getStationDisplayName(station) : 'Estación sin nombre');
-      const projectName = message.station?.project?.name ?? station?.project?.name ?? null;
-      const authorName = message.createdByUser?.fullName
-        ? `${message.createdByUser.fullName}`
-        : message.createdByUser?.email ?? 'Equipo';
-      const authorId = message.createdBy;
+    const messageEntries: BitacoraEntry[] = (messagesQuery.data ?? [])
+      .filter((message: StationMessage) => !allowedStationIds || (message.stationId ? allowedStationIds.has(message.stationId) : false))
+      .map((message: StationMessage) => {
+        const station = message.stationId ? stationById.get(message.stationId) : null;
+        const stationName = message.station?.name ?? (station ? getStationDisplayName(station) : 'Estación sin nombre');
+        const projectName = message.station?.project?.name ?? station?.project?.name ?? null;
+        const authorName = message.createdByUser?.fullName
+          ? `${message.createdByUser.fullName}`
+          : message.createdByUser?.email ?? 'Equipo';
+        const authorId = message.createdBy;
 
-      return {
-        body: message.body,
-        createdBy: authorName,
-        createdById: authorId,
-        date: message.createdAt,
-        dateText: formatDateTime(message.createdAt),
-        icon: 'chat-bubble-outline',
-        id: `message-${message.id}`,
-        isMine: authorId === nowUserId,
-        labels: ['Mensaje'],
-        meta: `${buildMeta(stationName, projectName)} · ${authorName}`,
-        stationId: message.stationId,
-        title: 'Mensaje de equipo'
-      };
-    });
+        return {
+          body: message.body,
+          createdBy: authorName,
+          createdById: authorId,
+          date: message.createdAt,
+          dateText: formatDateTime(message.createdAt),
+          icon: 'chat-bubble-outline',
+          id: `message-${message.id}`,
+          isMine: authorId === nowUserId,
+          labels: ['Mensaje'],
+          meta: `${buildMeta(stationName, projectName)} · ${authorName}`,
+          stationId: message.stationId,
+          title: 'Mensaje de equipo'
+        };
+      });
 
     return [...noteEntries, ...incidentEntries, ...messageEntries].sort(
       (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()
     );
-  }, [canUseTeamTools, currentUser?.id, incidentsQuery.data, messagesQuery.data, stationById, stationsQuery.data]);
+  }, [canUseTeamTools, currentUser?.id, incidentsQuery.data, messagesQuery.data, selectedProjectId, stationById, stationsQuery.data]);
 
   const filteredEntries = useMemo(() => {
     const now = new Date();
@@ -208,12 +228,13 @@ export default function BitacoraScreen() {
 
   const openIncidentCount = allEntries.filter((entry) => entry.labels.includes('Incidencia') && entry.labels.includes('Abierta')).length;
 
-  const isLoading = stationsQuery.isLoading || incidentsQuery.isLoading || messagesQuery.isLoading;
-  const isRefreshing = stationsQuery.isRefetching || incidentsQuery.isRefetching || messagesQuery.isRefetching;
-  const errorMessage = stationsQuery.errorMessage ?? incidentsQuery.errorMessage ?? messagesQuery.errorMessage;
+  const isLoading = projectsQuery.isLoading || stationsQuery.isLoading || incidentsQuery.isLoading || messagesQuery.isLoading;
+  const isRefreshing = projectsQuery.isRefetching || stationsQuery.isRefetching || incidentsQuery.isRefetching || messagesQuery.isRefetching;
+  const errorMessage = projectsQuery.errorMessage ?? stationsQuery.errorMessage ?? incidentsQuery.errorMessage ?? messagesQuery.errorMessage;
 
   const handleRefresh = async () => {
     await Promise.all([
+      projectsQuery.refetch(),
       stationsQuery.refetch(),
       canUseTeamTools ? incidentsQuery.refetch() : Promise.resolve(),
       canUseTeamTools ? messagesQuery.refetch() : Promise.resolve()
@@ -271,7 +292,9 @@ export default function BitacoraScreen() {
         <View style={styles.header}>
           <Text style={styles.eyebrow}>Bitácora</Text>
           <Text style={styles.heroTitle}>Bitácora</Text>
-          <Text style={styles.headerBody}>Notas, incidencias y mensajes con fecha y hora. Usa etiquetas para filtrar.</Text>
+          <Text style={styles.headerBody}>
+            Notas, incidencias y mensajes con fecha y hora{selectedProject ? ` · ${selectedProject.name}` : ''}.
+          </Text>
 
           {openIncidentCount > 0 ? (
             <View style={styles.alertCard}>
@@ -279,6 +302,34 @@ export default function BitacoraScreen() {
               <Text style={styles.alertText}>Incidencias abiertas: {openIncidentCount}</Text>
             </View>
           ) : null}
+
+          <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.dailyReportButton}>
+            <MaterialIcons color={colors.background} name="event-note" size={17} />
+            <Text style={styles.dailyReportButtonText}>Parte diario</Text>
+          </Pressable>
+
+          <Text style={styles.sectionLabel}>Obra</Text>
+          <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>
+            <Pressable
+              onPress={() => setSelectedProjectId(null)}
+              style={[styles.scopePill, selectedProjectId === null ? styles.scopePillSelected : null]}
+            >
+              <Text style={[styles.scopePillText, selectedProjectId === null ? styles.scopePillTextSelected : null]}>
+                Todas
+              </Text>
+            </Pressable>
+            {projects.map((project) => (
+              <Pressable
+                key={project.id}
+                onPress={() => setSelectedProjectId(project.id)}
+                style={[styles.scopePill, selectedProjectId === project.id ? styles.scopePillSelected : null]}
+              >
+                <Text style={[styles.scopePillText, selectedProjectId === project.id ? styles.scopePillTextSelected : null]}>
+                  {project.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
           <Text style={styles.sectionLabel}>Vista</Text>
           <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>
@@ -464,6 +515,21 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing[2],
     padding: spacing[3]
+  },
+  dailyReportButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: 10
+  },
+  dailyReportButtonText: {
+    color: colors.background,
+    fontSize: 13,
+    fontWeight: '900'
   },
   entryAuthor: {
     color: colors.textSecondary,

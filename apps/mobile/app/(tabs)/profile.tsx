@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
+import { useProjects } from '@/hooks/use-projects';
 import { colors } from '@/src/theme';
 
 export default function ProfileScreen() {
@@ -26,6 +27,7 @@ export default function ProfileScreen() {
     sessionWarning,
     storedToken
   } = useCurrentSession();
+  const projectsQuery = useProjects();
   const [tokenInput, setTokenInput] = useState('');
   const [authMode, setAuthMode] = useState<'credentials' | 'token'>('credentials');
   const [technicalEmail, setTechnicalEmail] = useState('');
@@ -235,6 +237,25 @@ export default function ProfileScreen() {
       {currentUser?.role === 'admin' || currentUser?.role === 'topografo' ? (
         <View style={styles.card}>
           <Text style={styles.title}>Operación</Text>
+          <Text style={styles.body}>
+            {currentUser.role === 'admin'
+              ? 'Alcance global por rol admin.'
+              : `Obras activas para esta cuenta: ${(projectsQuery.data ?? []).length || 0}.`}
+          </Text>
+          {currentUser.role === 'topografo' ? (
+            <View style={styles.projectList}>
+              {projectsQuery.isLoading ? <Text style={styles.caption}>Cargando obras asignadas...</Text> : null}
+              {(projectsQuery.data ?? []).map((project) => (
+                <View key={project.id} style={styles.projectPill}>
+                  <Text style={styles.projectPillText}>{project.name}</Text>
+                </View>
+              ))}
+              {projectsQuery.errorMessage ? <Text style={styles.error}>{projectsQuery.errorMessage}</Text> : null}
+            </View>
+          ) : null}
+          <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>Abrir parte diario</Text>
+          </Pressable>
           <Pressable onPress={() => router.push('/history' as never)} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Ver historial de cambios</Text>
           </Pressable>
@@ -324,6 +345,24 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: colors.background,
     fontSize: 15,
+    fontWeight: '800'
+  },
+  projectList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  projectPill: {
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7
+  },
+  projectPillText: {
+    color: colors.textPrimary,
+    fontSize: 12,
     fontWeight: '800'
   },
   secondaryButton: {

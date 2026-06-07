@@ -104,6 +104,12 @@ function RootLayoutNav() {
                   title: 'Historial'
                 }}
               />
+              <Stack.Screen
+                name="daily-report"
+                options={{
+                  title: 'Parte diario'
+                }}
+              />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack>
           </ThemeProvider>
