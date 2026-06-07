@@ -1,10 +1,20 @@
 # API_CANDIDATES.md — APIs públicas útiles para TopoField
 
-Fecha de revisión: 2026-06-01
+Fecha de revisión: 2026-06-07
 
 Este documento resume APIs públicas o free tier que pueden aportar valor real a TopoField. No es una lista de APIs "interesantes"; es una selección filtrada por utilidad en obra, coste, riesgo, compatibilidad con offline-first y facilidad de mantener en free tier.
 
 Corrección de criterio tras feedback del usuario: **clima no es prioridad**. El clima ya se puede consultar fácilmente desde el móvil y no diferencia TopoField. Las APIs realmente interesantes para este producto son las que aportan cartografía, catastro, ortofoto, contexto urbano, rutas de acceso, elevación aproximada o datos geográficos que ayuden a trabajar una obra.
+
+## Estado de decisión actual
+
+No hubo cambio de prioridad funcional desde la revisión anterior. La necesidad inmediata sigue siendo operativa:
+
+- cerrar flujo real de usuarios y membresías,
+- consolidar ruta de build Android sin depender de cuota EAS,
+- y solo después retomar integraciones externas.
+
+Interpretación: este documento sigue vigente como backlog de APIs, pero no entra en el siguiente bloque de trabajo inmediato.
 
 ## Criterio de decisión
 
