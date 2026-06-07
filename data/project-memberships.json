@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "email": "topofield-topografo@topofield.local",
+      "projectCodes": [
+        "campus-nord",
+        "maragall"
+      ],
+      "isActive": true
+    }
+  ]
+}
