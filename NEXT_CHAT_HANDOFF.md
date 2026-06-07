@@ -7,10 +7,12 @@
 - Rama actual: `main`.
 - Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` este disponible.
+- Estado actual: backend con script de matriz real de membresías (`npm run sync:project-memberships`) listo para operar en local.
 
 ## Para Continuar en Codex Cloud
 
 - Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
+- Nota de fecha actual (2026-06-07): el trabajo en curso prioriza `project_memberships` real por matriz usuario-obra; sin EAS todavía.
 - Último commit funcional móvil: `e39a01d`, fix para que login/refresh por cuenta no manden un bearer viejo o visitante.
 - Último commit funcional incluido en la APK instalada: `e39a01d`.
 - Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.

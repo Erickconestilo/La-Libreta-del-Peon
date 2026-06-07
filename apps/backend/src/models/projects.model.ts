@@ -86,6 +86,7 @@ export const listProjects = async (projectScope: string[] | null = null) => {
       COUNT(s.id)::int AS station_count
     FROM projects p
     LEFT JOIN stations s ON s.project_id = p.id
+    WHERE 1=1
     ${scope.clause}
     GROUP BY p.id
     ORDER BY p.is_active DESC, p.name ASC
