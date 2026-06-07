@@ -9,6 +9,7 @@
     "mobile:android": "npm run android --workspace apps/mobile",
     "mobile:web": "npm run web --workspace apps/mobile",
     "backend:dev": "npm run dev --workspace apps/backend",
-    "backend:build": "npm run build --workspace apps/backend"
+    "backend:build": "npm run build --workspace apps/backend",
+    "verify:pre-apk": "node scripts/verify-pre-apk.mjs"
   }
 }
