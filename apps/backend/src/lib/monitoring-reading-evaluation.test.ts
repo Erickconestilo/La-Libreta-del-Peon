@@ -80,3 +80,18 @@ test('keeps reading as draft when previous reading or threshold is missing', () 
   assert.equal(noThreshold.thresholdStatus, 'unknown');
   assert.equal(noThreshold.readingStatus, 'draft');
 });
+
+test('treats invalid negative thresholds as unknown draft', () => {
+  const result = evaluateReadingStatus({
+    alarmValue: -10,
+    autoConfirmGreen: true,
+    previousValue: 100,
+    valueNumeric: 100,
+    warningValue: -5
+  });
+
+  assert.equal(result.delta, null);
+  assert.equal(result.thresholdStatus, 'unknown');
+  assert.equal(result.readingStatus, 'draft');
+  assert.equal(result.autoConfirmed, false);
+});

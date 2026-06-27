@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS monitoring_round_points (
   round_id UUID NOT NULL REFERENCES monitoring_rounds(id) ON DELETE CASCADE,
   control_point_id UUID NOT NULL REFERENCES control_points(id) ON DELETE RESTRICT,
   expected_instrument_type TEXT NOT NULL REFERENCES instrument_types(code),
-  status TEXT NOT NULL CHECK (status IN ('pending', 'taken', 'skipped', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'taken', 'skipped', 'cancelled')),
   sort_order INTEGER NOT NULL DEFAULT 0,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS instrument_readings (
   raw_payload JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (value_numeric IS NOT NULL OR NULLIF(BTRIM(value_text), '') IS NOT NULL),
   UNIQUE (measured_by, client_request_id)
 );
 
@@ -106,6 +107,8 @@ CREATE TABLE IF NOT EXISTS control_point_thresholds (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (valid_to IS NULL OR valid_to > valid_from),
+  CHECK (warning_value IS NULL OR warning_value >= 0),
+  CHECK (alarm_value IS NULL OR alarm_value >= 0),
   CHECK (
     warning_value IS NULL
     OR alarm_value IS NULL
@@ -131,7 +134,14 @@ CREATE TABLE IF NOT EXISTS project_code_catalog (
 CREATE TABLE IF NOT EXISTS project_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  rule_type TEXT NOT NULL,
+  rule_type TEXT NOT NULL CHECK (
+    rule_type IN (
+      'max_points_per_pass',
+      'auto_confirm_green',
+      'block_on_alarm',
+      'require_photo_on_warning'
+    )
+  ),
   value TEXT NOT NULL,
   configured_by UUID NOT NULL REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

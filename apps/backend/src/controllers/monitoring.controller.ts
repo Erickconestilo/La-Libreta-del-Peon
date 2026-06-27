@@ -133,7 +133,16 @@ export const importProjectCodeCatalogController = async (request: Request, respo
       throw new AppError('CSV body is required', 400, 'CSV_BODY_REQUIRED');
     }
 
-    const rows = parseProjectCodeCatalogCsv(csv);
+    let rows: ReturnType<typeof parseProjectCodeCatalogCsv>;
+
+    try {
+      rows = parseProjectCodeCatalogCsv(csv);
+    } catch (error) {
+      throw new AppError('Invalid code catalog CSV', 400, 'INVALID_CODE_CATALOG_CSV', {
+        reason: error instanceof Error ? error.message : 'Unknown CSV parse error'
+      });
+    }
+
     const result = await importProjectCodeCatalog(projectId, rows);
 
     if (!result) {

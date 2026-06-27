@@ -2,13 +2,24 @@
 
 Aplicación móvil de campo para equipos pequeños de topografía. Stack actual: Expo/React Native, backend Node/Express, PostgreSQL/Supabase, Supabase Storage y tipos compartidos en `shared/types.ts`.
 
+## Documentación maestra
+
+- [PLAN.md](./PLAN.md)
+- [PRODUCT_STRATEGY.md](./PRODUCT_STRATEGY.md)
+- [UX_RESEARCH_PLAN.md](./UX_RESEARCH_PLAN.md)
+- [LAUNCH_PLAN.md](./LAUNCH_PLAN.md)
+
 ## Estado Actual
 
-- Repo actual: `main` en `c91682a` tras documentar sincronización de membresías y bloqueo de cuota EAS.
-- Último backend verificado en Render antes del último push: `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
-- Última APK Android validada en Galaxy: `topofield-c18d559-document-picker.apk`.
-- Build EAS nueva intentada el `2026-06-07`: bloqueada por cuota mensual agotada del plan free de Expo hasta `2026-07-01`.
+- El repo tiene cambios locales pendientes de consolidar en documentación, hardening backend y limpieza de artefactos legacy.
+- La verificación local actual pasa en backend y móvil:
+  - `npm run build --workspace apps/backend`
+  - `npm run test --workspace apps/backend`
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`
+  - `npm run verify:pre-apk`
+- El backend ya tiene tests unitarios mínimos para `access-control`, `photo-storage-path`, evaluación de lecturas de auscultación, CSV de catálogo y validación de payloads; la cobertura sigue siendo parcial y no sustituye QA funcional real.
 - Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
+- Android sigue siendo la plataforma principal de validación operativa.
 
 ## Funcionalidad Implementada
 
@@ -21,11 +32,19 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 - Recuperación móvil ante sesión técnica inválida en lecturas públicas.
 - Parte diario móvil implementado en código actual.
 - Verificación raíz `npm run verify:pre-apk` añadida y validada.
+- Backend MVP inicial de auscultación:
+  - migración no aplicada `014_monitoring_rounds.sql`;
+  - puntos esperados por ronda;
+  - lecturas instrumentadas con `client_request_id`;
+  - delta/threshold calculados, no persistidos;
+  - catálogo de códigos por proyecto;
+  - importación CSV de catálogo restringida a admin.
 
 ## Bloqueo Conocido
 
-- La cuenta Expo agotó la cuota mensual de Android builds en el plan free.
-- Render aún no reflejaba el último push documental en `GET /health` en la última comprobación local.
+- La distribución sigue sin estar cerrada de forma seria para compañeros: APK local y APK EAS no comparten firma, así que la actualización directa por `adb install -r` falla si la build no reutiliza la misma keystore.
+- La publicación y prueba con compañeros sigue pendiente de llevarse a Google Play Internal Testing o a una cadena estable equivalente.
+- El tooling móvil mantiene vulnerabilidades moderadas upstream del ecosistema Expo; hoy no hay hallazgos high/critical validados en la lógica propia, pero sigue siendo deuda antes de abrir más la distribución.
 
 ## Estado Operativo
 
@@ -40,10 +59,12 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 
 ## Siguiente paso
 
-Resolver una de estas dos rutas:
+Resolver estos bloques en orden:
 
-- Esperar al reset de cuota de Expo o usar build local propia para sacar una APK nueva con el código actual.
+- Consolidar y confirmar los cambios locales pendientes del repo.
 - Definir usuarios reales y ampliar `data/project-memberships.json` antes de alta operativa real.
+- Cerrar la ruta de distribución Android para compañeros con firma estable y preferiblemente Google Play Internal Testing.
+- Seguir ampliando tests automáticos sobre auth, permisos y flujos críticos de fotos/scope.
 
 Nota importante:
 

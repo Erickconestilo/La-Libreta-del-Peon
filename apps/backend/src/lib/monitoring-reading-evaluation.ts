@@ -27,7 +27,10 @@ export const evaluateReadingStatus = ({
     valueNumeric === null ||
     previousValue === null ||
     warningValue === null ||
-    alarmValue === null
+    alarmValue === null ||
+    warningValue < 0 ||
+    alarmValue < 0 ||
+    alarmValue < warningValue
   ) {
     return {
       autoConfirmed: false,

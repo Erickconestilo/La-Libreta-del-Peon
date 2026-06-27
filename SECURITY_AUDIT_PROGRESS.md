@@ -168,3 +168,105 @@ Estado: corregido y validado en Galaxy con `topografo` mediante subida firmada r
 - La sincronización real de la matriz técnica se ejecutó con la guarda `TOPOFIELD_ALLOW_PRODUCTION_WRITE=sync-project-memberships`; no produjo ampliación accidental de permisos.
 - Estado de Render observado en la última comprobación local: `GET /health` seguía en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`.
 - Riesgo operativo nuevo, no de seguridad: la cuota mensual de Android builds del plan free de Expo está agotada, así que la validación APK del código más reciente requiere build local o esperar al reset.
+
+## Actualización de Auditoría - 2026-06-20
+
+- Se reabrió la revisión de seguridad y robustez sobre backend, móvil y tooling local del repo.
+- Hallazgo corregido en backend de fotos:
+  - antes, `PATCH /stations/:id/photo`, `PATCH /projects/:id/photo`, `PATCH /prisms/:id/photo` y `POST /stations/:id/photos` aceptaban un `storagePath` con forma válida sin comprobar que el objeto existiera realmente en Supabase Storage;
+  - ahora el backend verifica la existencia real del objeto antes de persistir la referencia;
+  - resultado: se reduce el riesgo de referencias colgantes, vínculos a objetos inexistentes y persistencia arbitraria basada solo en regex de ruta.
+- Refuerzo técnico añadido:
+  - nuevo helper `apps/backend/src/lib/photo-storage-path.ts`;
+  - `assertPhotoObjectExists(...)` en `apps/backend/src/lib/photo-storage.ts`;
+  - cobertura aplicada a controladores de fotos de estación, obra, prisma y memoria visual.
+- Hallazgo de tooling corregido:
+  - `scripts/verify-pre-apk.mjs` ejecutaba comandos con `shell: true`;
+  - se cambió a ejecución explícita por proceso, compatible con Windows, evitando el warning de deprecación y reduciendo superficie de inyección accidental en el runner local.
+- Tests añadidos:
+  - `apps/backend/src/lib/photo-storage-path.test.ts`;
+  - cubre parseo de rutas de storage y coincidencia exacta de objeto.
+- Verificación ejecutada:
+  - `npm run build --workspace apps/backend`: OK.
+  - `npm run test --workspace apps/backend`: OK.
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`: OK.
+  - `npm run verify:pre-apk`: OK.
+  - `npm audit --workspace apps/backend --json`: 0 vulnerabilidades.
+  - `npm audit --workspace apps/mobile --json`: 12 vulnerabilidades moderadas en tooling Expo/xcode/js-yaml/uuid, sin high/critical.
+- Estado actualizado:
+  - backend sin hallazgos nuevos altos/críticos en la revisión local actual;
+  - móvil sigue con deuda de tooling upstream, no con un bypass validado en lógica de app.
+
+## Riesgo 10 - Persistencia de fotos sin comprobar objeto real
+
+Antes, el backend aceptaba `storagePath` bien formado y generaba `publicUrl` sin verificar la existencia del objeto en Storage.
+
+Estado: corregido en backend. Ahora se exige presencia real del objeto antes de persistir la referencia.
+
+## Riesgo 11 - Runner local con `shell: true`
+
+El verificador `verify-pre-apk` lanzaba comandos con `shell: true`, lo que en Windows dispara warning de seguridad y amplía superficie de composición de comandos.
+
+Estado: corregido. El runner usa invocación explícita por proceso y se volvió a validar con `npm run verify:pre-apk`.
+
+## Actualización de Auditoría - 2026-06-27
+
+- Se añadió una segunda tanda de tests unitarios backend para control de acceso:
+  - `apps/backend/src/lib/access-control.test.ts`
+  - cobertura sobre `getActorProjectScope`, `assertProjectAccess` y `canActorAccessProject`.
+- Verificación repetida a fecha de hoy:
+  - `npm run build --workspace apps/backend`: OK.
+  - `npm run test --workspace apps/backend`: OK.
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`: OK.
+  - `npm run verify:pre-apk`: OK.
+  - `npm audit --workspace apps/backend --json`: 0 vulnerabilidades.
+  - `npm audit --workspace apps/mobile --json`: 12 vulnerabilidades moderadas, 0 high, 0 critical.
+- Conclusión actual:
+  - la lógica propia backend revisada sigue sin hallazgos altos/críticos validados;
+  - el mayor pendiente técnico visible ya no es un bypass backend confirmado, sino la deuda de tooling móvil y la falta de más cobertura automática sobre flujos funcionales.
+
+## Riesgo 12 - Cobertura automática insuficiente en flujos críticos
+
+Aunque backend compila, verifica permisos y ya tiene tests unitarios mínimos, la cobertura sigue siendo estrecha para auth, mutaciones y fotos.
+
+Estado: parcialmente mitigado. Hay tests unitarios para utilidades de storage path y access control, pero siguen pendientes pruebas automatizadas sobre:
+- auth/login-refresh;
+- scopes por `project_memberships`;
+- mutaciones de fotos;
+- permisos por rol en rutas críticas.
+
+## Actualización de Auditoría - 2026-06-27 - Auscultación MVP
+
+- Se auditó el bloque recién implementado de auscultación:
+  - migración `014_monitoring_rounds.sql`;
+  - endpoints de puntos de ronda, lecturas instrumentadas y catálogo de códigos;
+  - parser CSV de catálogo;
+  - lógica de auto-confirmación por delta;
+  - permisos por rol y scope por `project_memberships`.
+- Hallazgos corregidos:
+  - el cálculo de lectura anterior podía tomar una lectura futura si llegaban datos offline fuera de orden; ahora compara solo contra lecturas confirmadas/revisadas con `measured_at` anterior a la lectura actual;
+  - umbrales negativos podían producir clasificación incorrecta; ahora la lógica los trata como `unknown` y la migración exige valores no negativos;
+  - `POST /rounds/:roundId/points` aceptaba crear un punto ya `taken`, `skipped` o `cancelled`; ahora la creación solo acepta `pending`;
+  - `instrument_readings` podía aceptar lecturas vacías sin `value_numeric` ni `value_text`; ahora API y DB exigen al menos un valor real;
+  - errores de CSV inválido en importación de catálogo podían caer como 500; ahora se devuelven como `400 INVALID_CODE_CATALOG_CSV`;
+  - `project_rules.rule_type` quedaba libre en DB; ahora queda restringido a las reglas MVP esperadas.
+- Verificación:
+  - `npm run build --workspace apps/backend`: OK.
+  - `npm run test --workspace apps/backend`: OK, 20 tests.
+  - `npx tsc --noEmit --project apps/mobile/tsconfig.json`: OK.
+  - `npm audit --workspace apps/backend --json`: 0 vulnerabilidades.
+  - `npm audit --workspace apps/mobile --json`: 12 moderadas, 0 high, 0 critical.
+- Decisión de seguridad vigente:
+  - `visitante` no tiene acceso a lecturas de auscultación en MVP;
+  - los endpoints nuevos quedan restringidos a `admin` y `topografo`;
+  - `topografo` sigue limitado por `project_memberships`.
+
+## Riesgo 13 - Deuda de integración de auscultación
+
+El bloque de auscultación tiene validación unitaria y controles de modelo, pero aún no tiene pruebas de integración contra una base real con migración `014` aplicada.
+
+Estado: mitigación parcial aplicada. La lógica crítica queda cubierta con tests unitarios, pero antes de conectar UI móvil o desplegar producción hay que validar:
+- aplicación de migración `014` en entorno controlado;
+- creación real de ronda/punto/lectura con usuario `topografo` dentro y fuera de scope;
+- importación CSV real de catálogo L8;
+- reintento idempotente con `client_request_id`.

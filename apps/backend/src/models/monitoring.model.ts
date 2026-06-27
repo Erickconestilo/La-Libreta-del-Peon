@@ -144,10 +144,11 @@ const getPreviousConfirmedValue = async (
   client: PoolClient,
   controlPointId: string,
   instrumentType: string,
+  measuredBefore: string,
   excludeReadingId: string | null = null
 ) => {
-  const params: unknown[] = [controlPointId, instrumentType];
-  const excludeClause = excludeReadingId ? 'AND id <> $3' : '';
+  const params: unknown[] = [controlPointId, instrumentType, measuredBefore];
+  const excludeClause = excludeReadingId ? 'AND id <> $4' : '';
 
   if (excludeReadingId) {
     params.push(excludeReadingId);
@@ -160,6 +161,7 @@ const getPreviousConfirmedValue = async (
       WHERE control_point_id = $1
         AND instrument_type = $2
         AND reading_status IN ('confirmed', 'reviewed')
+        AND measured_at < $3::timestamptz
         ${excludeClause}
       ORDER BY measured_at DESC
       LIMIT 1
@@ -311,6 +313,7 @@ export const createInstrumentReading = async (
         client,
         context.controlPointId,
         context.expectedInstrumentType,
+        String(existingReading.measuredAt),
         String(existingReading.id)
       );
       const autoConfirmGreen = await getAutoConfirmGreen(client, context.projectId);
@@ -349,7 +352,8 @@ export const createInstrumentReading = async (
     const previousValue = await getPreviousConfirmedValue(
       client,
       context.controlPointId,
-      context.expectedInstrumentType
+      context.expectedInstrumentType,
+      input.measuredAt
     );
     const autoConfirmGreen = await getAutoConfirmGreen(client, context.projectId);
     const evaluation = evaluateReadingStatus({

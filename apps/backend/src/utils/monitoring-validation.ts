@@ -17,20 +17,28 @@ export const createRoundPointSchema = z.object({
   expectedInstrumentType: instrumentTypeSchema,
   notes: z.string().trim().max(2000).nullable().optional(),
   sortOrder: z.number().int().min(0).optional(),
-  status: z.enum(['pending', 'taken', 'skipped', 'cancelled']).default('pending')
+  status: z.literal('pending').default('pending')
 });
 
 export type ValidatedCreateRoundPointInput = z.infer<typeof createRoundPointSchema>;
 
-export const createInstrumentReadingSchema = z.object({
-  clientRequestId: z.string().uuid(),
-  measuredAt: z.string().datetime({ offset: true }),
-  notes: z.string().trim().max(2000).nullable().optional(),
-  rawPayload: z.record(z.string(), z.unknown()).nullable().optional(),
-  unit: z.string().trim().max(40).nullable().optional(),
-  valueNumeric: z.number().nullable().optional(),
-  valueText: z.string().trim().max(500).nullable().optional()
-});
+export const createInstrumentReadingSchema = z
+  .object({
+    clientRequestId: z.string().uuid(),
+    measuredAt: z.string().datetime({ offset: true }),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    rawPayload: z.record(z.string(), z.unknown()).nullable().optional(),
+    unit: z.string().trim().max(40).nullable().optional(),
+    valueNumeric: z.number().nullable().optional(),
+    valueText: z.string().trim().max(500).nullable().optional()
+  })
+  .refine(
+    (input) => (input.valueNumeric !== undefined && input.valueNumeric !== null) || Boolean(input.valueText?.trim()),
+    {
+      message: 'Reading requires valueNumeric or valueText',
+      path: ['valueNumeric']
+    }
+  );
 
 export type ValidatedCreateInstrumentReadingInput = z.infer<typeof createInstrumentReadingSchema>;
 
