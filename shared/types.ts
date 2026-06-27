@@ -12,6 +12,30 @@ export type StationMapStatus = 'approximate' | 'verified' | 'resolved';
 export type StationPhotoKind = 'general' | 'point' | 'reference' | 'access' | 'obstacle' | 'other';
 export type PrismStatus = 'active' | 'missing' | 'replaced' | 'inactive';
 export type PrismObservationSourceFormat = 'trimble_csv' | 'trimble_rpd' | 'leica_txt';
+export type InstrumentType =
+  | 'total_station'
+  | 'digital_level'
+  | 'piezometer'
+  | 'distometer'
+  | 'linometer'
+  | 'inclinometer'
+  | 'cant_rule';
+export type ControlPointEnvironment = 'surface' | 'tunnel' | 'other';
+export type ControlPointSide = 'left' | 'right' | 'axis' | 'crown' | 'invert' | 'other';
+export type MonitoringRoundStatus = 'draft' | 'active' | 'closed' | 'cancelled';
+export type MonitoringRoundPointStatus = 'pending' | 'taken' | 'skipped' | 'cancelled';
+export type InstrumentReadingStatus = 'draft' | 'confirmed' | 'reviewed' | 'rejected';
+export type ReadingAttachmentType = 'photo' | 'note' | 'file';
+export type CalculatedThresholdStatus = 'normal' | 'warning' | 'alarm' | 'unknown';
+export type OfflineQueueEntityType = 'instrument_reading' | 'reading_attachment' | 'round_point_status';
+export type OfflineQueueStatus = 'pending' | 'syncing' | 'done' | 'error';
+export type ZoneColor = 'blue' | 'pink' | 'green';
+export type FieldConditions = 'good' | 'regular' | 'adverse';
+export type ProjectRuleType =
+  | 'max_points_per_pass'
+  | 'auto_confirm_green'
+  | 'block_on_alarm'
+  | 'require_photo_on_warning';
 
 export interface Project {
   id: string;
@@ -336,4 +360,133 @@ export interface CaptureLogEntry {
   isSuspicious: boolean;
   suspiciousReason: string | null;
   createdAt: string;
+}
+
+export interface ControlPoint {
+  id: string;
+  projectId: string;
+  code: string;
+  name: string | null;
+  environment: ControlPointEnvironment;
+  pk: string | null;
+  tramo: string | null;
+  zona: string | null;
+  seccion: string | null;
+  side: ControlPointSide | null;
+  notes: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonitoringRound {
+  id: string;
+  projectId: string;
+  name: string;
+  roundDate: string;
+  status: MonitoringRoundStatus;
+  operatorId: string | null;
+  instrumentSerial: string | null;
+  fieldConditions: FieldConditions | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonitoringRoundPoint {
+  id: string;
+  roundId: string;
+  controlPointId: string;
+  expectedInstrumentType: InstrumentType;
+  status: MonitoringRoundPointStatus;
+  sortOrder: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InstrumentReading {
+  id: string;
+  roundPointId: string;
+  controlPointId: string;
+  instrumentType: InstrumentType;
+  readingStatus: InstrumentReadingStatus;
+  clientRequestId: string;
+  valueNumeric: number | null;
+  valueText: string | null;
+  unit: string | null;
+  measuredAt: string;
+  measuredBy: string;
+  notes: string | null;
+  rawPayload: Record<string, unknown> | null;
+  delta?: number | null;
+  thresholdStatus?: CalculatedThresholdStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReadingAttachment {
+  id: string;
+  readingId: string;
+  storagePath: string;
+  publicUrl: string;
+  attachmentType: ReadingAttachmentType;
+  title: string | null;
+  notes: string | null;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+export interface ControlPointThreshold {
+  id: string;
+  controlPointId: string;
+  instrumentType: InstrumentType;
+  warningValue: number | null;
+  alarmValue: number | null;
+  unit: string;
+  validFrom: string;
+  validTo: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OfflineQueueItem {
+  idLocal: string;
+  entityType: OfflineQueueEntityType;
+  payload: Record<string, unknown>;
+  status: OfflineQueueStatus;
+  createdAt: string;
+  syncedAt: string | null;
+  errorMessage: string | null;
+}
+
+export interface ProjectCodeCatalogEntry {
+  id: string;
+  projectId: string;
+  code: string;
+  zone: string;
+  zoneColor: ZoneColor | null;
+  itineraryNumber: number;
+  itineraryOrder: number;
+  environment: ControlPointEnvironment | null;
+  pk: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ProjectRule {
+  id: string;
+  projectId: string;
+  ruleType: ProjectRuleType;
+  value: string;
+  configuredBy: string;
+  createdAt: string;
+}
+
+export interface ReadingInsertResponse {
+  reading: InstrumentReading;
+  delta: number | null;
+  thresholdStatus: CalculatedThresholdStatus;
+  autoConfirmed: boolean;
 }

@@ -1,5 +1,9 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 
+import {
+  importProjectCodeCatalogController,
+  listProjectCodeCatalogController
+} from '../controllers/monitoring.controller.js';
 import {
   createProjectController,
   getProjectByIdController,
@@ -13,6 +17,21 @@ export const projectsRouter = Router();
 
 projectsRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listProjectsController);
 projectsRouter.post('/', requireAuth, requireRole(['admin']), createProjectController);
+projectsRouter.get(
+  '/:projectId/code-catalog',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('projectId'),
+  listProjectCodeCatalogController
+);
+projectsRouter.post(
+  '/:projectId/code-catalog/import',
+  requireAuth,
+  requireRole(['admin']),
+  validateUuidParam('projectId'),
+  express.text({ limit: '1mb', type: ['text/csv', 'text/plain', 'application/csv', '*/*'] }),
+  importProjectCodeCatalogController
+);
 projectsRouter.get(
   '/:projectId',
   requireAuth,
