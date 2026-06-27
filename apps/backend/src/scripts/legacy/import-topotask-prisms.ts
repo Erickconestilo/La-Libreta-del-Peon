@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { pool } from '../db/pool.js';
-import { assertWriteAllowed } from './safety.js';
+import { pool } from '../../db/pool.js';
+import { assertWriteAllowed } from '../safety.js';
 
 const SYSTEM_IMPORT_USER_ID = '00000000-0000-0000-0000-000000000001';
 const SOURCE_SYSTEM = 'topotask-monitoring';
@@ -70,8 +70,8 @@ interface MatchedStation {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '../../../../');
-const reportPath = path.join(repoRoot, 'data', 'topotask-monitoring-prism-candidates.json');
+const repoRoot = path.resolve(__dirname, '../../../../../');
+const reportPath = path.join(repoRoot, 'data', 'legacy', 'topotask-monitoring-prism-candidates.json');
 const shouldApply = process.argv.includes('--apply');
 
 const normalizeText = (value: string) => {

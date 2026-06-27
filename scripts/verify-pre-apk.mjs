@@ -18,7 +18,7 @@ const steps = [
   {
     name: "mobile TypeScript check",
     cmd: "npx",
-    args: ["tsc", "-p", "apps/mobile/tsconfig.json"],
+    args: ["tsc", "--noEmit", "--project", "apps/mobile/tsconfig.json"],
     cwd: rootDir,
   },
   {
@@ -31,10 +31,15 @@ const steps = [
 
 const run = ({ name, cmd, args, cwd }) => {
   console.log(`\n> ${name}`);
-  const result = spawnSync(cmd, args, {
+  const command = process.platform === "win32"
+    ? "cmd.exe"
+    : cmd;
+  const commandArgs = process.platform === "win32"
+    ? ["/d", "/s", "/c", cmd, ...args]
+    : args;
+  const result = spawnSync(command, commandArgs, {
     cwd,
     stdio: "inherit",
-    shell: true,
     encoding: "utf-8",
   });
 

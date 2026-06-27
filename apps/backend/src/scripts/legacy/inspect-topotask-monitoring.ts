@@ -95,13 +95,13 @@ interface InspectionReport {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '../../../../');
+const repoRoot = path.resolve(__dirname, '../../../../../');
 const defaultTopotaskBackendPath = path.resolve(repoRoot, '../../Topotask/topotask-backend');
 const topotaskBackendPath = process.env.TOPOTASK_BACKEND_PATH
   ? path.resolve(process.env.TOPOTASK_BACKEND_PATH)
   : defaultTopotaskBackendPath;
 const fixturePath = path.join(topotaskBackendPath, 'tests', 'fixtures');
-const outputPath = path.join(repoRoot, 'data', 'topotask-monitoring-prism-candidates.json');
+const outputPath = path.join(repoRoot, 'data', 'legacy', 'topotask-monitoring-prism-candidates.json');
 
 interface SourceFileCandidate {
   absolutePath: string;
