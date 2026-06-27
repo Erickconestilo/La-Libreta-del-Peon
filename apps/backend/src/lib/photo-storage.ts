@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { AppError } from './app-error.js';
+import { getPhotoObjectPathParts, hasExactPhotoObjectMatch } from './photo-storage-path.js';
 import { supabaseAdmin } from './supabase.js';
 import {
   getPhotoExtension,
@@ -45,4 +46,20 @@ export const createSignedPhotoUpload = async (storagePath: string) => {
 export const getPublicPhotoUrl = (storagePath: string) => {
   const { data } = supabaseAdmin.storage.from(PHOTO_BUCKET).getPublicUrl(storagePath);
   return data.publicUrl;
+};
+
+export const assertPhotoObjectExists = async (storagePath: string) => {
+  const { directoryPath, objectName } = getPhotoObjectPathParts(storagePath);
+  const { data, error } = await supabaseAdmin.storage.from(PHOTO_BUCKET).list(directoryPath, {
+    limit: 100,
+    search: objectName
+  });
+
+  if (error) {
+    throw new AppError('Unable to verify uploaded photo', 500, 'PHOTO_STORAGE_VERIFY_FAILED');
+  }
+
+  if (!data || !hasExactPhotoObjectMatch(storagePath, data)) {
+    throw new AppError('Uploaded photo not found in storage', 400, 'PHOTO_OBJECT_NOT_FOUND');
+  }
 };

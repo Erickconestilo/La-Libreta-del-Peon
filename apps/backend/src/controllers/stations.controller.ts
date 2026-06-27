@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
+import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { shouldUsePublicDto, toPublicStation } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createStation, getStationById, listStations, updateStationNotes, updateStationPhoto } from '../models/stations.model.js';
@@ -124,6 +125,10 @@ export const updateStationPhotoController = async (request: Request, response: R
 
     if (input.storagePath && !isValidStationPhotoPath(stationId, input.storagePath)) {
       throw new AppError('Invalid station photo path', 400, 'INVALID_STATION_PHOTO_PATH');
+    }
+
+    if (input.storagePath) {
+      await assertPhotoObjectExists(input.storagePath);
     }
 
     const projectScope = getActorProjectScope(request.user);

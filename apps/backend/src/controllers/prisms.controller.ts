@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
 import { getActorProjectScope } from '../lib/access-control.js';
+import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import {
   shouldUsePublicDto,
   toPublicPrism,
@@ -159,6 +160,10 @@ export const updatePrismPhotoController = async (request: Request, response: Res
 
     if (input.storagePath && !isValidPrismPhotoPath(prismId, input.storagePath)) {
       throw new AppError('Invalid prism photo path', 400, 'INVALID_PRISM_PHOTO_PATH');
+    }
+
+    if (input.storagePath) {
+      await assertPhotoObjectExists(input.storagePath);
     }
 
     const prism = await updatePrismPhoto(prismId, input.storagePath, request.user.id, projectScope);
