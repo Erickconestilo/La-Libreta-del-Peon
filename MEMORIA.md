@@ -164,6 +164,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-26 | Claude Code | main | Fase 0: inventario completo de 8 migraciones no versionadas, 23 tablas Supabase, reconciliación 6 commits locales, análisis de riesgo y recomendaciones (sin aplicar nada) | cerrado |
 | 2026-07-26 | Cowork | — | Segunda lectura del informe de Fase 0 de Claude Code: verificación de conteos reales (COUNT(*)), corrección de §3 (había datos, no cero), corrección de una cita errónea sobre §8 | cerrado (solo lectura) |
 | 2026-07-26 | Claude Code | phase-1-domain-contract | Fase 1: ADR formalizando modelo obras/campanas/faenas, migración 015_obras_baseline.sql (retroactiva), recomendación obras/projects y profiles/users | cerrado |
+| 2026-07-26 | Claude Code | phase-2-cleanup | Fase 2: migración 016 (unificar profiles→users), migración 017 (DROP tablas TopoTask), con re-verificación COUNT(*) y backup previo | cerrado |
 
 ---
 
