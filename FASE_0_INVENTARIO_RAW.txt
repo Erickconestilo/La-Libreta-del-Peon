@@ -1,0 +1,681 @@
+◇ injected env (6) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+=== INVENTARIO DE ESQUEMA SUPABASE (topofield) ===
+Fecha: 2026-07-26T11:44:23.472Z
+
+Total de tablas encontradas: 37
+
+Inspeccionando campanas... ✓ (7 filas, RLS: ON)
+Inspeccionando capture_logs... ✓ (0 filas, RLS: ON)
+Inspeccionando change_logs... ✓ (55 filas, RLS: ON)
+Inspeccionando envios_correo... ✓ (0 filas, RLS: ON)
+Inspeccionando estacionamientos... ✓ (22 filas, RLS: ON)
+Inspeccionando guide_entries... ✓ (7 filas, RLS: ON)
+Inspeccionando incidencia_fotos... ✓ (0 filas, RLS: ON)
+Inspeccionando incidencias... ✓ (0 filas, RLS: ON)
+Inspeccionando incidents... ✓ (2 filas, RLS: ON)
+Inspeccionando jornadas... ✓ (0 filas, RLS: ON)
+Inspeccionando leveling_import_commits... ✓ (0 filas, RLS: ON)
+Inspeccionando leveling_import_issues... ✓ (0 filas, RLS: ON)
+Inspeccionando leveling_import_rows... ✓ (0 filas, RLS: ON)
+Inspeccionando leveling_imports... ✓ (0 filas, RLS: ON)
+Inspeccionando mediciones... ✓ (145 filas, RLS: ON)
+Inspeccionando obra_destinatarios... ✓ (0 filas, RLS: ON)
+Inspeccionando obras... ✓ (6 filas, RLS: ON)
+Inspeccionando prism_observations... ✓ (1889 filas, RLS: ON)
+Inspeccionando prisms... ✓ (171 filas, RLS: ON)
+Inspeccionando profiles... ✓ (11 filas, RLS: ON)
+Inspeccionando project_memberships... ✓ (6 filas, RLS: ON)
+Inspeccionando projects... ✓ (7 filas, RLS: ON)
+Inspeccionando schema_migrations... ✓ (13 filas, RLS: ON)
+Inspeccionando sensores... ✓ (72 filas, RLS: ON)
+Inspeccionando station_messages... ✓ (3 filas, RLS: ON)
+Inspeccionando station_photos... ✓ (1 filas, RLS: ON)
+Inspeccionando station_readings... ✓ (24 filas, RLS: ON)
+Inspeccionando stations... ✓ (12 filas, RLS: ON)
+Inspeccionando total_station_commit_batches... ✓ (0 filas, RLS: ON)
+Inspeccionando total_station_commit_links... ✓ (0 filas, RLS: ON)
+Inspeccionando total_station_imports... ✓ (2 filas, RLS: ON)
+Inspeccionando total_station_observations... ✓ (2 filas, RLS: ON)
+Inspeccionando total_station_reduced_point_observations... ✓ (2 filas, RLS: ON)
+Inspeccionando total_station_reduced_points... ✓ (2 filas, RLS: ON)
+Inspeccionando total_station_setups... ✓ (2 filas, RLS: ON)
+Inspeccionando users... ✓ (4 filas, RLS: ON)
+Inspeccionando work_sessions... ✓ (0 filas, RLS: ON)
+
+=== RESUMEN POR TABLA ===
+
+## campanas
+- RLS: HABILITADO
+- Filas: 7
+- Columnas (24):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - nombre: text NULL
+  - fecha: date NOT NULL
+  - archivo_txt: text NULL
+  - estado: text NOT NULL DEFAULT 'importada'::text
+  - total_sensores: integer NOT NULL DEFAULT 0
+  - medidos: integer NOT NULL DEFAULT 0
+  - no_medidos: integer NOT NULL DEFAULT 0
+  - nuevos: integer NOT NULL DEFAULT 0
+  - cobertura_pct: double precision NULL
+  - notas: text NULL
+  - mov_ok: integer NOT NULL DEFAULT 0
+  - mov_prealerta: integer NOT NULL DEFAULT 0
+  - mov_alerta: integer NOT NULL DEFAULT 0
+  - coord_incoherentes: integer NOT NULL DEFAULT 0
+  - max_asiento_mm: double precision NOT NULL DEFAULT 0
+  - max_levante_mm: double precision NOT NULL DEFAULT 0
+  - fichero_origen: text NULL
+  - operador: text NULL
+  - descripcion: text NULL
+  - estacionamiento: text NULL
+  - jornada_id: bigint NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## capture_logs
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (10):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NULL
+  - project_id: uuid NULL
+  - session_id: text NULL
+  - device_type: text NULL
+  - source: text NULL
+  - raw_payload: jsonb NOT NULL
+  - is_suspicious: boolean NOT NULL DEFAULT false
+  - suspicious_reason: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## change_logs
+- RLS: HABILITADO
+- Filas: 55
+- Columnas (8):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - entity_type: text NOT NULL
+  - entity_id: uuid NOT NULL
+  - field_changed: text NOT NULL
+  - old_value: text NULL
+  - new_value: text NULL
+  - changed_by: uuid NOT NULL
+  - changed_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## envios_correo
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (12):
+  - id: bigint NOT NULL
+  - campana_id: bigint NOT NULL
+  - enviado_por: uuid NOT NULL
+  - enviado_en: timestamp with time zone NOT NULL DEFAULT now()
+  - destinatarios: jsonb NOT NULL DEFAULT '[]'::jsonb
+  - destinatarios_temporales: jsonb NOT NULL DEFAULT '[]'::jsonb
+  - incidencias: text NOT NULL
+  - temperatura: double precision NULL
+  - presion: double precision NULL
+  - adjuntar_rpd: boolean NOT NULL DEFAULT false
+  - adjuntar_informe_topotask: boolean NOT NULL DEFAULT false
+  - estado_envio: text NOT NULL DEFAULT 'SIMULATED'::text
+
+## estacionamientos
+- RLS: HABILITADO
+- Filas: 22
+- Columnas (9):
+  - id: bigint NOT NULL
+  - campana_id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - nombre: text NOT NULL
+  - fichero_origen: text NULL
+  - formato: text NULL
+  - operador: text NULL
+  - total_lecturas: integer NOT NULL DEFAULT 0
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## guide_entries
+- RLS: HABILITADO
+- Filas: 7
+- Columnas (8):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - title: text NOT NULL
+  - body: text NOT NULL
+  - category: text NOT NULL
+  - created_by: uuid NOT NULL
+  - updated_by: uuid NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## incidencia_fotos
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (8):
+  - id: bigint NOT NULL
+  - incidencia_id: bigint NOT NULL
+  - telegram_file_id: text NULL
+  - bucket: text NOT NULL DEFAULT 'topotask-incidencias'::text
+  - storage_path: text NULL
+  - mime_type: text NULL
+  - size_bytes: bigint NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## incidencias
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (7):
+  - id: bigint NOT NULL
+  - jornada_id: bigint NOT NULL
+  - sensor_id: bigint NULL
+  - codigo_csv: text NULL
+  - motivo: text NOT NULL
+  - notas: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## incidents
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (11):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NULL
+  - prism_id: uuid NULL
+  - type: text NOT NULL
+  - description: text NOT NULL
+  - photo_url: text NULL
+  - reported_by: uuid NOT NULL
+  - reported_at: timestamp with time zone NOT NULL DEFAULT now()
+  - status: text NOT NULL
+  - suggestion: jsonb NULL
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## jornadas
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (7):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - topografo: text NULL
+  - fecha: date NOT NULL
+  - notas: text NULL
+  - estado: text NOT NULL DEFAULT 'abierta'::text
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## leveling_import_commits
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (6):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - campana_id: bigint NULL
+  - confirmed_by: uuid NOT NULL
+  - summary_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## leveling_import_issues
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (11):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - import_row_id: bigint NULL
+  - code: text NOT NULL
+  - severity: text NOT NULL
+  - message: text NOT NULL
+  - payload_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - resolved_by: uuid NULL
+  - resolved_at: timestamp with time zone NULL
+  - resolution_type: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## leveling_import_rows
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (11):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - row_number: integer NOT NULL
+  - codigo_punto_raw: text NOT NULL
+  - codigo_punto_normalized: text NOT NULL
+  - fecha: text NOT NULL
+  - desnivel_m: double precision NULL
+  - raw_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - resolved_sensor_id: bigint NULL
+  - resolution_note: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## leveling_imports
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (13):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - target_campana_id: bigint NULL
+  - fecha_campana: date NOT NULL
+  - filename: text NOT NULL
+  - source_format: text NOT NULL DEFAULT 'csv_normalized'::text
+  - parser_version: text NOT NULL
+  - file_hash: text NOT NULL
+  - status: text NOT NULL DEFAULT 'uploaded'::text
+  - imported_by: uuid NOT NULL
+  - confirmed_by: uuid NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## mediciones
+- RLS: HABILITADO
+- Filas: 145
+- Columnas (21):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - campana_id: bigint NOT NULL
+  - estacionamiento_id: bigint NULL
+  - sensor_id: bigint NULL
+  - point_id_csv: text NOT NULL
+  - fecha_medicion: text NOT NULL
+  - elev_medida: double precision NOT NULL
+  - east_csv: double precision NULL
+  - north_csv: double precision NULL
+  - instrumento: text NULL
+  - comentario: text NULL
+  - desnivel: double precision NULL
+  - movimiento: text NOT NULL DEFAULT 'ok'::text
+  - estado_match: text NOT NULL
+  - tipo_punto: text NOT NULL DEFAULT 'sensor'::text
+  - coordenadas_ok: boolean NOT NULL DEFAULT true
+  - dist_xy_m: double precision NULL
+  - posible_typo: boolean NOT NULL DEFAULT false
+  - similar_a: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## obra_destinatarios
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (7):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - empresa: text NOT NULL
+  - email: text NOT NULL
+  - formato: text NOT NULL DEFAULT 'CSV'::text
+  - incluir_fotos: text NOT NULL DEFAULT 'nunca'::text
+  - activo: boolean NOT NULL DEFAULT true
+
+## obras
+- RLS: HABILITADO
+- Filas: 6
+- Columnas (8):
+  - id: bigint NOT NULL
+  - nombre: text NOT NULL
+  - ubicacion: text NULL
+  - tipo: text NULL
+  - estado: text NOT NULL DEFAULT 'activa'::text
+  - fecha_inicio: date NULL
+  - notas: text NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## prism_observations
+- RLS: HABILITADO
+- Filas: 1889
+- Columnas (20):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - prism_id: uuid NOT NULL
+  - station_id: uuid NULL
+  - source_system: text NOT NULL DEFAULT 'manual'::text
+  - external_key: text NOT NULL
+  - source_file: text NOT NULL
+  - source_format: text NOT NULL
+  - station_code: text NULL
+  - face: text NULL
+  - measured_at: timestamp with time zone NULL
+  - horizontal_angle: double precision NULL
+  - vertical_angle: double precision NULL
+  - slope_distance: double precision NULL
+  - easting: double precision NULL
+  - northing: double precision NULL
+  - reduced_level: double precision NULL
+  - prism_constant: double precision NULL
+  - raw_payload: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## prisms
+- RLS: HABILITADO
+- Filas: 171
+- Columnas (17):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NULL
+  - code: text NOT NULL
+  - notes: text NULL
+  - photo_url: text NULL
+  - created_by: uuid NOT NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+  - project_id: uuid NULL
+  - source_system: text NOT NULL DEFAULT 'manual'::text
+  - external_id: text NULL
+  - prism_constant: double precision NULL
+  - first_observed_at: timestamp with time zone NULL
+  - last_observed_at: timestamp with time zone NULL
+  - source_files: jsonb NOT NULL DEFAULT '[]'::jsonb
+  - monitoring_metadata: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - status: text NOT NULL DEFAULT 'active'::text
+
+## profiles
+- RLS: HABILITADO
+- Filas: 11
+- Columnas (10):
+  - id: uuid NOT NULL
+  - legacy_usuario_id: bigint NULL
+  - nombre: text NOT NULL
+  - email: text NOT NULL
+  - rol: text NOT NULL DEFAULT 'topografo'::text
+  - activo: boolean NOT NULL DEFAULT true
+  - puede_enviar_correo_operativo: boolean NOT NULL DEFAULT false
+  - puede_adjuntar_informe_topotask: boolean NOT NULL DEFAULT false
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## project_memberships
+- RLS: HABILITADO
+- Filas: 6
+- Columnas (8):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - user_id: uuid NOT NULL
+  - project_id: uuid NOT NULL
+  - assigned_by: uuid NULL
+  - assigned_at: timestamp with time zone NOT NULL DEFAULT now()
+  - is_active: boolean NOT NULL DEFAULT true
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## projects
+- RLS: HABILITADO
+- Filas: 7
+- Columnas (8):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - code: text NOT NULL
+  - name: text NOT NULL
+  - description: text NULL
+  - is_active: boolean NOT NULL DEFAULT true
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+  - image_url: text NULL
+
+## schema_migrations
+- RLS: HABILITADO
+- Filas: 13
+- Columnas (3):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - filename: text NOT NULL
+  - executed_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## sensores
+- RLS: HABILITADO
+- Filas: 72
+- Columnas (16):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - codigo: text NOT NULL
+  - lat: double precision NULL
+  - lng: double precision NULL
+  - cota_ref: double precision NULL
+  - itinerario: text NULL
+  - tipo_sensor: text NULL DEFAULT 'nivelacion'::text
+  - estado: text NULL DEFAULT 'activo'::text
+  - fecha_instalacion: date NULL
+  - notas: text NULL
+  - east: double precision NULL
+  - north: double precision NULL
+  - z_local: double precision NULL
+  - coords_calculadas: boolean NOT NULL DEFAULT false
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## station_messages
+- RLS: HABILITADO
+- Filas: 3
+- Columnas (5):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NOT NULL
+  - body: text NOT NULL
+  - created_by: uuid NOT NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## station_photos
+- RLS: HABILITADO
+- Filas: 1
+- Columnas (10):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NOT NULL
+  - storage_path: text NOT NULL
+  - public_url: text NOT NULL
+  - kind: text NOT NULL
+  - title: text NULL
+  - notes: text NULL
+  - uploaded_by: uuid NOT NULL
+  - uploaded_at: timestamp with time zone NOT NULL DEFAULT now()
+  - is_primary: boolean NOT NULL DEFAULT false
+
+## station_readings
+- RLS: HABILITADO
+- Filas: 24
+- Columnas (19):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - station_id: uuid NOT NULL
+  - source: text NOT NULL
+  - lat: double precision NOT NULL
+  - lng: double precision NOT NULL
+  - utm_zone: text NULL
+  - utm_easting: double precision NULL
+  - utm_northing: double precision NULL
+  - elevation: double precision NULL
+  - accuracy: double precision NULL
+  - bearing: double precision NULL
+  - declination: double precision NULL
+  - speed_kmh: double precision NULL
+  - map_url: text NULL
+  - captured_online: boolean NOT NULL DEFAULT false
+  - raw_payload: jsonb NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - source_system: text NOT NULL DEFAULT 'manual'::text
+  - external_key: text NULL
+
+## stations
+- RLS: HABILITADO
+- Filas: 12
+- Columnas (22):
+  - id: uuid NOT NULL DEFAULT gen_random_uuid()
+  - obra_id: text NULL
+  - name: text NOT NULL
+  - lat: double precision NULL
+  - lng: double precision NULL
+  - photo_url: text NULL
+  - notes: text NULL
+  - created_by: uuid NOT NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+  - status: text NOT NULL
+  - project_id: uuid NULL
+  - device_type: text NULL
+  - map_status: text NULL
+  - utm_zone: text NULL
+  - utm_easting: double precision NULL
+  - utm_northing: double precision NULL
+  - elevation: double precision NULL
+  - resolved_method: text NULL
+  - display_mode: text NULL
+  - source_system: text NOT NULL DEFAULT 'manual'::text
+  - external_id: text NULL
+
+## total_station_commit_batches
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (11):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - campana_id: bigint NULL
+  - confirmed_by: uuid NOT NULL
+  - commit_mode: text NOT NULL DEFAULT 'reduced_points_v1'::text
+  - status: text NOT NULL DEFAULT 'committed'::text
+  - summary_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - rolled_back_by: uuid NULL
+  - rolled_back_at: timestamp with time zone NULL
+  - rollback_summary_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+
+## total_station_commit_links
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (12):
+  - batch_id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - reduced_point_id: bigint NOT NULL
+  - measurement_id: bigint NOT NULL
+  - sensor_id: bigint NULL
+  - target_code: text NOT NULL
+  - role: text NOT NULL DEFAULT 'sensor'::text
+  - elevation_source: text NOT NULL DEFAULT 'reduced_point_elevation'::text
+  - reduction_method: text NOT NULL
+  - reduction_version: text NOT NULL
+  - raw_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## total_station_imports
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (12):
+  - id: bigint NOT NULL
+  - obra_id: bigint NOT NULL
+  - target_campana_id: bigint NULL
+  - filename: text NOT NULL
+  - source_format: text NOT NULL
+  - source_vendor: text NOT NULL
+  - parser_version: text NOT NULL
+  - file_hash: text NOT NULL
+  - status: text NOT NULL DEFAULT 'uploaded'::text
+  - imported_by: uuid NULL
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## total_station_observations
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (20):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - setup_id: bigint NOT NULL
+  - row_number: integer NOT NULL
+  - target_code: text NOT NULL
+  - face: text NULL
+  - round_number: integer NULL
+  - cycle_number: integer NULL
+  - horizontal_angle: double precision NULL
+  - vertical_angle: double precision NULL
+  - slope_distance: double precision NULL
+  - target_height: double precision NULL
+  - prism_constant: double precision NULL
+  - pressure: double precision NULL
+  - temperature: double precision NULL
+  - ppm: double precision NULL
+  - observed_at: timestamp with time zone NULL
+  - raw_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - quality_status: text NOT NULL DEFAULT 'raw'::text
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## total_station_reduced_point_observations
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (3):
+  - reduced_point_id: bigint NOT NULL
+  - observation_id: bigint NOT NULL
+  - role: text NULL
+
+## total_station_reduced_points
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (12):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - setup_id: bigint NOT NULL
+  - target_code: text NOT NULL
+  - easting: double precision NULL
+  - northing: double precision NULL
+  - elevation: double precision NULL
+  - reduction_method: text NOT NULL
+  - reduction_version: text NOT NULL
+  - quality_status: text NOT NULL DEFAULT 'ok'::text
+  - reduced_at: timestamp with time zone NOT NULL DEFAULT now()
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## total_station_setups
+- RLS: HABILITADO
+- Filas: 2
+- Columnas (17):
+  - id: bigint NOT NULL
+  - import_id: bigint NOT NULL
+  - setup_code: text NOT NULL
+  - setup_type: text NOT NULL DEFAULT 'unknown'::text
+  - station_point_code: text NOT NULL
+  - station_easting: double precision NULL
+  - station_northing: double precision NULL
+  - station_elevation: double precision NULL
+  - instrument_height: double precision NULL
+  - backsight_point_code: text NULL
+  - backsight_azimuth: double precision NULL
+  - orientation_method: text NULL
+  - coordinate_system: text NULL
+  - linear_unit: text NOT NULL DEFAULT 'm'::text
+  - angular_unit: text NOT NULL DEFAULT 'gon'::text
+  - raw_json: jsonb NOT NULL DEFAULT '{}'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## users
+- RLS: HABILITADO
+- Filas: 4
+- Columnas (7):
+  - id: uuid NOT NULL
+  - email: text NOT NULL
+  - full_name: text NOT NULL
+  - role: text NOT NULL
+  - is_active: boolean NOT NULL DEFAULT true
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+## work_sessions
+- RLS: HABILITADO
+- Filas: 0
+- Columnas (6):
+  - id: text NOT NULL
+  - date: date NOT NULL
+  - notes: text NULL
+  - coordinates: jsonb NOT NULL DEFAULT '[]'::jsonb
+  - created_at: timestamp with time zone NOT NULL DEFAULT now()
+  - updated_at: timestamp with time zone NOT NULL DEFAULT now()
+
+=== TABLAS NO VERSIONADAS LOCALMENTE (migraciones 001-014) ===
+Total: 23
+
+- campanas (7 filas, RLS: ON)
+- envios_correo (0 filas, RLS: ON)
+- estacionamientos (22 filas, RLS: ON)
+- incidencia_fotos (0 filas, RLS: ON)
+- incidencias (0 filas, RLS: ON)
+- jornadas (0 filas, RLS: ON)
+- leveling_import_commits (0 filas, RLS: ON)
+- leveling_import_issues (0 filas, RLS: ON)
+- leveling_import_rows (0 filas, RLS: ON)
+- leveling_imports (0 filas, RLS: ON)
+- mediciones (145 filas, RLS: ON)
+- obra_destinatarios (0 filas, RLS: ON)
+- obras (6 filas, RLS: ON)
+- profiles (11 filas, RLS: ON)
+- schema_migrations (13 filas, RLS: ON)
+- sensores (72 filas, RLS: ON)
+- total_station_commit_batches (0 filas, RLS: ON)
+- total_station_commit_links (0 filas, RLS: ON)
+- total_station_imports (2 filas, RLS: ON)
+- total_station_observations (2 filas, RLS: ON)
+- total_station_reduced_point_observations (2 filas, RLS: ON)
+- total_station_reduced_points (2 filas, RLS: ON)
+- total_station_setups (2 filas, RLS: ON)
+
+=== MIGRACIONES APLICADAS EN SUPABASE ===
+No se pudo leer schema_migrations: column "version" does not exist
+
+=== FIN DEL INVENTARIO ===
