@@ -130,6 +130,24 @@ El plan maestro de rework (enmienda 2) propone un modelo de faenas de 5 tablas n
 
 **Acción inmediata:** Documentar en migración 015 que `obras` y `projects` coexisten con propósitos separados (campañas vs. stations). Añadir comentario en `shared/types.ts` explicando la diferencia.
 
+**Condición de reconciliación obligatoria (no convivencia indefinida):**
+
+La convivencia `obras`/`projects` es temporal y deliberada, no permanente. Se reconcilia cuando se cumple **cualquiera** de estos disparadores:
+
+1. **Disparador de confusión operativa (Fase 5):** Al cerrar el piloto con usuario real (Erick), si reporta confusión sobre "en qué proyecto pongo esto" o "por qué hay dos listas de proyectos", se unifica inmediatamente.
+
+2. **Disparador de venta a terceros (antes de demo):** Antes de la primera demo a cliente potencial o transferencia de repo a terceros, se unifica para evitar explicar convivencia a externos. La unificación es prerequisito de salida a terceros, no opcional.
+
+3. **Disparador de feature cross-boundary (Fase 6+):** Si una feature requiere vincular datos de ambos contextos (ej: "mostrar stations y sensores en el mismo mapa"), se evalúa si el vínculo via tabla m:n `project_obra_links` es suficiente. Si genera complejidad, se unifica.
+
+4. **Disparador de carga de mantenimiento (Fase 4-5):** Si mantener RLS policies, migraciones y tipos TypeScript duplicados para ambas tablas genera >20% de sobrecarga de tiempo en una fase, se unifica.
+
+**Dirección de unificación cuando se dispare:**
+- Si `projects` no tiene datos de campañas: migrar `obras` → `projects` (añadir columnas ubicacion, tipo, estado_text, fecha_inicio).
+- Si `obras` se ha convertido en el modelo principal: deprecar `projects`, migrar stations/prisms a referencia de `obras`.
+
+**Rationale:** Igual que el plan maestro prevé para `Station` (MEMORIA.md §10, plan maestro §8): "introducir entidades nuevas junto al modelo legado... retirar el significado ambiguo al final". La convivencia es explícitamente temporal, con criterios de salida claros. No es "hasta que alguien se acuerde", es "hasta que uno de estos 4 disparadores se active".
+
 ### 3. ¿profiles se unifica con users o conviven?
 
 **Contexto:**
