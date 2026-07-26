@@ -165,7 +165,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-26 | Cowork | — | Segunda lectura del informe de Fase 0 de Claude Code: verificación de conteos reales (COUNT(*)), corrección de §3 (había datos, no cero), corrección de una cita errónea sobre §8 | cerrado (solo lectura) |
 | 2026-07-26 | Claude Code | phase-1-domain-contract | Fase 1: ADR formalizando modelo obras/campanas/faenas, migración 015_obras_baseline.sql (retroactiva), recomendación obras/projects y profiles/users | cerrado |
 | 2026-07-26 | Claude Code | phase-2-cleanup | Limpieza de Fase 1 (mal etiquetada como "Fase 2"): migración 016 (unificar profiles→users), migración 017 (DROP tablas TopoTask) | cerrado |
-| 2026-07-26 | Claude Code | phase-2-offline-engine | Fase 2 real: PARTE 1 tipos TS obras/campanas/faenas, PARTE 2 motor offline (SQLite versionado, outbox, runner pruebas mobile, 1 slice vertical completo) | abierto |
+| 2026-07-26 | Claude Code | phase-2-offline-engine | Fase 2 PARCIAL: PARTE 1 tipos TS obras/campanas/faenas (✅), PARTE 2 estructura base motor offline (test runner, SQLite schema, outbox API, diseño) — slice vertical pendiente | cerrado |
 
 ---
 
@@ -222,3 +222,4 @@ Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corre
 - **2026-07-26 — Limpieza de carpeta raíz:** 274 capturas de depuración obsoletas (68 MB) archivadas y luego eliminadas de `Aplicacion_Movil/`, sin tocar `topofield/`.
 - **2026-07-26 — Tres agentes coordinados:** Codex sumado (track móvil/builds), Claude Code (backend/dominio), Cowork (auditoría/memoria); protocolo de un solo agente por rama en `AGENTS.md`.
 - **2026-07-26 — Corrección de numeración de fases:** la limpieza de `profiles`/TopoTask se llamó "Fase 2" pero en realidad era limpieza dentro de Fase 1. La Fase 2 real (motor offline: SQLite, outbox, estados de sincronización) no se ha empezado. Fase 3 (pantallas de faenas) queda bloqueada hasta cerrarla — construir faenas sin motor offline no cumpliría la promesa central de la app (funcionar sin cobertura).
+- **2026-07-26 — Fase 2 iniciada (PARCIAL):** PARTE 1 completa (tipos TS obras/campanas/faenas en `shared/obras-types.ts`). PARTE 2 estructura base: test runner (Jest), SQLite schema (migración 001, tabla outbox), outbox API, diseño documentado en `lib/offline/DESIGN.md`. Pendiente: sync engine, slice vertical completo (Station Message), tests. Fase 2 no cerrada, Fase 3 sigue bloqueada.
