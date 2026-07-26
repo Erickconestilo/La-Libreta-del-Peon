@@ -38,7 +38,11 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.1.4",
+    "@types/jest": "^29.5.15",
     "@types/react": "~19.2.2",
+    "jest": "^29.7.0",
+    "jest-expo": "~56.0.3",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -46,7 +50,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "private": true
 }
