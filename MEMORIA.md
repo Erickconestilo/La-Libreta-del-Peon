@@ -136,9 +136,9 @@ Este plan **sustituye** la lista de fases de `TOPOFIELD_PLAN_MAESTRO_REWORK_2026
 | Fase | Objetivo | Cambio respecto al plan original |
 |---|---|---|
 | **0 — Reconciliación total** | Una sola verdad antes de programar | **Ampliada.** Ya no es solo git vs `origin/main`. Incluye inventariar las 8 migraciones y 22+ tablas de §3 (0 filas cada una, sin riesgo de datos) y decidir por tabla: aprovechar/adaptar/descartar. Salida añadida: `015_rls_baseline.sql` con las políticas reales. |
-| **1 — Contrato de producto y dominio** | Diseñar antes de crear tablas | Decidir, con el inventario de Fase 0 ya resuelto, si el modelo de faenas usa `obras/jornadas/mediciones` adaptadas o el modelo de 5 tablas de la enmienda 2. No construir ambos. Catálogo semilla separado genérico/real (enmienda 5). |
-| **2 — Base fiable y offline** | Motor que usan todas las operaciones | Sin cambio de fondo. Consolida el contrato ya declarado en `shared/types.ts`, no lo reinventa. Añadido: instalar runner de pruebas en `apps/mobile` (no existe hoy). |
-| **3 — MVP de faenas semanales** | Sustituir el Excel | Modelo de 5 tablas (enmienda 2). Erick es usuario piloto desde semana 1 (enmienda 1); no se espera reclutar equipo. |
+| **1 — Contrato de producto y dominio** | Diseñar antes de crear tablas | **Completada 26-07-2026.** ADR 001: se adopta y adapta `obras/campanas/jornadas/sensores/mediciones/estacionamientos` (no el modelo de 5 tablas de la enmienda 2 desde cero — se descartó por tener 0 datos frente al historial real). Limpieza incluida: `profiles`→`users` unificado, 4 tablas TopoTask eliminadas. Catálogo semilla genérico/real (enmienda 5) sigue pendiente. |
+| **2 — Base fiable y offline** | Motor que usan todas las operaciones | **Pendiente — no iniciada.** Corrección 26-07-2026: la limpieza de esquema de más arriba se etiquetó informalmente como "Fase 2" en el trabajo con Claude Code, pero no es esto — era limpieza dentro de Fase 1. La Fase 2 real (SQLite versionado, outbox persistente, `client_request_id`, estados local/pending/syncing/synced/error/conflict, runner de pruebas en `apps/mobile`) sigue sin construirse. Consolida el contrato ya declarado en `shared/types.ts` (`OfflineQueueEntityType`/`OfflineQueueStatus`), no lo reinventa. |
+| **3 — MVP de faenas semanales** | Sustituir el Excel | **Bloqueada hasta cerrar Fase 2** (dependencia explícita del plan maestro: Fase 3 depende de Fase 2). Ahora se construye sobre `obras/campanas/jornadas/sensores/mediciones/estacionamientos` adaptadas, no sobre el modelo de 5 tablas. Erick es usuario piloto desde semana 1 (enmienda 1); no se espera reclutar equipo. |
 | **4 — Migración y compatibilidad Excel** | Incorporar datos sin copiar errores | Sin cambios. |
 | **5 — Seguridad, pruebas y piloto** | Revisión y firma | Foco añadido: pruebas de fuga entre obras (multi-tenant), por la intención de venta a terceros (enmienda 3). Piloto en dos pasos: Erick solo, luego equipo con permiso escrito. |
 | **6 — Instrumentos y campañas** | Disciplinas geotécnicas | Orden: piezómetro/inclinómetro primero, reemplazando el blob genérico de lectura (§7) por estructura propia. Fisurómetro/extensómetro/clinómetro después, no ahora. |
@@ -164,7 +164,8 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-26 | Claude Code | main | Fase 0: inventario completo de 8 migraciones no versionadas, 23 tablas Supabase, reconciliación 6 commits locales, análisis de riesgo y recomendaciones (sin aplicar nada) | cerrado |
 | 2026-07-26 | Cowork | — | Segunda lectura del informe de Fase 0 de Claude Code: verificación de conteos reales (COUNT(*)), corrección de §3 (había datos, no cero), corrección de una cita errónea sobre §8 | cerrado (solo lectura) |
 | 2026-07-26 | Claude Code | phase-1-domain-contract | Fase 1: ADR formalizando modelo obras/campanas/faenas, migración 015_obras_baseline.sql (retroactiva), recomendación obras/projects y profiles/users | cerrado |
-| 2026-07-26 | Claude Code | phase-2-cleanup | Fase 2: migración 016 (unificar profiles→users), migración 017 (DROP tablas TopoTask), con re-verificación COUNT(*) y backup previo | cerrado |
+| 2026-07-26 | Claude Code | phase-2-cleanup | Limpieza de Fase 1 (mal etiquetada como "Fase 2"): migración 016 (unificar profiles→users), migración 017 (DROP tablas TopoTask) | cerrado |
+| 2026-07-26 | Claude Code | phase-2-offline-engine | Fase 2 real: PARTE 1 tipos TS obras/campanas/faenas, PARTE 2 motor offline (SQLite versionado, outbox, runner pruebas mobile, 1 slice vertical completo) | abierto |
 
 ---
 
@@ -185,3 +186,39 @@ Con los datos reales ahora confirmados, la familia "obras" deja de ser un experi
 **Decisión formal de Erick (26-07-2026): adaptar la familia "obras" como base del modelo de faenas.** Migración 014 (monitoring_rounds) no se aplica — queda descartada para este propósito, no se migra el historial real hacia ella. `total_station_*`/`leveling_*` se conservan sin cambios, resuelven Fase 6.
 
 **Siguiente paso concreto para Fase 1:** redactar el ADR de dominio (§1 de la adenda) formalizando `obras`→`campanas`→`jornadas`→`sensores`→`mediciones`→`estacionamientos` como el contrato de faenas, documentar sus columnas reales vía migración retroactiva (`015_obras_baseline.sql`, sin aplicar — ya existe en Supabase), y decidir el nombrado/ajustes mínimos necesarios (p. ej. si `obras` se unifica o convive con `projects`, y si `profiles` se unifica con `users`). Las 4 tablas de integración TopoTask (telegram, correo) quedan descartadas, confirmando la recomendación del informe de Fase 0.
+
+---
+
+## 11. Fase 2 aplicada — verificación de Cowork (26-07-2026)
+
+**Resultado: correcto, con una afirmación falsa en el reporte que se corrige aquí.**
+
+Verificado directo contra Supabase tras la ejecución de Claude Code (migraciones 016 y 017):
+
+- `profiles` eliminada, 0 referencias en `information_schema`. `incidencias`, `incidencia_fotos`, `obra_destinatarios`, `envios_correo` eliminadas — confirmado, no solo reportado.
+- `users`: 15 filas reales (antes 4). Datos consistentes: 10 filas con `legacy_usuario_id` 1–10 sin huecos ni duplicados, más 1 fila migrada (`remoteonly-...@topotask.local`) sin ID legacy porque nunca lo tuvo en origen — el reporte decía "11 migradas", que es correcto; la aparente discrepancia con "10" se explica y no es un fallo.
+- Commits `77508b9`, `9c42512`, `87565fb` reales, sincronizados con `origin/main` (0 de diferencia).
+
+**Corrección importante:** el reporte afirmó que `backups_topofield/backup_manifest_app_movil_2026-07-26.json` era "válido para rollback". Es falso — la nota interna del propio archivo dice explícitamente que **no** exporta filas y que su objetivo es solo comparar checksums, no restaurar. Además cubre las tablas nativas de TopoField, no `profiles`. El otro respaldo (`backup_topotask_tables_2026-07-26.json`) sí tiene datos fila por fila, pero tampoco incluye `profiles` — solo las 4 tablas TopoTask (que estaban vacías, así que ahí no hubo pérdida real). Ambos respaldos son de las 07:51 de esta mañana, de un trabajo de separación TopoTask anterior a esta sesión — **no se generó ningún respaldo nuevo específico para esta migración**, pese a que se pidió explícitamente en el encargo.
+
+**Consecuencia:** las 11 filas reales de `profiles` se migraron sin un respaldo restaurable propio. No hay nada que corregir retroactivamente (la tabla ya no existe y el estado final se ve correcto por inspección directa), pero no se puede afirmar con certeza absoluta que no hay ninguna fila con un dato mal mapeado, más allá de lo que la inspección directa ya descartó (sin duplicados, sin huecos en la secuencia).
+
+**Lección para próximas migraciones destructivas (aplica a Fase 3 en adelante):** exigir un respaldo fila-por-fila generado en el momento de la tabla específica que se va a modificar o eliminar, no aceptar la reutilización de un respaldo preexistente de otro propósito sin verificar que cubre exactamente las tablas afectadas.
+
+---
+
+## 12. Bitácora de avances (una línea por hito, con contexto)
+
+Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
+
+- **2026-07-26 — Auditoría inicial (Cowork):** plan maestro de rework aprobado con 5 enmiendas; modelo de faenas reducido de 10 a 5 tablas por presupuesto de tiempo real (5-10h/semana).
+- **2026-07-26 — Corrección TopoTask:** no es contaminación, son dos proyectos Supabase separados; el único vínculo es una importación de datos históricos legítima de mayo.
+- **2026-07-26 — Fase 0 (Claude Code):** reveló deriva de esquema masiva — 8 migraciones y 23 tablas ya construidas en Supabase sin archivo local, incluida una familia "obras" con datos reales (72 sensores, 145 mediciones).
+- **2026-07-26 — Corrección de conteos:** Cowork había dicho "0 filas, sin riesgo" basado en una estimación de Postgres poco fiable; los datos reales existían desde el principio.
+- **2026-07-26 — Decisión Fase 1:** adoptar la familia "obras" como modelo de faenas; migración 014 (monitoring_rounds) descartada por tener 0 datos y usar un blob de lectura genérico.
+- **2026-07-26 — Fase 1 fusionada a main:** ADR 001 + migración 015 documental + `deprecated/014` con explicación; incluye condición explícita de reconciliación obras/projects (no convivencia indefinida).
+- **2026-07-26 — Fase 2 aplicada a producción:** `profiles` (11 filas) unificada en `users`; 4 tablas TopoTask (0 filas) eliminadas. Primer cambio destructivo real del rework.
+- **2026-07-26 — Corrección de respaldo:** el respaldo citado como "válido para rollback" en Fase 2 no lo era (solo checksums, no cubría `profiles`); no hubo pérdida de datos pero fue suerte, no proceso. Regla 9 añadida a `AGENTS.md`.
+- **2026-07-26 — Limpieza de carpeta raíz:** 274 capturas de depuración obsoletas (68 MB) archivadas y luego eliminadas de `Aplicacion_Movil/`, sin tocar `topofield/`.
+- **2026-07-26 — Tres agentes coordinados:** Codex sumado (track móvil/builds), Claude Code (backend/dominio), Cowork (auditoría/memoria); protocolo de un solo agente por rama en `AGENTS.md`.
+- **2026-07-26 — Corrección de numeración de fases:** la limpieza de `profiles`/TopoTask se llamó "Fase 2" pero en realidad era limpieza dentro de Fase 1. La Fase 2 real (motor offline: SQLite, outbox, estados de sincronización) no se ha empezado. Fase 3 (pantallas de faenas) queda bloqueada hasta cerrarla — construir faenas sin motor offline no cumpliría la promesa central de la app (funcionar sin cobertura).
