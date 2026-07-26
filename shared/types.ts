@@ -490,3 +490,32 @@ export interface ReadingInsertResponse {
   thresholdStatus: CalculatedThresholdStatus;
   autoConfirmed: boolean;
 }
+
+// =====================================================
+// MODELO OBRAS (ADR 001, Fase 1)
+// =====================================================
+// Re-exportados desde obras-types.ts para mantener compatibilidad.
+// Este modelo convive temporalmente con "projects" (ver ADR 001).
+
+export {
+  type ObraEstado,
+  type Obra,
+  type CreateObraInput,
+  type CampanaEstado,
+  type Campana,
+  type CreateCampanaInput,
+  type JornadaEstado,
+  type Jornada,
+  type CreateJornadaInput,
+  type TipoSensor,
+  type EstadoSensor,
+  type Sensor,
+  type CreateSensorInput,
+  type MovimientoEstado,
+  type EstadoMatch,
+  type TipoPunto,
+  type Medicion,
+  type CreateMedicionInput,
+  type Estacionamiento,
+  type CreateEstacionamientoInput,
+} from './obras-types.js';
