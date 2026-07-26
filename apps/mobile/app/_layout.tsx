@@ -10,6 +10,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { getPendingStationVisualPhoto } from '@/lib/pending-station-visual-photo';
 import { queryClient } from '@/lib/query-client';
 import { SessionProvider } from '@/src/session/session-provider';
+import { applyMigrations } from '@/lib/offline/database';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -39,6 +40,18 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Inicializar base de datos offline al arrancar
+  useEffect(() => {
+    void (async () => {
+      try {
+        await applyMigrations();
+        console.log('[App] Offline database initialized');
+      } catch (err) {
+        console.error('[App] Failed to initialize offline database:', err);
+      }
+    })();
+  }, []);
 
   if (!loaded) {
     return null;

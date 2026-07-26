@@ -4,7 +4,6 @@
  */
 
 import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
-import { Asset } from 'expo-asset';
 
 const DB_NAME = 'topofield.db';
 
@@ -42,9 +41,9 @@ export async function applyMigrations(): Promise<void> {
 
   // List of migrations (add new ones at the end)
   const migrations = [
-    { version: 1, file: require('./migrations/001_initial_schema.sql') },
+    { version: 1 },
     // Future migrations go here:
-    // { version: 2, file: require('./migrations/002_...sql') },
+    // { version: 2 },
   ];
 
   // Apply pending migrations
@@ -53,19 +52,7 @@ export async function applyMigrations(): Promise<void> {
       console.log(`[SQLite] Applying migration ${migration.version}...`);
 
       try {
-        // Load migration SQL from asset
-        const asset = Asset.fromModule(migration.file);
-        await asset.downloadAsync();
-
-        if (!asset.localUri) {
-          throw new Error(`Failed to load migration ${migration.version}`);
-        }
-
-        // Note: This requires a custom loader for .sql files
-        // For now, we'll inline the SQL in migration files as strings
-        // TODO: Set up SQL file loader or use string imports
-
-        // For migration 001, we'll execute it directly
+        // Execute migration directly (SQL inlined)
         if (migration.version === 1) {
           executeMigration001(db);
         }

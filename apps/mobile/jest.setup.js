@@ -1,5 +1,5 @@
 // Jest setup for React Native / Expo
-import '@testing-library/react-native/extend-expect';
+import '@testing-library/react-native';
 
 // Mock expo-sqlite
 jest.mock('expo-sqlite', () => ({
@@ -25,4 +25,24 @@ jest.mock('expo-file-system', () => ({
   readAsStringAsync: jest.fn(),
   writeAsStringAsync: jest.fn(),
   deleteAsync: jest.fn(),
+}));
+
+// Mock expo-network
+jest.mock('expo-network', () => ({
+  getNetworkStateAsync: jest.fn(() =>
+    Promise.resolve({
+      isConnected: true,
+      isInternetReachable: true,
+    })
+  ),
+}));
+
+// Mock expo-asset
+jest.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: jest.fn(() => ({
+      downloadAsync: jest.fn(() => Promise.resolve()),
+      localUri: null,
+    })),
+  },
 }));
