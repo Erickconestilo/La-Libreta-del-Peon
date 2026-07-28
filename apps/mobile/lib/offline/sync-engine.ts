@@ -150,7 +150,7 @@ async function syncItem(item: OutboxItem, syncCallback: (item: OutboxItem) => Pr
   // Verificar si debe reintentar (backoff exponencial)
   if (item.retryCount > 0 && item.lastSyncAttemptAt) {
     const delayMs = getRetryDelay(item.retryCount - 1);
-    const nextRetryAt = new Date(item.lastSyncAttemptAt).getTime() + delayMs;
+    const nextRetryAt = parseSqliteUtcDate(item.lastSyncAttemptAt) + delayMs;
     const now = Date.now();
 
     if (now < nextRetryAt) {
@@ -246,6 +246,20 @@ function classifyError(error: { message?: string; status?: number; code?: string
  */
 function getRetryDelay(retryIndex: number): number {
   return RETRY_DELAYS[Math.min(retryIndex, RETRY_DELAYS.length - 1)];
+}
+
+/**
+ * Parsear un timestamp de SQLite (formato `datetime('now')`: "YYYY-MM-DD HH:MM:SS",
+ * siempre en UTC, sin sufijo de zona) como milisegundos desde epoch.
+ *
+ * `new Date("YYYY-MM-DD HH:MM:SS")` lo interpreta como hora LOCAL del dispositivo,
+ * no UTC. Fuera de UTC (p. ej. Europe/Madrid, UTC+2 en verano) eso desfasa el
+ * cálculo por el offset de la zona y rompe el backoff exponencial: cree que ya
+ * pasó el tiempo de espera cuando en realidad faltan horas. Insertar 'T' y 'Z'
+ * fuerza el parseo ISO en UTC, que es lo que el string realmente representa.
+ */
+function parseSqliteUtcDate(sqliteDatetime: string): number {
+  return new Date(`${sqliteDatetime.replace(' ', 'T')}Z`).getTime();
 }
 
 /**

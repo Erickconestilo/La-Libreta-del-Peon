@@ -78,7 +78,14 @@ export function enqueue(params: {
 export function getPending(): OutboxItem[] {
   const db = getDatabase();
 
-  const rows = db.getAllSync<OutboxRow>('SELECT * FROM outbox WHERE status = ? ORDER BY created_at ASC', ['pending']);
+  // Desempate por rowid: created_at solo tiene precisión de 1 segundo, así que
+  // dos items encolados en el mismo segundo no tendrían orden garantizado sin
+  // esto. rowid (columna implícita de SQLite) crece de forma monótona con
+  // cada INSERT, así que sí refleja el orden real de encolado.
+  const rows = db.getAllSync<OutboxRow>(
+    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at ASC, rowid ASC',
+    ['pending']
+  );
 
   return rows.map(rowToItem);
 }
@@ -89,7 +96,11 @@ export function getPending(): OutboxItem[] {
 export function getErrors(): OutboxItem[] {
   const db = getDatabase();
 
-  const rows = db.getAllSync<OutboxRow>('SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC', ['error']);
+  // Mismo desempate por rowid que en getPending() — ver comentario allí.
+  const rows = db.getAllSync<OutboxRow>(
+    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC, rowid DESC',
+    ['error']
+  );
 
   return rows.map(rowToItem);
 }
@@ -100,7 +111,11 @@ export function getErrors(): OutboxItem[] {
 export function getConflicts(): OutboxItem[] {
   const db = getDatabase();
 
-  const rows = db.getAllSync<OutboxRow>('SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC', ['conflict']);
+  // Mismo desempate por rowid que en getPending() — ver comentario allí.
+  const rows = db.getAllSync<OutboxRow>(
+    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC, rowid DESC',
+    ['conflict']
+  );
 
   return rows.map(rowToItem);
 }
