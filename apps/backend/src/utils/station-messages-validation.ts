@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { AppError } from '../lib/app-error.js';
 
 const createStationMessageSchema = z.object({
-  body: z.string().trim().min(1).max(1200)
+  body: z.string().trim().min(1).max(1200),
+  clientRequestId: z.string().uuid().optional()
 });
 
 export type ValidatedCreateStationMessageInput = z.infer<typeof createStationMessageSchema>;

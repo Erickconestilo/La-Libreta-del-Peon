@@ -61,7 +61,13 @@ export const createStationMessageController = async (request: Request, response:
 
     const input = validateCreateStationMessageInput(request.body);
     const projectScope = getActorProjectScope(request.user);
-    const message = await createStationMessage(stationId, input.body, request.user.id, projectScope);
+    const message = await createStationMessage(
+      stationId,
+      input.body,
+      request.user.id,
+      projectScope,
+      input.clientRequestId
+    );
 
     sendSuccess(response, message, 201);
   } catch (error) {

@@ -123,6 +123,46 @@ const getStationMessageById = async (
   return result.rowCount === 0 ? null : mapStationMessageRow(result.rows[0]);
 };
 
+/**
+ * Busca un station_message ya existente por su client_request_id.
+ * Se usa cuando el INSERT idempotente de createStationMessage() detecta
+ * que ese client_request_id ya se sincronizó antes (reintento del outbox
+ * offline tras un timeout de red), para devolver el mensaje ya creado en
+ * vez de duplicarlo.
+ */
+const getStationMessageByClientRequestId = async (
+  clientRequestId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildStationScopeCondition(projectScope, 2);
+
+  const result = await pool.query(
+    `
+      SELECT
+        sm.id,
+        sm.station_id,
+        sm.body,
+        sm.created_by,
+        sm.created_at,
+        s.name AS station_name,
+        pr.code AS project_code,
+        pr.name AS project_name,
+        u.email AS created_by_email,
+        u.full_name AS created_by_full_name,
+        u.role AS created_by_role
+      FROM station_messages sm
+      LEFT JOIN users u ON u.id = sm.created_by
+      INNER JOIN stations s ON s.id = sm.station_id
+      LEFT JOIN projects pr ON pr.id = s.project_id
+      WHERE sm.client_request_id = $1
+      ${scope.clause}
+    `,
+    [clientRequestId, ...scope.params]
+  );
+
+  return result.rowCount === 0 ? null : mapStationMessageRow(result.rows[0]);
+};
+
 export const listRecentStationMessages = async (
   limit = 100,
   projectScope: string[] | null = null
@@ -163,7 +203,8 @@ export const createStationMessage = async (
   stationId: string,
   body: string,
   createdBy: string,
-  projectScope: string[] | null = null
+  projectScope: string[] | null = null,
+  clientRequestId?: string
 ) => {
   const scope = buildStationScopeCondition(projectScope, 2);
   const client = await pool.connect();
@@ -185,18 +226,44 @@ export const createStationMessage = async (
       throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
     }
 
+    // ON CONFLICT DO NOTHING sobre client_request_id: si el móvil reintenta
+    // el mismo item del outbox tras un timeout de red (sin saber si el
+    // servidor ya lo proceso), esto no crea una fila duplicada. Cuando
+    // clientRequestId es undefined, nunca hay conflicto (el índice único es
+    // parcial, solo aplica a valores no NULL) y el INSERT se comporta igual
+    // que antes.
     const result = await client.query(
       `
         INSERT INTO station_messages (
           station_id,
           body,
-          created_by
+          created_by,
+          client_request_id
         )
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (client_request_id) WHERE client_request_id IS NOT NULL DO NOTHING
         RETURNING id
       `,
-      [stationId, body, createdBy]
+      [stationId, body, createdBy, clientRequestId ?? null]
     );
+
+    if (result.rowCount === 0) {
+      // Ya existía (reintento idempotente): no crear un change-log duplicado,
+      // simplemente devolver el mensaje que ya se sincronizó antes.
+      if (!clientRequestId) {
+        // No debería poder pasar (sin clientRequestId nunca hay conflicto),
+        // pero si pasa es un estado inconsistente real, no algo a ignorar.
+        throw new AppError(
+          'Station message insert produced no row without a clientRequestId',
+          500,
+          'STATION_MESSAGE_INSERT_INCONSISTENT'
+        );
+      }
+
+      await client.query('COMMIT');
+
+      return getStationMessageByClientRequestId(clientRequestId, projectScope);
+    }
 
     await createChangeLog(
       {

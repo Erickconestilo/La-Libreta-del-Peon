@@ -185,6 +185,7 @@ export interface StationMessage {
 
 export interface CreateStationMessageInput {
   body: string;
+  clientRequestId?: string;
 }
 
 export interface StationPhoto {
