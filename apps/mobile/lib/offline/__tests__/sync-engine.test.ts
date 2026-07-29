@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import * as Network from 'expo-network';
 import { getDatabase, closeDatabase, applyMigrations } from '../database';
 import * as outbox from '../outbox';
 import { flushOutbox, hasConnectivity, stopSyncEngine } from '../sync-engine';
@@ -14,7 +15,9 @@ jest.mock('expo-network', () => ({
   getNetworkStateAsync: jest.fn(),
 }));
 
-const mockGetNetworkStateAsync = require('expo-network').getNetworkStateAsync as jest.Mock;
+const mockGetNetworkStateAsync = Network.getNetworkStateAsync as jest.MockedFunction<
+  typeof Network.getNetworkStateAsync
+>;
 
 describe('Sync Engine', () => {
   beforeEach(async () => {
@@ -78,7 +81,9 @@ describe('Sync Engine', () => {
         payload: { message: 'Test' },
       });
 
-      const mockSyncCallback = jest.fn().mockResolvedValue(undefined);
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockResolvedValue(undefined);
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -111,7 +116,7 @@ describe('Sync Engine', () => {
         payload: {},
       });
 
-      const mockSyncCallback = jest.fn();
+      const mockSyncCallback = jest.fn<(item: OutboxItem) => Promise<void>>();
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -131,7 +136,9 @@ describe('Sync Engine', () => {
       const networkError = new Error('Network timeout');
       (networkError as any).code = 'ETIMEDOUT';
 
-      const mockSyncCallback = jest.fn().mockRejectedValue(networkError);
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockRejectedValue(networkError);
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -155,7 +162,9 @@ describe('Sync Engine', () => {
       const conflictError = new Error('Conflict');
       (conflictError as any).status = 409;
 
-      const mockSyncCallback = jest.fn().mockRejectedValue(conflictError);
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockRejectedValue(conflictError);
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -178,7 +187,9 @@ describe('Sync Engine', () => {
       const validationError = new Error('Validation failed');
       (validationError as any).status = 422;
 
-      const mockSyncCallback = jest.fn().mockRejectedValue(validationError);
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockRejectedValue(validationError);
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -208,9 +219,10 @@ describe('Sync Engine', () => {
       });
 
       const syncedItems: OutboxItem[] = [];
-      const mockSyncCallback = jest.fn().mockImplementation((item: OutboxItem) => {
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockImplementation(async (item: OutboxItem) => {
         syncedItems.push(item);
-        return Promise.resolve();
       });
 
       const synced = await flushOutbox(mockSyncCallback);
@@ -240,7 +252,7 @@ describe('Sync Engine', () => {
         WHERE id = 'test-1'`
       );
 
-      const mockSyncCallback = jest.fn();
+      const mockSyncCallback = jest.fn<(item: OutboxItem) => Promise<void>>();
 
       // Intentar flush inmediatamente (debe saltarse por backoff)
       const synced = await flushOutbox(mockSyncCallback);
@@ -268,7 +280,7 @@ describe('Sync Engine', () => {
         WHERE id = 'test-1'`
       );
 
-      const mockSyncCallback = jest.fn();
+      const mockSyncCallback = jest.fn<(item: OutboxItem) => Promise<void>>();
 
       const synced = await flushOutbox(mockSyncCallback);
 
@@ -291,7 +303,9 @@ describe('Sync Engine', () => {
         payload: { message: 'Test' },
       });
 
-      const mockSyncCallback = jest.fn().mockResolvedValue(undefined);
+      const mockSyncCallback = jest
+        .fn<(item: OutboxItem) => Promise<void>>()
+        .mockResolvedValue(undefined);
 
       await flushOutbox(mockSyncCallback);
 

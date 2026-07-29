@@ -27,8 +27,15 @@ export type MonitoringRoundPointStatus = 'pending' | 'taken' | 'skipped' | 'canc
 export type InstrumentReadingStatus = 'draft' | 'confirmed' | 'reviewed' | 'rejected';
 export type ReadingAttachmentType = 'photo' | 'note' | 'file';
 export type CalculatedThresholdStatus = 'normal' | 'warning' | 'alarm' | 'unknown';
-export type OfflineQueueEntityType = 'instrument_reading' | 'reading_attachment' | 'round_point_status';
-export type OfflineQueueStatus = 'pending' | 'syncing' | 'done' | 'error';
+export type OfflineQueueEntityType =
+  | 'station_message'
+  | 'incident'
+  | 'station_photo'
+  | 'prism_observation'
+  | 'medicion'
+  | 'campana'
+  | 'sensor';
+export type OfflineQueueStatus = 'pending' | 'syncing' | 'synced' | 'error' | 'conflict';
 export type ZoneColor = 'blue' | 'pink' | 'green';
 export type FieldConditions = 'good' | 'regular' | 'adverse';
 export type ProjectRuleType =

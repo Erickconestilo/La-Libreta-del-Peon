@@ -60,14 +60,14 @@ const syncStationMessage = async (item: OutboxItem): Promise<void> => {
     throw new Error(`Unexpected entity type: ${item.entityType}`);
   }
 
-  const payload = item.payload as CreateStationMessageInput & { stationId: string };
+  const payload = item.payload as unknown as CreateStationMessageInput & { stationId: string };
 
   const response = await apiFetch<ApiEnvelope<StationMessage>>(
     `/stations/${payload.stationId}/messages`,
     {
       body: JSON.stringify({
-        ...payload,
-        clientRequestId: item.clientRequestId, // Para idempotencia
+        body: payload.body,
+        clientRequestId: item.clientRequestId,
       }),
       method: 'POST'
     }
@@ -147,16 +147,19 @@ export const useCreateStationMessage = (stationId: string | null) => {
         },
       });
 
-      console.log(`[useCreateStationMessage] Enqueued message ${id} for later sync`);
+      console.log(
+        `[useCreateStationMessage] Enqueued message ${id} with clientRequestId ${clientRequestId} for later sync`
+      );
 
       // Retornar un objeto mock para que el UI no falle
       return {
         id: clientRequestId,
         stationId,
-        message: input.message,
+        body: input.body,
         createdAt: new Date().toISOString(),
-        createdBy: '', // Se llenará al sincronizar
-      } as StationMessage;
+        createdBy: '',
+        createdByUser: null,
+      } satisfies StationMessage;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['station-messages', stationId] });
