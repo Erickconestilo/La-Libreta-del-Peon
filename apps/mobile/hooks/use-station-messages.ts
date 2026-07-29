@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 
 import type { CreateStationMessageInput, StationMessage } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
 import { enqueue, getPendingCount } from '@/lib/offline/outbox';
-import { initSyncEngine, flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
-import type { OutboxItem } from '@/lib/offline/outbox';
+import { syncOutboxItem } from '@/lib/offline/sync-handlers';
+import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
+import { createRandomId } from '@/lib/random-id';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -51,33 +51,6 @@ const createStationMessage = async ({
   return response.data;
 };
 
-/**
- * Callback de sincronización para el sync engine
- * Envía un item de outbox al servidor
- */
-const syncStationMessage = async (item: OutboxItem): Promise<void> => {
-  if (item.entityType !== 'station_message') {
-    throw new Error(`Unexpected entity type: ${item.entityType}`);
-  }
-
-  const payload = item.payload as unknown as CreateStationMessageInput & { stationId: string };
-
-  const response = await apiFetch<ApiEnvelope<StationMessage>>(
-    `/stations/${payload.stationId}/messages`,
-    {
-      body: JSON.stringify({
-        body: payload.body,
-        clientRequestId: item.clientRequestId,
-      }),
-      method: 'POST'
-    }
-  );
-
-  if (!response.data) {
-    throw new Error('Server returned no data');
-  }
-};
-
 export const useStationMessages = (stationId: string | null) => {
   const query = useQuery({
     enabled: Boolean(stationId),
@@ -109,11 +82,6 @@ export const useRecentStationMessages = (enabled = true) => {
 export const useCreateStationMessage = (stationId: string | null) => {
   const queryClient = useQueryClient();
 
-  // Inicializar sync engine al montar el hook
-  useEffect(() => {
-    initSyncEngine(syncStationMessage);
-  }, []);
-
   const mutation = useMutation({
     mutationFn: async (input: CreateStationMessageInput) => {
       if (!stationId) {
@@ -133,8 +101,8 @@ export const useCreateStationMessage = (stationId: string | null) => {
       }
 
       // Sin conectividad o fallo directo: encolar en outbox
-      const id = crypto.randomUUID();
-      const clientRequestId = crypto.randomUUID();
+      const id = createRandomId();
+      const clientRequestId = createRandomId();
 
       enqueue({
         id,
@@ -169,7 +137,7 @@ export const useCreateStationMessage = (stationId: string | null) => {
       // Intentar flush automático si hay conectividad
       const connected = await hasConnectivity();
       if (connected) {
-        void flushOutbox(syncStationMessage);
+        void flushOutbox(syncOutboxItem);
       }
     }
   });

@@ -468,6 +468,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSavedSessions(nextSessions);
       return true;
     } catch (error) {
+      if (!isAuthError(error)) {
+        setCurrentUser(null);
+        setStoredToken(token);
+        setApiBearerToken(token);
+        setIsSessionInvalid(false);
+        setSessionWarning('Sin conexión: la sesión técnica se conserva hasta poder revalidarla.');
+        setSavedSessions(nextSessions);
+        setErrorMessage(null);
+        return true;
+      }
+
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
       setCurrentUser(null);
       setIsSessionInvalid(true);

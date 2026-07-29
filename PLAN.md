@@ -31,6 +31,7 @@ Este plan se apoya en cuatro fuentes de verdad complementarias:
 - El backend ya tiene base MVP inicial para auscultación: rondas, puntos esperados, lecturas instrumentadas, catálogo de códigos por proyecto y reglas de auto-confirmación calculada.
 - La validación Android en Galaxy ya existe y ha permitido detectar problemas reales de sesión, fotos, navegación y ritmo de uso.
 - Hay una ruta de build Android local sin coste en Windows.
+- La base offline técnica quedó validada el 29-07-2026 en Galaxy real: outbox SQLite, reinicio sin red, sincronización automática global e idempotencia en Supabase. Esto desbloquea el desarrollo de Fase 3, pero todavía requiere integrar la rama y desplegar el backend actual antes del piloto.
 - El siguiente salto de valor no es añadir más superficie sin orden, sino conectar la auscultación a flujos móviles simples y validar si sirve en campo.
 
 ## Fases del plan

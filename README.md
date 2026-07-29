@@ -8,15 +8,17 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 - [PRODUCT_STRATEGY.md](./PRODUCT_STRATEGY.md)
 - [UX_RESEARCH_PLAN.md](./UX_RESEARCH_PLAN.md)
 - [LAUNCH_PLAN.md](./LAUNCH_PLAN.md)
+- [PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md](./PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md)
 
 ## Estado Actual
 
-- El repo tiene cambios locales pendientes de consolidar en documentación, hardening backend y limpieza de artefactos legacy.
+- La Fase 2 técnica offline está cerrada en la rama `phase-2-device-e2e`; falta integrarla y publicar el backend actual antes del piloto.
 - La verificación local actual pasa en backend y móvil:
   - `npm run build --workspace apps/backend`
   - `npm run test --workspace apps/backend`
   - `npx tsc --noEmit --project apps/mobile/tsconfig.json`
-  - `npm run verify:pre-apk`
+  - `npm run test --workspace apps/mobile -- --runInBand`
+  - `npx expo export --platform android`
 - El backend ya tiene tests unitarios mínimos para `access-control`, `photo-storage-path`, evaluación de lecturas de auscultación, CSV de catálogo y validación de payloads; la cobertura sigue siendo parcial y no sustituye QA funcional real.
 - Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 - Android sigue siendo la plataforma principal de validación operativa.
@@ -30,6 +32,7 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 - Croquis operativo de prismas por estación usando ángulo/distancia, no coordenada geográfica absoluta.
 - Subida de fotos a Supabase Storage para estaciones, obras, memoria visual y prismas.
 - Recuperación móvil ante sesión técnica inválida en lecturas públicas.
+- Motor offline con outbox SQLite, sincronización al recuperar red, reinicio persistente e idempotencia por `client_request_id`.
 - Parte diario móvil implementado en código actual.
 - Verificación raíz `npm run verify:pre-apk` añadida y validada.
 - Backend MVP inicial de auscultación:
@@ -45,6 +48,7 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 - La distribución sigue sin estar cerrada de forma seria para compañeros: APK local y APK EAS no comparten firma, así que la actualización directa por `adb install -r` falla si la build no reutiliza la misma keystore.
 - La publicación y prueba con compañeros sigue pendiente de llevarse a Google Play Internal Testing o a una cadena estable equivalente.
 - El tooling móvil mantiene vulnerabilidades moderadas upstream del ecosistema Expo; hoy no hay hallazgos high/critical validados en la lógica propia, pero sigue siendo deuda antes de abrir más la distribución.
+- `expo install --check` detecta tres desajustes de compatibilidad pendientes (`expo-network`, `react-native-maps`, `react-native-screens`); se deben tratar en un cambio aislado con nueva QA de dispositivo.
 
 ## Estado Operativo
 
@@ -61,7 +65,9 @@ Aplicación móvil de campo para equipos pequeños de topografía. Stack actual:
 
 Resolver estos bloques en orden:
 
-- Consolidar y confirmar los cambios locales pendientes del repo.
+- Revisar e integrar la rama `phase-2-device-e2e`.
+- Desplegar el backend que contiene la idempotencia antes de probar offline fuera del entorno local.
+- Iniciar Fase 3: MVP de faenas semanales sobre el motor offline ya validado.
 - Definir usuarios reales y ampliar `data/project-memberships.json` antes de alta operativa real.
 - Cerrar la ruta de distribución Android para compañeros con firma estable y preferiblemente Google Play Internal Testing.
 - Seguir ampliando tests automáticos sobre auth, permisos y flujos críticos de fotos/scope.

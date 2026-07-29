@@ -1,7 +1,7 @@
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,8 +9,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/components/useColorScheme';
 import { getPendingStationVisualPhoto } from '@/lib/pending-station-visual-photo';
 import { queryClient } from '@/lib/query-client';
-import { SessionProvider } from '@/src/session/session-provider';
+import { SessionProvider, useSession } from '@/src/session/session-provider';
 import { applyMigrations } from '@/lib/offline/database';
+import { syncOutboxItem } from '@/lib/offline/sync-handlers';
+import { initSyncEngine, stopSyncEngine } from '@/lib/offline/sync-engine';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -26,6 +28,7 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [isOfflineDatabaseReady, setIsOfflineDatabaseReady] = useState(false);
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -46,8 +49,10 @@ export default function RootLayout() {
     void (async () => {
       try {
         await applyMigrations();
+        setIsOfflineDatabaseReady(true);
         console.log('[App] Offline database initialized');
       } catch (err) {
+        setIsOfflineDatabaseReady(false);
         console.error('[App] Failed to initialize offline database:', err);
       }
     })();
@@ -57,10 +62,25 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return <RootLayoutNav isOfflineDatabaseReady={isOfflineDatabaseReady} />;
 }
 
-function RootLayoutNav() {
+function OfflineSyncBootstrap({ enabled }: { enabled: boolean }) {
+  const { isLoading, storedToken } = useSession();
+
+  useEffect(() => {
+    if (!enabled || isLoading || !storedToken) {
+      return;
+    }
+
+    initSyncEngine(syncOutboxItem);
+    return stopSyncEngine;
+  }, [enabled, isLoading, storedToken]);
+
+  return null;
+}
+
+function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boolean }) {
   const colorScheme = useColorScheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -90,6 +110,7 @@ function RootLayoutNav() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
+        <OfflineSyncBootstrap enabled={isOfflineDatabaseReady} />
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack>

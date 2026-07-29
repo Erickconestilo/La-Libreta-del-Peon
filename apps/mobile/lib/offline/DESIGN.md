@@ -1,7 +1,8 @@
 # Diseño del Motor Offline — TopoField Fase 2
 
-**Fecha:** 2026-07-26  
-**Estado:** DISEÑO (implementación pendiente)  
+**Fecha:** 2026-07-26
+**Última verificación:** 2026-07-29
+**Estado:** IMPLEMENTADO Y VALIDADO EN GALAXY REAL
 **Referencia:** MEMORIA.md §8, Plan Maestro Fase 2
 
 ---
@@ -85,14 +86,17 @@ SYNCING (intento en progreso)
 Cada mutación genera un `client_request_id` UUID v4 único ANTES de escribir en outbox.
 
 **Backend debe:**
-- Aceptar header `X-Client-Request-ID` o campo `clientRequestId` en payload
-- Deduplicar: si ya procesó ese ID, retornar 200 con el resultado original (no 409)
-- Almacenar mapping `client_request_id → server_id` por 30 días mínimo
+- Aceptar `clientRequestId` en el payload.
+- Persistirlo en `station_messages.client_request_id`.
+- Deduplicar con un índice único parcial y `ON CONFLICT ... DO NOTHING`.
+- Devolver el registro original cuando recibe de nuevo el mismo ID.
 
 **Ejemplo:**
 ```typescript
-const clientRequestId = crypto.randomUUID();
-await outbox.enqueue({
+import { createRandomId } from '@/lib/random-id';
+
+const clientRequestId = createRandomId();
+outbox.enqueue({
   entityType: 'station_message',
   operation: 'insert',
   payload: { ...message, clientRequestId },
@@ -100,13 +104,17 @@ await outbox.enqueue({
 });
 ```
 
+`createRandomId()` usa `expo-crypto`. No se debe usar `crypto.randomUUID()`
+global: Hermes no lo expone en esta configuración y el Galaxy mostró
+literalmente `Property 'crypto' doesn't exist`.
+
 ### 4. Detección de Conectividad
 
 **Estrategias combinadas:**
-- `expo-network`: estado de red (wifi, cellular, none)
-- Heartbeat cada 30s: HEAD /api/health (timeout 5s)
-- Retry inmediato al cambio wifi/cellular → conectado
-- Flush manual via botón "Sincronizar ahora"
+- `expo-network`: estado de red (wifi, cellular, none).
+- Polling de conectividad cada 30 segundos.
+- Flush automático cuando el estado pasa de desconectado a conectado.
+- Flush inicial al arrancar la app con una sesión técnica conservada.
 
 **No usar:**
 - `navigator.onLine` (poco fiable en móvil)
@@ -140,13 +148,13 @@ await outbox.enqueue({
 - Ya existe hook (`use-station-messages.ts`)
 
 **Checklist del slice:**
-1. [ ] Migración SQLite 001 (tabla outbox)
-2. [ ] `lib/offline/outbox.ts`: API de enqueue/flush/getAll
-3. [ ] `lib/offline/sync-engine.ts`: lógica de sincronización
-4. [ ] `hooks/use-station-messages.ts`: modificar POST para usar outbox
-5. [ ] `lib/offline/__tests__/outbox.test.ts`: tests de enqueue/dequeue
-6. [ ] `lib/offline/__tests__/sync-engine.test.ts`: tests de retry/conflict
-7. [ ] Probar:
+1. [x] Migración SQLite 001 (tabla outbox)
+2. [x] `lib/offline/outbox.ts`: API de enqueue/flush/getAll
+3. [x] `lib/offline/sync-engine.ts`: lógica de sincronización
+4. [x] `hooks/use-station-messages.ts`: modificar POST para usar outbox
+5. [x] `lib/offline/__tests__/outbox.test.ts`: tests de enqueue/dequeue
+6. [x] `lib/offline/__tests__/sync-engine.test.ts`: tests de retry/conflict
+7. [x] Probar en Galaxy:
    - Crear mensaje en modo avión
    - Cerrar y reabrir app (persiste en outbox)
    - Activar conexión → sincroniza automáticamente
@@ -174,9 +182,10 @@ Fase 2 se considera CERRADA cuando:
    - Tests pasando
 
 **Bloqueadores para Fase 3:**
-- Fase 3 (pantallas de faenas) está BLOQUEADA hasta que Fase 2 esté cerrada
-- No se pueden construir pantallas "Hoy"/"Semana"/faenas sin motor offline funcional
-- Razón: la promesa central de TopoField es funcionar sin cobertura
+- Ninguno dentro del alcance técnico de Fase 2.
+- Fase 3 queda desbloqueada para desarrollo.
+- Esto no equivale a despliegue: la rama debe integrarse y el backend actual
+  debe publicarse antes de usar el flujo offline en un piloto.
 
 ---
 
@@ -208,21 +217,13 @@ db.withTransactionSync(() => {
 
 ### Client Request ID en Backend
 
-**Pendiente:** modificar backend para aceptar `clientRequestId` y deduplicar.
+Implementado en la migración `018_station_messages_client_request_id.sql` y
+validado el 2026-07-29 contra Supabase real. Una repetición controlada del
+mismo `clientRequestId` devolvió el mismo registro y la consulta posterior
+confirmó una sola fila.
 
-Ejemplo en `apps/backend/src/controllers/station-messages.controller.ts`:
-
-```typescript
-// POST /api/projects/:projectId/stations/:stationId/messages
-const clientRequestId = req.body.clientRequestId;
-if (clientRequestId) {
-  const existing = await checkIfAlreadyProcessed(clientRequestId);
-  if (existing) {
-    return res.status(200).json(existing); // idempotente
-  }
-}
-// ... procesar normalmente y guardar clientRequestId → server_id
-```
+La evidencia completa está en
+`PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md`.
 
 ### Manejo de Fotos Offline
 

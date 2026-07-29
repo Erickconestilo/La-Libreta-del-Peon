@@ -161,6 +161,30 @@ Estado: corregido y validado en Galaxy con `topografo` mediante subida firmada r
 - No lanzar otra EAS salvo cambio móvil real.
 - No hay bloqueo técnico actual para QA validada; la siguiente decisión operativa es la matriz real de usuarios y obras.
 
+## Actualización de Auditoría — 2026-07-29
+
+- Se corrigió el uso de `crypto.randomUUID()` global, inexistente en Hermes,
+  mediante `expo-crypto`; los UUID se generan en el dispositivo y no contienen
+  datos del usuario.
+- El manejador de outbox valida `body` y `stationId` antes de enviar una fila
+  persistida al backend.
+- La sesión técnica solo se invalida ante errores reales de autenticación. Ante
+  un fallo transitorio de red conserva el token ya validado en `SecureStore`
+  para poder sincronizar al reconectar; no se imprimieron tokens ni contraseñas.
+- Idempotencia verificada contra Supabase real: repetición del mismo
+  `client_request_id` devolvió el mismo registro y el conteo permaneció en una
+  fila. Esto reduce duplicados por timeout/retry, pero no sustituye controles de
+  autorización ni RLS.
+- Logs del E2E: 0 `AndroidRuntime`/FATAL/TypeError y 0 errores 5xx o excepciones
+  del backend durante los escenarios aceptados.
+- `npm audit --omit=dev`: 11 moderadas, 0 high y 0 critical. La cadena afectada
+  es tooling Expo/config/xcode/uuid; el arreglo sugerido implica downgrade o
+  saltos incompatibles, por lo que no se aplicó `--force`.
+- `npx expo install --check`: pendientes de alinear `expo-network@6.0.1` a
+  `~56.0.5`, `react-native-maps@1.29.0` a `1.27.2` y
+  `react-native-screens@4.25.2` a `~4.26.0`. Debe hacerse como cambio aislado
+  con nueva build y QA, no dentro del fix E2E.
+
 ## Actualización de Auditoría - 2026-06-07
 
 - No aparecieron hallazgos nuevos en la verificación más reciente.

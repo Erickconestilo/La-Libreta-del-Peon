@@ -4,12 +4,25 @@
 
 - Proyecto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield`.
 - Repo remoto: `https://github.com/Erickconestilo/La-Libreta-del-Peon.git`.
-- Rama actual: `main`.
+- Rama actual: `phase-2-device-e2e`.
 - Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` este disponible.
-- Estado actual: backend con script de matriz real de membresías (`npm run sync:project-memberships`) listo para operar en local.
+- Estado actual: Fase 2 offline cerrada en Galaxy con backend local actual y Supabase real; pendiente integrar rama y desplegar backend antes de piloto.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
 - APK local actual generada en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+
+## Actualización prioritaria — 2026-07-29
+
+- Informe fuente: `PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md`.
+- `crypto.randomUUID()` fallaba en Hermes; corregido con `expo-crypto` y `createRandomId()`.
+- El motor de sync ya arranca globalmente después de SQLite y de la sesión, no al entrar en una estación.
+- Una sesión técnica previamente validada se conserva si falla la red; un 401 real la sigue invalidando.
+- E2E real: tres mensajes offline terminaron `synced` en SQLite y una sola vez en Supabase con `client_request_id`.
+- La prueba más estricta quitó `adb reverse` del backend antes de reabrir: la app arrancó offline en `Obras`, inicializó el motor y sincronizó al volver la red sin abrir una estación.
+- Repetición controlada del UUID `a9698cea-4d64-4382-8182-7a271315e075`: HTTP 201 devolvió el mismo registro y Supabase mantuvo una fila.
+- Verificación: backend 23/23, móvil 28/28, TypeScript limpio, export Android completo.
+- No se usó EAS ni se desplegó nada.
+- Pendiente no bloqueante: alinear las tres dependencias indicadas por `expo install --check` y vigilar 11 alertas moderadas upstream; no usar `npm audit fix --force`.
 
 ## Para Continuar en Codex Cloud
 

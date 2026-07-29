@@ -300,6 +300,36 @@ APK generada:
 C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
 ```
 
+### Build debug arm64 usada en el E2E offline del 29-07-2026
+
+Una regeneración limpia volvió a seleccionar Java 25 y perdió la ruta del SDK.
+El build correcto fijó ambas rutas en la misma consola y limitó la compilación
+al ABI del Galaxy:
+
+```powershell
+$env:JAVA_HOME='C:\Users\guill\scoop\apps\temurin17-jdk\current'
+$env:ANDROID_HOME='C:\Users\guill\scoop\apps\android-clt\current'
+$env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
+$env:Path="$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:Path"
+
+Set-Location C:\tf\apps\mobile\android
+.\gradlew.bat app:assembleDebug `
+  -PreactNativeArchitectures=arm64-v8a `
+  --no-daemon `
+  --console=plain
+```
+
+Resultado literal:
+
+```text
+BUILD SUCCESSFUL in 1m 2s
+348 actionable tasks: 32 executed, 316 up-to-date
+```
+
+Sin `-PreactNativeArchitectures=arm64-v8a`, el build limpio compila también
+ABIs de emulador y 32 bits y puede tardar mucho más. Java 25 produjo el error
+`JvmVendorSpec ... IBM_SEMERU`; JDK 17 es obligatorio en esta máquina.
+
 ## 18. Comprobacion del dispositivo y prueba de instalacion
 
 Se confirmo el Galaxy por ADB:

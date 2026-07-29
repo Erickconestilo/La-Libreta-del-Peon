@@ -1,5 +1,26 @@
 # QA_ANDROID_GALAXY.md — Prueba APK TopoField
 
+## Cierre E2E offline — 2026-07-29
+
+- Dispositivo: Galaxy `SM-S938B` / ADB `R5CY21X6FLE`.
+- Build: Gradle local debug `arm64-v8a`, sin EAS.
+- Cuenta: sesión técnica real `topografo`.
+- Escenario 1: mensaje creado en modo avión quedó `pending` en SQLite y pasó
+  automáticamente a `synced` al reconectar.
+- Escenario 2: mensaje persistió tras `force-stop` y reapertura offline; después
+  sincronizó una sola vez.
+- Prueba endurecida: se quitó también `adb reverse` del backend antes de
+  reabrir. El motor arrancó desde `Obras`, sin entrar en estación, y sincronizó
+  al recuperar red.
+- Supabase real confirmó una fila por cada `client_request_id`.
+- Replay manual del segundo UUID devolvió el mismo ID de servidor sin crear
+  otra fila.
+- UI final: los mensajes nuevos aparecen en `Mensajes del equipo`.
+- Logs: 0 errores runtime/FATAL de TopoField y 0 errores backend 5xx.
+- Regresión: móvil 28/28, backend 23/23, TypeScript y export Android OK.
+- Evidencia completa:
+  `PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md`.
+
 ## Estado operativo actual — 2026-06-03
 
 - APK instalada en Galaxy: `dbcb7a7b-47a5-4abb-a643-c76d63bb5960`, archivo `C:\Users\guill\Downloads\topofield-dbcb7a7b-admin-project.apk`.
@@ -541,3 +562,32 @@ $AppPid = (& $ADB shell pidof com.ciudadanoinusual.topofield).Trim()
 - Modal apertura externa: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_02_external.png`
 - Google Maps abierto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_maps_03_google_maps.png`
 - Edición de notas visible: `C:\Users\guill\Documents\Aplicacion_Movil\topofield_note_04_edit_mode.png`
+
+## Resultado E2E offline e instalación autónoma — 2026-07-29
+
+- Galaxy conectado: `R5CY21X6FLE`.
+- Fase 2 offline validada con backend local idempotente y Supabase real:
+  - tres mensajes sincronizados;
+  - persistencia tras cierre forzado;
+  - arranque frío sin backend accesible;
+  - una sola fila por `client_request_id`;
+  - replay controlado sin duplicado.
+- Regresión:
+  - móvil `28/28`;
+  - backend `23/23`;
+  - TypeScript móvil sin errores;
+  - export Android correcto;
+  - errores runtime del dispositivo `0`;
+  - errores backend durante la prueba `0`.
+- APK autónoma final:
+  - `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`;
+  - 53.051.310 bytes;
+  - SHA-256 `DF7907448F07C6227ABD7263B6AB1E1A16BDF685D8D34FD6936134B89061B554`;
+  - instalación ADB: `Success`;
+  - abre con Metro detenido y sin `adb reverse`;
+  - actividad en primer plano: `com.ciudadanoinusual.topofield/.MainActivity`;
+  - `FATAL_OR_RUNTIME_ERRORS=0`.
+- Play Protect pidió permiso para enviar la build local a Google. Se eligió
+  `No enviar`; la app se instaló sin desactivar la protección del sistema.
+- Esta APK usa firma de depuración y queda solo para prueba local. No sustituye
+  la firma estable requerida para distribución o Play Store.
