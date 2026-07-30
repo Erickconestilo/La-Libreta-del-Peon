@@ -1,9 +1,27 @@
 # ADR 001: Adoptar el esquema "obras" como modelo de dominio de faenas
 
-**Estado:** Aprobado  
-**Fecha:** 2026-07-26  
-**Decisor:** Erick  
+**Estado:** ⚠️ **SUPERSEDIDO (29-07-2026) — ver nota abajo. No usar esta decisión.**
+**Fecha:** 2026-07-26
+**Decisor:** Erick
 **Contexto documentado en:** `MEMORIA.md` §3, §10; `FASE_0_INVENTARIO_COMPLETO.md` §6
+
+---
+
+## ⚠️ Nota de corrección (29-07-2026, Cowork)
+
+**Esta decisión se basó en un error de proyecto Supabase.** Verificado directamente con `list_tables`/`information_schema` el 29-07-2026:
+
+- Las 6 tablas `obras/campanas/jornadas/sensores/mediciones/estacionamientos` (con las mismas filas: 6/7/0/72/145/22) **no están en el proyecto `topofield`** (`tmlexrsnxpmykbpeebri`, el que usa realmente `apps/backend/.env`). **Están en el proyecto `topotask-backend`** (`jwckuoiossieiyankkvh`), que además tiene `organizations`/`portfolios`/`asset_nodes` — parece ser la base de datos real de TopoTask, no un simple resto de archivos.
+- El backend de TopoField nunca ha podido leer esas tablas, aunque quisiera: están en otra base de datos.
+- Todo el razonamiento de este ADR (Fase 0 hasta aquí) se basó en un inventario que mezcló los dos proyectos Supabase sin darse cuenta.
+
+**Decisión de Erick (29-07-2026):** reconocer el error y diseñar el modelo de datos de faenas desde cero dentro de `topofield` — no migrar ni adoptar la familia `obras`.
+
+**Hallazgo relevante para la nueva decisión:** el proyecto `topofield` ya tiene una migración completa y sin aplicar (`apps/backend/migrations/deprecated/014_monitoring_rounds.sql`) diseñada específicamente sobre la tabla `projects` real de este proyecto — `instrument_types`, `control_points`, `monitoring_rounds`, `monitoring_round_points`, `instrument_readings`, `reading_attachments`, `control_point_thresholds`, `project_code_catalog`, `project_rules` — con idempotencia ya resuelta (`client_request_id` UNIQUE) y lógica de umbrales ya escrita y probada (`monitoring-reading-evaluation.ts`, con tests en verde). Además hay código de controller/model ya escrito para una parte de esto (`monitoring.controller.ts`, `monitoring.model.ts`) y rutas ya montadas para 2 de sus endpoints. Ver discusión de continuación en `MEMORIA.md` §9/§12 (29-07-2026).
+
+El resto de este documento se conserva sin editar como registro histórico de por qué se tomó (erróneamente) la decisión original.
+
+---
 
 ---
 
