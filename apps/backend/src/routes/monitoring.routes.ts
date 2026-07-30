@@ -1,14 +1,28 @@
 import { Router } from 'express';
 
 import {
+  createControlPointThresholdController,
   createInstrumentReadingController,
-  createRoundPointController
+  createRoundPointController,
+  getMonitoringRoundDetailController,
+  getReadingHistoryController,
+  listControlPointThresholdsController,
+  updateControlPointController
 } from '../controllers/monitoring.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateUuidParam } from '../middleware/validate-uuid.js';
 
 export const roundsRouter = Router();
 export const roundPointsRouter = Router();
+export const controlPointsRouter = Router();
+
+roundsRouter.get(
+  '/:roundId',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('roundId'),
+  getMonitoringRoundDetailController
+);
 
 roundsRouter.post(
   '/:roundId/points',
@@ -24,4 +38,36 @@ roundPointsRouter.post(
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundPointId'),
   createInstrumentReadingController
+);
+
+controlPointsRouter.patch(
+  '/:controlPointId',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('controlPointId'),
+  updateControlPointController
+);
+
+controlPointsRouter.get(
+  '/:controlPointId/readings',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('controlPointId'),
+  getReadingHistoryController
+);
+
+controlPointsRouter.post(
+  '/:controlPointId/thresholds',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('controlPointId'),
+  createControlPointThresholdController
+);
+
+controlPointsRouter.get(
+  '/:controlPointId/thresholds',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('controlPointId'),
+  listControlPointThresholdsController
 );

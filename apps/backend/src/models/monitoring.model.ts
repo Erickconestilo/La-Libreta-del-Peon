@@ -5,8 +5,15 @@ import { AppError } from '../lib/app-error.js';
 import { evaluateReadingStatus } from '../lib/monitoring-reading-evaluation.js';
 import type {
   ValidatedCodeCatalogQuery,
+  ValidatedCreateControlPointInput,
+  ValidatedCreateControlPointThresholdInput,
   ValidatedCreateInstrumentReadingInput,
-  ValidatedCreateRoundPointInput
+  ValidatedCreateMonitoringRoundInput,
+  ValidatedCreateRoundPointInput,
+  ValidatedListControlPointsQuery,
+  ValidatedListMonitoringRoundsQuery,
+  ValidatedReadingHistoryQuery,
+  ValidatedUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 
 type ProjectScope = {
@@ -72,6 +79,57 @@ const mapReadingRow = (row: Record<string, unknown>) => ({
   updatedAt: row.updated_at,
   valueNumeric: row.value_numeric,
   valueText: row.value_text
+});
+
+const mapRoundRow = (row: Record<string, unknown>) => ({
+  createdAt: row.created_at,
+  createdBy: row.created_by,
+  fieldConditions: row.field_conditions,
+  id: row.id,
+  instrumentSerial: row.instrument_serial,
+  name: row.name,
+  operatorId: row.operator_id,
+  projectId: row.project_id,
+  roundDate: row.round_date,
+  status: row.status,
+  updatedAt: row.updated_at
+});
+
+const mapRoundPointWithControlPointRow = (row: Record<string, unknown>) => ({
+  ...mapRoundPointRow(row),
+  controlPointCode: row.control_point_code,
+  controlPointName: row.control_point_name
+});
+
+const mapControlPointRow = (row: Record<string, unknown>) => ({
+  code: row.code,
+  createdAt: row.created_at,
+  environment: row.environment,
+  id: row.id,
+  isActive: row.is_active,
+  name: row.name,
+  notes: row.notes,
+  pk: row.pk,
+  projectId: row.project_id,
+  seccion: row.seccion,
+  side: row.side,
+  tramo: row.tramo,
+  updatedAt: row.updated_at,
+  zona: row.zona
+});
+
+const mapThresholdRow = (row: Record<string, unknown>) => ({
+  alarmValue: row.alarm_value === null || row.alarm_value === undefined ? null : Number(row.alarm_value),
+  controlPointId: row.control_point_id,
+  createdAt: row.created_at,
+  createdBy: row.created_by,
+  id: row.id,
+  instrumentType: row.instrument_type,
+  unit: row.unit,
+  updatedAt: row.updated_at,
+  validFrom: row.valid_from,
+  validTo: row.valid_to,
+  warningValue: row.warning_value === null || row.warning_value === undefined ? null : Number(row.warning_value)
 });
 
 const mapCodeCatalogRow = (row: Record<string, unknown>) => ({
@@ -207,6 +265,376 @@ const getRoundPointContext = async (
     expectedInstrumentType: result.rows[0].expected_instrument_type as string,
     projectId: result.rows[0].project_id as string
   };
+};
+
+const resolveControlPointContext = async (controlPointId: string, projectScope: string[] | null) => {
+  const scope = buildProjectScopeCondition(projectScope, 'cp', 2);
+  const result = await pool.query(
+    `
+      SELECT cp.id, cp.project_id
+      FROM control_points cp
+      WHERE cp.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [controlPointId, ...scope.params]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    id: result.rows[0].id as string,
+    projectId: result.rows[0].project_id as string
+  };
+};
+
+export const createMonitoringRound = async (
+  projectId: string,
+  input: ValidatedCreateMonitoringRoundInput,
+  createdBy: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildProjectScopeCondition(projectScope, 'p', 9);
+  const result = await pool.query(
+    `
+      INSERT INTO monitoring_rounds (
+        project_id,
+        name,
+        round_date,
+        status,
+        operator_id,
+        instrument_serial,
+        field_conditions,
+        created_by
+      )
+      SELECT p.id, $2, $3::date, $4, $5, $6, $7, $8
+      FROM projects p
+      WHERE p.id = $1
+      ${scope.clause}
+      RETURNING *
+    `,
+    [
+      projectId,
+      input.name.trim(),
+      input.roundDate,
+      input.status,
+      input.operatorId ?? null,
+      input.instrumentSerial?.trim() || null,
+      input.fieldConditions ?? null,
+      createdBy,
+      ...scope.params
+    ]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapRoundRow(result.rows[0]);
+};
+
+export const listMonitoringRounds = async (
+  projectId: string,
+  query: ValidatedListMonitoringRoundsQuery,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildProjectScopeCondition(projectScope, 'mr', 2);
+  const params: unknown[] = [projectId, ...scope.params];
+  const filters: string[] = [];
+
+  if (query.status) {
+    params.push(query.status);
+    filters.push(`AND mr.status = $${params.length}`);
+  }
+
+  params.push(query.limit);
+  const limitParamIndex = params.length;
+  params.push(query.offset);
+  const offsetParamIndex = params.length;
+
+  const result = await pool.query(
+    `
+      SELECT mr.*
+      FROM monitoring_rounds mr
+      WHERE mr.project_id = $1
+      ${scope.clause}
+      ${filters.join('\n')}
+      ORDER BY mr.round_date DESC, mr.created_at DESC
+      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+    `,
+    params
+  );
+
+  return result.rows.map(mapRoundRow);
+};
+
+export const getMonitoringRoundDetail = async (roundId: string, projectScope: string[] | null = null) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const roundResult = await pool.query(
+    `
+      SELECT mr.*
+      FROM monitoring_rounds mr
+      WHERE mr.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundId, ...scope.params]
+  );
+
+  if (roundResult.rowCount === 0) {
+    return null;
+  }
+
+  const pointsResult = await pool.query(
+    `
+      SELECT
+        mrp.*,
+        cp.code AS control_point_code,
+        cp.name AS control_point_name
+      FROM monitoring_round_points mrp
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
+      WHERE mrp.round_id = $1
+      ORDER BY mrp.sort_order ASC, mrp.created_at ASC
+    `,
+    [roundId]
+  );
+
+  return {
+    ...mapRoundRow(roundResult.rows[0]),
+    points: pointsResult.rows.map(mapRoundPointWithControlPointRow)
+  };
+};
+
+export const createControlPoint = async (
+  projectId: string,
+  input: ValidatedCreateControlPointInput,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildProjectScopeCondition(projectScope, 'p', 11);
+  const result = await pool.query(
+    `
+      INSERT INTO control_points (
+        project_id,
+        code,
+        name,
+        environment,
+        pk,
+        tramo,
+        zona,
+        seccion,
+        side,
+        notes
+      )
+      SELECT p.id, $2, $3, $4, $5, $6, $7, $8, $9, $10
+      FROM projects p
+      WHERE p.id = $1
+      ${scope.clause}
+      RETURNING *
+    `,
+    [
+      projectId,
+      input.code.trim(),
+      input.name?.trim() || null,
+      input.environment,
+      input.pk?.trim() || null,
+      input.tramo?.trim() || null,
+      input.zona?.trim() || null,
+      input.seccion?.trim() || null,
+      input.side ?? null,
+      input.notes?.trim() || null,
+      ...scope.params
+    ]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapControlPointRow(result.rows[0]);
+};
+
+export const listControlPoints = async (
+  projectId: string,
+  query: ValidatedListControlPointsQuery,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildProjectScopeCondition(projectScope, 'cp', 2);
+  const params: unknown[] = [projectId, ...scope.params];
+  const filters: string[] = [];
+
+  if (query.isActive !== undefined) {
+    params.push(query.isActive);
+    filters.push(`AND cp.is_active = $${params.length}`);
+  }
+
+  const result = await pool.query(
+    `
+      SELECT cp.*
+      FROM control_points cp
+      WHERE cp.project_id = $1
+      ${scope.clause}
+      ${filters.join('\n')}
+      ORDER BY cp.code ASC
+    `,
+    params
+  );
+
+  return result.rows.map(mapControlPointRow);
+};
+
+export const updateControlPoint = async (
+  controlPointId: string,
+  input: ValidatedUpdateControlPointInput,
+  projectScope: string[] | null = null
+) => {
+  const setClauses: string[] = [];
+  const params: unknown[] = [controlPointId];
+
+  const fieldMap: Array<[keyof ValidatedUpdateControlPointInput, string]> = [
+    ['environment', 'environment'],
+    ['isActive', 'is_active'],
+    ['name', 'name'],
+    ['notes', 'notes'],
+    ['pk', 'pk'],
+    ['seccion', 'seccion'],
+    ['side', 'side'],
+    ['tramo', 'tramo'],
+    ['zona', 'zona']
+  ];
+
+  for (const [inputKey, column] of fieldMap) {
+    if (input[inputKey] !== undefined) {
+      params.push(input[inputKey]);
+      setClauses.push(`${column} = $${params.length}`);
+    }
+  }
+
+  if (setClauses.length === 0) {
+    throw new AppError('No fields to update', 400, 'NO_FIELDS_TO_UPDATE');
+  }
+
+  const scope = buildProjectScopeCondition(projectScope, 'cp', params.length + 1);
+  params.push(...scope.params);
+
+  const result = await pool.query(
+    `
+      UPDATE control_points cp
+      SET ${setClauses.join(', ')}, updated_at = NOW()
+      WHERE cp.id = $1
+      ${scope.clause}
+      RETURNING cp.*
+    `,
+    params
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapControlPointRow(result.rows[0]);
+};
+
+export const createControlPointThreshold = async (
+  controlPointId: string,
+  input: ValidatedCreateControlPointThresholdInput,
+  createdBy: string,
+  projectScope: string[] | null = null
+) => {
+  const context = await resolveControlPointContext(controlPointId, projectScope);
+
+  if (!context) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `
+      INSERT INTO control_point_thresholds (
+        control_point_id,
+        instrument_type,
+        warning_value,
+        alarm_value,
+        unit,
+        valid_from,
+        valid_to,
+        created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8)
+      RETURNING *
+    `,
+    [
+      controlPointId,
+      input.instrumentType,
+      input.warningValue ?? null,
+      input.alarmValue ?? null,
+      input.unit.trim(),
+      input.validFrom,
+      input.validTo ?? null,
+      createdBy
+    ]
+  );
+
+  return mapThresholdRow(result.rows[0]);
+};
+
+export const listControlPointThresholds = async (controlPointId: string, projectScope: string[] | null = null) => {
+  const context = await resolveControlPointContext(controlPointId, projectScope);
+
+  if (!context) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM control_point_thresholds
+      WHERE control_point_id = $1
+      ORDER BY valid_from DESC
+    `,
+    [controlPointId]
+  );
+
+  return result.rows.map(mapThresholdRow);
+};
+
+export const getReadingHistory = async (
+  controlPointId: string,
+  query: ValidatedReadingHistoryQuery,
+  projectScope: string[] | null = null
+) => {
+  const context = await resolveControlPointContext(controlPointId, projectScope);
+
+  if (!context) {
+    return null;
+  }
+
+  const params: unknown[] = [controlPointId];
+  const filters: string[] = [];
+
+  if (query.instrumentType) {
+    params.push(query.instrumentType);
+    filters.push(`AND instrument_type = $${params.length}`);
+  }
+
+  params.push(query.limit);
+  const limitParamIndex = params.length;
+  params.push(query.offset);
+  const offsetParamIndex = params.length;
+
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM instrument_readings
+      WHERE control_point_id = $1
+      ${filters.join('\n')}
+      ORDER BY measured_at DESC, created_at DESC
+      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+    `,
+    params
+  );
+
+  return result.rows.map(mapReadingRow);
 };
 
 export const createMonitoringRoundPoint = async (

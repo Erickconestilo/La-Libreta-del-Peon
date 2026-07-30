@@ -12,7 +12,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { changeLogsRouter } from './routes/change-logs.routes.js';
 import { guideRouter } from './routes/guide.routes.js';
 import { incidentsRouter } from './routes/incidents.routes.js';
-import { roundPointsRouter, roundsRouter } from './routes/monitoring.routes.js';
+import { controlPointsRouter, roundPointsRouter, roundsRouter } from './routes/monitoring.routes.js';
 import { projectsRouter } from './routes/projects.routes.js';
 import { prismsRouter } from './routes/prisms.routes.js';
 import { stationsRouter } from './routes/stations.routes.js';
@@ -54,6 +54,7 @@ app.use(authenticateRequest);
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/change-logs', changeLogsRouter);
+app.use('/api/v1/control-points', controlPointsRouter);
 app.use('/api/v1/guide-entries', guideRouter);
 app.use('/api/v1/incidents', incidentsRouter);
 app.use('/api/v1/projects', projectsRouter);

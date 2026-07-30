@@ -5,15 +5,31 @@ import { AppError } from '../lib/app-error.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { parseProjectCodeCatalogCsv } from '../lib/project-code-catalog-csv.js';
 import {
+  createControlPoint,
+  createControlPointThreshold,
   createInstrumentReading,
+  createMonitoringRound,
   createMonitoringRoundPoint,
+  getMonitoringRoundDetail,
+  getReadingHistory,
   importProjectCodeCatalog,
-  listProjectCodeCatalog
+  listControlPoints,
+  listControlPointThresholds,
+  listMonitoringRounds,
+  listProjectCodeCatalog,
+  updateControlPoint
 } from '../models/monitoring.model.js';
 import {
   validateCodeCatalogQuery,
+  validateCreateControlPointInput,
+  validateCreateControlPointThresholdInput,
   validateCreateInstrumentReadingInput,
-  validateCreateRoundPointInput
+  validateCreateMonitoringRoundInput,
+  validateCreateRoundPointInput,
+  validateListControlPointsQuery,
+  validateListMonitoringRoundsQuery,
+  validateReadingHistoryQuery,
+  validateUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 
 const sendControllerError = (response: Response, error: unknown, fallbackCode: string, fallbackMessage: string) => {
@@ -152,5 +168,177 @@ export const importProjectCodeCatalogController = async (request: Request, respo
     sendSuccess(response, result, 201);
   } catch (error) {
     sendControllerError(response, error, 'CODE_CATALOG_IMPORT_FAILED', 'Unable to import project code catalog');
+  }
+};
+
+const routeParam = (request: Request, name: string) => {
+  const value = request.params[name];
+  return Array.isArray(value) ? value[0] : value;
+};
+
+export const createMonitoringRoundController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const projectId = routeParam(request, 'projectId');
+    assertProjectAccess(request.user, projectId);
+
+    const input = validateCreateMonitoringRoundInput(request.body);
+    const round = await createMonitoringRound(projectId, input, request.user.id, getActorProjectScope(request.user));
+
+    if (!round) {
+      throw new AppError('Project not found', 404, 'PROJECT_NOT_FOUND');
+    }
+
+    sendSuccess(response, round, 201);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUND_CREATE_FAILED', 'Unable to create monitoring round');
+  }
+};
+
+export const listMonitoringRoundsController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const projectId = routeParam(request, 'projectId');
+    assertProjectAccess(request.user, projectId);
+
+    const query = validateListMonitoringRoundsQuery(request.query);
+    const rounds = await listMonitoringRounds(projectId, query, getActorProjectScope(request.user));
+
+    sendSuccess(response, rounds);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUNDS_LIST_FAILED', 'Unable to load monitoring rounds');
+  }
+};
+
+export const getMonitoringRoundDetailController = async (request: Request, response: Response) => {
+  try {
+    const roundId = routeParam(request, 'roundId');
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+
+    if (!round) {
+      throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    }
+
+    sendSuccess(response, round);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUND_DETAIL_FAILED', 'Unable to load monitoring round');
+  }
+};
+
+export const createControlPointController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const projectId = routeParam(request, 'projectId');
+    assertProjectAccess(request.user, projectId);
+
+    const input = validateCreateControlPointInput(request.body);
+    const controlPoint = await createControlPoint(projectId, input, getActorProjectScope(request.user));
+
+    if (!controlPoint) {
+      throw new AppError('Project not found', 404, 'PROJECT_NOT_FOUND');
+    }
+
+    sendSuccess(response, controlPoint, 201);
+  } catch (error) {
+    sendControllerError(response, error, 'CONTROL_POINT_CREATE_FAILED', 'Unable to create control point');
+  }
+};
+
+export const listControlPointsController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const projectId = routeParam(request, 'projectId');
+    assertProjectAccess(request.user, projectId);
+
+    const query = validateListControlPointsQuery(request.query);
+    const controlPoints = await listControlPoints(projectId, query, getActorProjectScope(request.user));
+
+    sendSuccess(response, controlPoints);
+  } catch (error) {
+    sendControllerError(response, error, 'CONTROL_POINTS_LIST_FAILED', 'Unable to load control points');
+  }
+};
+
+export const updateControlPointController = async (request: Request, response: Response) => {
+  try {
+    const controlPointId = routeParam(request, 'controlPointId');
+    const input = validateUpdateControlPointInput(request.body);
+    const controlPoint = await updateControlPoint(controlPointId, input, getActorProjectScope(request.user));
+
+    if (!controlPoint) {
+      throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    }
+
+    sendSuccess(response, controlPoint);
+  } catch (error) {
+    sendControllerError(response, error, 'CONTROL_POINT_UPDATE_FAILED', 'Unable to update control point');
+  }
+};
+
+export const createControlPointThresholdController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const controlPointId = routeParam(request, 'controlPointId');
+    const input = validateCreateControlPointThresholdInput(request.body);
+    const threshold = await createControlPointThreshold(
+      controlPointId,
+      input,
+      request.user.id,
+      getActorProjectScope(request.user)
+    );
+
+    if (!threshold) {
+      throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    }
+
+    sendSuccess(response, threshold, 201);
+  } catch (error) {
+    sendControllerError(response, error, 'THRESHOLD_CREATE_FAILED', 'Unable to create control point threshold');
+  }
+};
+
+export const listControlPointThresholdsController = async (request: Request, response: Response) => {
+  try {
+    const controlPointId = routeParam(request, 'controlPointId');
+    const thresholds = await listControlPointThresholds(controlPointId, getActorProjectScope(request.user));
+
+    if (!thresholds) {
+      throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    }
+
+    sendSuccess(response, thresholds);
+  } catch (error) {
+    sendControllerError(response, error, 'THRESHOLDS_LIST_FAILED', 'Unable to load control point thresholds');
+  }
+};
+
+export const getReadingHistoryController = async (request: Request, response: Response) => {
+  try {
+    const controlPointId = routeParam(request, 'controlPointId');
+    const query = validateReadingHistoryQuery(request.query);
+    const history = await getReadingHistory(controlPointId, query, getActorProjectScope(request.user));
+
+    if (!history) {
+      throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    }
+
+    sendSuccess(response, history);
+  } catch (error) {
+    sendControllerError(response, error, 'READING_HISTORY_FAILED', 'Unable to load reading history');
   }
 };

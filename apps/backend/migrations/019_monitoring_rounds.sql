@@ -1,7 +1,12 @@
--- REACTIVADA el 30-07-2026 como migrations/019_monitoring_rounds.sql
--- (el descarte de esta migracion se baso en parte en un ADR con datos de un
--- proyecto Supabase equivocado; ver README.md de este directorio y
--- MEMORIA.md). Este archivo se conserva como registro historico, no aplicar.
+-- Origen: apps/backend/migrations/deprecated/014_monitoring_rounds.sql
+-- Reactivada el 30-07-2026 tras corregir el ADR 001 (se basaba en tablas obras/*
+-- que viven en el proyecto Supabase equivocado, topotask-backend, no topofield).
+-- Ver MEMORIA.md secciones 8, 9 y 12 (entradas del 29 y 30-07-2026).
+--
+-- Cambio respecto al original: se quita 'total_station' del catalogo de
+-- instrument_types. Ese instrumento ya tiene tabla propia real y en uso
+-- (prism_monitoring_observations, migracion 005); incluirlo aqui duplicaba
+-- el mismo dato en dos sitios.
 
 CREATE TABLE IF NOT EXISTS instrument_types (
   code TEXT PRIMARY KEY,
@@ -13,7 +18,6 @@ CREATE TABLE IF NOT EXISTS instrument_types (
 
 INSERT INTO instrument_types (code, name, default_unit)
 VALUES
-  ('total_station', 'Estacion total', NULL),
   ('digital_level', 'Nivel digital', 'mm'),
   ('piezometer', 'Piezometro', 'm'),
   ('distometer', 'Distanciometro', 'mm'),

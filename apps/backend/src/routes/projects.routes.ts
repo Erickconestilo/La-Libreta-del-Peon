@@ -1,7 +1,11 @@
 import express, { Router } from 'express';
 
 import {
+  createControlPointController,
+  createMonitoringRoundController,
   importProjectCodeCatalogController,
+  listControlPointsController,
+  listMonitoringRoundsController,
   listProjectCodeCatalogController
 } from '../controllers/monitoring.controller.js';
 import {
@@ -45,4 +49,32 @@ projectsRouter.patch(
   requireRole(['admin', 'topografo']),
   validateUuidParam('projectId'),
   updateProjectPhotoController
+);
+projectsRouter.get(
+  '/:projectId/rounds',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('projectId'),
+  listMonitoringRoundsController
+);
+projectsRouter.post(
+  '/:projectId/rounds',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('projectId'),
+  createMonitoringRoundController
+);
+projectsRouter.get(
+  '/:projectId/control-points',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'visitante']),
+  validateUuidParam('projectId'),
+  listControlPointsController
+);
+projectsRouter.post(
+  '/:projectId/control-points',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('projectId'),
+  createControlPointController
 );

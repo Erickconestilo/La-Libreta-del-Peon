@@ -61,6 +61,25 @@ Por ahora, **no se aplica** y el modelo `obras` es la fuente de verdad para faen
 
 ---
 
-**Última actualización:** 2026-07-26  
-**Decisor:** Erick  
+## Actualización 30-07-2026: reactivada como migración 019
+
+El ADR 001 en el que se apoyaba el descarte resultó estar basado en un error de
+proyecto Supabase: las tablas `obras/campanas/jornadas/sensores/mediciones/estacionamientos`
+con datos reales viven en `topotask-backend`, no en `topofield`. El backend de
+TopoField nunca pudo leerlas. Con esa premisa fuera de juego, Erick decidió
+reactivar este diseño en `migrations/019_monitoring_rounds.sql`, con un ajuste:
+se quita `total_station` del catálogo `instrument_types` porque ya tiene tabla
+propia (`prism_monitoring_observations`, migración 005). El resto del diseño
+(rounds, control points, thresholds, blob de lectura escalar) se mantiene: para
+instrumentos de valor único (nivel digital, piezómetro, distanciómetro,
+inclinómetro, regla de peralte) `valueNumeric + unit` es una representación
+adecuada, no el antipatrón que sí sería forzar ahí datos vectoriales.
+
+Este archivo (`014_monitoring_rounds.sql`) se conserva sin cambios como
+registro histórico de la decisión original; no debe aplicarse.
+
+---
+
+**Última actualización:** 2026-07-26 (descarte original), 30-07-2026 (reactivación)
+**Decisor:** Erick
 **Documentado por:** Claude Code
