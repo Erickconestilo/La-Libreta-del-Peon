@@ -79,9 +79,13 @@ function startConnectivityMonitoring(syncCallback: (item: OutboxItem) => Promise
     void (async () => {
       const connected = await hasConnectivity();
 
-      // Si pasamos de desconectado a conectado, flush inmediato
-      if (connected && lastConnectivityState === false) {
-        console.log('[SyncEngine] Connectivity restored, flushing outbox...');
+      if (connected) {
+        if (lastConnectivityState === false) {
+          console.log('[SyncEngine] Connectivity restored, flushing outbox...');
+        }
+
+        // Un fallo transitorio del servidor no cambia la conectividad. Hacer
+        // flush en cada sondeo permite que el backoff de la outbox se cumpla.
         void flushOutbox(syncCallback);
       }
 
@@ -178,9 +182,13 @@ async function syncItem(item: OutboxItem, syncCallback: (item: OutboxItem) => Pr
     console.log(`[SyncEngine] Item ${item.id} synced successfully`);
     return true;
   } catch (err: unknown) {
-    const error = err as { message?: string; status?: number; code?: string };
+    const error = err as { code?: string; message?: string; rawMessage?: string | null; status?: number };
 
-    console.error(`[SyncEngine] Failed to sync item ${item.id}:`, error);
+    console.error(
+      `[SyncEngine] Failed to sync item ${item.id} ` +
+      `(status=${error.status ?? 'unknown'} code=${error.code ?? 'unknown'} ` +
+      `message=${error.rawMessage ?? error.message ?? 'unknown'})`
+    );
 
     // Clasificar el error
     const errorType = classifyError(error);

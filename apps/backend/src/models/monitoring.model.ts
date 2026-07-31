@@ -58,6 +58,14 @@ export const buildProjectScopeCondition = (
   };
 };
 
+export const toIsoTimestamp = (value: unknown) => {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return new Date(String(value)).toISOString();
+};
+
 const mapRoundPointRow = (row: Record<string, unknown>) => ({
   controlPointId: row.control_point_id,
   createdAt: row.created_at,
@@ -750,17 +758,18 @@ export const createInstrumentReading = async (
         return null;
       }
 
+      const existingMeasuredAt = toIsoTimestamp(existingReading.measuredAt);
       const threshold = await getApplicableThreshold(
         client,
         context.controlPointId,
         context.expectedInstrumentType,
-        String(existingReading.measuredAt)
+        existingMeasuredAt
       );
       const previousValue = await getPreviousConfirmedValue(
         client,
         context.controlPointId,
         context.expectedInstrumentType,
-        String(existingReading.measuredAt),
+        existingMeasuredAt,
         String(existingReading.id)
       );
       const autoConfirmGreen = await getAutoConfirmGreen(client, context.projectId);

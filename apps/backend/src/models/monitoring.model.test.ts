@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildProjectScopeCondition } from './monitoring.model.js';
+import { buildProjectScopeCondition, toIsoTimestamp } from './monitoring.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -24,4 +24,15 @@ test('uses project_id by default for monitoring child tables', () => {
 
   assert.equal(scope.clause, 'AND mr.project_id = ANY($3::uuid[])');
   assert.deepEqual(scope.params, [['11111111-1111-1111-1111-111111111111']]);
+});
+
+test('normalizes database timestamps before an idempotent reading retry', () => {
+  assert.equal(
+    toIsoTimestamp(new Date('2026-07-31T08:45:25.061Z')),
+    '2026-07-31T08:45:25.061Z'
+  );
+  assert.equal(
+    toIsoTimestamp('2026-07-31T08:45:25.061Z'),
+    '2026-07-31T08:45:25.061Z'
+  );
 });
