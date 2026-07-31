@@ -1,15 +1,17 @@
 # NEXT_CHAT_HANDOFF.md
 
-## Contexto Rápido
+**Leer primero `MEMORIA.md` completo (fuente de verdad con fecha de verificación por sección). Este archivo es un resumen rápido de arranque, no la referencia autoritativa.**
+
+## Contexto Rápido (actualizado 2026-07-30)
 
 - Proyecto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield`.
 - Repo remoto: `https://github.com/Erickconestilo/La-Libreta-del-Peon.git`.
-- Rama actual: `phase-2-device-e2e`.
-- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
-- Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` este disponible.
-- Estado actual: Fase 2 offline cerrada en Galaxy con backend local actual y Supabase real; pendiente integrar rama y desplegar backend antes de piloto.
+- Rama actual: `main` (la rama `phase-2-device-e2e` ya se fusionó por fast-forward el 2026-07-29 y fue borrada, junto con `phase-2-fix-mocks` y `phase-2-backend-idempotency`; local va por delante de `origin/main`, sin push todavía).
+- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — **desactualizado respecto a `main` local**: no incluye todavía `client_request_id` en `station_messages` (migración 018) ni el backend de Fase 3 (`monitoring_rounds`, migración 019). Pendiente desplegar antes de cualquier piloto real.
+- Supabase real: proyecto `topofield` (`tmlexrsnxpmykbpeebri`, región eu-north-1). Existe un segundo proyecto, `topotask-backend` (`jwckuoiossieiyankkvh`), que es una base de datos ajena — no confundirlos (ver ADR 001, corrección 2026-07-29).
+- Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` esté disponible.
+- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 (motor offline) cerrada y validada en dispositivo real. Fase 3 (MVP de faenas semanales) en construcción sobre `monitoring_rounds` — backend completo y migración 019 ya aplicada a Supabase; pendiente decidir/aplicar políticas RLS en las 9 tablas nuevas y construir las pantallas móviles.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
-- APK local actual generada en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
 
 ## Actualización prioritaria — 2026-07-29
 
@@ -24,82 +26,22 @@
 - No se usó EAS ni se desplegó nada.
 - Pendiente no bloqueante: alinear las tres dependencias indicadas por `expo install --check` y vigilar 11 alertas moderadas upstream; no usar `npm audit fix --force`.
 
-## Para Continuar en Codex Cloud
+## Actualización — 2026-07-30 (Fase 3 backend: monitoring_rounds)
 
-- Leer primero este archivo, `QA_ANDROID_GALAXY.md`, `PLAN.md`, `SECURITY_AUDIT_PROGRESS.md`, `PROJECT_MEMBERSHIPS_MATRIX.md` y `AGENTS.md`.
-- Nota de fecha actual (2026-06-07): el trabajo en curso prioriza `project_memberships` real por matriz usuario-obra; sin EAS todavía.
-- Último commit funcional móvil: `e39a01d`, fix para que login/refresh por cuenta no manden un bearer viejo o visitante.
-- Último commit funcional incluido en la APK instalada: `e39a01d`.
-- Codex Cloud podrá trabajar sobre el repo y backend, pero no debe asumir acceso al Galaxy local, ADB, APK descargada ni `topofield-session-tokens.local`.
-- Si se necesita QA móvil real, volver a este entorno local con el Galaxy conectado.
-- No exponer ni pegar tokens en GitHub, docs ni respuestas. El archivo `topofield-session-tokens.local` queda local e ignorado por git.
-- Próximo bloque recomendado: validar en campo la APK `01e691fc`: `Nueva obra` como admin, cambio admin/topógrafo si se entra con cuenta topógrafo, `Bitácora`, guías, fotos y croquis del prisma `626`.
-- Nueva intención del usuario: empezar a meter datos reales trabajando con ambos roles `topografo` y `admin`.
-- APK instalada actual: `01e691fc`; contiene multi-sesión técnica, creación de obra admin, Bitácora tipo chat, fixes de Guías/croquis y el fix de login por cuenta sin bearer viejo.
-- Galaxy queda con sesión `admin` activa por correo/clave con refresh token. El usuario puede usar el móvil para crear datos como admin.
-- No se guardan contraseñas en docs ni GitHub. Si se necesita recordatorio, usar canal privado del usuario; no commitear secretos.
-- El usuario reportó el 2026-06-05 que la app se quedaba a menudo en `Cargando obras...` y que no pudo agregar fotos.
-- Fix móvil aplicado y empujado:
-  - `ce03884` añade timeout a `apiFetch` y a subidas de foto, y evita ocultar errores reales de `/projects` con fallback a `/stations`.
-  - `c15a462` muestra recuperación si `Obras` tarda más de 7 s y desactiva retry silencioso global de React Query.
-- Fix backend aplicado y empujado:
-  - `c7bdea4` corrige `PATCH /stations/:id/photo` y `/notes` para `topografo` declarando alias `stations s`; también agrupa el `OR` en `/prisms/coverage/:groupCode` para respetar scope por obra.
-- Render desplegado y verificado en `c7bdea4ccb2f9fcc7eba231c6b400c29de2a8ce9`.
-- Smoke backend tras deploy: health 200, lecturas visitante 200, escritura sin token 401, y prueba topógrafo no destructiva OK (`/uploads/photos/sign` 201, `PATCH /stations/:id/photo` 200, `PATCH /stations/:id/notes` 200).
-- Estado repo/backend verificado el 2026-06-07:
-  - `origin/main` y local estaban en `2fd2eb2fab825f3d9df84dfa631d037ac0608e67`; luego se empujó `3a689bc` con `verify:pre-apk`.
-  - Render `GET /health` publicaba `2fd2eb2` en la comprobación previa al push.
-  - `npm run verify:pre-apk` pasa completo: build backend, TypeScript móvil, `verify:project-memberships` y `expo export --platform android`.
-- Commits posteriores relevantes al handoff anterior:
-  - `14b8549` aplica scope real por `project_memberships` y añade `sync:project-memberships`.
-  - `076e866` recupera lecturas públicas si hay sesión técnica inválida.
-  - `b628573` añade pantalla móvil `daily-report`.
-  - `2fd2eb2` añade `verify:project-memberships` como smoke test backend real.
-- Estado actual de matriz técnica:
-  - `topofield-topografo@topofield.local` queda limitado a `campus-nord` y `maragall` según `data/project-memberships.json`.
-- Cambio local preparado y aún sin commit en esta sesión:
-  - Ya no pendiente: quedó guardado en commit `3a689bc` (`chore(repo): add pre-apk verification`) y empujado a `origin/main`.
-- Operación de membresías ejecutada el 2026-06-07:
-  - `TOPOFIELD_ALLOW_PRODUCTION_WRITE=sync-project-memberships npm run sync:project-memberships --workspace apps/backend`
-  - Resultado: 1 cuenta sincronizada, 1 fila actualizada, 0 membresías nuevas, 0 desactivadas.
-- Intento de APK nueva el 2026-06-07:
-  - `npx eas-cli build --platform android --profile preview --non-interactive`
-  - La subida del proyecto y credenciales Android fueron correctas.
-  - Bloqueo real: cuota mensual de Android builds agotada en el plan free de Expo.
-  - Reset indicado por EAS: `2026-07-01`.
-- Ruta local Windows resuelta el 2026-06-07:
-  - Instalado `android-clt` con `scoop`.
-  - Instalado `temurin17-jdk` con `scoop`.
-  - `expo prebuild --clean --platform android --no-install` funciona.
-  - Build Gradle local reproducible validada con ruta corta `C:\tf` y ABI `arm64-v8a`.
-  - Wrapper añadido: `npm run mobile:build-local-android`.
-  - APK generada en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
-  - Intento de instalar sobre la APK EAS existente falla con `INSTALL_FAILED_UPDATE_INCOMPATIBLE` porque la build local usa otra firma.
-  - `eas build --local` no sirve en este Windows: el CLI exige macOS o Linux para Android local.
-- Build móvil nueva finalizada: EAS `6b0e7b85-fc46-4e3d-aa0e-0f74a2b29657`, commit `c15a462`.
-- APK URL: https://expo.dev/artifacts/eas/edKpZXGBoibv1wP3LR1mUP.apk
-- APK local: `C:\Users\guill\Downloads\topofield-6b0e7b85-loading-photo-fix.apk`.
-- Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
-- Mini-QA Galaxy tras instalar: app arranca, Obras carga, visibles `***REMOVED***` y `***REMOVED***`, sesión admin persistida, `logcat` limpio.
-- El usuario reportó después el error móvil `Creating blobs from ArrayBuffer and ArrayBufferView are not supported` al intentar agregar fotos.
-- Fix móvil aplicado y empujado:
-  - `ac09f3a` elimina la ruta `Blob` en subida de fotos.
-  - `pickAndCompressPhoto` devuelve un archivo local comprimido y las subidas usan `expo-file-system` `File.upload` con `PUT` al signed URL de Supabase Storage.
-  - Afecta fotos de obra, foto principal de estación, galería de estación y foto de prisma.
-  - Verificación local: `npx tsc --noEmit --project apps/mobile/tsconfig.json` OK; búsqueda confirma que no quedan `preparedPhoto.blob`, `blob()` ni `fetch(compressed.uri)` en rutas de foto.
-- Build móvil actual finalizada: EAS `2d6ad87a-41d4-4774-838f-30f1e67d3c2f`, commit `ac09f3abe0c93db75ffb606322b6cdbcbe2cdd3f`.
-- APK URL: https://expo.dev/artifacts/eas/6BhqtjX6KFRS9mfhFTDcfx.apk
-- APK local: `C:\Users\guill\Downloads\topofield-2d6ad87a-photo-file-upload-fix.apk`.
-- Instalada en Galaxy por ADB el 2026-06-06 con resultado `Success`.
-- Mini-QA Galaxy tras instalar: app arranca, `Obras` carga, visibles `***REMOVED***`, `***REMOVED***`, `Nueva obra` y `Añadir imagen`; sesión admin persistida; `logcat` limpio.
-- QA foto real de obra completada con usuario presente:
-  - Obra usada: `***REMOVED***`.
-  - Se añadió imagen inicial.
-  - Se cambió por otra imagen desde galería.
-  - Se cambió de nuevo con foto tomada desde cámara.
-  - Se quitó la imagen al final.
-  - Resultado: sin error `Creating blobs from ArrayBuffer and ArrayBufferView are not supported`; `logcat` filtrado sin `ReactNativeJS` ni `AndroidRuntime`; backend confirma `***REMOVED*** hasImage=False` tras limpiar la prueba.
-- Hallazgo posterior en pantalla de obra/estacionamientos: si queda una sesión técnica inválida, la app puede mostrar `Invalid authentication token` también en lecturas públicas como estaciones de una obra. Fix local preparado en `apps/mobile/lib/api.ts`: las lecturas públicas GET reintentan con `GUEST_PUBLIC_TOKEN` cuando el bearer técnico devuelve `401 INVALID_TOKEN`. Las escrituras siguen requiriendo revalidar sesión.
+- ADR 001 (adoptar `obras/*`) quedó superseded el 2026-07-29: esas tablas viven en el proyecto Supabase equivocado (`topotask-backend`), no en `topofield`. No migrar `obras`. Ver corrección al inicio de `docs/adr/001-adopt-obras-schema-as-work-domain-model.md`.
+- Erick decidió reactivar `apps/backend/migrations/deprecated/014_monitoring_rounds.sql` como base del modelo de faenas, ahora `apps/backend/migrations/019_monitoring_rounds.sql` — **ya aplicada a Supabase** (`topofield`). Cambio respecto al original: sin `total_station` en `instrument_types` (ya cubierto por `prism_monitoring_observations`).
+- Backend completo para: crear/listar rondas, detalle de ronda con puntos, CRUD de puntos de control, umbrales de alarma, histórico de lecturas. Ver `apps/backend/src/models/monitoring.model.ts`, `.../controllers/monitoring.controller.ts`, `.../routes/monitoring.routes.ts`. 27/27 tests, `tsc` limpio.
+- **Hallazgo de seguridad pendiente:** las 9 tablas nuevas quedaron con RLS desactivado (el resto del proyecto sí lo tiene). Diseño de políticas en curso; ver MEMORIA.md §12, entrada 2026-07-30.
+- Pendiente: aplicar políticas RLS, construir pantallas móviles de Fase 3 (rondas, captura de lectura).
+
+## Para Continuar (cualquier agente)
+
+- Leer primero `MEMORIA.md` completo, luego este archivo, `AGENTS.md` y `PROJECT_MEMBERSHIPS_MATRIX.md`.
+- Reparto por área (ver `AGENTS.md`): Codex = móvil (`apps/mobile`, builds, dispositivo); Claude Code = backend/dominio (`apps/backend`, migraciones, ADR, `shared/`); Cowork = auditoría, no escribe código de producto salvo excepción puntual autorizada.
+- No asumir acceso al Galaxy local, ADB, APK descargada ni tokens de sesión desde un entorno cloud (Codex Cloud, Cowork) — eso requiere el entorno local de Erick con el dispositivo conectado.
+- No exponer ni pegar tokens/contraseñas en GitHub, docs ni respuestas.
+- Próximo bloque recomendado: decidir e implementar políticas RLS de las 9 tablas de `monitoring_rounds` (diseño listo, ver MEMORIA.md), luego pantallas móviles de Fase 3.
+- **Todo lo que sigue debajo de esta línea es historial de antes del rework (anterior al 2026-07-26): APKs, builds EAS y bugs ya resueltos de una fase de desarrollo distinta a la actual (Fase 0-3 de MEMORIA.md). Se conserva como archivo, no como estado vigente — para el estado actual usar siempre MEMORIA.md.**
 
 ## Últimos Commits Importantes
 

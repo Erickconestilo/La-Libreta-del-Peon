@@ -4,6 +4,8 @@
 **Agente:** Claude Code  
 **Estado:** COMPLETO (solo lectura, sin commits)
 
+> ⚠️ **Corrección (2026-07-29/30):** las menciones de `obras/campanas/jornadas/sensores/mediciones/estacionamientos` en este inventario describen tablas que en realidad viven en el proyecto Supabase `topotask-backend` (`jwckuoiossieiyankkvh`), no en `topofield` (`tmlexrsnxpmykbpeebri`, el que usa `apps/backend/.env`). El inventario de esta fase conflacionó los dos proyectos — ver `FASE_0_INVENTARIO_RAW.txt` para el porqué técnico y la corrección al inicio de `docs/adr/001-adopt-obras-schema-as-work-domain-model.md`. Para el estado real y verificado de tablas, usar `MEMORIA.md`, no este documento.
+
 ---
 
 ## 1. COMMITS LOCALES NO PUBLICADOS (6 commits por delante de origin/main)

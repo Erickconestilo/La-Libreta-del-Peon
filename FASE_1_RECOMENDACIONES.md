@@ -4,6 +4,8 @@
 **Contexto:** ADR 001 (adopción del esquema "obras")  
 **Decisor pendiente:** Erick
 
+> ⚠️ **Corrección (2026-07-29):** ADR 001 quedó superseded — el esquema "obras" que este documento recomienda unificar con `projects` vive en el proyecto Supabase `topotask-backend`, no en `topofield`. No se adoptó ni se adopta `obras` como modelo de faenas. Erick decidió diseñar el modelo desde cero dentro de `topofield` (ver `MEMORIA.md` §8/§12, entradas 2026-07-29/30); el resultado fue reactivar `monitoring_rounds` (migración 019), no las preguntas de unificación que este documento plantea. Se conserva como registro histórico de la recomendación original, ya no vigente.
+
 ---
 
 ## Preguntas abiertas del ADR 001

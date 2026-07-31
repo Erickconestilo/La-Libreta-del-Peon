@@ -1,3 +1,18 @@
+[CORRECCIÓN 2026-07-30 — leer antes que el resto del archivo]
+Este inventario muestra `campanas` con 7 filas y RLS ON, como si viviera en
+`topofield`. Es falso: verificado el 2026-07-29/30 directamente contra Supabase
+por project_id (no por config de la app), `campanas`/`obras`/etc. viven en el
+proyecto `topotask-backend` (jwckuoiossieiyankkvh), y `topofield`
+(tmlexrsnxpmykbpeebri) no las tiene ni las tuvo.
+Causa técnica encontrada: `apps/backend/src/scripts/inventory-supabase-schema.ts`
+línea 79 imprime el texto fijo "(topofield)" en el log sin comprobar contra qué
+proyecto conecta realmente `DATABASE_URL` (línea 32) en el momento de ejecutarse.
+La etiqueta del log no prueba a qué proyecto se conectó — lo más probable es que
+el 26-07-2026 esa variable de entorno apuntara a `topotask-backend`, y de ahí
+viene el error de origen de ADR 001. Ver `MEMORIA.md` y la corrección en
+`docs/adr/001-adopt-obras-schema-as-work-domain-model.md`.
+[FIN DE LA CORRECCIÓN]
+
 ◇ injected env (6) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
 === INVENTARIO DE ESQUEMA SUPABASE (topofield) ===
 Fecha: 2026-07-26T11:44:23.472Z
