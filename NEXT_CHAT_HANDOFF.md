@@ -6,11 +6,11 @@
 
 - Proyecto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield`.
 - Repo remoto: `https://github.com/Erickconestilo/La-Libreta-del-Peon.git`.
-- `main` está publicado en GitHub hasta `fe8269b`; el arreglo de permisos de Fase 3 está en `codex/phase-3-galaxy-e2e` y aún debe integrarse.
-- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — confirmado en `fe8269b`: la ruta de rondas existe y devuelve `401` sin token. Falta publicar el arreglo de permisos detectado durante el E2E Galaxy.
+- `main` está publicado en GitHub y Render hasta `e7e2902` (verificar el hash completo con `/health`). Incluye el scope correcto para `topografo`, adjuntos de lecturas y el reintento robusto del motor offline.
+- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — confirmado en `e7e2902`: la ruta de rondas devuelve `401` sin token, como corresponde.
 - Supabase real: proyecto `topofield` (`tmlexrsnxpmykbpeebri`, región eu-north-1). Existe un segundo proyecto, `topotask-backend` (`jwckuoiossieiyankkvh`), que es una base de datos ajena — no confundirlos (ver ADR 001, corrección 2026-07-29).
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` esté disponible.
-- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 validada en dispositivo real. Fase 3 tiene backend, RLS, pantallas móviles y adjuntos publicados; el E2E Galaxy está en curso. La primera ronda reveló un SQL de scope erróneo para `topografo`, ya corregido y cubierto por test local, pendiente de desplegar.
+- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 validada en dispositivo real. Fase 3 tiene backend, RLS, pantallas móviles y adjuntos publicados; el E2E final de Galaxy superó el flujo offline con reinicio, idempotencia y foto. Informe: `PHASE_3_DEVICE_E2E_REPORT_2026-07-31.md`.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
 
 ## Actualización — 2026-07-31 (Fase 3 móvil y adjuntos)
@@ -26,10 +26,9 @@
 - Añadido localmente el endpoint de `reading_attachments`, firmado Storage por
   lectura y foto opcional persistente/offline-first. Pruebas: backend 30/30,
   móvil 31/31 y TypeScript limpio.
-- Render ya publica Fase 3 (`fe8269b`) y devuelve `401` sin token en rondas,
-  por lo que las rutas y la protección de autenticación están activas. El E2E
-  real detectó después una regresión de scope para `topografo` al crear ronda;
-  la corrección local aún debe integrarse y desplegarse antes de retomar QA.
+- Render publica Fase 3 y el arreglo de scope/idempotencia (`e7e2902`); las
+  rondas devuelven `401` sin token. Galaxy confirmó una lectura offline con
+  foto, reapertura de aplicación y sincronización automática sin duplicado.
 
 ## Actualización prioritaria — 2026-07-29
 
@@ -49,8 +48,8 @@
 - ADR 001 (adoptar `obras/*`) quedó superseded el 2026-07-29: esas tablas viven en el proyecto Supabase equivocado (`topotask-backend`), no en `topofield`. No migrar `obras`. Ver corrección al inicio de `docs/adr/001-adopt-obras-schema-as-work-domain-model.md`.
 - Erick decidió reactivar `apps/backend/migrations/deprecated/014_monitoring_rounds.sql` como base del modelo de faenas, ahora `apps/backend/migrations/019_monitoring_rounds.sql` — **ya aplicada a Supabase** (`topofield`). Cambio respecto al original: sin `total_station` en `instrument_types` (ya cubierto por `prism_monitoring_observations`).
 - Backend completo para: crear/listar rondas, detalle de ronda con puntos, CRUD de puntos de control, umbrales de alarma, histórico de lecturas. Ver `apps/backend/src/models/monitoring.model.ts`, `.../controllers/monitoring.controller.ts`, `.../routes/monitoring.routes.ts`. 27/27 tests, `tsc` limpio.
-- **Hallazgo de seguridad pendiente:** las 9 tablas nuevas quedaron con RLS desactivado (el resto del proyecto sí lo tiene). Diseño de políticas en curso; ver MEMORIA.md §12, entrada 2026-07-30.
-- Pendiente: aplicar políticas RLS, construir pantallas móviles de Fase 3 (rondas, captura de lectura).
+- Las 9 tablas nuevas tienen RLS activo mediante la migración `020`, ya aplicada.
+- Fase 3 está implementada. Pendientes de producto: caché de Obras para arranque frío offline, UI de reintento/diagnóstico del outbox y decisión sobre catálogo/reglas por proyecto.
 
 ## Para Continuar (cualquier agente)
 
@@ -58,7 +57,7 @@
 - Reparto por área (ver `AGENTS.md`): Codex = móvil (`apps/mobile`, builds, dispositivo); Claude Code = backend/dominio (`apps/backend`, migraciones, ADR, `shared/`); Cowork = auditoría, no escribe código de producto salvo excepción puntual autorizada.
 - No asumir acceso al Galaxy local, ADB, APK descargada ni tokens de sesión desde un entorno cloud (Codex Cloud, Cowork) — eso requiere el entorno local de Erick con el dispositivo conectado.
 - No exponer ni pegar tokens/contraseñas en GitHub, docs ni respuestas.
-- Próximo bloque recomendado: decidir e implementar políticas RLS de las 9 tablas de `monitoring_rounds` (diseño listo, ver MEMORIA.md), luego pantallas móviles de Fase 3.
+- Próximo bloque recomendado: cerrar los dos huecos UX offline (caché de Obras y recuperación visible de outbox) y preparar el checklist de piloto con usuarios reales.
 - **Todo lo que sigue debajo de esta línea es historial de antes del rework (anterior al 2026-07-26): APKs, builds EAS y bugs ya resueltos de una fase de desarrollo distinta a la actual (Fase 0-3 de MEMORIA.md). Se conserva como archivo, no como estado vigente — para el estado actual usar siempre MEMORIA.md.**
 
 ## Últimos Commits Importantes

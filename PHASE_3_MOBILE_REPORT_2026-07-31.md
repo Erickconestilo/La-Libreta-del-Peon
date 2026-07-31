@@ -1,86 +1,80 @@
 # Fase 3 móvil: rondas de auscultación
 
-**Fecha:** 2026-07-31  
-**Ramas:** `codex/phase-3-mobile-monitoring` (fusionada) y `codex/phase-3-reading-attachments` (en curso)
-**Alcance actualizado:** móvil y contrato backend de adjuntos, sin migraciones ni cambios directos en Supabase.
+**Fecha:** 2026-07-31
+**Estado:** implementada y validada técnicamente en Galaxy.
+**Alcance:** rondas, puntos de control, lecturas, histórico y foto opcional,
+con persistencia offline-first. No se aplicaron migraciones durante esta fase.
 
 ## Decisión offline
 
-Las lecturas se implementan como offline-first. Cada intento genera un
-`clientRequestId`; con conectividad se intenta el POST para obtener el umbral
-de inmediato y, sin red o ante un error transitorio, se persiste en SQLite con
-`entity_type = 'medicion'`. El sync engine reutiliza ese UUID al recuperar
-conexión.
+Las lecturas se guardan con `clientRequestId` y, sin conectividad o ante fallo
+transitorio, se encolan en SQLite con `entity_type = 'medicion'`. La foto es
+una operación de outbox independiente, con una ruta firmada de Storage por
+lectura. La recuperación de red reutiliza el mismo UUID, por lo que el backend
+mantiene la idempotencia.
 
-Se reutiliza `medicion` porque ya es un valor válido en el CHECK de la outbox.
-Así no se recrea ni transforma la tabla SQLite ya instalada en dispositivos.
+## Flujos entregados
 
-## Pantallas implementadas
+- Lista y creación de rondas por obra, con estado `draft`, `active`, `closed`
+  y `cancelled`.
+- Detalle de ronda y sus puntos pendientes/tomados; alta de punto a ronda.
+- CRUD básico de puntos de control, histórico de lecturas y activación.
+- Captura numérica o textual, unidad, notas y foto opcional.
+- Estado de umbral `normal`, `warning`, `alarm` o `unknown` cuando responde
+  el backend; estado pendiente cuando queda en outbox.
+- Acciones mutables ocultas para el rol visitante.
 
-- Entrada desde el detalle de obra: `Rondas de auscultación`.
-- Lista de rondas con filtros por estado y alta de ronda.
-- Detalle de ronda con conteo de puntos pendientes/tomados.
-- Selección de punto de control e instrumento para una ronda.
-- Captura de lectura numérica o textual, unidad y notas.
-- Feedback inmediato de `normal`, `warning`, `alarm` o `unknown` cuando el
-  backend responde; feedback pendiente cuando la lectura queda en outbox.
-- Lista, alta, histórico y activación/desactivación de puntos de control.
-- Restricción de escritura en interfaz para visitante; solo `admin` y
-  `topografo` ven las acciones mutables.
+Los instrumentos son: `digital_level`, `piezometer`, `distometer`,
+`linometer`, `inclinometer` y `cant_rule`. La estación total conserva su flujo
+propio de prismas.
 
-Los instrumentos visibles son exactamente: `digital_level`, `piezometer`,
-`distometer`, `linometer`, `inclinometer` y `cant_rule`. La estación total no
-aparece en este flujo.
+## Render y correcciones halladas en dispositivo
 
-## Foto de lectura
+Render publica `e7e2902`. La ruta de rondas devuelve `401` sin bearer, lo que
+confirma que existe y exige autenticación.
 
-El endpoint `POST /api/v1/round-points/:roundPointId/readings/:readingId/attachments`
-crea la fila de `reading_attachments` solo si la lectura pertenece al punto de
-ronda y al alcance de obra del actor. La foto se sube antes por el flujo de
-firmado existente, usando una ruta determinista por lectura e intento. El
-móvil conserva la imagen en almacenamiento persistente y la trata como una
-segunda operación de outbox, de modo que una lectura offline y su foto pueden
-sobrevivir al reinicio sin usar Base64 ni `rawPayload`.
+El E2E detectó y corrigió dos defectos reales:
 
-## Verificación literal
+1. El scope de `topografo` contra `projects` construía `p.project_id`; la
+   columna correcta es `p.id` (`0c61b50`).
+2. El reintento idempotente de una lectura convertía la fecha a texto local,
+   que PostgreSQL rechazaba por `GMT+0200`. Ahora se usa ISO 8601 y el sync
+   engine reintenta fallos transitorios también en su comprobación periódica
+   (`e7e2902`).
+
+## E2E real
+
+El escenario final se ejecutó con APK release local instalada por ADB en
+Galaxy S25, sin EAS. Con modo avión confirmado se guardó `7 mm` y una foto;
+tras `force-stop` y reapertura aún sin red, al restaurar conectividad Logcat
+registró:
 
 ```text
-npx tsc --noEmit --project apps/mobile/tsconfig.json
-Exit code: 0
+[SyncEngine] Flushing 2 pending items...
+[SyncEngine] Item ... synced successfully
+[SyncEngine] Item ... synced successfully
+[SyncEngine] Flush complete: 2/2 synced
+```
 
+Supabase confirmó una sola fila de lectura para
+`a0ee5b77-480d-4f3e-9ed5-7ee8bb4810bb`, con `client_request_id` poblado, y un
+adjunto asociado. El informe con identificadores, evidencia y limitaciones está
+en `PHASE_3_DEVICE_E2E_REPORT_2026-07-31.md`.
+
+## Verificación
+
+```text
+npm run build --workspace apps/backend
+npm test --workspace apps/backend
 npm run test --workspace apps/mobile -- --runInBand
-Test Suites: 4 passed, 4 total
-Tests:       31 passed, 31 total
-Snapshots:   0 total
-
-npx expo export --platform android --output-dir C:\Users\guill\AppData\Local\Temp\topofield-phase3-export
-Android Bundled 20784ms node_modules\expo-router\entry.js (1978 modules)
-Exported: C:\Users\guill\AppData\Local\Temp\topofield-phase3-export
+npx tsc --noEmit --project apps/mobile/tsconfig.json
 ```
 
-## Bloqueo de integración pública
+## Pendientes antes de piloto
 
-La configuración móvil actual apunta a:
-
-```text
-https://la-libreta-del-peon-1.onrender.com/api/v1
-```
-
-La comprobación sin credenciales del endpoint de rondas devolvió:
-
-```text
-ROUNDS_ANON_STATUS=404
-```
-
-Una ruta desplegada exigiría autenticación y devolvería `401` sin bearer. Por
-tanto Render todavía no contiene las rutas Express de Fase 3. Supabase tiene
-el esquema, pero no sustituye el despliegue del backend Express que consume el
-móvil.
-
-## Próximo paso
-
-1. Disparar el redeploy de Render: GitHub ya contiene `main` hasta `1abf2a1`,
-   pero Render sigue sirviendo `2fd2eb2`.
-2. Ejecutar E2E en Galaxy: crear ronda/punto, enviar lectura online con foto, repetir
-   en modo avión, cerrar/reabrir y confirmar una sola fila por
-   `client_request_id` y una fila de `reading_attachments` por foto.
+- Persistir/cargar la lista de Obras para que un arranque frío sin red no deje
+  la pantalla sin contexto.
+- Mostrar operaciones del outbox en `error` y una acción de reintento o
+  diagnóstico para el usuario.
+- Decidir uso real de `project_code_catalog` y `project_rules` a partir de
+  una campaña de campo.
