@@ -183,11 +183,15 @@ en obra o túnel y no se puede perder por una cobertura irregular.
 - Mientras está pendiente, la UI debe indicar que el umbral aún no se ha
   evaluado; no debe inventar un estado `normal`, `warning` o `alarm` local.
 
-**Adjuntos:** aunque existe la tabla `reading_attachments`, el backend no
-expone un endpoint para crear ni vincular adjuntos a una lectura. No se
-guardará una foto en `rawPayload`, porque dejaría un archivo no trazable. La
-foto opcional queda bloqueada hasta que el track backend añada el contrato de
-adjuntos y su sincronización.
+**Adjuntos (actualizado 2026-07-31):** la foto no entra en `rawPayload`. Al
+guardar una lectura con foto se conservan dos operaciones de outbox bajo
+`entity_type = 'medicion'`: la inserción de lectura y una operación `update`
+con `kind = 'reading_attachment'`. La segunda repite de forma idempotente la
+lectura por su `clientRequestId`, obtiene el `readingId`, sube la foto a una
+ruta determinista `readings/<readingId>/<uploadId>.jpg` y crea el adjunto.
+La imagen se copia antes a `documentDirectory/topofield-offline-photos/`, no
+queda en caché, y se borra solo tras confirmar el adjunto. Esto evita perderla
+si Android mata la app entre el modo avión, la reconexión y el reinicio.
 
 ---
 

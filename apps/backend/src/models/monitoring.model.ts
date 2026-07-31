@@ -3,11 +3,13 @@ import type { PoolClient } from 'pg';
 import { pool } from '../db/pool.js';
 import { AppError } from '../lib/app-error.js';
 import { evaluateReadingStatus } from '../lib/monitoring-reading-evaluation.js';
+import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import type {
   ValidatedCodeCatalogQuery,
   ValidatedCreateControlPointInput,
   ValidatedCreateControlPointThresholdInput,
   ValidatedCreateInstrumentReadingInput,
+  ValidatedCreateReadingAttachmentInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
   ValidatedListControlPointsQuery,
@@ -79,6 +81,18 @@ const mapReadingRow = (row: Record<string, unknown>) => ({
   updatedAt: row.updated_at,
   valueNumeric: row.value_numeric,
   valueText: row.value_text
+});
+
+const mapReadingAttachmentRow = (row: Record<string, unknown>) => ({
+  attachmentType: row.attachment_type,
+  id: row.id,
+  notes: row.notes,
+  publicUrl: row.public_url,
+  readingId: row.reading_id,
+  storagePath: row.storage_path,
+  title: row.title,
+  uploadedAt: row.uploaded_at,
+  uploadedBy: row.uploaded_by
 });
 
 const mapRoundRow = (row: Record<string, unknown>) => ({
@@ -849,6 +863,107 @@ export const createInstrumentReading = async (
       reading: mapReadingRow(insertResult.rows[0]),
       thresholdStatus: evaluation.thresholdStatus
     };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const getInstrumentReadingById = async (readingId: string, projectScope: string[] | null = null) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT ir.*
+      FROM instrument_readings ir
+      INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      WHERE ir.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [readingId, ...scope.params]
+  );
+
+  return result.rowCount === 0 ? null : mapReadingRow(result.rows[0]);
+};
+
+export const createReadingAttachment = async (
+  roundPointId: string,
+  readingId: string,
+  input: ValidatedCreateReadingAttachmentInput,
+  uploadedBy: string,
+  projectScope: string[] | null = null
+) => {
+  const client = await pool.connect();
+  const scope = buildRoundProjectScopeCondition(projectScope, 3);
+
+  try {
+    await client.query('BEGIN');
+
+    const readingResult = await client.query(
+      `
+        SELECT ir.id
+        FROM instrument_readings ir
+        INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
+        INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+        WHERE ir.id = $1
+          AND ir.round_point_id = $2
+        ${scope.clause}
+        FOR UPDATE
+      `,
+      [readingId, roundPointId, ...scope.params]
+    );
+
+    if (readingResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const existingResult = await client.query(
+      `
+        SELECT *
+        FROM reading_attachments
+        WHERE reading_id = $1
+          AND storage_path = $2
+        LIMIT 1
+      `,
+      [readingId, input.storagePath]
+    );
+
+    if (existingResult.rows.length > 0) {
+      await client.query('COMMIT');
+      return mapReadingAttachmentRow(existingResult.rows[0]);
+    }
+
+    const result = await client.query(
+      `
+        INSERT INTO reading_attachments (
+          reading_id,
+          storage_path,
+          public_url,
+          attachment_type,
+          title,
+          notes,
+          uploaded_by
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+      `,
+      [
+        readingId,
+        input.storagePath,
+        getPublicPhotoUrl(input.storagePath),
+        input.attachmentType,
+        input.title ?? null,
+        input.notes ?? null,
+        uploadedBy
+      ]
+    );
+
+    await client.query('COMMIT');
+    return mapReadingAttachmentRow(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

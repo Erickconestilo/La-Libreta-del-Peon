@@ -2,18 +2,18 @@
 
 **Leer primero `MEMORIA.md` completo (fuente de verdad con fecha de verificación por sección). Este archivo es un resumen rápido de arranque, no la referencia autoritativa.**
 
-## Contexto Rápido (actualizado 2026-07-30)
+## Contexto Rápido (actualizado 2026-07-31)
 
 - Proyecto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield`.
 - Repo remoto: `https://github.com/Erickconestilo/La-Libreta-del-Peon.git`.
-- Rama actual: `main` (la rama `phase-2-device-e2e` ya se fusionó por fast-forward el 2026-07-29 y fue borrada, junto con `phase-2-fix-mocks` y `phase-2-backend-idempotency`; local va por delante de `origin/main`, sin push todavía).
+- `main` está publicado en GitHub hasta `1abf2a1`; el trabajo de adjuntos está en `codex/phase-3-reading-attachments`.
 - Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — **desactualizado respecto a `main` local**: no incluye todavía `client_request_id` en `station_messages` (migración 018) ni el backend de Fase 3 (`monitoring_rounds`, migración 019). Pendiente desplegar antes de cualquier piloto real.
 - Supabase real: proyecto `topofield` (`tmlexrsnxpmykbpeebri`, región eu-north-1). Existe un segundo proyecto, `topotask-backend` (`jwckuoiossieiyankkvh`), que es una base de datos ajena — no confundirlos (ver ADR 001, corrección 2026-07-29).
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` esté disponible.
-- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 (motor offline) cerrada y validada en dispositivo real. Fase 3 (MVP de faenas semanales) en construcción sobre `monitoring_rounds` — backend completo y migración 019 ya aplicada a Supabase; pendiente decidir/aplicar políticas RLS en las 9 tablas nuevas y construir las pantallas móviles.
+- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 validada en dispositivo real. Fase 3 tiene backend, RLS, pantallas móviles y adjuntos de lectura locales; faltan despliegue real de Render y E2E Galaxy.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
 
-## Actualización — 2026-07-31 (Fase 3 móvil)
+## Actualización — 2026-07-31 (Fase 3 móvil y adjuntos)
 
 - Rama de trabajo: `codex/phase-3-mobile-monitoring`.
 - Pantallas implementadas: rondas por obra, nueva ronda, detalle y puntos de
@@ -23,11 +23,13 @@
   conservan `clientRequestId`; pruebas de sincronización ampliadas.
 - Verificado: TypeScript móvil limpio, Jest `4/4` suites y `30/30` tests,
   export Android correcto. Informe: `PHASE_3_MOBILE_REPORT_2026-07-31.md`.
-- Límite conocido: no hay endpoint backend para `reading_attachments`; no se
-  ofrece foto hasta que exista un contrato trazable.
+- Añadido localmente el endpoint de `reading_attachments`, firmado Storage por
+  lectura y foto opcional persistente/offline-first. Pruebas: backend 30/30,
+  móvil 31/31 y TypeScript limpio.
 - Bloqueo para QA contra la app configurada: Render devuelve `404` en
-  `/projects/:projectId/rounds` sin token. Las rutas de Fase 3 aún no están
-  desplegadas en Render; aplicar migraciones en Supabase no publica Express.
+  `/projects/:projectId/rounds` sin token y su health expone `2fd2eb2`, aunque
+  `main` ya se publicó a GitHub. Las rutas aún no están desplegadas en Render;
+  aplicar migraciones en Supabase no publica Express.
 
 ## Actualización prioritaria — 2026-07-29
 

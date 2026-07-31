@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { apiFetch } from '@/lib/api';
+import { deletePreparedPhoto, uploadPreparedPhotoToSignedUrl } from '@/lib/photo-upload';
 
 import type { OutboxItem } from '../outbox';
 import { syncOutboxItem } from '../sync-handlers';
@@ -9,7 +10,14 @@ jest.mock('@/lib/api', () => ({
   apiFetch: jest.fn(),
 }));
 
+jest.mock('@/lib/photo-upload', () => ({
+  deletePreparedPhoto: jest.fn(),
+  uploadPreparedPhotoToSignedUrl: jest.fn()
+}));
+
 const mockApiFetch = apiFetch as jest.MockedFunction<typeof apiFetch>;
+const mockDeletePreparedPhoto = deletePreparedPhoto as jest.MockedFunction<typeof deletePreparedPhoto>;
+const mockUploadPreparedPhotoToSignedUrl = uploadPreparedPhotoToSignedUrl as jest.MockedFunction<typeof uploadPreparedPhotoToSignedUrl>;
 
 const stationMessageItem: OutboxItem = {
   clientRequestId: 'a9698cea-4d64-4382-8182-7a271315e075',
@@ -54,6 +62,9 @@ const instrumentReadingItem: OutboxItem = {
 describe('syncOutboxItem', () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
+    mockDeletePreparedPhoto.mockReset();
+    mockUploadPreparedPhotoToSignedUrl.mockReset();
+    mockUploadPreparedPhotoToSignedUrl.mockResolvedValue({ status: 200 } as never);
     mockApiFetch.mockResolvedValue({
       data: {
         body: 'Mensaje offline',
@@ -121,5 +132,60 @@ describe('syncOutboxItem', () => {
     ).rejects.toThrow('Invalid instrument reading outbox payload');
 
     expect(mockApiFetch).not.toHaveBeenCalled();
+  });
+
+  it('recreates the reading idempotently before attaching its persisted photo', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce({
+        data: {
+          reading: {
+            id: 'c741a875-efbd-4e73-9f2e-66c07d46849e'
+          }
+        },
+        error: null
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          path: 'readings/c741a875-efbd-4e73-9f2e-66c07d46849e/a5ca42c2-af48-4b10-81cc-4d6e3b021c6c.jpg',
+          signedUrl: 'https://storage.example/upload'
+        },
+        error: null
+      } as never)
+      .mockResolvedValueOnce({ data: { id: 'attachment-id' }, error: null } as never);
+
+    await syncOutboxItem({
+      ...instrumentReadingItem,
+      operation: 'update',
+      payload: {
+        kind: 'reading_attachment',
+        photo: {
+          contentType: 'image/jpeg',
+          fileSizeBytes: 1024,
+          height: 800,
+          localUri: 'file:///documents/topofield-offline-photos/photo.jpg',
+          width: 1200
+        },
+        readingClientRequestId: instrumentReadingItem.clientRequestId,
+        readingInput: {
+          measuredAt: '2026-07-31T08:00:00.000Z',
+          notes: 'Lectura tomada sin cobertura',
+          unit: 'mm',
+          valueNumeric: 2.4,
+          valueText: null
+        },
+        roundPointId: 'a741a875-efbd-4e73-9f2e-66c07d46849e'
+      }
+    });
+
+    expect(mockUploadPreparedPhotoToSignedUrl).toHaveBeenCalledWith(
+      'https://storage.example/upload',
+      expect.objectContaining({ localUri: 'file:///documents/topofield-offline-photos/photo.jpg' }),
+      expect.any(Object)
+    );
+    expect(mockApiFetch).toHaveBeenLastCalledWith(
+      '/round-points/a741a875-efbd-4e73-9f2e-66c07d46849e/readings/c741a875-efbd-4e73-9f2e-66c07d46849e/attachments',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
   });
 });

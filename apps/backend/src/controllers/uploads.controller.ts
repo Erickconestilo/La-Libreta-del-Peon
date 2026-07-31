@@ -5,9 +5,11 @@ import { getActorProjectScope } from '../lib/access-control.js';
 import {
   createPrismPhotoStoragePath,
   createProjectPhotoStoragePath,
+  createReadingPhotoStoragePath,
   createSignedPhotoUpload,
   createStationPhotoStoragePath
 } from '../lib/photo-storage.js';
+import { getInstrumentReadingById } from '../models/monitoring.model.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { getPrismById } from '../models/prisms.model.js';
 import { getProjectById } from '../models/projects.model.js';
@@ -23,14 +25,18 @@ export const createSignedPhotoUploadController = async (request: Request, respon
       ? await getStationById(input.entityId, projectScope)
       : input.entityType === 'project'
         ? await getProjectById(input.entityId, projectScope)
-        : await getPrismById(input.entityId, projectScope);
+        : input.entityType === 'prism'
+          ? await getPrismById(input.entityId, projectScope)
+          : await getInstrumentReadingById(input.entityId, projectScope);
 
     if (!entity) {
       const entityLabel = input.entityType === 'station'
         ? 'Station'
         : input.entityType === 'project'
           ? 'Project'
-          : 'Prism';
+          : input.entityType === 'prism'
+            ? 'Prism'
+            : 'Reading';
 
       throw new AppError(
         `${entityLabel} not found`,
@@ -43,7 +49,9 @@ export const createSignedPhotoUploadController = async (request: Request, respon
       ? createStationPhotoStoragePath(input.entityId, input.contentType)
       : input.entityType === 'project'
         ? createProjectPhotoStoragePath(input.entityId, input.contentType)
-        : createPrismPhotoStoragePath(input.entityId, input.contentType);
+        : input.entityType === 'prism'
+          ? createPrismPhotoStoragePath(input.entityId, input.contentType)
+          : createReadingPhotoStoragePath(input.entityId, input.uploadId as string, input.contentType);
     const signedUpload = await createSignedPhotoUpload(storagePath);
 
     sendSuccess(response, {

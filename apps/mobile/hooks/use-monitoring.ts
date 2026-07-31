@@ -18,6 +18,12 @@ import { apiFetch, isApiRequestError } from '@/lib/api';
 import { enqueue, getPendingCount } from '@/lib/offline/outbox';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
+import {
+  deletePreparedPhoto,
+  persistPreparedPhotoForOffline,
+  uploadPreparedPhotoToSignedUrl,
+  type PreparedPhoto
+} from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
 
 type ApiEnvelope<T> = {
@@ -80,15 +86,32 @@ export type CreateInstrumentReadingInput = {
   unit: string | null;
   valueNumeric: number | null;
   valueText: string | null;
+  photo?: PreparedPhoto | null;
+};
+
+type ReadingAttachmentPayload = {
+  notes: string | null;
+  photo: PreparedPhoto;
+  readingClientRequestId: string;
+  readingInput: Omit<CreateInstrumentReadingInput, 'photo'>;
+  roundPointId: string;
+  title: string | null;
+};
+
+type SignedPhotoUpload = {
+  path: string;
+  signedUrl: string;
 };
 
 type QueuedReadingResult = {
   clientRequestId: string;
   mode: 'queued';
+  photoPending: boolean;
 };
 
 type SyncedReadingResult = {
   mode: 'synced';
+  photoPending: boolean;
   response: ReadingInsertResponse;
 };
 
@@ -179,6 +202,98 @@ const createInstrumentReadingRequest = async ({
     method: 'POST'
   });
   return response.data;
+};
+
+const requestSignedReadingPhotoUpload = async ({
+  fileSizeBytes,
+  readingId,
+  contentType,
+  uploadId
+}: {
+  contentType: PreparedPhoto['contentType'];
+  fileSizeBytes: number;
+  readingId: string;
+  uploadId: string;
+}) => {
+  const response = await apiFetch<ApiEnvelope<SignedPhotoUpload>>('/uploads/photos/sign', {
+    body: JSON.stringify({
+      contentType,
+      entityId: readingId,
+      entityType: 'reading',
+      fileSizeBytes,
+      uploadId
+    }),
+    method: 'POST'
+  });
+
+  return response.data;
+};
+
+const createReadingAttachmentRequest = async ({
+  attachment,
+  readingId,
+  roundPointId,
+  storagePath
+}: {
+  attachment: Pick<ReadingAttachmentPayload, 'notes' | 'title'>;
+  readingId: string;
+  roundPointId: string;
+  storagePath: string;
+}) => {
+  await apiFetch<ApiEnvelope<unknown>>(`/round-points/${roundPointId}/readings/${readingId}/attachments`, {
+    body: JSON.stringify({
+      attachmentType: 'photo',
+      notes: attachment.notes,
+      storagePath,
+      title: attachment.title
+    }),
+    method: 'POST'
+  });
+};
+
+const uploadAndAttachReadingPhoto = async ({
+  attachment,
+  readingId,
+  uploadId
+}: {
+  attachment: Omit<ReadingAttachmentPayload, 'readingClientRequestId' | 'readingInput'>;
+  readingId: string;
+  uploadId: string;
+}) => {
+  const signedUpload = await requestSignedReadingPhotoUpload({
+    contentType: attachment.photo.contentType,
+    fileSizeBytes: attachment.photo.fileSizeBytes,
+    readingId,
+    uploadId
+  });
+  const uploadResponse = await uploadPreparedPhotoToSignedUrl(signedUpload.signedUrl, attachment.photo, {
+    timeoutMessage: 'La subida de la foto de lectura tardó demasiado. Se reintentará al recuperar conexión.',
+    timeoutMs: 60000
+  });
+
+  if ((uploadResponse.status < 200 || uploadResponse.status >= 300) && uploadResponse.status !== 409) {
+    throw new Error(`No se pudo subir la foto de la lectura (${uploadResponse.status}).`);
+  }
+
+  await createReadingAttachmentRequest({
+    attachment,
+    readingId,
+    roundPointId: attachment.roundPointId,
+    storagePath: signedUpload.path
+  });
+};
+
+const enqueueReadingAttachment = (attachment: ReadingAttachmentPayload, clientRequestId: string) => {
+  enqueue({
+    clientRequestId,
+    entityType: 'medicion',
+    id: createRandomId(),
+    operation: 'update',
+    payload: {
+      kind: 'reading_attachment',
+      ...attachment
+    }
+  });
 };
 
 const shouldQueueReadingAfterError = (error: unknown) => {
@@ -341,16 +456,44 @@ export const useCreateInstrumentReading = ({
         throw new Error('Falta el punto de la ronda.');
       }
 
-      const id = createRandomId();
       const clientRequestId = createRandomId();
+      const { photo, ...readingInput } = input;
+      const persistentPhoto = photo ? await persistPreparedPhotoForOffline(photo, clientRequestId) : null;
+      const attachmentClientRequestId = persistentPhoto ? createRandomId() : null;
       const connected = await hasConnectivity();
 
       if (connected) {
         try {
-          const response = await createInstrumentReadingRequest({ clientRequestId, input, roundPointId });
-          return { mode: 'synced', response };
+          const response = await createInstrumentReadingRequest({ clientRequestId, input: readingInput, roundPointId });
+
+          if (persistentPhoto && attachmentClientRequestId) {
+            const attachment: ReadingAttachmentPayload = {
+              notes: null,
+              photo: persistentPhoto,
+              readingClientRequestId: clientRequestId,
+              readingInput,
+              roundPointId,
+              title: null
+            };
+
+            try {
+              await uploadAndAttachReadingPhoto({
+                attachment,
+                readingId: response.reading.id,
+                uploadId: attachmentClientRequestId
+              });
+              await deletePreparedPhoto(persistentPhoto);
+            } catch (error) {
+              console.warn('[useCreateInstrumentReading] Photo sync failed, enqueueing:', error);
+              enqueueReadingAttachment(attachment, attachmentClientRequestId);
+              return { mode: 'synced', photoPending: true, response };
+            }
+          }
+
+          return { mode: 'synced', photoPending: false, response };
         } catch (error) {
           if (!shouldQueueReadingAfterError(error)) {
+            await deletePreparedPhoto(persistentPhoto);
             throw error;
           }
           console.warn('[useCreateInstrumentReading] Direct sync failed, enqueueing:', error);
@@ -360,19 +503,30 @@ export const useCreateInstrumentReading = ({
       enqueue({
         clientRequestId,
         entityType: 'medicion',
-        id,
+        id: createRandomId(),
         operation: 'insert',
         payload: {
-          ...input,
+          ...readingInput,
           roundPointId
         }
       });
 
+      if (persistentPhoto && attachmentClientRequestId) {
+        enqueueReadingAttachment({
+          notes: null,
+          photo: persistentPhoto,
+          readingClientRequestId: clientRequestId,
+          readingInput,
+          roundPointId,
+          title: null
+        }, attachmentClientRequestId);
+      }
+
       console.log(
-        `[useCreateInstrumentReading] Enqueued reading ${id} with clientRequestId ${clientRequestId} for later sync`
+        `[useCreateInstrumentReading] Enqueued reading with clientRequestId ${clientRequestId} for later sync`
       );
 
-      return { clientRequestId, mode: 'queued' };
+      return { clientRequestId, mode: 'queued', photoPending: Boolean(persistentPhoto) };
     },
     onSuccess: async () => {
       await Promise.all([

@@ -5,6 +5,7 @@ import {
   validateCreateControlPointInput,
   validateCreateControlPointThresholdInput,
   validateCreateInstrumentReadingInput,
+  validateCreateReadingAttachmentInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateUpdateControlPointInput
@@ -47,6 +48,25 @@ test('instrument reading creation requires numeric or text value', () => {
       valueText: 'sin lectura por vibracion'
     }).valueText,
     'sin lectura por vibracion'
+  );
+});
+
+test('reading attachment only accepts photo metadata with bounded text', () => {
+  assert.equal(
+    validateCreateReadingAttachmentInput({
+      storagePath: 'readings/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.jpg',
+      title: 'Fisura en clave'
+    }).attachmentType,
+    'photo'
+  );
+
+  assert.throws(
+    () =>
+      validateCreateReadingAttachmentInput({
+        attachmentType: 'file',
+        storagePath: 'readings/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.jpg'
+      }),
+    /Invalid reading attachment payload/
   );
 });
 

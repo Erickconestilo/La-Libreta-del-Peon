@@ -3,11 +3,13 @@ import type { Request, Response } from 'express';
 import { assertProjectAccess, getActorProjectScope } from '../lib/access-control.js';
 import { AppError } from '../lib/app-error.js';
 import { sendSuccess } from '../lib/api-response.js';
+import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { parseProjectCodeCatalogCsv } from '../lib/project-code-catalog-csv.js';
 import {
   createControlPoint,
   createControlPointThreshold,
   createInstrumentReading,
+  createReadingAttachment,
   createMonitoringRound,
   createMonitoringRoundPoint,
   getMonitoringRoundDetail,
@@ -24,6 +26,7 @@ import {
   validateCreateControlPointInput,
   validateCreateControlPointThresholdInput,
   validateCreateInstrumentReadingInput,
+  validateCreateReadingAttachmentInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateListControlPointsQuery,
@@ -31,6 +34,7 @@ import {
   validateReadingHistoryQuery,
   validateUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
+import { isValidReadingPhotoPath } from '../utils/photo-validation.js';
 
 const sendControllerError = (response: Response, error: unknown, fallbackCode: string, fallbackMessage: string) => {
   if (error instanceof AppError) {
@@ -114,6 +118,40 @@ export const createInstrumentReadingController = async (request: Request, respon
     );
   } catch (error) {
     sendControllerError(response, error, 'READING_CREATE_FAILED', 'Unable to create instrument reading');
+  }
+};
+
+export const createReadingAttachmentController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const roundPointId = routeParam(request, 'roundPointId');
+    const readingId = routeParam(request, 'readingId');
+    const input = validateCreateReadingAttachmentInput(request.body);
+
+    if (!isValidReadingPhotoPath(readingId, input.storagePath)) {
+      throw new AppError('Invalid reading photo path', 400, 'INVALID_READING_PHOTO_PATH');
+    }
+
+    await assertPhotoObjectExists(input.storagePath);
+
+    const attachment = await createReadingAttachment(
+      roundPointId,
+      readingId,
+      input,
+      request.user.id,
+      getActorProjectScope(request.user)
+    );
+
+    if (!attachment) {
+      throw new AppError('Reading not found', 404, 'READING_NOT_FOUND');
+    }
+
+    sendSuccess(response, attachment, 201);
+  } catch (error) {
+    sendControllerError(response, error, 'READING_ATTACHMENT_CREATE_FAILED', 'Unable to attach reading photo');
   }
 };
 

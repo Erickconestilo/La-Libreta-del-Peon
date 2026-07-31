@@ -234,6 +234,18 @@ const buildTemporaryPhotoUri = (extension?: string) => {
   return `${LegacyFileSystem.cacheDirectory}topofield-photo-source-${uniqueSuffix}.${normalizeImageExtension(extension)}`;
 };
 
+const getPersistentPhotoExtension = (contentType: PhotoContentType) => {
+  if (contentType === 'image/png') {
+    return 'png';
+  }
+
+  if (contentType === 'image/webp') {
+    return 'webp';
+  }
+
+  return 'jpg';
+};
+
 const prepareAssetUriForCompression = async (pickedPhoto: PickedPhoto) => {
   const { extension, shouldDeleteAfterCompression, uri } = pickedPhoto;
 
@@ -401,6 +413,32 @@ export const deletePreparedPhoto = async (preparedPhoto: PreparedPhoto | null) =
   } catch {
     // Temporary camera/cache files are safe to leave if Android refuses cleanup.
   }
+};
+
+export const persistPreparedPhotoForOffline = async (preparedPhoto: PreparedPhoto, id: string): Promise<PreparedPhoto> => {
+  if (!LegacyFileSystem.documentDirectory) {
+    throw new Error('No se pudo acceder al almacenamiento local para conservar la foto sin conexión.');
+  }
+
+  const directory = `${LegacyFileSystem.documentDirectory}topofield-offline-photos/`;
+  const localUri = `${directory}${id}.${getPersistentPhotoExtension(preparedPhoto.contentType)}`;
+
+  try {
+    await LegacyFileSystem.makeDirectoryAsync(directory, { intermediates: true });
+    await LegacyFileSystem.copyAsync({
+      from: preparedPhoto.localUri,
+      to: localUri
+    });
+  } catch {
+    throw new Error('No se pudo conservar la foto para sincronizarla más tarde.');
+  }
+
+  await deletePreparedPhoto(preparedPhoto);
+
+  return {
+    ...preparedPhoto,
+    localUri
+  };
 };
 
 export const uploadPreparedPhotoToSignedUrl = async (

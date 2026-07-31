@@ -42,6 +42,15 @@ export const createInstrumentReadingSchema = z
 
 export type ValidatedCreateInstrumentReadingInput = z.infer<typeof createInstrumentReadingSchema>;
 
+export const createReadingAttachmentSchema = z.object({
+  attachmentType: z.literal('photo').default('photo'),
+  notes: z.string().trim().max(1000).nullable().optional(),
+  storagePath: z.string().trim().min(1).max(500),
+  title: z.string().trim().max(120).nullable().optional()
+});
+
+export type ValidatedCreateReadingAttachmentInput = z.infer<typeof createReadingAttachmentSchema>;
+
 export const codeCatalogQuerySchema = z.object({
   itineraryNumber: z.coerce.number().int().positive().optional(),
   zoneColor: z.enum(['blue', 'pink', 'green']).optional()
@@ -162,6 +171,21 @@ export const validateCreateInstrumentReadingInput = (input: unknown): ValidatedC
 
   if (!parsedInput.success) {
     throw new AppError('Invalid instrument reading payload', 400, 'INVALID_READING_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateCreateReadingAttachmentInput = (input: unknown): ValidatedCreateReadingAttachmentInput => {
+  const parsedInput = createReadingAttachmentSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError(
+      'Invalid reading attachment payload',
+      400,
+      'INVALID_READING_ATTACHMENT_PAYLOAD',
+      parsedInput.error.flatten()
+    );
   }
 
   return parsedInput.data;

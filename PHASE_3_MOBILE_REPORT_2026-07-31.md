@@ -1,8 +1,8 @@
 # Fase 3 móvil: rondas de auscultación
 
 **Fecha:** 2026-07-31  
-**Rama:** `codex/phase-3-mobile-monitoring`  
-**Alcance:** `apps/mobile`, sin cambios de backend, migraciones ni Supabase.
+**Ramas:** `codex/phase-3-mobile-monitoring` (fusionada) y `codex/phase-3-reading-attachments` (en curso)
+**Alcance actualizado:** móvil y contrato backend de adjuntos, sin migraciones ni cambios directos en Supabase.
 
 ## Decisión offline
 
@@ -32,12 +32,15 @@ Los instrumentos visibles son exactamente: `digital_level`, `piezometer`,
 `distometer`, `linometer`, `inclinometer` y `cant_rule`. La estación total no
 aparece en este flujo.
 
-## Límite de contrato
+## Foto de lectura
 
-La tabla `reading_attachments` existe, pero el backend no expone un endpoint
-para crear ni vincular adjuntos. No se implementó una foto falsa en
-`rawPayload`: la foto opcional queda pendiente de un endpoint backend que
-guarde el adjunto y permita sincronizarlo de forma trazable.
+El endpoint `POST /api/v1/round-points/:roundPointId/readings/:readingId/attachments`
+crea la fila de `reading_attachments` solo si la lectura pertenece al punto de
+ronda y al alcance de obra del actor. La foto se sube antes por el flujo de
+firmado existente, usando una ruta determinista por lectura e intento. El
+móvil conserva la imagen en almacenamiento persistente y la trata como una
+segunda operación de outbox, de modo que una lectura offline y su foto pueden
+sobrevivir al reinicio sin usar Base64 ni `rawPayload`.
 
 ## Verificación literal
 
@@ -47,7 +50,7 @@ Exit code: 0
 
 npm run test --workspace apps/mobile -- --runInBand
 Test Suites: 4 passed, 4 total
-Tests:       30 passed, 30 total
+Tests:       31 passed, 31 total
 Snapshots:   0 total
 
 npx expo export --platform android --output-dir C:\Users\guill\AppData\Local\Temp\topofield-phase3-export
@@ -66,7 +69,7 @@ https://la-libreta-del-peon-1.onrender.com/api/v1
 La comprobación sin credenciales del endpoint de rondas devolvió:
 
 ```text
-ROUNDS_WITHOUT_AUTH_STATUS=404
+ROUNDS_ANON_STATUS=404
 ```
 
 Una ruta desplegada exigiría autenticación y devolvería `401` sin bearer. Por
@@ -76,10 +79,8 @@ móvil.
 
 ## Próximo paso
 
-1. Publicar el backend de Fase 3 en Render o iniciar el backend local y usar
-   `adb reverse` para QA.
-2. Ejecutar E2E en Galaxy: crear ronda/punto, enviar lectura online, repetir
+1. Disparar el redeploy de Render: GitHub ya contiene `main` hasta `1abf2a1`,
+   pero Render sigue sirviendo `2fd2eb2`.
+2. Ejecutar E2E en Galaxy: crear ronda/punto, enviar lectura online con foto, repetir
    en modo avión, cerrar/reabrir y confirmar una sola fila por
-   `client_request_id`.
-3. Añadir el endpoint de `reading_attachments` antes de ofrecer foto en la
-   captura.
+   `client_request_id` y una fila de `reading_attachments` por foto.

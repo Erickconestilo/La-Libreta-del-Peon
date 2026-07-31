@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CalculatedThresholdStatus } from '@shared/types';
 import { ChoiceChip, ThresholdPill } from '@/components/monitoring-ui';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useCreateInstrumentReading } from '@/hooks/use-monitoring';
+import { deletePreparedPhoto, pickAndCompressPhoto, type PhotoSource, type PreparedPhoto } from '@/lib/photo-upload';
 import { colors, spacing, typography } from '@/src/theme';
 
 type ValueMode = 'numeric' | 'text';
@@ -28,7 +29,31 @@ export default function ReadingCaptureScreen() {
   const [textValue, setTextValue] = useState('');
   const [unit, setUnit] = useState('mm');
   const [notes, setNotes] = useState('');
-  const [feedback, setFeedback] = useState<{ autoConfirmed: boolean; delta: number | null; status: CalculatedThresholdStatus; type: 'synced' | 'queued' } | null>(null);
+  const [photo, setPhoto] = useState<PreparedPhoto | null>(null);
+  const [feedback, setFeedback] = useState<{ autoConfirmed: boolean; delta: number | null; photoPending: boolean; status: CalculatedThresholdStatus; type: 'synced' | 'queued' } | null>(null);
+
+  const handlePickPhoto = async (source: PhotoSource) => {
+    try {
+      const pickedPhoto = await pickAndCompressPhoto(source);
+
+      if (!pickedPhoto) {
+        return;
+      }
+
+      if (photo) {
+        await deletePreparedPhoto(photo);
+      }
+
+      setPhoto(pickedPhoto);
+    } catch (error) {
+      Alert.alert('No se pudo preparar la foto', error instanceof Error ? error.message : 'Prueba de nuevo con otra imagen.');
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    await deletePreparedPhoto(photo);
+    setPhoto(null);
+  };
 
   const handleSubmit = async () => {
     const valueNumeric = mode === 'numeric' && numericValue.trim() ? Number(numericValue.replace(',', '.')) : null;
@@ -50,16 +75,20 @@ export default function ReadingCaptureScreen() {
         unit: unit.trim() || null,
         valueNumeric,
         valueText,
+        photo
       });
 
       if (result.mode === 'queued') {
-        setFeedback({ autoConfirmed: false, delta: null, status: 'unknown', type: 'queued' });
+        setPhoto(null);
+        setFeedback({ autoConfirmed: false, delta: null, photoPending: result.photoPending, status: 'unknown', type: 'queued' });
         return;
       }
 
+      setPhoto(null);
       setFeedback({
         autoConfirmed: result.response.autoConfirmed,
         delta: result.response.delta,
+        photoPending: result.photoPending,
         status: result.response.thresholdStatus,
         type: 'synced',
       });
@@ -81,10 +110,12 @@ export default function ReadingCaptureScreen() {
           <TextInput autoCapitalize="none" onChangeText={setUnit} placeholder="mm, m, bar..." placeholderTextColor="#64748b" style={styles.input} value={unit} />
           <Text style={styles.label}>Notas</Text>
           <TextInput multiline onChangeText={setNotes} placeholder="Condición, incidencia o referencia de medida" placeholderTextColor="#64748b" style={[styles.input, styles.notes]} value={notes} />
+          <Text style={styles.label}>Foto opcional</Text>
+          {photo ? <View style={styles.photoReady}><View><Text style={styles.photoReadyTitle}>Foto preparada</Text><Text style={styles.body}>Se conservará y se sincronizará junto a la lectura.</Text></View><Pressable accessibilityLabel="Quitar foto" onPress={() => void handleRemovePhoto()} style={styles.photoRemove}><Text style={styles.photoRemoveText}>Quitar</Text></Pressable></View> : <View style={styles.photoActions}><Pressable accessibilityLabel="Hacer foto" onPress={() => void handlePickPhoto('camera')} style={styles.photoAction}><Text style={styles.photoActionText}>Cámara</Text></Pressable><Pressable accessibilityLabel="Elegir foto de galería" onPress={() => void handlePickPhoto('library')} style={styles.photoAction}><Text style={styles.photoActionText}>Galería</Text></Pressable></View>}
         </View>
         <View style={styles.offlineCard}><Text style={styles.offlineTitle}>Guardado seguro en campo</Text><Text style={styles.body}>Si no hay red, la lectura queda encolada y se enviará con el mismo identificador al recuperar conexión.</Text>{pendingCount > 0 ? <Text style={styles.pendingText}>{pendingCount} cambio{pendingCount === 1 ? '' : 's'} pendiente{pendingCount === 1 ? '' : 's'} de sincronizar</Text> : null}</View>
         {errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar la lectura</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
-        {feedback ? <View style={[styles.feedback, feedback.type === 'queued' ? styles.feedbackPending : null]}>{feedback.type === 'queued' ? <><Text style={styles.feedbackTitle}>Lectura guardada sin conexión</Text><Text style={styles.body}>El umbral se evaluará automáticamente cuando el servidor reciba la lectura.</Text></> : <><View style={styles.feedbackHeader}><Text style={styles.feedbackTitle}>{feedback.autoConfirmed ? 'Lectura confirmada' : 'Lectura pendiente de revisión'}</Text><ThresholdPill status={feedback.status} /></View>{feedback.delta !== null ? <Text style={styles.body}>Variación respecto a la anterior: {feedback.delta}</Text> : <Text style={styles.body}>No hay variación comparable todavía.</Text>}</>}</View> : null}
+        {feedback ? <View style={[styles.feedback, feedback.type === 'queued' ? styles.feedbackPending : null]}>{feedback.type === 'queued' ? <><Text style={styles.feedbackTitle}>Lectura guardada sin conexión</Text><Text style={styles.body}>El umbral se evaluará automáticamente cuando el servidor reciba la lectura.</Text>{feedback.photoPending ? <Text style={styles.pendingText}>La foto también queda pendiente de sincronizar.</Text> : null}</> : <><View style={styles.feedbackHeader}><Text style={styles.feedbackTitle}>{feedback.autoConfirmed ? 'Lectura confirmada' : 'Lectura pendiente de revisión'}</Text><ThresholdPill status={feedback.status} /></View>{feedback.delta !== null ? <Text style={styles.body}>Variación respecto a la anterior: {feedback.delta}</Text> : <Text style={styles.body}>No hay variación comparable todavía.</Text>}{feedback.photoPending ? <Text style={styles.pendingText}>La lectura está guardada; la foto se enviará automáticamente al recuperar conexión.</Text> : null}</>}</View> : null}
         <Pressable disabled={isCreating} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}><Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar lectura'}</Text></Pressable>
         {feedback ? <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable> : null}
       </ScrollView>
@@ -113,6 +144,13 @@ const styles = StyleSheet.create({
   offlineCard: { backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.4)', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
   offlineTitle: { color: colors.accentGreen, fontSize: typography.fontSizeBody, fontWeight: '900' },
   pendingText: { color: colors.amber, fontSize: 13, fontWeight: '800' },
+  photoAction: { alignItems: 'center', borderColor: '#475569', borderRadius: 8, borderWidth: 1, flex: 1, paddingVertical: spacing[2] },
+  photoActionText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  photoActions: { flexDirection: 'row', gap: spacing[1] },
+  photoReady: { alignItems: 'center', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', padding: spacing[2] },
+  photoReadyTitle: { color: colors.accentGreen, fontSize: 14, fontWeight: '900' },
+  photoRemove: { padding: spacing[1] },
+  photoRemoveText: { color: colors.red, fontSize: 13, fontWeight: '800' },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 8, paddingVertical: spacing[3] },
   primaryButtonText: { color: colors.background, fontSize: typography.fontSizeBody, fontWeight: '900' },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingVertical: spacing[2] },

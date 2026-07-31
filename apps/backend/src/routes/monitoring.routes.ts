@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   createControlPointThresholdController,
+  createReadingAttachmentController,
   createInstrumentReadingController,
   createRoundPointController,
   getMonitoringRoundDetailController,
@@ -38,6 +39,15 @@ roundPointsRouter.post(
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundPointId'),
   createInstrumentReadingController
+);
+
+roundPointsRouter.post(
+  '/:roundPointId/readings/:readingId/attachments',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundPointId'),
+  validateUuidParam('readingId'),
+  createReadingAttachmentController
 );
 
 controlPointsRouter.patch(

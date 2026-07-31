@@ -21,6 +21,14 @@ export const createPrismPhotoStoragePath = (prismId: string, contentType: PhotoC
   return `prisms/${prismId}/${randomUUID()}.${getPhotoExtension(contentType)}`;
 };
 
+export const createReadingPhotoStoragePath = (
+  readingId: string,
+  uploadId: string,
+  contentType: PhotoContentType
+) => {
+  return `readings/${readingId}/${uploadId}.${getPhotoExtension(contentType)}`;
+};
+
 export const createSignedPhotoUpload = async (storagePath: string) => {
   const { data, error } = await supabaseAdmin.storage
     .from(PHOTO_BUCKET)
