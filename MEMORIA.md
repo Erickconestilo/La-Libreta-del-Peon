@@ -255,8 +255,6 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 **Después (importante, no bloquea uso real):**
 - Catálogo semilla genérico para obras nuevas, sin datos operativos reales.
 - Firma estable + AAB para Google Play.
-- 3 discrepancias de versión señaladas por `expo install --check` (expo-network, react-native-maps, react-native-screens).
-- `npm audit`: 11 alertas moderadas transitivas (no usar `--force`).
 - Catálogo semilla genérico/real del producto (Fase 1, enmienda 5).
 - Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro.
 
@@ -271,6 +269,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-07-31 — Dependencias y auditoría (Codex, Bloque A):** `expo-network` quedó en `~56.0.5`, `react-native-maps` en `1.27.2` y `react-native-screens` en `~4.26.0`; `npx expo install --check` confirma dependencias compatibles. La auditoría actual de `apps/backend` devuelve 0 vulnerabilidades tanto con dependencias de desarrollo como con `--omit=dev`; las 11 alertas moderadas anotadas antes eran estado histórico, así que no hubo `npm audit fix` que aplicar.
 - **2026-07-31 — Catálogo semilla genérico (Codex, Bloque 0):** al crear una obra se insertan, dentro de la misma transacción, cuatro códigos neutros de ejemplo (`EJ-*`), dos puntos de control de muestra (nivel digital y piezómetro) y umbrales indicativos. Cada registro se marca como dato de muestra para sustituir antes de una campaña; no contiene nombres, códigos ni proceso de ningún cliente o empleador.
 - **2026-07-26 — Auditoría inicial (Cowork):** plan maestro de rework aprobado con 5 enmiendas; modelo de faenas reducido de 10 a 5 tablas por presupuesto de tiempo real (5-10h/semana).
 - **2026-07-26 — Corrección TopoTask:** no es contaminación, son dos proyectos Supabase separados; el único vínculo es una importación de datos históricos legítima de mayo.
