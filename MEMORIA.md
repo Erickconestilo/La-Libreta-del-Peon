@@ -199,7 +199,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/render-backend-lockfile | Corregir el bloqueo de dependencias que impide el build de Render: `apps/backend/package.json` requiere esbuild 0.28.1 mientras su lock local conserva 0.28.0. | cerrado (`npm ci` y `npm ci --omit=dev` con npm 10.9.8 pasan; build y 30/30 tests backend verdes) |
 | 2026-07-31 | Codex | codex/phase-3-galaxy-e2e-report | Prueba E2E de Fase 3 en Galaxy: ronda, lectura con foto, repetición offline tras reinicio, idempotencia en Render/Supabase; documentación e informe final. | cerrado (escenario limpio offline superado; ver informe de dispositivo y pendientes UX en §12) |
 | 2026-07-31 | Codex | codex/pilot-blockers-mobile | Resolver pendientes prioritarios: diagnóstico de sesión, caché offline de Obras, diagnóstico/reintento de outbox, decisión de catálogo/reglas y baseline RLS legacy. | cerrado (app, decisión y baseline documental completos; queda solo confirmación opcional de configuración Auth por Erick) |
-| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | abierto |
+| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | cerrado (commits separados; AAB firmado y verificado, instalación Galaxy pendiente porque ADB no detectó dispositivo; purga bloqueada a la espera de confirmación explícita de cadenas) |
 
 ---
 
@@ -259,7 +259,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro.
 
 **Aparcado (sin retorno claro ahora):**
-- Purga de historial git de nombres reales de obra.
+- Purga de historial git de nombres reales de obra: inventario de solo lectura completado el 31-07-2026; esperar confirmación explícita de Erick sobre las cadenas a retirar antes de crear el backup mirror o reescribir nada.
 - Fisurómetro/extensómetro/clinómetro (después de piezómetro/inclinómetro).
 - Acceso GitHub de Cowork vía token fine-grained (no bloquea nada hoy).
 
@@ -269,6 +269,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-07-31 — Inventario de purga de historial (Codex, Bloque C):** búsqueda de solo lectura completada sobre los 141 commits accesibles, incluyendo `git log -G`, `git log -S` y `git grep` por commit. Hay nombres reales de obra y referencias operativas en migraciones, datos de estaciones, pantallas y documentación histórica. No se creó mirror, no se usó `filter-repo` ni se hizo ningún push forzado: queda una compuerta explícita de confirmación de Erick antes de cualquier reescritura.
 - **2026-07-31 — Firma release local y AAB (Codex, Bloque B):** generado el keystore local de TopoField fuera del repo y el configurador versionado que lo conecta a `release` tras cada prebuild. Se generó `app-release.aab` (40.059.801 bytes), `jarsigner` devolvió `jar verified` y el APK universal de Bundletool tiene la misma huella SHA-256 del certificado. `adb devices` no mostró ningún dispositivo, así que la instalación física queda pendiente; no se subió nada a Play Store.
 - **2026-07-31 — Dependencias y auditoría (Codex, Bloque A):** `expo-network` quedó en `~56.0.5`, `react-native-maps` en `1.27.2` y `react-native-screens` en `~4.26.0`; `npx expo install --check` confirma dependencias compatibles. La auditoría actual de `apps/backend` devuelve 0 vulnerabilidades tanto con dependencias de desarrollo como con `--omit=dev`; las 11 alertas moderadas anotadas antes eran estado histórico, así que no hubo `npm audit fix` que aplicar.
 - **2026-07-31 — Catálogo semilla genérico (Codex, Bloque 0):** al crear una obra se insertan, dentro de la misma transacción, cuatro códigos neutros de ejemplo (`EJ-*`), dos puntos de control de muestra (nivel digital y piezómetro) y umbrales indicativos. Cada registro se marca como dato de muestra para sustituir antes de una campaña; no contiene nombres, códigos ni proceso de ningún cliente o empleador.
