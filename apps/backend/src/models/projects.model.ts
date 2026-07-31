@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg';
 
 import { pool } from '../db/pool.js';
+import { seedGenericProjectTemplate } from '../lib/generic-project-template.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import { createChangeLog } from './change-logs.model.js';
 
@@ -147,6 +148,8 @@ export const createProject = async (input: CreateProjectInput, createdBy: string
       ]
     );
     const projectId = result.rows[0].id as string;
+
+    await seedGenericProjectTemplate(client, projectId, createdBy);
 
     await createChangeLog(
       {

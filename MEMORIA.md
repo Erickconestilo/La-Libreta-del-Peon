@@ -199,6 +199,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/render-backend-lockfile | Corregir el bloqueo de dependencias que impide el build de Render: `apps/backend/package.json` requiere esbuild 0.28.1 mientras su lock local conserva 0.28.0. | cerrado (`npm ci` y `npm ci --omit=dev` con npm 10.9.8 pasan; build y 30/30 tests backend verdes) |
 | 2026-07-31 | Codex | codex/phase-3-galaxy-e2e-report | Prueba E2E de Fase 3 en Galaxy: ronda, lectura con foto, repetición offline tras reinicio, idempotencia en Render/Supabase; documentación e informe final. | cerrado (escenario limpio offline superado; ver informe de dispositivo y pendientes UX en §12) |
 | 2026-07-31 | Codex | codex/pilot-blockers-mobile | Resolver pendientes prioritarios: diagnóstico de sesión, caché offline de Obras, diagnóstico/reintento de outbox, decisión de catálogo/reglas y baseline RLS legacy. | cerrado (app, decisión y baseline documental completos; queda solo confirmación opcional de configuración Auth por Erick) |
+| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | abierto |
 
 ---
 
@@ -252,6 +253,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - **Documentado (31-07-2026):** baseline RLS en `apps/backend/migrations/baseline/legacy_rls_baseline.sql`, solo referencia y no aplicable. La consulta real a `pg_policies` devuelve 24 tablas con `legacy deny all`, no 37; queda corregir la cifra histórica en una auditoría futura, sin inventar políticas inexistentes.
 
 **Después (importante, no bloquea uso real):**
+- Catálogo semilla genérico para obras nuevas, sin datos operativos reales.
 - Firma estable + AAB para Google Play.
 - 3 discrepancias de versión señaladas por `expo install --check` (expo-network, react-native-maps, react-native-screens).
 - `npm audit`: 11 alertas moderadas transitivas (no usar `--force`).
@@ -269,6 +271,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-07-31 — Catálogo semilla genérico (Codex, Bloque 0):** al crear una obra se insertan, dentro de la misma transacción, cuatro códigos neutros de ejemplo (`EJ-*`), dos puntos de control de muestra (nivel digital y piezómetro) y umbrales indicativos. Cada registro se marca como dato de muestra para sustituir antes de una campaña; no contiene nombres, códigos ni proceso de ningún cliente o empleador.
 - **2026-07-26 — Auditoría inicial (Cowork):** plan maestro de rework aprobado con 5 enmiendas; modelo de faenas reducido de 10 a 5 tablas por presupuesto de tiempo real (5-10h/semana).
 - **2026-07-26 — Corrección TopoTask:** no es contaminación, son dos proyectos Supabase separados; el único vínculo es una importación de datos históricos legítima de mayo.
 - **2026-07-26 — Fase 0 (Claude Code):** reveló deriva de esquema masiva — 8 migraciones y 23 tablas ya construidas en Supabase sin archivo local, incluida una familia "obras" con datos reales (72 sensores, 145 mediciones).
