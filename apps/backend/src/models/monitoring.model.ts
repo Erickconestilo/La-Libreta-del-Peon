@@ -38,7 +38,12 @@ const buildRoundProjectScopeCondition = (projectIds: string[] | null, offset: nu
   };
 };
 
-const buildProjectScopeCondition = (projectIds: string[] | null, alias: string, offset: number): ProjectScope => {
+export const buildProjectScopeCondition = (
+  projectIds: string[] | null,
+  alias: string,
+  offset: number,
+  projectIdColumn = 'project_id',
+): ProjectScope => {
   if (projectIds === null) {
     return { clause: '', params: [] };
   }
@@ -48,7 +53,7 @@ const buildProjectScopeCondition = (projectIds: string[] | null, alias: string, 
   }
 
   return {
-    clause: `AND ${alias}.project_id = ANY($${offset}::uuid[])`,
+    clause: `AND ${alias}.${projectIdColumn} = ANY($${offset}::uuid[])`,
     params: [projectIds]
   };
 };
@@ -310,7 +315,7 @@ export const createMonitoringRound = async (
   createdBy: string,
   projectScope: string[] | null = null
 ) => {
-  const scope = buildProjectScopeCondition(projectScope, 'p', 9);
+  const scope = buildProjectScopeCondition(projectScope, 'p', 9, 'id');
   const result = await pool.query(
     `
       INSERT INTO monitoring_rounds (
@@ -426,7 +431,7 @@ export const createControlPoint = async (
   input: ValidatedCreateControlPointInput,
   projectScope: string[] | null = null
 ) => {
-  const scope = buildProjectScopeCondition(projectScope, 'p', 11);
+  const scope = buildProjectScopeCondition(projectScope, 'p', 11, 'id');
   const result = await pool.query(
     `
       INSERT INTO control_points (

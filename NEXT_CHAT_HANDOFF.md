@@ -6,11 +6,11 @@
 
 - Proyecto: `C:\Users\guill\Documents\Aplicacion_Movil\topofield`.
 - Repo remoto: `https://github.com/Erickconestilo/La-Libreta-del-Peon.git`.
-- `main` está publicado en GitHub hasta `1abf2a1`; el trabajo de adjuntos está en `codex/phase-3-reading-attachments`.
-- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — **desactualizado respecto a `main` local**: no incluye todavía `client_request_id` en `station_messages` (migración 018) ni el backend de Fase 3 (`monitoring_rounds`, migración 019). Pendiente desplegar antes de cualquier piloto real.
+- `main` está publicado en GitHub hasta `fe8269b`; el arreglo de permisos de Fase 3 está en `codex/phase-3-galaxy-e2e` y aún debe integrarse.
+- Backend Render: `https://la-libreta-del-peon-1.onrender.com/api/v1` — confirmado en `fe8269b`: la ruta de rondas existe y devuelve `401` sin token. Falta publicar el arreglo de permisos detectado durante el E2E Galaxy.
 - Supabase real: proyecto `topofield` (`tmlexrsnxpmykbpeebri`, región eu-north-1). Existe un segundo proyecto, `topotask-backend` (`jwckuoiossieiyankkvh`), que es una base de datos ajena — no confundirlos (ver ADR 001, corrección 2026-07-29).
 - Dispositivo ADB: Galaxy S25 `SM_S938B`, id `R5CY21X6FLE` cuando `adb` esté disponible.
-- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 validada en dispositivo real. Fase 3 tiene backend, RLS, pantallas móviles y adjuntos de lectura locales; faltan despliegue real de Render y E2E Galaxy.
+- Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 validada en dispositivo real. Fase 3 tiene backend, RLS, pantallas móviles y adjuntos publicados; el E2E Galaxy está en curso. La primera ronda reveló un SQL de scope erróneo para `topografo`, ya corregido y cubierto por test local, pendiente de desplegar.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
 
 ## Actualización — 2026-07-31 (Fase 3 móvil y adjuntos)
@@ -26,10 +26,10 @@
 - Añadido localmente el endpoint de `reading_attachments`, firmado Storage por
   lectura y foto opcional persistente/offline-first. Pruebas: backend 30/30,
   móvil 31/31 y TypeScript limpio.
-- Bloqueo para QA contra la app configurada: Render devuelve `404` en
-  `/projects/:projectId/rounds` sin token y su health expone `2fd2eb2`, aunque
-  `main` ya se publicó a GitHub. Las rutas aún no están desplegadas en Render;
-  aplicar migraciones en Supabase no publica Express.
+- Render ya publica Fase 3 (`fe8269b`) y devuelve `401` sin token en rondas,
+  por lo que las rutas y la protección de autenticación están activas. El E2E
+  real detectó después una regresión de scope para `topografo` al crear ronda;
+  la corrección local aún debe integrarse y desplegarse antes de retomar QA.
 
 ## Actualización prioritaria — 2026-07-29
 
