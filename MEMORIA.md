@@ -239,6 +239,31 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 ---
 
+## 12a. Lista consolidada de pendientes (31-07-2026)
+
+Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
+
+**Ahora (bloquea piloto real o es fricción activa):**
+- Investigar por qué la sesión de la app pide re-login tras varios días sin usarla (Erick lo reportó 31-07-2026 usando el login real, no el script de QA). Puede ser comportamiento esperado de expiración de refresh token de Supabase Auth, o un bug en cómo `session-provider`/`use-auth` intenta refrescar. Ver apps/mobile/lib (auth/sesión).
+- Fase 3: caché de la lista de Obras para arranque en frío sin red.
+- Fase 3: UI de reintento/diagnóstico para elementos del outbox en estado `error`.
+- Fase 3: decidir si se usa `project_code_catalog`/`project_rules` (migración 019 los creó) o se descartan — ya existe un catálogo de códigos por proyecto vía `projects.routes.ts` que podría ser redundante.
+- RLS de las 37 tablas legacy (`"legacy deny all"`) no está en ningún archivo versionado, solo en la base — volcar a un `NNN_rls_baseline.sql` de solo lectura (sin aplicar) para que un restore desde el repo no las pierda.
+
+**Después (importante, no bloquea uso real):**
+- Firma estable + AAB para Google Play.
+- 3 discrepancias de versión señaladas por `expo install --check` (expo-network, react-native-maps, react-native-screens).
+- `npm audit`: 11 alertas moderadas transitivas (no usar `--force`).
+- Catálogo semilla genérico/real del producto (Fase 1, enmienda 5).
+- Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro.
+
+**Aparcado (sin retorno claro ahora):**
+- Purga de historial git de nombres reales de obra.
+- Fisurómetro/extensómetro/clinómetro (después de piezómetro/inclinómetro).
+- Acceso GitHub de Cowork vía token fine-grained (no bloquea nada hoy).
+
+**Acción de Erick, no delegable a un agente:** permiso por escrito del empleador que distinga "usar TopoField en obra" de "ser propietario del código" (ver §5).
+
 ## 12. Bitácora de avances (una línea por hito, con contexto)
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
