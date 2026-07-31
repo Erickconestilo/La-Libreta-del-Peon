@@ -200,6 +200,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/phase-3-galaxy-e2e-report | Prueba E2E de Fase 3 en Galaxy: ronda, lectura con foto, repetición offline tras reinicio, idempotencia en Render/Supabase; documentación e informe final. | cerrado (escenario limpio offline superado; ver informe de dispositivo y pendientes UX en §12) |
 | 2026-07-31 | Codex | codex/pilot-blockers-mobile | Resolver pendientes prioritarios: diagnóstico de sesión, caché offline de Obras, diagnóstico/reintento de outbox, decisión de catálogo/reglas y baseline RLS legacy. | cerrado (app, decisión y baseline documental completos; queda solo confirmación opcional de configuración Auth por Erick) |
 | 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | cerrado (commits separados; AAB firmado y verificado, instalación Galaxy pendiente porque ADB no detectó dispositivo; purga bloqueada a la espera de confirmación explícita de cadenas) |
+| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque C autorizado: backup mirror y reescritura de clonación local desechable con las siete cadenas confirmadas, sin push forzado. | abierto |
 
 ---
 
