@@ -6,6 +6,7 @@ import { Storage } from 'expo-sqlite/kv-store';
 
 import { apiFetch, isApiRequestError, setApiAuthFailureHandler, setApiBearerToken } from '@/lib/api';
 import { queryClient } from '@/lib/query-client';
+import { resolveSessionAfterRefreshFailure } from './session-refresh';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -63,6 +64,7 @@ type SessionContextValue = {
 const LEGACY_SESSION_KEY = 'topofield_admin_bearer_token';
 const SESSION_STATE_KEY = 'topofield_technical_sessions_v1';
 const TOKEN_EXPIRY_WARNING_SECONDS = 10 * 60;
+const SESSION_REFRESH_RETRY_DELAY_MS = 30 * 1000;
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
@@ -319,9 +321,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [isSessionInvalid, setIsSessionInvalid] = useState(false);
   const authCacheKeyRef = useRef<string | null>(null);
+  const refreshRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void hydrateSession();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (refreshRetryTimeoutRef.current) {
+        clearTimeout(refreshRetryTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -428,18 +439,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         nextSessions = normalized.sessions;
         nextSession = normalized.sessions.find((session) => session.id === sessionId) ?? nextSession;
       }
-    } catch {
-      nextSession = {
-        ...storedSession,
-        token: ''
-      };
-      nextSessions = sessions.map((session) =>
-        session.id === storedSession.id ? nextSession : session
-      );
-      await applyPersistedSessions({
-        sessions: nextSessions,
-        activeSessionId: sessionId
-      });
+    } catch (error) {
+      const resolvedFailure = resolveSessionAfterRefreshFailure(storedSession, error);
+      nextSession = resolvedFailure.session;
+
+      if (resolvedFailure.shouldPersistInvalidation) {
+        nextSessions = sessions.map((session) =>
+          session.id === storedSession.id ? nextSession : session
+        );
+        await applyPersistedSessions({
+          sessions: nextSessions,
+          activeSessionId: sessionId
+        });
+      } else if (!refreshRetryTimeoutRef.current) {
+        refreshRetryTimeoutRef.current = setTimeout(() => {
+          refreshRetryTimeoutRef.current = null;
+          void applySession(sessionId, sessions, { swallowAuthError: true });
+        }, SESSION_REFRESH_RETRY_DELAY_MS);
+      }
     }
 
     const token = nextSession.token;
@@ -456,9 +473,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!canUseToken) {
       setCurrentUser(null);
       if (!token) {
+        if (refreshRetryTimeoutRef.current) {
+          clearTimeout(refreshRetryTimeoutRef.current);
+          refreshRetryTimeoutRef.current = null;
+        }
         setSessionWarning('La sesión técnica es inválida. Repite el token.');
+      } else if (tokenInfo.isExpired) {
+        setSessionWarning('No se pudo renovar la sesión todavía. Se reintentará automáticamente.');
       }
       return false;
+    }
+
+    if (refreshRetryTimeoutRef.current) {
+      clearTimeout(refreshRetryTimeoutRef.current);
+      refreshRetryTimeoutRef.current = null;
     }
 
     try {

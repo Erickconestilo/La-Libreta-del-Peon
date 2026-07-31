@@ -42,8 +42,7 @@ export async function applyMigrations(): Promise<void> {
   // List of migrations (add new ones at the end)
   const migrations = [
     { version: 1 },
-    // Future migrations go here:
-    // { version: 2 },
+    { version: 2 },
   ];
 
   // Apply pending migrations
@@ -55,6 +54,10 @@ export async function applyMigrations(): Promise<void> {
         // Execute migration directly (SQL inlined)
         if (migration.version === 1) {
           executeMigration001(db);
+        }
+
+        if (migration.version === 2) {
+          executeMigration002(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -118,6 +121,23 @@ function executeMigration001(db: SQLiteDatabase): void {
       ON outbox(created_at DESC);
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (1);
+  `);
+}
+
+/**
+ * Guarda la última lista de obras que llegó correctamente desde la API.
+ * La clave se asocia a la sesión local para no mezclar el alcance de dos
+ * cuentas técnicas que utilicen el mismo dispositivo.
+ */
+function executeMigration002(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS project_list_cache (
+      cache_key TEXT PRIMARY KEY,
+      projects_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (2);
   `);
 }
 

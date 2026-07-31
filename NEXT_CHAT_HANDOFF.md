@@ -29,6 +29,10 @@
 - Render publica Fase 3 y el arreglo de scope/idempotencia (`e7e2902`); las
   rondas devuelven `401` sin token. Galaxy confirmó una lectura offline con
   foto, reapertura de aplicación y sincronización automática sin duplicado.
+- Pendientes prioritarios posteriores cerrados en `codex/pilot-blockers-mobile`:
+  refresh transitorio ya no borra SecureStore, Obras conserva caché SQLite por
+  sesión, Perfil permite diagnosticar/reintentar outbox en error y el bundle
+  Android local pasa. La referencia autoritativa es `MEMORIA.md` §12a.
 
 ## Actualización prioritaria — 2026-07-29
 
@@ -49,7 +53,9 @@
 - Erick decidió reactivar `apps/backend/migrations/deprecated/014_monitoring_rounds.sql` como base del modelo de faenas, ahora `apps/backend/migrations/019_monitoring_rounds.sql` — **ya aplicada a Supabase** (`topofield`). Cambio respecto al original: sin `total_station` en `instrument_types` (ya cubierto por `prism_monitoring_observations`).
 - Backend completo para: crear/listar rondas, detalle de ronda con puntos, CRUD de puntos de control, umbrales de alarma, histórico de lecturas. Ver `apps/backend/src/models/monitoring.model.ts`, `.../controllers/monitoring.controller.ts`, `.../routes/monitoring.routes.ts`. 27/27 tests, `tsc` limpio.
 - Las 9 tablas nuevas tienen RLS activo mediante la migración `020`, ya aplicada.
-- Fase 3 está implementada. Pendientes de producto: caché de Obras para arranque frío offline, UI de reintento/diagnóstico del outbox y decisión sobre catálogo/reglas por proyecto.
+- Fase 3 y sus pendientes prioritarios están implementados. `project_code_catalog`
+  es el catálogo ya expuesto por rutas y `project_rules` controla auto-confirmación;
+  se mantienen. El baseline RLS documental recoge 24 políticas actuales, no 37.
 
 ## Para Continuar (cualquier agente)
 
@@ -57,7 +63,8 @@
 - Reparto por área (ver `AGENTS.md`): Codex = móvil (`apps/mobile`, builds, dispositivo); Claude Code = backend/dominio (`apps/backend`, migraciones, ADR, `shared/`); Cowork = auditoría, no escribe código de producto salvo excepción puntual autorizada.
 - No asumir acceso al Galaxy local, ADB, APK descargada ni tokens de sesión desde un entorno cloud (Codex Cloud, Cowork) — eso requiere el entorno local de Erick con el dispositivo conectado.
 - No exponer ni pegar tokens/contraseñas en GitHub, docs ni respuestas.
-- Próximo bloque recomendado: cerrar los dos huecos UX offline (caché de Obras y recuperación visible de outbox) y preparar el checklist de piloto con usuarios reales.
+- Próximo bloque recomendado: comprobar la configuración de sesiones de Supabase
+  con Erick y preparar el checklist de piloto con usuarios reales.
 - **Todo lo que sigue debajo de esta línea es historial de antes del rework (anterior al 2026-07-26): APKs, builds EAS y bugs ya resueltos de una fase de desarrollo distinta a la actual (Fase 0-3 de MEMORIA.md). Se conserva como archivo, no como estado vigente — para el estado actual usar siempre MEMORIA.md.**
 
 ## Últimos Commits Importantes

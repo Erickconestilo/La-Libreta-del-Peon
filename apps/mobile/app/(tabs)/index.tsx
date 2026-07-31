@@ -13,7 +13,7 @@ export default function ProjectsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
-  const { data, errorMessage, isLoading, isRefetching, refetch } = useProjects();
+  const { cachedAt, data, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useProjects();
   const [isLoadTakingLong, setIsLoadTakingLong] = useState(false);
   const {
     errorMessage: photoErrorMessage,
@@ -105,6 +105,18 @@ export default function ProjectsScreen() {
             <MaterialIcons color={colors.background} name="refresh" size={17} />
             <Text style={styles.retryButtonText}>{isRefetching ? 'Reintentando...' : 'Reintentar'}</Text>
           </Pressable>
+        </View>
+      ) : null}
+
+      {isOfflineCache ? (
+        <View style={styles.offlineCard}>
+          <MaterialIcons color={colors.amber} name="cloud-off" size={18} />
+          <View style={styles.offlineCopy}>
+            <Text style={styles.offlineTitle}>Datos sin actualizar</Text>
+            <Text style={styles.offlineBody}>
+              Mostrando la última lista guardada{cachedAt ? ` (${new Date(cachedAt).toLocaleString('es-ES')})` : ''}.
+            </Text>
+          </View>
         </View>
       ) : null}
 
@@ -330,6 +342,31 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: typography.fontSizeBody,
     fontWeight: '800',
+  },
+  offlineBody: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19
+  },
+  offlineCard: {
+    alignItems: 'flex-start',
+    backgroundColor: `${colors.amber}14`,
+    borderLeftColor: colors.amber,
+    borderLeftWidth: 3,
+    flexDirection: 'row',
+    gap: spacing[1],
+    marginHorizontal: spacing[3],
+    marginTop: spacing[2],
+    padding: spacing[2]
+  },
+  offlineCopy: {
+    flex: 1,
+    gap: 2
+  },
+  offlineTitle: {
+    color: colors.amber,
+    fontSize: 14,
+    fontWeight: '800'
   },
   errorBody: {
     color: colors.textSecondary,

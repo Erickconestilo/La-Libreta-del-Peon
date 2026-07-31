@@ -6,6 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjects } from '@/hooks/use-projects';
+import { getErrors, type OutboxItem } from '@/lib/offline/outbox';
+import { syncOutboxItem } from '@/lib/offline/sync-handlers';
+import { flushOutbox, forceRetry } from '@/lib/offline/sync-engine';
 import { colors } from '@/src/theme';
 
 export default function ProfileScreen() {
@@ -32,7 +35,18 @@ export default function ProfileScreen() {
   const [authMode, setAuthMode] = useState<'credentials' | 'token'>('credentials');
   const [technicalEmail, setTechnicalEmail] = useState('');
   const [technicalPassword, setTechnicalPassword] = useState('');
+  const [outboxErrors, setOutboxErrors] = useState<OutboxItem[]>([]);
+  const [isRetryingOutbox, setIsRetryingOutbox] = useState<string | null>(null);
   const isCredentialsMode = authMode === 'credentials';
+
+  const refreshOutboxErrors = () => {
+    try {
+      setOutboxErrors(getErrors());
+    } catch (error) {
+      console.warn('[Profile] Unable to load outbox diagnostics:', error);
+      setOutboxErrors([]);
+    }
+  };
 
   useEffect(() => {
     setTokenInput('');
@@ -43,6 +57,23 @@ export default function ProfileScreen() {
       setTechnicalEmail((currentUser.email ?? '').trim());
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    refreshOutboxErrors();
+  }, [activeSessionId]);
+
+  const handleRetryOutboxItem = async (itemId: string) => {
+    setIsRetryingOutbox(itemId);
+
+    try {
+      forceRetry(itemId);
+      refreshOutboxErrors();
+      await flushOutbox(syncOutboxItem);
+    } finally {
+      refreshOutboxErrors();
+      setIsRetryingOutbox(null);
+    }
+  };
 
   const handleConnect = async () => {
     try {
@@ -261,9 +292,62 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       ) : null}
+
+      {savedSessions.length > 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>Operaciones pendientes</Text>
+          <Text style={styles.body}>
+            {outboxErrors.length > 0
+              ? 'Estas operaciones no se pudieron enviar. Puedes reintentarlas cuando tengas conexión.'
+              : 'No hay operaciones bloqueadas en este dispositivo.'}
+          </Text>
+          {outboxErrors.map((item) => (
+            <View key={item.id} style={styles.outboxItem}>
+              <View style={styles.outboxCopy}>
+                <Text style={styles.outboxTitle}>{getOutboxLabel(item)}</Text>
+                <Text style={styles.caption}>{item.errorMessage ?? 'Error sin detalle disponible.'}</Text>
+                <Text style={styles.caption}>Intentos: {item.retryCount}</Text>
+              </View>
+              <Pressable
+                disabled={isRetryingOutbox !== null}
+                onPress={() => void handleRetryOutboxItem(item.id)}
+                style={[styles.secondaryButton, isRetryingOutbox !== null ? styles.disabledButton : null]}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  {isRetryingOutbox === item.id ? 'Reintentando...' : 'Reintentar'}
+                </Text>
+              </Pressable>
+            </View>
+          ))}
+          <Pressable
+            disabled={isRetryingOutbox !== null}
+            onPress={refreshOutboxErrors}
+            style={[styles.secondaryButton, isRetryingOutbox !== null ? styles.disabledButton : null]}
+          >
+            <Text style={styles.secondaryButtonText}>Actualizar estado</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
+
+const getOutboxLabel = (item: OutboxItem) => {
+  switch (item.entityType) {
+    case 'medicion':
+      return 'Lectura de auscultación';
+    case 'station_message':
+      return 'Mensaje de estación';
+    case 'station_photo':
+      return 'Foto de estación';
+    case 'prism_observation':
+      return 'Observación de prisma';
+    case 'incident':
+      return 'Incidencia';
+    default:
+      return 'Operación de campo';
+  }
+};
 
 const getRoleTitle = (role: string | undefined) => {
   switch (role) {
@@ -336,6 +420,23 @@ const styles = StyleSheet.create({
     padding: 12,
     textAlignVertical: 'center'
   },
+  outboxCopy: {
+    flex: 1,
+    gap: 4
+  },
+  outboxItem: {
+    backgroundColor: '#151922',
+    borderColor: 'rgba(245, 158, 11, 0.55)',
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+    padding: 12
+  },
+  outboxTitle: {
+    color: colors.amber,
+    fontSize: 14,
+    fontWeight: '800'
+  },
   primaryButton: {
     alignItems: 'center',
     backgroundColor: colors.accentGreen,
@@ -394,6 +495,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 10,
     paddingHorizontal: 10
+  },
+  disabledButton: {
+    opacity: 0.55
   },
   sessionActions: {
     alignItems: 'flex-end',

@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateProjectInput, PhotoContentType, ProjectSummary, SignedPhotoUpload, Station } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
+import { getCachedProjectList, saveProjectList } from '@/lib/offline/project-cache';
 import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
+import { useCurrentSession } from '@/hooks/use-auth';
 
 type StationListItem = Station & {
   project?: {
@@ -61,7 +63,13 @@ const buildProjectsFromStations = (stations: StationListItem[]): ProjectSummary[
   return Array.from(projects.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
-const fetchProjects = async () => {
+type ProjectListResult = {
+  cachedAt: string | null;
+  isOfflineCache: boolean;
+  projects: ProjectSummary[];
+};
+
+const fetchRemoteProjects = async () => {
   try {
     const response = await apiFetch<ApiEnvelope<ProjectSummary[]>>('/projects');
     return response.data;
@@ -72,6 +80,25 @@ const fetchProjects = async () => {
 
     const fallback = await apiFetch<ApiEnvelope<StationListItem[]>>('/stations');
     return buildProjectsFromStations(fallback.data);
+  }
+};
+
+const fetchProjects = async (cacheKey: string): Promise<ProjectListResult> => {
+  try {
+    const projects = await fetchRemoteProjects();
+    saveProjectList(cacheKey, projects);
+    return { cachedAt: null, isOfflineCache: false, projects };
+  } catch (error) {
+    const cached = getCachedProjectList(cacheKey);
+    if (cached) {
+      return {
+        cachedAt: cached.cachedAt,
+        isOfflineCache: true,
+        projects: cached.projects
+      };
+    }
+
+    throw error;
   }
 };
 
@@ -122,15 +149,20 @@ const createProjectRequest = async (input: CreateProjectInput) => {
 };
 
 export const useProjects = () => {
+  const { activeSessionId } = useCurrentSession();
+  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
   const query = useQuery({
-    queryFn: fetchProjects,
-    queryKey: ['projects'],
+    queryFn: () => fetchProjects(cacheKey),
+    queryKey: ['projects', cacheKey],
     staleTime: 1000 * 60
   });
 
   return {
     ...query,
-    errorMessage: query.error ? getErrorMessage(query.error) : null
+    cachedAt: query.data?.cachedAt ?? null,
+    data: query.data?.projects,
+    errorMessage: query.error ? getErrorMessage(query.error) : null,
+    isOfflineCache: query.data?.isOfflineCache ?? false
   };
 };
 
