@@ -430,3 +430,32 @@ Coste:
 
 - mas trabajo de credenciales
 - pero permite actualizar encima sin borrar la app
+
+## 23. Firma release local (31-07-2026)
+
+La firma de produccion se configura localmente, fuera del repositorio. El
+script versionado `scripts/configure-local-android-signing.ps1` se ejecuta
+despues de cada `expo prebuild` desde `scripts/build-local-android.ps1` y
+reemplaza la firma release de depuracion por la clave local indicada en:
+
+```text
+%USERPROFILE%\.topofield\android\topofield-release.properties
+```
+
+Ese archivo y el `.jks` nunca se versionan. `*.jks` esta cubierto por
+`.gitignore`. La build release local pasa a generar un Android App Bundle:
+
+```powershell
+npm run mobile:build-local-android
+```
+
+El resultado esperado queda en:
+
+```text
+C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab
+```
+
+Un AAB no se instala con `adb install` directamente: para una prueba local se
+convierte a un conjunto `.apks` mediante Bundletool y se instala ese conjunto.
+No subir el AAB a Play Store hasta conservar dos copias externas del keystore y
+las credenciales de firma en un gestor de contrasenas.

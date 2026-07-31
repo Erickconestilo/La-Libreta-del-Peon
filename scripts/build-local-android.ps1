@@ -2,6 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $mobileRoot = Join-Path $repoRoot "apps\mobile"
+$signingScript = Join-Path $repoRoot "scripts\configure-local-android-signing.ps1"
 $shortRoot = "C:\tf"
 $sdkRoot = "C:\Users\guill\scoop\apps\android-clt\current"
 $javaHome = "C:\Users\guill\scoop\apps\temurin17-jdk\current"
@@ -29,9 +30,10 @@ Write-Host "Prebuild Android desde ruta corta..."
 Push-Location (Join-Path $shortRoot "apps\mobile")
 try {
   npx expo prebuild --platform android --clean --no-install
+  & $signingScript -AndroidAppBuildGradlePath (Join-Path $shortRoot "apps\mobile\android\app\build.gradle")
   Push-Location (Join-Path $shortRoot "apps\mobile\android")
   try {
-    .\gradlew.bat clean app:assembleRelease --no-daemon --no-parallel --max-workers=1 -PreactNativeArchitectures=arm64-v8a
+    .\gradlew.bat clean app:bundleRelease --no-daemon --no-parallel --max-workers=1 -PreactNativeArchitectures=arm64-v8a
   }
   finally {
     Pop-Location
@@ -41,12 +43,12 @@ finally {
   Pop-Location
 }
 
-$apkPath = Join-Path $shortRoot "apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
+$aabPath = Join-Path $shortRoot "apps\mobile\android\app\build\outputs\bundle\release\app-release.aab"
 
-if (-not (Test-Path $apkPath)) {
-  throw "Build completada sin encontrar APK en $apkPath"
+if (-not (Test-Path $aabPath)) {
+  throw "Build completada sin encontrar AAB en $aabPath"
 }
 
 Write-Host ""
-Write-Host "APK generada:"
-Write-Host $apkPath
+Write-Host "AAB generada:"
+Write-Host $aabPath
