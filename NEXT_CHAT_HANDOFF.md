@@ -13,6 +13,22 @@
 - Estado actual (ver MEMORIA.md §8 para la tabla completa): Fase 2 (motor offline) cerrada y validada en dispositivo real. Fase 3 (MVP de faenas semanales) en construcción sobre `monitoring_rounds` — backend completo y migración 019 ya aplicada a Supabase; pendiente decidir/aplicar políticas RLS en las 9 tablas nuevas y construir las pantallas móviles.
 - Build local Android Windows operativa: `npm run mobile:build-local-android`.
 
+## Actualización — 2026-07-31 (Fase 3 móvil)
+
+- Rama de trabajo: `codex/phase-3-mobile-monitoring`.
+- Pantallas implementadas: rondas por obra, nueva ronda, detalle y puntos de
+  ronda, captura offline-first de lecturas, lista/alta/histórico de puntos de
+  control y activación/desactivación.
+- Lecturas: reutilizan la outbox SQLite con `entity_type = 'medicion'` y
+  conservan `clientRequestId`; pruebas de sincronización ampliadas.
+- Verificado: TypeScript móvil limpio, Jest `4/4` suites y `30/30` tests,
+  export Android correcto. Informe: `PHASE_3_MOBILE_REPORT_2026-07-31.md`.
+- Límite conocido: no hay endpoint backend para `reading_attachments`; no se
+  ofrece foto hasta que exista un contrato trazable.
+- Bloqueo para QA contra la app configurada: Render devuelve `404` en
+  `/projects/:projectId/rounds` sin token. Las rutas de Fase 3 aún no están
+  desplegadas en Render; aplicar migraciones en Supabase no publica Express.
+
 ## Actualización prioritaria — 2026-07-29
 
 - Informe fuente: `PHASE_2_DEVICE_E2E_REPORT_2026-07-29.md`.

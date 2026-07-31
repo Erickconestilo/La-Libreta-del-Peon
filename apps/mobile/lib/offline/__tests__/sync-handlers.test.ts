@@ -29,6 +29,28 @@ const stationMessageItem: OutboxItem = {
   syncedAt: null,
 };
 
+const instrumentReadingItem: OutboxItem = {
+  clientRequestId: 'a5ca42c2-af48-4b10-81cc-4d6e3b021c6c',
+  conflictData: null,
+  createdAt: '2026-07-31 08:00:00',
+  entityType: 'medicion',
+  errorMessage: null,
+  id: '0d88a337-9c75-4853-83e1-0e4b03a3f7a2',
+  lastSyncAttemptAt: null,
+  operation: 'insert',
+  payload: {
+    measuredAt: '2026-07-31T08:00:00.000Z',
+    notes: 'Lectura tomada sin cobertura',
+    roundPointId: 'a741a875-efbd-4e73-9f2e-66c07d46849e',
+    unit: 'mm',
+    valueNumeric: 2.4,
+    valueText: null,
+  },
+  retryCount: 0,
+  status: 'pending',
+  syncedAt: null,
+};
+
 describe('syncOutboxItem', () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
@@ -67,6 +89,36 @@ describe('syncOutboxItem', () => {
         payload: { body: 'Sin estación' },
       })
     ).rejects.toThrow('Invalid station message outbox payload');
+
+    expect(mockApiFetch).not.toHaveBeenCalled();
+  });
+
+  it('sends a persisted instrument reading with its original clientRequestId', async () => {
+    await syncOutboxItem(instrumentReadingItem);
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/round-points/a741a875-efbd-4e73-9f2e-66c07d46849e/readings',
+      {
+        body: JSON.stringify({
+          clientRequestId: 'a5ca42c2-af48-4b10-81cc-4d6e3b021c6c',
+          measuredAt: '2026-07-31T08:00:00.000Z',
+          notes: 'Lectura tomada sin cobertura',
+          unit: 'mm',
+          valueNumeric: 2.4,
+          valueText: null,
+        }),
+        method: 'POST',
+      }
+    );
+  });
+
+  it('rejects an invalid persisted reading before calling the API', async () => {
+    await expect(
+      syncOutboxItem({
+        ...instrumentReadingItem,
+        payload: { measuredAt: '2026-07-31T08:00:00.000Z', roundPointId: 'missing-value' },
+      })
+    ).rejects.toThrow('Invalid instrument reading outbox payload');
 
     expect(mockApiFetch).not.toHaveBeenCalled();
   });

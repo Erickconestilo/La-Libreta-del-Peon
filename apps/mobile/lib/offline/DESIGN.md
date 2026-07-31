@@ -165,6 +165,30 @@ literalmente `Property 'crypto' doesn't exist`.
 3. Station Photo (añade upload de archivos grandes)
 4. Mediciones de faenas (añade batch sync de muchos registros)
 
+### Slice 4: Lecturas de auscultación (Fase 3)
+
+**Decisión (2026-07-31):** las lecturas de `monitoring_round_points` son
+offline-first. Una ronda se prepara con conectividad, pero una lectura se toma
+en obra o túnel y no se puede perder por una cobertura irregular.
+
+- Cada lectura genera `clientRequestId` con `createRandomId()`.
+- Con red, el móvil intenta `POST /round-points/:roundPointId/readings` con
+  ese UUID para obtener enseguida `thresholdStatus`, `delta` y
+  `autoConfirmed`.
+- Sin red, o ante un fallo transitorio, se guarda en la outbox como
+  `entity_type = 'medicion'`. Ese valor ya existe en el CHECK de SQLite y
+  evita recrear la tabla o transformar las colas instaladas en dispositivos.
+- El sincronizador envía la misma carga y el mismo UUID al recuperar red. La
+  respuesta del backend es idempotente, igual que el slice de mensajes.
+- Mientras está pendiente, la UI debe indicar que el umbral aún no se ha
+  evaluado; no debe inventar un estado `normal`, `warning` o `alarm` local.
+
+**Adjuntos:** aunque existe la tabla `reading_attachments`, el backend no
+expone un endpoint para crear ni vincular adjuntos a una lectura. No se
+guardará una foto en `rawPayload`, porque dejaría un archivo no trazable. La
+foto opcional queda bloqueada hasta que el track backend añada el contrato de
+adjuntos y su sincronización.
+
 ---
 
 ## Criterio de Salida de Fase 2

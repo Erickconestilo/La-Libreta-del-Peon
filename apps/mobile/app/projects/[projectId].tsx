@@ -129,6 +129,11 @@ export default function ProjectDetailScreen() {
               </View>
             ) : null}
 
+            <Pressable onPress={() => router.push(`/projects/${projectId}/monitoring` as never)} style={styles.mapButton}>
+              <MaterialIcons color={colors.background} name="timeline" size={20} />
+              <Text style={styles.mapButtonText}>Rondas de auscultación</Text>
+            </Pressable>
+
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Estacionamientos</Text>
