@@ -200,7 +200,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/phase-3-galaxy-e2e-report | Prueba E2E de Fase 3 en Galaxy: ronda, lectura con foto, repetición offline tras reinicio, idempotencia en Render/Supabase; documentación e informe final. | cerrado (escenario limpio offline superado; ver informe de dispositivo y pendientes UX en §12) |
 | 2026-07-31 | Codex | codex/pilot-blockers-mobile | Resolver pendientes prioritarios: diagnóstico de sesión, caché offline de Obras, diagnóstico/reintento de outbox, decisión de catálogo/reglas y baseline RLS legacy. | cerrado (app, decisión y baseline documental completos; queda solo confirmación opcional de configuración Auth por Erick) |
 | 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | cerrado (commits separados; AAB firmado y verificado, instalación Galaxy pendiente porque ADB no detectó dispositivo; purga bloqueada a la espera de confirmación explícita de cadenas) |
-| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque C autorizado: backup mirror y reescritura de clonación local desechable con las siete cadenas confirmadas, sin push forzado. | abierto |
+| 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque C autorizado: generar esta copia saneada desde el backup mirror original mediante una sola reescritura de las nueve cadenas confirmadas, sin push forzado. | cerrado (nueve búsquedas literales a cero, `git fsck --full` correcto y sin remoto) |
 
 ---
 
@@ -260,7 +260,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro.
 
 **Aparcado (sin retorno claro ahora):**
-- Purga de historial git de nombres reales de obra: inventario de solo lectura completado el 31-07-2026; esperar confirmación explícita de Erick sobre las cadenas a retirar antes de crear el backup mirror o reescribir nada.
+- Purga de historial git de nombres reales de obra: esta copia saneada local de las nueve cadenas autorizadas fue verificada el 31-07-2026; queda revisión de Erick y decisión explícita posterior sobre sustituir el repositorio original o publicar una reescritura.
 - Fisurómetro/extensómetro/clinómetro (después de piezómetro/inclinómetro).
 - Acceso GitHub de Cowork vía token fine-grained (no bloquea nada hoy).
 
@@ -270,6 +270,7 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-07-31 — Purga local final de historial autorizada (Codex, Bloque C):** esta copia se reconstruyó desde el backup mirror original y recibió una única reescritura con las nueve cadenas autorizadas. Las nueve verificaciones literales sobre `git log -p --all` devuelven 0; `git fsck --full` termina correctamente. No conserva remoto GitHub y no se ejecutó ningún push.
 - **2026-07-31 — Inventario de purga de historial (Codex, Bloque C):** búsqueda de solo lectura completada sobre los 141 commits accesibles, incluyendo `git log -G`, `git log -S` y `git grep` por commit. Hay nombres reales de obra y referencias operativas en migraciones, datos de estaciones, pantallas y documentación histórica. No se creó mirror, no se usó `filter-repo` ni se hizo ningún push forzado: queda una compuerta explícita de confirmación de Erick antes de cualquier reescritura.
 - **2026-07-31 — Firma release local y AAB (Codex, Bloque B):** generado el keystore local de TopoField fuera del repo y el configurador versionado que lo conecta a `release` tras cada prebuild. Se generó `app-release.aab` (40.059.801 bytes), `jarsigner` devolvió `jar verified` y el APK universal de Bundletool tiene la misma huella SHA-256 del certificado. `adb devices` no mostró ningún dispositivo, así que la instalación física queda pendiente; no se subió nada a Play Store.
 - **2026-07-31 — Dependencias y auditoría (Codex, Bloque A):** `expo-network` quedó en `~56.0.5`, `react-native-maps` en `1.27.2` y `react-native-screens` en `~4.26.0`; `npx expo install --check` confirma dependencias compatibles. La auditoría actual de `apps/backend` devuelve 0 vulnerabilidades tanto con dependencias de desarrollo como con `--omit=dev`; las 11 alertas moderadas anotadas antes eran estado histórico, así que no hubo `npm audit fix` que aplicar.
