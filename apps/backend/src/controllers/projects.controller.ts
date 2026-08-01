@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { getActorProjectScope } from '../lib/access-control.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
+import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createProject, getProjectById, listProjects, updateProjectPhoto } from '../models/projects.model.js';
 import { isValidProjectPhotoPath, validateAttachProjectPhotoInput } from '../utils/photo-validation.js';
@@ -94,9 +95,14 @@ export const updateProjectPhotoController = async (request: Request, response: R
       throw new AppError('Invalid project photo path', 400, 'INVALID_PROJECT_PHOTO_PATH');
     }
 
-    if (input.storagePath) {
-      await assertPhotoObjectExists(input.storagePath);
-    }
+    await requireScopedResourceBeforeExternalCheck({
+      code: 'PROJECT_NOT_FOUND',
+      loadResource: () => getProjectById(projectId, projectScope),
+      message: 'Project not found',
+      verifyAfterAccess: input.storagePath
+        ? () => assertPhotoObjectExists(input.storagePath as string)
+        : undefined
+    });
 
     const project = await updateProjectPhoto(projectId, input.storagePath, request.user.id, projectScope);
 

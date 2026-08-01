@@ -4,6 +4,7 @@ import { AppError } from '../lib/app-error.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { shouldUsePublicDto, toPublicStation } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
+import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import { createStation, getStationById, listStations, updateStationNotes, updateStationPhoto } from '../models/stations.model.js';
 import { assertProjectAccess, getActorProjectScope } from '../lib/access-control.js';
 import { isValidStationPhotoPath, validateAttachStationPhotoInput } from '../utils/photo-validation.js';
@@ -127,11 +128,15 @@ export const updateStationPhotoController = async (request: Request, response: R
       throw new AppError('Invalid station photo path', 400, 'INVALID_STATION_PHOTO_PATH');
     }
 
-    if (input.storagePath) {
-      await assertPhotoObjectExists(input.storagePath);
-    }
-
     const projectScope = getActorProjectScope(request.user);
+    await requireScopedResourceBeforeExternalCheck({
+      code: 'STATION_NOT_FOUND',
+      loadResource: () => getStationById(stationId, projectScope),
+      message: 'Station not found',
+      verifyAfterAccess: input.storagePath
+        ? () => assertPhotoObjectExists(input.storagePath as string)
+        : undefined
+    });
     const station = await updateStationPhoto(stationId, input.storagePath, request.user.id, projectScope);
 
     if (!station) {

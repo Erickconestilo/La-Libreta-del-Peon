@@ -46,3 +46,16 @@ export const canActorAccessProject = (user: AuthenticatedUser, projectId: string
 
   return projectIds.includes(projectId);
 };
+
+export const assertTopografoHasScopedResource = (
+  user: AuthenticatedUser,
+  hasScopedResource: boolean
+) => {
+  if (user.role === 'topografo' && !hasScopedResource) {
+    throw new AppError(
+      'A project-scoped resource is required for this operation',
+      403,
+      'PROJECT_REQUIRED'
+    );
+  }
+};

@@ -2,7 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { AppError } from './app-error.js';
-import { assertProjectAccess, canActorAccessProject, getActorProjectScope } from './access-control.js';
+import {
+  assertProjectAccess,
+  assertTopografoHasScopedResource,
+  canActorAccessProject,
+  getActorProjectScope
+} from './access-control.js';
+
+const projectA = '11111111-1111-1111-1111-111111111111';
+const projectB = '22222222-2222-2222-2222-222222222222';
 
 const adminUser = {
   authProvider: 'supabase' as const,
@@ -26,6 +34,18 @@ const surveyorUser = {
   id: 'surveyor-user',
   projectIds: ['project-a', 'project-b'],
   role: 'topografo' as const
+};
+
+const surveyorA = {
+  ...surveyorUser,
+  id: 'surveyor-a',
+  projectIds: [projectA]
+};
+
+const surveyorB = {
+  ...surveyorUser,
+  id: 'surveyor-b',
+  projectIds: [projectB]
 };
 
 test('getActorProjectScope returns unrestricted scope for admin and visitante', () => {
@@ -71,4 +91,53 @@ test('canActorAccessProject mirrors access semantics for each role', () => {
   assert.equal(canActorAccessProject(surveyorUser, null), false);
   assert.equal(canActorAccessProject(surveyorUser, 'project-a'), true);
   assert.equal(canActorAccessProject(surveyorUser, 'project-z'), false);
+});
+
+test('separate project memberships deny every project-bound endpoint family across works', () => {
+  const endpointFamilies = [
+    'projects',
+    'stations',
+    'station photos',
+    'station messages',
+    'station prisms',
+    'prism coverage',
+    'prism photos',
+    'incidents',
+    'change logs',
+    'signed uploads',
+    'monitoring rounds',
+    'round points',
+    'instrument readings',
+    'reading attachments',
+    'control points',
+    'thresholds',
+    'reading history'
+  ];
+
+  for (const endpointFamily of endpointFamilies) {
+    assert.equal(canActorAccessProject(surveyorA, projectA), true, `${endpointFamily}: A can access A`);
+    assert.equal(canActorAccessProject(surveyorB, projectB), true, `${endpointFamily}: B can access B`);
+    assert.equal(canActorAccessProject(surveyorA, projectB), false, `${endpointFamily}: A cannot access B`);
+    assert.equal(canActorAccessProject(surveyorB, projectA), false, `${endpointFamily}: B cannot access A`);
+
+    assert.throws(
+      () => assertProjectAccess(surveyorA, projectB),
+      (error: unknown) => error instanceof AppError && error.code === 'FORBIDDEN_PROJECT_ACCESS',
+      `${endpointFamily}: A write to B is forbidden`
+    );
+    assert.throws(
+      () => assertProjectAccess(surveyorB, projectA),
+      (error: unknown) => error instanceof AppError && error.code === 'FORBIDDEN_PROJECT_ACCESS',
+      `${endpointFamily}: B write to A is forbidden`
+    );
+  }
+});
+
+test('topografo cannot create a projectless incident while an admin can', () => {
+  assert.throws(
+    () => assertTopografoHasScopedResource(surveyorA, false),
+    (error: unknown) => error instanceof AppError && error.code === 'PROJECT_REQUIRED'
+  );
+  assert.doesNotThrow(() => assertTopografoHasScopedResource(surveyorA, true));
+  assert.doesNotThrow(() => assertTopografoHasScopedResource(adminUser, false));
 });

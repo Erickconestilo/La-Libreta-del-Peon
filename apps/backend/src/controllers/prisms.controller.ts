@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { getActorProjectScope } from '../lib/access-control.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
+import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import {
   shouldUsePublicDto,
   toPublicPrism,
@@ -11,6 +12,7 @@ import {
 } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import {
+  getPrismById,
   getPrismCoverageByGroupCode,
   listPrismObservationsByStationId,
   listPrismsByStationId,
@@ -162,9 +164,14 @@ export const updatePrismPhotoController = async (request: Request, response: Res
       throw new AppError('Invalid prism photo path', 400, 'INVALID_PRISM_PHOTO_PATH');
     }
 
-    if (input.storagePath) {
-      await assertPhotoObjectExists(input.storagePath);
-    }
+    await requireScopedResourceBeforeExternalCheck({
+      code: 'PRISM_NOT_FOUND',
+      loadResource: () => getPrismById(prismId, projectScope),
+      message: 'Prism not found',
+      verifyAfterAccess: input.storagePath
+        ? () => assertPhotoObjectExists(input.storagePath as string)
+        : undefined
+    });
 
     const prism = await updatePrismPhoto(prismId, input.storagePath, request.user.id, projectScope);
 

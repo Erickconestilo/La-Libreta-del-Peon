@@ -5,6 +5,7 @@ import { AppError } from '../lib/app-error.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { parseProjectCodeCatalogCsv } from '../lib/project-code-catalog-csv.js';
+import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import {
   createControlPoint,
   createControlPointThreshold,
@@ -12,6 +13,7 @@ import {
   createReadingAttachment,
   createMonitoringRound,
   createMonitoringRoundPoint,
+  getInstrumentReadingById,
   getMonitoringRoundDetail,
   getReadingHistory,
   importProjectCodeCatalog,
@@ -135,14 +137,20 @@ export const createReadingAttachmentController = async (request: Request, respon
       throw new AppError('Invalid reading photo path', 400, 'INVALID_READING_PHOTO_PATH');
     }
 
-    await assertPhotoObjectExists(input.storagePath);
+    const projectScope = getActorProjectScope(request.user);
+    await requireScopedResourceBeforeExternalCheck({
+      code: 'READING_NOT_FOUND',
+      loadResource: () => getInstrumentReadingById(readingId, projectScope),
+      message: 'Reading not found',
+      verifyAfterAccess: () => assertPhotoObjectExists(input.storagePath)
+    });
 
     const attachment = await createReadingAttachment(
       roundPointId,
       readingId,
       input,
       request.user.id,
-      getActorProjectScope(request.user)
+      projectScope
     );
 
     if (!attachment) {

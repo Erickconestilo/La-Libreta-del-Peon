@@ -25,6 +25,25 @@ const buildIncidentScopeCondition = (projectScope: string[] | null, baseOffset: 
   };
 };
 
+export const buildIncidentResourceScopeCondition = (
+  projectScope: string[] | null,
+  tableAlias: string,
+  baseOffset: number
+): IncidentScope => {
+  if (projectScope === null) {
+    return { params: [], clause: '' };
+  }
+
+  if (projectScope.length === 0) {
+    return { params: [], clause: 'AND 1=0' };
+  }
+
+  return {
+    params: [projectScope],
+    clause: `AND ${tableAlias}.project_id = ANY($${baseOffset}::uuid[])`
+  };
+};
+
 const mapIncidentRow = (row: QueryResultRow) => {
   return {
     description: row.description,
@@ -84,26 +103,65 @@ export const listIncidents = async ({
   return result.rows.map(mapIncidentRow);
 };
 
-export const createIncident = async (input: ValidatedCreateIncidentInput, reportedBy: string) => {
+export const createIncident = async (
+  input: ValidatedCreateIncidentInput,
+  reportedBy: string,
+  projectScope: string[] | null = null
+) => {
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
+    let stationProjectId: string | null = null;
+    let prismProjectId: string | null = null;
+
     if (input.stationId) {
-      const stationResult = await client.query('SELECT id FROM stations WHERE id = $1', [input.stationId]);
+      const scope = buildIncidentResourceScopeCondition(projectScope, 's', 2);
+      const stationResult = await client.query(
+        `
+          SELECT s.id, s.project_id
+          FROM stations s
+          WHERE s.id = $1
+          ${scope.clause}
+          FOR UPDATE
+        `,
+        [input.stationId, ...scope.params]
+      );
 
       if (stationResult.rowCount === 0) {
         throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
       }
+
+      stationProjectId = stationResult.rows[0].project_id as string | null;
     }
 
     if (input.prismId) {
-      const prismResult = await client.query('SELECT id FROM prisms WHERE id = $1', [input.prismId]);
+      const scope = buildIncidentResourceScopeCondition(projectScope, 'p', 2);
+      const prismResult = await client.query(
+        `
+          SELECT p.id, p.project_id
+          FROM prisms p
+          WHERE p.id = $1
+          ${scope.clause}
+          FOR UPDATE
+        `,
+        [input.prismId, ...scope.params]
+      );
 
       if (prismResult.rowCount === 0) {
         throw new AppError('Prism not found', 404, 'PRISM_NOT_FOUND');
       }
+
+      prismProjectId = prismResult.rows[0].project_id as string | null;
+    }
+
+    if (stationProjectId && prismProjectId && stationProjectId !== prismProjectId) {
+      throw new AppError(
+        'Station and prism must belong to the same project',
+        400,
+        'INCIDENT_SCOPE_MISMATCH'
+      );
     }
 
     const result = await client.query(

@@ -3,6 +3,8 @@ import './generic-project-template.test.js';
 import './monitoring-reading-evaluation.test.js';
 import './photo-storage-path.test.js';
 import './project-code-catalog-csv.test.js';
+import './scoped-resource-access.test.js';
+import '../models/incidents.model.test.js';
 import '../models/monitoring.model.test.js';
 import '../utils/monitoring-validation.test.js';
 import '../utils/photo-validation.test.js';
