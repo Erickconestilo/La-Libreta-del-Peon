@@ -202,6 +202,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque 0 catálogo genérico, Bloque A dependencias/audit, Bloque B firma AAB local y Bloque C inventario de historial sin reescritura. | cerrado (commits separados; AAB firmado y verificado, instalación Galaxy pendiente porque ADB no detectó dispositivo; purga bloqueada a la espera de confirmación explícita de cadenas) |
 | 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque C autorizado: generar esta copia saneada desde el backup mirror original mediante una sola reescritura de las nueve cadenas confirmadas, sin push forzado. | cerrado (nueve búsquedas literales a cero, `git fsck --full` correcto y sin remoto) |
 | 2026-08-01 | Codex | codex/release-readiness-catalog | Sustituir el worktree original por esta copia saneada, guardar y reaplicar el diff local pendiente de `apps/mobile/package.json`, y restaurar solo la configuración de `origin`, sin sincronizar ni publicar. | cerrado (backup bare íntegro, worktree previo preservado, parche reaplicado limpio; backend compila y 34/34 tests, móvil TypeScript limpio y 35/35 tests) |
+| 2026-08-01 | Codex | codex/phase-5-multitenant-security | Fase 5: auditar y reforzar el aislamiento multi-tenant en todos los endpoints, añadir regresiones entre obras, revisar advisor de Supabase en modo lectura y preparar checklist de piloto. | en curso |
 
 ---
 
