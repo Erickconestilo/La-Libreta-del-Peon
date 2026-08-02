@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # ADR 001: Adoptar el esquema "obras" como modelo de dominio de faenas
 
 **Estado:** ⚠️ **SUPERSEDIDO (29-07-2026) — ver nota abajo. No usar esta decisión.**

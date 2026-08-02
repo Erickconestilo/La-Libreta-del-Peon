@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # UX_RESEARCH_PLAN.md — Plan de Investigación UX y Usabilidad
 
 ## Objetivo

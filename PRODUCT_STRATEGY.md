@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # PRODUCT_STRATEGY.md — Estrategia de Producto TopoField
 
 ## Propósito

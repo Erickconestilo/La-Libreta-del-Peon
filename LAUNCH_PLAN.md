@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # LAUNCH_PLAN.md — Plan de Piloto, Lanzamiento y Activación Inicial
 
 ## Objetivo

@@ -1,3 +1,11 @@
+<!-- doc-status
+estado: archivado
+congelado: 2026-08-02
+superado-por: ROADMAP.md
+-->
+
+> 🧊 **Documento archivado el 02-08-2026.** Se conserva como historial verificable y no se actualiza. Para el estado actual del proyecto ver `ROADMAP.md`; para el porqué de cada decisión, `MEMORIA.md`.
+
 # API_CANDIDATES.md — APIs públicas útiles para TopoField
 
 Fecha de revisión: 2026-06-07

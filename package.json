@@ -11,6 +11,7 @@
     "mobile:build-local-android": "powershell -ExecutionPolicy Bypass -File scripts/build-local-android.ps1",
     "backend:dev": "npm run dev --workspace apps/backend",
     "backend:build": "npm run build --workspace apps/backend",
-    "verify:pre-apk": "node scripts/verify-pre-apk.mjs"
+    "verify:pre-apk": "node scripts/verify-pre-apk.mjs",
+    "docs:check": "node scripts/check-docs.mjs"
   }
 }

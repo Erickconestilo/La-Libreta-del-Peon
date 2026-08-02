@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # LOCAL_ANDROID_BUILD_RUNBOOK.md
 
 ## Objetivo
@@ -376,7 +381,7 @@ Interpretacion:
 
 Se creo el script:
 
-- [scripts/build-local-android.ps1](C:/Users/guill/Documents/Aplicacion_Movil/topofield/scripts/build-local-android.ps1)
+- [scripts/build-local-android.ps1](./scripts/build-local-android.ps1)
 
 Y se expuso con comando raiz:
 

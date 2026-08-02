@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # Matriz de project_memberships - TopoField
 
 ## Decisión - 2026-06-01

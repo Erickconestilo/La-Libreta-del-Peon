@@ -1,3 +1,8 @@
+<!-- doc-status
+estado: vivo
+verificado: 2026-08-02
+-->
+
 # MEMORIA.md — TopoField, estado de decisiones (rework)
 
 **Última actualización:** 31 de julio de 2026
@@ -142,7 +147,9 @@ Erick preguntó (26-07-2026) si estos tres instrumentos estaban contemplados. Ve
 
 ## 8. Plan de fases consolidado (2026-07-26)
 
-Este plan **sustituye** la lista de fases de `TOPOFIELD_PLAN_MAESTRO_REWORK_2026-07-26.md` para efectos de ejecución (las enmiendas de la adenda ya están incorporadas). `PLAN.md` sigue vigente como referencia de producto/UX donde no contradiga esto.
+> ⚠️ **Superado el 02-08-2026 para efectos de "en qué fase estamos".** La numeración de fases vive ahora en `ROADMAP.md`, con un solo eje `F0`–`F9` y tabla de equivalencias con los nombres antiguos. Esta tabla se conserva porque el **detalle histórico de cada fase** (qué cambió respecto al plan original, qué se verificó y cuándo) sigue siendo útil y no está duplicado en ningún otro sitio. Si `ROADMAP.md` y esta tabla discrepan sobre el estado de una fase, manda `ROADMAP.md`.
+
+Este plan sustituyó la lista de fases de `TOPOFIELD_PLAN_MAESTRO_REWORK_2026-07-26.md` para efectos de ejecución (las enmiendas de la adenda ya están incorporadas). `PLAN.md` quedó archivado en `docs/archive/` el 02-08-2026; su contenido de producto/UX vive en `PRODUCT_STRATEGY.md` y `UX_RESEARCH_PLAN.md`.
 
 | Fase | Objetivo | Cambio respecto al plan original |
 |---|---|---|
@@ -205,6 +212,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-07-31 | Codex | codex/release-readiness-catalog | Bloque C autorizado: generar esta copia saneada desde el backup mirror original mediante una sola reescritura de las nueve cadenas confirmadas, sin push forzado. | cerrado (nueve búsquedas literales a cero, `git fsck --full` correcto y sin remoto) |
 | 2026-08-01 | Codex | codex/release-readiness-catalog | Sustituir el worktree original por esta copia saneada, guardar y reaplicar el diff local pendiente de `apps/mobile/package.json`, y restaurar solo la configuración de `origin`, sin sincronizar ni publicar. | cerrado (backup bare íntegro, worktree previo preservado, parche reaplicado limpio; backend compila y 34/34 tests, móvil TypeScript limpio y 35/35 tests) |
 | 2026-08-01 | Codex | codex/phase-5-multitenant-security | Fase 5: auditar y reforzar el aislamiento multi-tenant en todos los endpoints, añadir regresiones entre obras, revisar advisor de Supabase en modo lectura y preparar checklist de piloto. | cerrado (incidencias y flujos de foto reforzados; backend 40/40, móvil 35/35; queda una decisión de producto sobre visitante y auscultación) |
+| 2026-08-02 | Cowork | codex/phase-5-multitenant-security | Reorganización documental completa a petición de Erick: crear `ROADMAP.md` como fuente única de fases (F0-F9), archivar 12 documentos históricos en `docs/archive/`, cabeceras `doc-status` en los 24 .md, script `scripts/check-docs.mjs` + `npm run docs:check`, protocolo `docs/DOC_MAINTENANCE.md`, reescribir `README.md`, y tomar las decisiones D1/D2/D3 que estaban abiertas. | cerrado (chequeo en verde; probado que falla ante roadmap duplicado, doc rancio y `superado-por` inexistente) |
 | 2026-08-02 | Codex | codex/phase-5-multitenant-security | Limpiar referencias locales residuales tras la purga de historial: validar ocho ramas ya fusionadas, eliminar la referencia remota obsoleta y podar objetos inalcanzables, sin contactar con origin. | cerrado (ocho ramas y `refs/remotes/origin/main` eliminadas; las nueve cadenas autorizadas dan 0 coincidencias exactas y `git fsck --full` sin errores) |
 
 ---
@@ -269,11 +277,21 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - Fisurómetro/extensómetro/clinómetro (después de piezómetro/inclinómetro).
 - Acceso GitHub de Cowork vía token fine-grained (no bloquea nada hoy).
 
-**Acciones de Erick, no delegables a un agente (actualizado 02-08-2026, la de empleador ya no aplica — ver §5):**
-- Decidir si `visitante` puede consultar auscultación (ver `MULTI_TENANT_SCOPE_AUDIT_2026-08-01.md` y `PILOT_READINESS_CHECKLIST.md`).
-- Decidir si activar en Supabase Auth la protección contra contraseñas filtradas (config, no código).
+**Acciones de Erick (actualizado 02-08-2026; la de empleador ya no aplica — ver §5):**
+- **D1 y D2 ya están decididas**, no pendientes de decisión sino de aplicación. Ver `ROADMAP.md` con el razonamiento completo. D1 (quitar auscultación a `visitante`) es cambio de backend y se puede delegar a un agente. D2 (protección contra contraseñas filtradas en Supabase Auth) es configuración de producción y solo la ejecuta o autoriza Erick.
 - Autorizar en el momento cualquier `push --force` de la reescritura de historial, tras avisar a colaboradores con clon.
 - Capa (3) de §5 (datos de terceros/activos reales de clientes de auscultación): sigue abierta, sin urgencia, no se replantea sin que Erick la traiga primero.
+
+### Reorganización documental (02-08-2026) — sustituye a la propuesta de abajo
+
+La propuesta que sigue se mantiene por su razonamiento, pero su conclusión ya está aplicada: **el siguiente bloque es la fase F5 de `ROADMAP.md`, validación de uso real en campo.** Además, a petición de Erick de "no volver atrás por problemas de documentación", se cambió el proceso, no solo el contenido:
+
+- `ROADMAP.md` es ahora la única fuente de verdad sobre fases, con un eje `F0`–`F9` y tabla de equivalencias. `PLAN.md` archivado.
+- 12 documentos históricos movidos a `docs/archive/` con cabecera de congelado. La raíz pasa de 22 a 11 documentos vivos.
+- Cada `.md` de raíz y `docs/` declara su estado en una cabecera `doc-status` (vivo/archivado + fecha de verificación).
+- `npm run docs:check` valida siete invariantes mecánicas. La que más importa: **falla si aparece un segundo documento con `rol: roadmap`**, que es literalmente la causa raíz del problema.
+- Protocolo y razonamiento en `docs/DOC_MAINTENANCE.md`; revisión programada los días 1 y 15 de cada mes.
+- Decisiones D1 (visitante sin auscultación), D2 (activar protección de contraseñas filtradas) y D3 (Excel antes que instrumentos nuevos, y exportar antes que importar) tomadas con su razonamiento y contraargumento en `ROADMAP.md`.
 
 ### Propuesta de siguiente bloque (02-08-2026)
 
@@ -293,6 +311,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-08-02 — Documentación reorganizada y proceso automatizado (Cowork):** creado `ROADMAP.md` como fuente única de fases (eje F0-F9 con equivalencias a los nombres viejos), archivados 12 documentos históricos en `docs/archive/` (la raíz baja de 22 a 11 documentos vivos), añadida cabecera `doc-status` a los 24 `.md` de raíz y `docs/`, y creado `npm run docs:check` (`scripts/check-docs.mjs`) que valida siete invariantes — la principal, que no exista un segundo `rol: roadmap`. Probado induciendo tres fallos reales (roadmap duplicado, documento vivo de hace 204 días, `superado-por` inexistente): los tres se detectan. Protocolo en `docs/DOC_MAINTENANCE.md`, revisión programada los días 1 y 15. `README.md` reescrito. Tomadas D1, D2 y D3 con razonamiento y contraargumento en `ROADMAP.md`; ninguna aplicada todavía porque tocan código o producción.
 - **2026-08-02 — Reconciliación PLAN.md/MEMORIA.md y propuesta (Cowork):** confirmado que las dos numeraciones de fases son ejes distintos (PLAN.md 1-8 = producto/UX/piloto; MEMORIA.md §8 0-7 = datos/backend/dominio); PLAN.md Fase 5.7 ≈ MEMORIA.md Fase 3 (auscultación móvil, ya cerrada). Hallazgo: PLAN.md Fase 4 (validación de usabilidad en campo con compañeros reales) nunca se ejecutó — todo el trabajo reciente fue técnico. Actualizados `AGENTS.md` (nota explícita de numeración independiente), `PLAN.md` (banner de corrección en "Estado actual" y "Próximo bloque inmediato" realineado) y esta sección (propuesta completa arriba). Decisión pendiente de Erick.
 - **2026-08-02 — Limpieza de referencias tras purga (Codex):** confirmadas ocho ramas obsoletas sin commits exclusivos frente a Fase 5 y eliminadas junto a `refs/remotes/origin/main`; reflogs expirados y objetos inalcanzables podados sin fetch, pull ni push. El `HEAD` del bare saneado, que aún apuntaba a una rama borrada, quedó normalizado a `main`. Las nueve cadenas autorizadas devuelven 0 coincidencias exactas en `git log --all -p`; solo permanecen `main` y la rama de Fase 5, y `git fsck --full` no muestra errores. Se detectaron variantes históricas en minúscula fuera de la lista explícitamente autorizada; no se reescribieron y requieren una autorización nueva si se desea purgarlas.
 - **2026-08-01 — Fase 5, aislamiento multi-tenant (Codex):** auditoría de controladores/modelos/rutas completada. Incidencias ahora valida estación/prisma bajo scope dentro de la transacción y un topógrafo no puede crear una incidencia sin recurso de obra; los cinco flujos de foto autorizan el recurso antes de consultar Storage. Pruebas de dos topógrafos y dos obras, backend 40/40 y móvil 35/35 en verde. El advisor de Supabase no muestra RLS/políticas nuevas; conserva solo el WARN conocido de protección de contraseñas filtradas. Documentos: `MULTI_TENANT_SCOPE_AUDIT_2026-08-01.md` y `PILOT_READINESS_CHECKLIST.md`. Queda confirmar la política de visitante para lecturas de auscultación.
