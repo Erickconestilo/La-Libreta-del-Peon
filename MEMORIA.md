@@ -269,12 +269,31 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - Fisurómetro/extensómetro/clinómetro (después de piezómetro/inclinómetro).
 - Acceso GitHub de Cowork vía token fine-grained (no bloquea nada hoy).
 
-**Acción de Erick, no delegable a un agente:** permiso por escrito del empleador que distinga "usar TopoField en obra" de "ser propietario del código" (ver §5).
+**Acciones de Erick, no delegables a un agente (actualizado 02-08-2026, la de empleador ya no aplica — ver §5):**
+- Decidir si `visitante` puede consultar auscultación (ver `MULTI_TENANT_SCOPE_AUDIT_2026-08-01.md` y `PILOT_READINESS_CHECKLIST.md`).
+- Decidir si activar en Supabase Auth la protección contra contraseñas filtradas (config, no código).
+- Autorizar en el momento cualquier `push --force` de la reescritura de historial, tras avisar a colaboradores con clon.
+- Capa (3) de §5 (datos de terceros/activos reales de clientes de auscultación): sigue abierta, sin urgencia, no se replantea sin que Erick la traiga primero.
+
+### Propuesta de siguiente bloque (02-08-2026)
+
+Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración independiente de la tabla de §8) y dar una propuesta. Hallazgo al reconciliar ambos documentos: `PLAN.md` Fase 5, punto 7 ("auscultación MVP móvil: rondas, puntos, lectura, catálogo, histórico") es el mismo trabajo que aquí se llamó "Fase 3" — ya cerrado. Pero `PLAN.md` Fase 4 ("Validación de usabilidad en campo": compañeros reales, tareas concretas, medir tiempo/errores/bloqueos/dudas, top 10 fricciones) **nunca se ha ejecutado** — todo el trabajo de las últimas semanas fue técnico (offline, seguridad multi-tenant, RLS, keystore), no validación de uso real con otra persona. El propio `PLAN.md` es explícito en que esa validación debe preceder a considerar la app lista para piloto.
+
+**Recomendación:** antes de abrir Fase 4 de §8 (Excel) o Fase 6 (nuevo instrumento) de §8 — ambas sin hipótesis de uso todavía —, ejecutar el Paso 1 de `PILOT_READINESS_CHECKLIST.md` (Erick con datos reales, una obra, un dispositivo) registrando los hallazgos con la plantilla de Fase 4 de `PLAN.md` (tiempo, errores, bloqueos, dudas repetidas, pasos sobrantes, elementos ignorados), no solo como checklist de sí/no. Esto es barato (no requiere código nuevo), resuelve la brecha real del propio plan de producto, y la evidencia que salga decide con criterio si el siguiente bloque técnico es Excel, un nuevo instrumento, o arreglar fricciones encontradas — en vez de elegir a ciegas entre dos líneas técnicas igual de especulativas hoy.
+
+**Alternativa conservadora:** si Erick prefiere seguir en modo técnico, Fase 4 de §8 (migración/compatibilidad Excel) tiene la ventaja de ser el motivo original del proyecto ("sustituir el Excel") y no depende de decisiones de producto pendientes (visitante, terceros).
+
+**Riesgo de no hacer la validación de campo:** seguir añadiendo superficie técnica (nuevo instrumento, Excel) sobre un MVP que todavía nadie más que Erick ha probado, arriesga construir sobre fricciones no detectadas y descubrirlas tarde, con más código que rehacer.
+
+**Decisión:** pendiente de Erick.
+**Siguiente paso concreto si aprueba la recomendación:** Erick ejecuta Paso 1 del checklist en campo con una obra real; documentar hallazgos en un archivo nuevo (`PHASE_4_USABILITY_FINDINGS_<fecha>.md`) siguiendo la plantilla de `PLAN.md` Fase 4.
+**Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-08-02 — Reconciliación PLAN.md/MEMORIA.md y propuesta (Cowork):** confirmado que las dos numeraciones de fases son ejes distintos (PLAN.md 1-8 = producto/UX/piloto; MEMORIA.md §8 0-7 = datos/backend/dominio); PLAN.md Fase 5.7 ≈ MEMORIA.md Fase 3 (auscultación móvil, ya cerrada). Hallazgo: PLAN.md Fase 4 (validación de usabilidad en campo con compañeros reales) nunca se ejecutó — todo el trabajo reciente fue técnico. Actualizados `AGENTS.md` (nota explícita de numeración independiente), `PLAN.md` (banner de corrección en "Estado actual" y "Próximo bloque inmediato" realineado) y esta sección (propuesta completa arriba). Decisión pendiente de Erick.
 - **2026-08-02 — Limpieza de referencias tras purga (Codex):** confirmadas ocho ramas obsoletas sin commits exclusivos frente a Fase 5 y eliminadas junto a `refs/remotes/origin/main`; reflogs expirados y objetos inalcanzables podados sin fetch, pull ni push. El `HEAD` del bare saneado, que aún apuntaba a una rama borrada, quedó normalizado a `main`. Las nueve cadenas autorizadas devuelven 0 coincidencias exactas en `git log --all -p`; solo permanecen `main` y la rama de Fase 5, y `git fsck --full` no muestra errores. Se detectaron variantes históricas en minúscula fuera de la lista explícitamente autorizada; no se reescribieron y requieren una autorización nueva si se desea purgarlas.
 - **2026-08-01 — Fase 5, aislamiento multi-tenant (Codex):** auditoría de controladores/modelos/rutas completada. Incidencias ahora valida estación/prisma bajo scope dentro de la transacción y un topógrafo no puede crear una incidencia sin recurso de obra; los cinco flujos de foto autorizan el recurso antes de consultar Storage. Pruebas de dos topógrafos y dos obras, backend 40/40 y móvil 35/35 en verde. El advisor de Supabase no muestra RLS/políticas nuevas; conserva solo el WARN conocido de protección de contraseñas filtradas. Documentos: `MULTI_TENANT_SCOPE_AUDIT_2026-08-01.md` y `PILOT_READINESS_CHECKLIST.md`. Queda confirmar la política de visitante para lecturas de auscultación.
 - **2026-07-31 — Purga local final de historial autorizada (Codex, Bloque C):** esta copia se reconstruyó desde el backup mirror original y recibió una única reescritura con las nueve cadenas autorizadas. Las nueve verificaciones literales sobre `git log -p --all` devuelven 0; `git fsck --full` termina correctamente. No conserva remoto GitHub y no se ejecutó ningún push.

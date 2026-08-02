@@ -5,7 +5,7 @@ Consulta y sigue como fuente principal:
 - `C:\Users\guill\Documents\Aplicacion_Movil\topofield\MEMORIA.md` — estado verificado de decisiones del rework (empezar por aquí; tiene fecha de verificación por sección).
 - `C:\Users\guill\Documents\Aplicacion_Movil\AGENTS.md`
 - `C:\Users\guill\Documents\Aplicacion_Movil\MEMORY.md`
-- `C:\Users\guill\Documents\Aplicacion_Movil\topofield\PLAN.md` — plan de producto/UX anterior; desactualizado respecto al estado real de Supabase, ver `MEMORIA.md` §3.
+- `C:\Users\guill\Documents\Aplicacion_Movil\topofield\PLAN.md` — plan de producto/UX; desactualizado respecto al estado real de Supabase, ver `MEMORIA.md` §3. **Ojo: usa una numeración de fases distinta e independiente de `MEMORIA.md` §8** (PLAN.md Fase 1-8 = producto/UX/piloto; MEMORIA.md Fase 0-7 = datos/backend/dominio). Son dos ejes distintos, no la misma fase con dos nombres — no asumir que "Fase 3" en un documento es "Fase 3" en el otro.
 
 Nota técnica:
 - Expo ha cambiado entre versiones, así que antes de aplicar cambios sensibles de framework conviene revisar la documentación oficial de la versión exacta usada en el proyecto.

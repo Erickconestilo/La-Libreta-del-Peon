@@ -27,12 +27,18 @@ Este plan se apoya en cuatro fuentes de verdad complementarias:
 - Se mantiene el criterio de infraestructura contenida y free tier cuando no perjudique el uso real.
 
 ## Estado actual que condiciona el plan
+
+> ⚠️ **Corrección (2026-08-02):** esta sección estaba desactualizada — dos puntos que decía "pendientes" ya están cerrados desde el 31-07-2026. Además, **la numeración de fases de este documento (1-8, eje producto/UX/piloto) es independiente de la numeración de `MEMORIA.md` §8 (0-7, eje datos/backend/dominio)** — no son la misma fase con nombres distintos. Ver `MEMORIA.md` como fuente de verdad técnica verificada; este documento sigue siendo la referencia de producto/UX.
+
 - La app ya tiene base funcional real en `Obras -> Estacionamientos`, detalle de estación, memoria visual, notas, guía offline, croquis de prismas y aperturas externas.
-- El backend ya tiene base MVP inicial para auscultación: rondas, puntos esperados, lecturas instrumentadas, catálogo de códigos por proyecto y reglas de auto-confirmación calculada.
+- El backend ya tiene la auscultación semanal implementada y desplegada: rondas, puntos de control, lecturas instrumentadas, umbrales, histórico y adjuntos por foto — corresponde a lo que este plan llama "auscultación MVP móvil" en Fase 5 punto 7, y a lo que `MEMORIA.md` §8 llama "Fase 3" (ya cerrada y validada en dispositivo real el 31-07-2026).
 - La validación Android en Galaxy ya existe y ha permitido detectar problemas reales de sesión, fotos, navegación y ritmo de uso.
-- Hay una ruta de build Android local sin coste en Windows.
-- La base offline técnica quedó validada el 29-07-2026 en Galaxy real: outbox SQLite, reinicio sin red, sincronización automática global e idempotencia en Supabase. Esto desbloquea el desarrollo de Fase 3, pero todavía requiere integrar la rama y desplegar el backend actual antes del piloto.
-- El siguiente salto de valor no es añadir más superficie sin orden, sino conectar la auscultación a flujos móviles simples y validar si sirve en campo.
+- Hay una ruta de build Android local sin coste en Windows, incluida generación de keystore/AAB firmado.
+- La base offline técnica quedó validada el 29-07-2026 en Galaxy real: outbox SQLite, reinicio sin red, sincronización automática global e idempotencia en Supabase.
+- **Ya cerrado (antes decía "pendiente"):** la rama de auscultación está integrada en `main` y el backend está desplegado en Render, verificado con las rutas de rondas respondiendo autenticadas.
+- Se completó también una auditoría multi-tenant (seguridad entre obras) con dos correcciones reales aplicadas, y un checklist de piloto en dos pasos (Erick solo → equipo).
+- **Brecha real detectada (2026-08-02): la Fase 4 de este mismo plan — "Validación de usabilidad en campo" con compañeros reales, midiendo tiempo/errores/bloqueos/dudas — nunca se ha ejecutado.** Todo el trabajo reciente fue técnico (backend, offline, seguridad), no validación de uso real con otra persona. Este plan es explícito en que Fase 4 debe preceder a considerar la app "lista para piloto" (Fase 6).
+- El siguiente salto de valor no es añadir más superficie técnica sin orden, sino validar con una persona real de campo (Paso 1 del checklist de piloto ya cubre parte de esto con Erick mismo) antes de abrir Fase 4 (Excel) o Fase 6 (nuevos instrumentos) de `MEMORIA.md`.
 
 ## Fases del plan
 
@@ -243,7 +249,10 @@ Casos obligatorios para el MVP:
 - no percibe la app como pesada o confusa.
 
 ## Próximo bloque inmediato
-1. Consolidar `PRODUCT_STRATEGY.md`, `UX_RESEARCH_PLAN.md` y `LAUNCH_PLAN.md` como referencia diaria.
-2. Revisar el backlog técnico actual contra las prioridades de Fase 5.
-3. Elegir el siguiente bloque funcional solo entre los problemas que afecten al piloto controlado.
-4. No abrir nuevas líneas grandes sin hipótesis de uso o criterio de salida.
+
+> Actualizado 2026-08-02 — ver propuesta y razonamiento completo en `MEMORIA.md` §12a.
+
+1. Ejecutar el Paso 1 del checklist de piloto (`PILOT_READINESS_CHECKLIST.md`): Erick en campo con datos reales, una obra, un dispositivo — esto es en la práctica la Fase 4 de este plan (validación de usabilidad), aunque con un solo usuario en vez de varios compañeros.
+2. Registrar los hallazgos con la plantilla de Fase 4 (tiempo, errores, bloqueos, dudas repetidas, pasos sobrantes, elementos ignorados) en lugar de solo marcar casillas de "funciona/no funciona".
+3. Recién con esa evidencia real, decidir entre Fase 4 de `MEMORIA.md` (migración Excel) o Fase 6 (nuevo instrumento) — no antes, y no las dos a la vez.
+4. No abrir nuevas líneas grandes sin hipótesis de uso o criterio de salida (regla sin cambios).
