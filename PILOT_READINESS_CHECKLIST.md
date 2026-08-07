@@ -31,6 +31,6 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 - [ ] Ejecutar aceptacion API real con dos cuentas `topografo`, dos obras y membresias opuestas: lectura, alta, edicion, foto, mensaje, ronda y lectura cruzadas deben devolver `403` o `404`, nunca datos ajenos.
 - [ ] Configurar y revisar el canal de feedback, la guia de instalacion y las credenciales/roles de cada persona piloto.
 - [x] **D1 aplicada (02-08-2026):** rutas de auscultacion restringidas a `admin` y `topografo`; token publico `visitante` ya no accede. Verificado antes que ninguna pantalla movil dependia de leerlas sin sesion.
-- [ ] **D2 replanteada (02-08-2026):** requiere plan Pro de Supabase (25 USD/mes), no está disponible en Free. Ver coste/beneficio razonado en `ROADMAP.md` — decisión de Erick, no una tarea de dos minutos como se pensó al principio.
+- [x] **D2 decidida (02-08-2026): no gastar por ahora.** Requiere plan Pro de Supabase (25 USD/mes); Erick decide quedarse en Free. Mitigación: comprobar que el proyecto no esté pausado antes de cada sesión (primer punto de este checklist). Se reabre si F5 muestra pausas frecuentes o al sumar una segunda persona (F8).
 - [ ] Avisar a cualquier colaborador con un clon antes de pedir el `push --force` que publicaria el historial saneado.
 - [ ] Establecer quien revoca cuentas, reasigna membresias y responde ante perdida de un dispositivo.

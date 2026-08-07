@@ -71,7 +71,7 @@ Razonamiento original (sigue siendo válido en cuanto a por qué interesa, no en
 
 **Dato nuevo relevante (02-08-2026):** el mismo día se encontró que el proyecto Free se había pausado solo por inactividad (ver bitácora), tumbando la app hasta que se reactivó a mano. El plan Pro (25 USD/mes) **también elimina esa pausa automática** — no es solo el candado de contraseñas, es dos problemas reales resueltos por el mismo cambio de plan.
 
-**Decisión revisada: pendiente de Erick, ahora sí con coste real de por medio.**
+**Decisión de Erick (02-08-2026): no gastar por ahora.** Se queda en Free — la alternativa conservadora de abajo. Válido mientras el piloto sea solo Erick; se reabre si F5 muestra que el proyecto se pausa con más frecuencia de la tolerable, o al incorporar una segunda persona (F8).
 
 - **Mejor opción:** subir a Pro. 25 USD/mes cubre tanto D2 como el riesgo de que el proyecto se vuelva a pausar solo antes de una sesión de campo — ese segundo problema es operativo, no cosmético, y ya costó una interrupción real hoy.
 - **Alternativa conservadora:** quedarse en Free por ahora. D2 queda sin activar (no es catastrófico: es una capa extra, no la única defensa) y el riesgo de pausa se gestiona a mano, comprobando el estado del proyecto antes de cada sesión de campo (ya añadido a `PILOT_READINESS_CHECKLIST.md`).
