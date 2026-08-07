@@ -65,9 +65,20 @@ Contraargumento razonable, para no venderlo como obvio: si en algún momento se 
 
 ### D2 — Activar la protección contra contraseñas filtradas en Supabase Auth
 
-**Decisión: activar.** Es el único aviso de seguridad que queda abierto en el advisor. Coste cero, sin cambio de código, sin migración. Efecto único: rechaza contraseñas que aparecen en brechas conocidas al registrar o cambiar contraseña. Con 11 usuarios existentes y un piloto por delante, es el momento más barato para hacerlo; después habrá que pedirle a gente real que cambie su contraseña.
+> ⚠️ **Corrección (02-08-2026): no es gratis.** Se intentó activar en el panel y el interruptor no persiste: la función está marcada "Only available on Pro plan and above" y el proyecto está en el plan **Free**. La decisión de abajo asumía coste cero; no es así. Queda repensada más abajo.
 
-Es configuración de producción, así que **requiere que Erick lo active o lo autorice explícitamente en el momento** (regla 6 de `AGENTS.md`). No lo aplica un agente por su cuenta.
+Razonamiento original (sigue siendo válido en cuanto a por qué interesa, no en cuanto al coste): es el único aviso de seguridad que quedaba abierto en el advisor. Rechaza, al registrar o cambiar contraseña, las contraseñas que aparecen en brechas conocidas. Con 11 usuarios existentes y un piloto por delante, cuanto antes se active, menos gente real tendrá que cambiar de contraseña después.
+
+**Dato nuevo relevante (02-08-2026):** el mismo día se encontró que el proyecto Free se había pausado solo por inactividad (ver bitácora), tumbando la app hasta que se reactivó a mano. El plan Pro (25 USD/mes) **también elimina esa pausa automática** — no es solo el candado de contraseñas, es dos problemas reales resueltos por el mismo cambio de plan.
+
+**Decisión revisada: pendiente de Erick, ahora sí con coste real de por medio.**
+
+- **Mejor opción:** subir a Pro. 25 USD/mes cubre tanto D2 como el riesgo de que el proyecto se vuelva a pausar solo antes de una sesión de campo — ese segundo problema es operativo, no cosmético, y ya costó una interrupción real hoy.
+- **Alternativa conservadora:** quedarse en Free por ahora. D2 queda sin activar (no es catastrófico: es una capa extra, no la única defensa) y el riesgo de pausa se gestiona a mano, comprobando el estado del proyecto antes de cada sesión de campo (ya añadido a `PILOT_READINESS_CHECKLIST.md`).
+- **Riesgo principal de esperar:** otra pausa automática justo antes o durante una sesión de campo real, con alguien más que Erick usando la app — ahí sí cuesta credibilidad, no solo una interrupción resoluble en dos minutos.
+- **Información que cambiaría la decisión:** si F5 confirma que la app se usa con la frecuencia suficiente para que Supabase nunca la pause sola, el argumento operativo de subir a Pro desaparece y solo queda el candado de contraseñas, que es prescindible mientras el piloto siga siendo Erick solo.
+
+No es configuración que un agente pueda aplicar: implica gasto recurrente, así que la decisión y el pago son de Erick.
 
 ### D3 — Orden entre Excel (F6) e instrumentos nuevos (F7)
 
