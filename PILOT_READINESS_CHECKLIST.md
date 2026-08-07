@@ -11,6 +11,7 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 
 Comprobaciones técnicas:
 
+- [ ] **Confirmar que Supabase "topofield" está activo, no pausado**, antes de salir a campo. El free tier lo pausa solo tras varios días de inactividad (pasó el 02-08-2026); si está pausado, login y toda la app fallan sin que haya ningún bug en el código. Reactivar es gratis y no destructivo, pero tarda 1-2 minutos en levantar.
 - [ ] Confirmar que la cuenta tecnica de Erick entra y conserva sesion ante un fallo transitorio de red.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
 - [ ] Verificar login, una estacion, una foto, una lectura offline y su sincronizacion en el dispositivo objetivo con datos reales de una sola obra.
