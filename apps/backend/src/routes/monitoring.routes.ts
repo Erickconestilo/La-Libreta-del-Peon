@@ -20,7 +20,7 @@ export const controlPointsRouter = Router();
 roundsRouter.get(
   '/:roundId',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo']),
   validateUuidParam('roundId'),
   getMonitoringRoundDetailController
 );
@@ -61,7 +61,7 @@ controlPointsRouter.patch(
 controlPointsRouter.get(
   '/:controlPointId/readings',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo']),
   validateUuidParam('controlPointId'),
   getReadingHistoryController
 );
@@ -77,7 +77,7 @@ controlPointsRouter.post(
 controlPointsRouter.get(
   '/:controlPointId/thresholds',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo']),
   validateUuidParam('controlPointId'),
   listControlPointThresholdsController
 );

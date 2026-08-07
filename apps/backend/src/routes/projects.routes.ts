@@ -53,7 +53,7 @@ projectsRouter.patch(
 projectsRouter.get(
   '/:projectId/rounds',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo']),
   validateUuidParam('projectId'),
   listMonitoringRoundsController
 );
@@ -67,7 +67,7 @@ projectsRouter.post(
 projectsRouter.get(
   '/:projectId/control-points',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo']),
   validateUuidParam('projectId'),
   listControlPointsController
 );

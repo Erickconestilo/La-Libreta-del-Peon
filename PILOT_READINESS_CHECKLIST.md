@@ -29,7 +29,7 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 
 - [ ] Ejecutar aceptacion API real con dos cuentas `topografo`, dos obras y membresias opuestas: lectura, alta, edicion, foto, mensaje, ronda y lectura cruzadas deben devolver `403` o `404`, nunca datos ajenos.
 - [ ] Configurar y revisar el canal de feedback, la guia de instalacion y las credenciales/roles de cada persona piloto.
-- [ ] **Aplicar D1** (decidido el 02-08-2026, ver `ROADMAP.md`): restringir las rutas de auscultacion a `admin` y `topografo`, quitando el acceso del token publico `visitante`. Cambio de backend, delegable a un agente; repasar que ninguna pantalla movil dependa de leer auscultacion sin sesion.
+- [x] **D1 aplicada (02-08-2026):** rutas de auscultacion restringidas a `admin` y `topografo`; token publico `visitante` ya no accede. Verificado antes que ninguna pantalla movil dependia de leerlas sin sesion.
 - [ ] **Aplicar D2** (decidido el 02-08-2026): activar en Supabase Auth la proteccion contra contrasenas filtradas. Configuracion de produccion, la ejecuta o autoriza Erick en el momento.
 - [ ] Avisar a cualquier colaborador con un clon antes de pedir el `push --force` que publicaria el historial saneado.
 - [ ] Establecer quien revoca cuentas, reasigna membresias y responde ante perdida de un dispositivo.
