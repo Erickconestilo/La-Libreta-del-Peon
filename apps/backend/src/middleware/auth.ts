@@ -84,8 +84,12 @@ export const requireAuth = async (request: Request, response: Response, next: Ne
   }
 };
 
-export const requireRole = (roles: Array<'admin' | 'topografo' | 'visitante'>) => {
-  return async (request: Request, response: Response, next: NextFunction) => {
+export type RequireRoleMiddleware = ((request: Request, response: Response, next: NextFunction) => Promise<void>) & {
+  allowedRoles: Array<'admin' | 'topografo' | 'visitante'>;
+};
+
+export const requireRole = (roles: Array<'admin' | 'topografo' | 'visitante'>): RequireRoleMiddleware => {
+  const middleware = async (request: Request, response: Response, next: NextFunction) => {
     try {
       if (!request.user) {
         sendError(
@@ -116,4 +120,10 @@ export const requireRole = (roles: Array<'admin' | 'topografo' | 'visitante'>) =
       next(error);
     }
   };
+
+  // Expuesto para que las rutas de auscultación puedan auditarse sin
+  // levantar la app: ver route-role-audit.test.ts.
+  (middleware as RequireRoleMiddleware).allowedRoles = roles;
+
+  return middleware as RequireRoleMiddleware;
 };
