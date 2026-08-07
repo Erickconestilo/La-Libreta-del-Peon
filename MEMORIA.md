@@ -5,14 +5,18 @@ verificado: 2026-08-02
 
 # MEMORIA.md — TopoField, estado de decisiones (rework)
 
-**Última actualización:** 31 de julio de 2026
-**Rol de este archivo:** punto de entrada único para saber qué se decidió, qué se verificó y qué sigue pendiente sobre el rework de TopoField. Si hay contradicción entre este archivo y un resumen anterior (incluida cualquier auditoría externa), **manda lo verificado aquí**, con fecha de verificación.
+**Última actualización:** 2 de agosto de 2026
+**Rol de este archivo:** el **porqué** de cada decisión, qué se verificó, con qué evidencia y en qué fecha, más la bitácora cronológica. Si hay contradicción entre este archivo y un resumen anterior (incluida cualquier auditoría externa), **manda lo verificado aquí**, con fecha de verificación.
+
+**Qué NO es este archivo (desde el 02-08-2026):** no es la fuente de verdad sobre en qué fase está el proyecto ni sobre qué toca hacer ahora. Eso vive en **`ROADMAP.md`**. Si este archivo y `ROADMAP.md` discrepan sobre el estado de una fase o el siguiente paso, manda `ROADMAP.md`.
 
 Documentos relacionados:
+- `ROADMAP.md` (este repo) — **fases, estado y siguiente paso.** Léelo primero.
 - `TOPOFIELD_PLAN_MAESTRO_REWORK_2026-07-26.md` (fuera del repo, en la carpeta compartida) — plan de rework auditado con Codex/ChatGPT/Claude.
 - `TOPOFIELD_ADDENDA_APROBACION_2026-07-26.md` (fuera del repo) — enmiendas 1–5 al plan anterior.
-- `PLAN.md` (este repo) — plan de producto/UX anterior, centrado en piloto y validación de usabilidad. **No sustituido**, pero desactualizado respecto al estado real de Supabase (ver §3).
-- `PRODUCT_STRATEGY.md`, `UX_RESEARCH_PLAN.md`, `LAUNCH_PLAN.md` — siguen vigentes como referencia de producto/UX, no verificados en esta sesión.
+- `PRODUCT_STRATEGY.md`, `UX_RESEARCH_PLAN.md`, `LAUNCH_PLAN.md`, `PILOT_READINESS_CHECKLIST.md` — producto, validación y piloto; siguen vigentes.
+- `docs/archive/PLAN.md` — plan de producto/UX anterior, **archivado el 02-08-2026** por usar una numeración de fases paralela que causaba confusión. Su contenido vivo está en `PRODUCT_STRATEGY.md` y `UX_RESEARCH_PLAN.md`.
+- `docs/DOC_MAINTENANCE.md` — cómo se mantiene toda esta documentación y por qué (`npm run docs:check`).
 
 ---
 
@@ -26,7 +30,7 @@ Resumen de las enmiendas aprobadas:
 2. **Modelo de faenas reducido:** 5 tablas en vez de 10 (`work_items`, `project_work_items`, `work_events` append-only, `work_evidence`, `import_batches`). Se pospone `work_plans`/`work_occurrences`/`work_reviews` hasta que alguien pida reasignación o aprobación.
 3. **Presupuesto de tiempo:** 5–10 h/semana declaradas. Fases 0→3 en un trimestre. El aislamiento multi-tenant (RLS) sustituye al planificador como prioridad, porque hay intención de venta a terceros.
 4. **Regla de agentes:** un solo agente escribiendo en una rama a la vez; se descarta la jerarquía "Codex ejecutor / Claude revisor" (era circunstancial, no una capacidad real).
-5. **Riesgo de titularidad:** el catálogo de faenas y los nombres de obra son activos operativos del empleador; los datos medidos pertenecen a terceros (clientes de auscultación). Ver §5.
+5. **Riesgo de titularidad:** ⚠️ *corregida el 01-08-2026* — la redacción original decía que el catálogo de faenas y los nombres de obra eran "activos operativos del empleador". **Erick aclaró que no existe relación de empleador**; el proceso es propio. Lo que sigue abierto es solo la capa de datos de terceros (clientes de auscultación cuyos activos se miden). Ver §5, que manda sobre esta línea.
 
 Evaluación honesta de la app antes de esta expansión, con instrumentos aún sin terminar (solo estaciones/prismas/incidencias/guía/fotos, desplegado en producción): **6.5/10 como primera app**. Bien: backend en capas, migraciones incrementales, tests de backend, `expo-secure-store`, RLS realmente activo en producción (ver corrección en §4). Mal: sin cola offline pese a ser la promesa central, cero tests móviles, `Station` mezcla conceptos, datos reales de obra commiteados en el historial de Git.
 
@@ -108,15 +112,17 @@ Dije antes que las migraciones no tenían RLS y por tanto "no había RLS verific
 
 ---
 
-## 6. Siguiente paso único (revisado)
+## 6. Siguiente paso único — CERRADO (histórico)
 
-El encargo de investigación de solo lectura de la Fase 0 (ver adenda §7) se amplía con un punto nuevo, y pasa a ser el más importante de la lista:
+> ⚠️ **Sección cerrada el 02-08-2026.** El bloqueo que imponía ("nada se aplica, nada se modifica hasta cerrar el inventario") **ya no está vigente**: el inventario de Fase 0 se cerró el 26-07-2026 y desde entonces se han aplicado 3 migraciones, cerrado varias fases y desplegado backend. Se conserva el texto por trazabilidad, pero **no leerlo como una instrucción activa**. El siguiente paso real está en `ROADMAP.md`.
 
-> Inventariar las 8 migraciones no versionadas (`total_station_*`) y las 14+ tablas sin correspondencia local (`obras`, `jornadas`, `mediciones`, `campanas`, etc.): qué columnas tienen, qué políticas RLS reales aplican, si tienen datos (hoy: 0 filas en todas, según `list_tables`), y si conviene versionarlas retroactivamente como migraciones locales o descartarlas.
+Texto original (26-07-2026), ya cumplido:
 
-Nada se aplica, nada se modifica, hasta cerrar ese inventario.
+> El encargo de investigación de solo lectura de la Fase 0 (ver adenda §7) se amplía con un punto nuevo, y pasa a ser el más importante de la lista: inventariar las 8 migraciones no versionadas (`total_station_*`) y las 14+ tablas sin correspondencia local (`obras`, `jornadas`, `mediciones`, `campanas`, etc.): qué columnas tienen, qué políticas RLS reales aplican, si tienen datos, y si conviene versionarlas retroactivamente como migraciones locales o descartarlas. Nada se aplica, nada se modifica, hasta cerrar ese inventario.
 
-**Evidencia de que este archivo está al día:** cada sección lleva su propia verificación (`list_projects`, `list_tables`, `list_migrations`, `get_advisors`, `git log`) ejecutada el 26-07-2026. Si en una sesión futura estos hechos no coinciden con lo que se observa, gana lo observado, y este archivo se corrige de nuevo con la fecha nueva — igual que se corrigió hoy la hipótesis de TopoTask.
+**Cómo se cerró:** el inventario se completó el 26-07-2026 (`docs/archive/FASE_0_INVENTARIO_COMPLETO.md`). Su conclusión más importante resultó ser un error que se corrigió después: las tablas `obras/*` no estaban en el proyecto Supabase de TopoField sino en `topotask-backend`, así que el backend real nunca pudo leerlas — ver la corrección en §8 y en el ADR 001.
+
+**Principio que sí sigue vigente:** cada sección de este archivo lleva su propia fecha y método de verificación. Si en una sesión futura los hechos no coinciden con lo observado, **gana lo observado**, y la sección se corrige con la fecha nueva — igual que se corrigió la hipótesis de TopoTask (§2), la de RLS (§4), la del empleador (§5) y esta misma.
 
 ---
 
@@ -215,6 +221,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | 2026-08-02 | Cowork | codex/phase-5-multitenant-security | Reorganización documental completa a petición de Erick: crear `ROADMAP.md` como fuente única de fases (F0-F9), archivar 12 documentos históricos en `docs/archive/`, cabeceras `doc-status` en los 24 .md, script `scripts/check-docs.mjs` + `npm run docs:check`, protocolo `docs/DOC_MAINTENANCE.md`, reescribir `README.md`, y tomar las decisiones D1/D2/D3 que estaban abiertas. | cerrado (chequeo en verde; probado que falla ante roadmap duplicado, doc rancio y `superado-por` inexistente) |
 | 2026-08-02 | Codex | codex/phase-5-multitenant-security | Limpiar referencias locales residuales tras la purga de historial: validar ocho ramas ya fusionadas, eliminar la referencia remota obsoleta y podar objetos inalcanzables, sin contactar con origin. | cerrado (ocho ramas y `refs/remotes/origin/main` eliminadas; las nueve cadenas autorizadas dan 0 coincidencias exactas y `git fsck --full` sin errores) |
 | 2026-08-02 | Cowork | codex/phase-5-multitenant-security | Aplicar D1 (quitar `visitante` de las rutas de auscultación): `apps/backend/src/routes/monitoring.routes.ts` y `apps/backend/src/routes/projects.routes.ts`. **Excepción puntual a la regla 2 (backend es normalmente pista de Claude Code), autorizada explícitamente por Erick** ("puedes ahora hacerlo tu?"). Verificado antes: el móvil nunca reintenta estas rutas con el token público (`canRetryPublicReadAsGuest` en `apps/mobile/lib/api.ts` no las incluye en su lista), así que no hay pantalla que dependa del acceso de invitado a auscultación. | cerrado (5 rutas corregidas, `tsc` limpio, 40/40 tests backend en verde en copia aislada; commit sin coautoría) |
+| 2026-08-02 | Cowork | codex/phase-5-multitenant-security | Revisión documental completa pedida por Erick ("actualiza MEMORIA, AGENTS, ROADMAP y todo lo demás") más verificación honesta de qué queda por avanzar en código. Corregidas contradicciones reales: §6 seguía imponiendo un bloqueo ("nada se aplica hasta cerrar el inventario") cumplido el 26-07; la cabecera decía "última actualización 31-07"; §1 enmienda 5 aún hablaba del empleador; `AGENTS.md` regla 2 afirmaba que Cowork no escribe código (falso desde el 28-07) y la regla 4 describía una Fase 0 cerrada. | cerrado (`npm run docs:check` en verde; hallazgo de despliegue documentado en `ROADMAP.md`) |
 | 2026-08-02 | Cowork | codex/phase-5-multitenant-security | A petición de Erick de seguir avanzando, cubrir la regresión de D1: `requireRole` no tenía ninguna prueba propia. Añadido `middleware/auth.test.ts` (aislamiento) y `routes/route-role-audit.test.ts` (audita los routers reales por su propiedad `allowedRoles`, añadida a `requireRole` para hacerlo auditable). | cerrado (probado que la auditoría detecta una reintroducción real de `visitante` en una copia aislada antes de revertirla; 49/49 tests backend, `tsc` limpio) |
 
 ---
@@ -313,6 +320,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-08-02 — Hallazgo: producción está 20 commits por detrás, con correcciones de seguridad sin desplegar (Cowork).** Revisión documental a petición de Erick, verificando en vez de suponer. `git log main..codex/phase-5-multitenant-security` da 20 commits; `/api/v1/health` de Render devuelve `41e3cc3`, localizado en el backup mirror pre-purga como `fix(mobile): resolver bloqueos de piloto offline` del 31-07-2026 12:00. Es decir: **producción corre el estado del 31 de julio y no tiene ni las 3 correcciones de aislamiento multi-tenant de F4 ni D1**. El merge a `main` sería fast-forward limpio, pero publicar exige `push --force` (historial reescrito el 31-07, todos los hashes cambiados) y esa autorización nunca se ha dado. Documentado como "Deuda de despliegue" en `ROADMAP.md`, marcado como bloqueante de F5: no tiene sentido validar en campo contra una versión con fallos ya corregidos.
 - **2026-08-02 — D2 cerrada: Erick decide no gastar por ahora.** Se queda en Free ("no quiero gastar por ahora"). Válido mientras el piloto sea solo Erick; se reabre si F5 muestra pausas frecuentes del proyecto o al incorporar una segunda persona (F8). Mitigación en marcha: comprobar el estado de Supabase antes de cada sesión de campo (`PILOT_READINESS_CHECKLIST.md`).
 - **2026-08-02 — D2 replanteada: requiere plan Pro, no es gratis (Cowork):** al intentar activar "Prevent use of leaked passwords" en el panel (navegación real con Claude en Chrome, no supuesto), el interruptor no persiste: Supabase la restringe a partir del plan Pro (25 USD/mes) y el proyecto está en Free. Se verificó guardando el cambio y recargando la página: sigue en `DISABLED`. Coincide con el mismo día que se encontró que Free pausa el proyecto solo por inactividad — el plan Pro resuelve los dos problemas a la vez, no solo el candado de contraseñas. Decisión de coste (25 USD/mes) queda pendiente de Erick, con las opciones razonadas en `ROADMAP.md`.
 - **2026-08-02 — Hallazgo: Supabase "topofield" estaba pausado (Cowork):** al comprobar el proyecto antes de aplicar D2, `get_project` devolvió `status: INACTIVE` (free tier, pausa automática por inactividad de varios días) mientras que el otro proyecto (`topotask-backend`, no relacionado) seguía `ACTIVE_HEALTHY`. Con el proyecto pausado, Render no puede conectar: login y toda la app quedan caídos sin que el código tenga ningún fallo. Autorizado por Erick, se ejecutó `restore_project` (no destructivo, no toca datos, solo reactiva). Riesgo real para el futuro: si pasan varios días sin usar la app (fácil, dado el ritmo de 5-10h/semana), puede volver a pausarse solo. Añadido a `PILOT_READINESS_CHECKLIST.md` como primer paso a comprobar antes de cualquier sesión de campo.

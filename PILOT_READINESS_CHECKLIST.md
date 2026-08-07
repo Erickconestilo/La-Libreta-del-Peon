@@ -15,7 +15,7 @@ Comprobaciones técnicas:
 - [ ] Confirmar que la cuenta tecnica de Erick entra y conserva sesion ante un fallo transitorio de red.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
 - [ ] Verificar login, una estacion, una foto, una lectura offline y su sincronizacion en el dispositivo objetivo con datos reales de una sola obra.
-- [ ] Confirmar que Render publica el commit que se pretende probar y que las rutas de rondas responden autenticadas.
+- [ ] **Confirmar que Render publica el commit que se pretende probar** consultando `/api/v1/health`, que devuelve el hash desplegado. **Verificado el 02-08-2026: NO coincide.** Render corre el estado del 31-07 y le faltan las correcciones de aislamiento entre obras de F4 y D1. Antes de salir a campo hay que fusionar a `main` y publicar — y publicar exige el `push --force` pendiente de autorización. Ver "Deuda de despliegue" en `ROADMAP.md`.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 
