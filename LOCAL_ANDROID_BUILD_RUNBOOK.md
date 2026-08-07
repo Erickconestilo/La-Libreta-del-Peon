@@ -397,6 +397,21 @@ Este comando hace:
 4. compila release con Gradle en la ruta corta
 5. deja la APK lista
 
+## Antes de compilar un release local: `.env` obligatorio (hallazgo 07-08-2026)
+
+**`apps/mobile/eas.json` no aplica a este script.** Ese archivo define `EXPO_PUBLIC_API_BASE_URL` y `EXPO_PUBLIC_GUEST_PUBLIC_TOKEN` por perfil (`preview`/`production`), pero esos valores **solo los inyecta `eas build` en la nube**. `scripts/build-local-android.ps1` nunca lee `eas.json` ni exporta esas variables antes de `expo prebuild`/`gradlew`.
+
+Sin ellas, `apps/mobile/lib/api.ts` construye `API_BASE_URL` vacío en producción y lanza a propósito "La URL de API no está configurada para esta versión de la app." al primer intento de red — es el código funcionando como debe, no un bug. Sin esto la app abre pero no puede cargar Obras, ni ninguna pantalla que dependa del backend.
+
+**Antes de `npm run mobile:build-local-android` para un release real**, crea (una sola vez, no se versiona) `apps/mobile/.env`:
+
+```
+EXPO_PUBLIC_API_BASE_URL=https://la-libreta-del-peon-1.onrender.com/api/v1
+EXPO_PUBLIC_GUEST_PUBLIC_TOKEN=<mismo valor que GUEST_PUBLIC_TOKEN en el backend de Render>
+```
+
+Cubierto por `.gitignore` (`.env`), igual que el keystore de firma — nunca se commitea. Plantilla de referencia en `apps/mobile/.env.example` (apunta a `localhost`, válido solo para desarrollo local con backend en tu máquina, no para un release real).
+
 ## 21. Estado final real
 
 - Build Android local gratuita: resuelta
