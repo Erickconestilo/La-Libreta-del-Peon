@@ -24,8 +24,8 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F1** | Contrato de dominio de auscultación | ✅ Cerrada con corrección (29-07-2026) — ADR 001 quedó supersedido: las tablas `obras/*` estaban en otro proyecto Supabase, no en el que usa el backend | MEMORIA Fase 1 |
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
-| **F4** | Seguridad multi-tenant y preparación de release | ⚠️ **Cerrada en código pero NO desplegada** (ver "Deuda de despliegue" abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado. D1 y D2 ya decididas. | MEMORIA Fase 5 |
-| **F5** | **Validación de uso real en campo** | 🔵 **ABIERTA — es el siguiente bloque** | PLAN Fase 4 (nunca ejecutada) |
+| **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
+| **F5** | **Validación de uso real en campo** | 🔵 **ABIERTA — es el siguiente bloque, ya sin bloqueo de despliegue** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | ⚪ Pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos nuevos (piezómetro, inclinómetro) reemplazando el blob genérico de lectura | ⚪ Pendiente, condicionada a demanda real | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
@@ -33,26 +33,19 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 
 Nota sobre las fases 1-4 de `PLAN.md` (enfoque de producto, diseño funcional, UX aplicada): su contenido no se pierde, vive en `PRODUCT_STRATEGY.md` y `UX_RESEARCH_PLAN.md`, que siguen vigentes y no dependen de la numeración.
 
-## ⚠️ Deuda de despliegue (verificado 02-08-2026) — bloquea F5
+## ✅ Deuda de despliegue — resuelta (02-08-2026)
 
-**Todo el trabajo de seguridad de F4 y las correcciones de hoy están en la rama `codex/phase-5-multitenant-security`, no en `main`, y no en producción.**
+Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendiente.
 
-Evidencia, no suposición:
+**Qué pasó:** todo el trabajo de seguridad de F4 estaba commiteado en la rama `codex/phase-5-multitenant-security`, 20 commits por delante de `main`, y `main` nunca se había publicado tras la purga de historial del 31-07. `/api/v1/health` de Render confirmaba que producción corría el commit `41e3cc3` (31-07-2026 12:00) — sin las 3 correcciones de aislamiento multi-tenant ni D1.
 
-- `main` local está **20 commits por detrás** de la rama de trabajo (`git log main..codex/phase-5-multitenant-security`). El merge sería fast-forward limpio, sin conflictos.
-- Render expone el commit desplegado en `/api/v1/health`. Devuelve `41e3cc3`, que corresponde a `fix(mobile): resolver bloqueos de piloto offline` del **31-07-2026 12:00**. Ese hash ya no existe en el repo local porque el historial se reescribió, pero se localizó en el backup mirror pre-purga.
-- Conclusión: **producción corre el estado del 31 de julio.** No incluye las 3 correcciones de aislamiento entre obras de F4 (incidencias y flujos de foto), ni D1 (quitar auscultación al token público), ni sus tests de regresión.
+**Cómo se cerró:**
+1. Merge fast-forward local de la rama a `main` (Cowork, sin publicar).
+2. Erick autorizó y ejecutó `git push --force-with-lease origin main` desde PowerShell — la autorización explícita que exige la regla 6 de `AGENTS.md`, dada por él mismo en el momento.
+3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
+4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Por qué importa.** Las correcciones de F4 son de aislamiento multi-tenant: son precisamente las que impiden que una obra vea datos de otra. Están escritas, probadas y commiteadas, pero un usuario real hoy sigue hablando con un backend que no las tiene. Esto no es cosmético: si F5 se hace en campo contra producción, se estaría validando una versión que ya sabemos que tiene fallos corregidos.
-
-**El bloqueo real es tuyo, no técnico.** Publicar exige `git push --force` a `origin`, porque el historial local fue reescrito el 31-07 para purgar nombres reales de obra y todos los hashes cambiaron. Un push normal sería rechazado. `push --force` sobre `origin/main` es destructivo para cualquiera que tenga un clon, así que **requiere autorización explícita de Erick en el momento**, tras avisar a posibles colaboradores. Nunca se ha dado esa autorización.
-
-Secuencia pendiente, en orden:
-
-1. Fusionar la rama a `main` en local (fast-forward, reversible, no publica nada).
-2. Erick autoriza el `push --force` tras confirmar que nadie más tiene un clon del repo.
-3. Render redespliega solo al detectar el nuevo `main`; verificar con `/api/v1/health` que el commit cambió.
-4. Recién entonces tiene sentido hacer F5 en campo.
+**Estado actual:** producción tiene todo — F4 completa, D1 aplicada, D2 decidida. F5 queda sin ningún bloqueo técnico ni de despliegue.
 
 ## F5 — Validación de uso real en campo (fase actual)
 

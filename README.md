@@ -27,10 +27,10 @@ Resumen; el detalle por fase está en [ROADMAP.md](./ROADMAP.md).
 
 - Motor offline validado en dispositivo real: outbox SQLite, sincronización al recuperar red, persistencia tras `force-stop` e idempotencia por `client_request_id`.
 - MVP de auscultación completo y validado en dispositivo real: rondas, puntos de control, lecturas, umbrales, histórico y foto adjunta, todo offline-first.
-- Backend desplegado en Render, pero **desactualizado**: `/api/v1/health` confirma que corre el estado del 31-07 y le faltan las correcciones de aislamiento entre obras y D1. Ver "Deuda de despliegue" en [ROADMAP.md](./ROADMAP.md).
+- Backend desplegado en Render y **al día** (verificado 02-08-2026 vía `/api/v1/health`): incluye las correcciones de aislamiento entre obras y D1.
 - Aislamiento multi-tenant auditado por familia de endpoint, con tres correcciones aplicadas. RLS activo en las 24 tablas del proyecto.
 - Release Android firmable localmente: keystore propio y AAB verificado criptográficamente.
-- **Siguiente bloque: F5, validación de uso real en campo** — pero antes hay que publicar lo ya hecho: el merge a `main` está pendiente y la publicación requiere un `push --force` que Erick debe autorizar (el historial se reescribió el 31-07 para purgar nombres reales de obra).
+- **Siguiente bloque: F5, validación de uso real en campo.** Sin bloqueos técnicos ni de despliegue.
 
 ## Verificación local
 
