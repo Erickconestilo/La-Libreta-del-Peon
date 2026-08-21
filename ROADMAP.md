@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-verificado: 2026-08-02
+verificado: 2026-08-21
 -->
 
 # ROADMAP.md — TopoField
@@ -27,7 +27,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Validación de uso real en campo** | 🔵 **ABIERTA — es el siguiente bloque, ya sin bloqueo de despliegue** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | ⚪ Pendiente | parte de MEMORIA Fase 4 |
-| **F7** | Instrumentos nuevos (piezómetro, inclinómetro) reemplazando el blob genérico de lectura | ⚪ Pendiente, condicionada a demanda real | MEMORIA Fase 6 |
+| **F7** | Instrumentos nuevos reemplazando el blob genérico de lectura | ⚪ Pendiente. **Alcance precisado 21-08-2026:** los instrumentos reales de Erick son fisurómetro y potenciómetro (los más usados, según demanda), regla de peralte (en unos meses) y cinta de convergencia. Ver `MEMORIA.md` §7 — hay un **hallazgo de modelado bloqueante**: varios miden entre pares de puntos y el modelo actual solo admite un punto por lectura. | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
 
@@ -61,9 +61,19 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Qué NO hacer durante F5.** No abrir F6 ni F7 en paralelo. No añadir features "ya que estamos". Si aparece un bug bloqueante, se corrige y se anota; cualquier otra cosa va a la lista de fricciones.
 
-## Decisiones tomadas el 02-08-2026 (criterio de ingeniería, pendientes de aplicar)
+### Estado de F5 (revisado 21-08-2026)
 
-Tres decisiones que estaban abiertas y bloqueaban el avance. Se resuelven aquí con su razonamiento; ninguna se ha aplicado todavía porque dos tocan código o configuración de producción.
+F5 sigue abierta y **no ha empezado**: `docs/field/` está vacío, así que no existe todavía ningún `F5_HALLAZGOS_<fecha>.md` y no se cumple el criterio de salida. La frase de arriba —"F5 no requiere escribir código"— sigue siendo cierta sobre el trabajo de la fase, pero el 07-08-2026 se intentó ejecutar el Paso 1 dos veces y **las dos se pararon antes de llegar a campo** (fuente: bitácora de `MEMORIA.md` §12, commits `22d5bea`, `ba3a5cc`, `0a41c02`):
+
+1. **Build local sin URL de API — resuelto.** La release local no exportaba `EXPO_PUBLIC_API_BASE_URL`; se creó `apps/mobile/.env` (gitignored) y se documentó en `LOCAL_ANDROID_BUILD_RUNBOOK.md`.
+2. **403 en Rondas — no era un bug.** La app operaba en contexto invitado; el 403 es D1 funcionando como se diseñó. No prueba que la cuenta `topografo` vea Rondas con normalidad: es una afirmación distinta y sigue sin verificar.
+3. **Login técnico en el Galaxy — abierto.** `POST /api/v1/auth/login` contra Render responde `HTTP 200` con la contraseña restablecida, pero la misma prueba introducida por ADB en el dispositivo deja la UI en `Invalid credentials`. No se atribuye todavía a un defecto de la app: ADB puede alterar la entrada de credenciales.
+
+**Decisión pendiente de Erick:** cómo se resuelve el punto 3 — prueba manual tecleando en el Galaxy (barata, descarta el ruido de ADB, es lo primero que conviene intentar) o instrumentación de diagnóstico autorizada en la app. Hasta cerrarlo no se puede entrar en `campus-nord` / `maragall` ni empezar la jornada real de F5.
+
+## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
+
+Tres decisiones que estaban abiertas y bloqueaban el avance. Se resuelven aquí con su razonamiento. Estado a 21-08-2026: **D1 aplicada y con test de regresión**, **D2 cerrada** (Erick decide quedarse en Free), **D3 vigente** como orden de fases. Ninguna queda pendiente de aplicar.
 
 ### D1 — El rol `visitante` no accede a datos de auscultación
 
@@ -106,11 +116,11 @@ Contraargumento razonable: el blob genérico de `instrument_readings` es deuda t
 
 ## Pendientes que no son fases
 
-Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo puede resolver Erick:
+Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo puede resolver Erick (revisado 21-08-2026):
 
-- Aplicar D1 (delegable a un agente) y D2 (no delegable, es configuración de Supabase).
-- Autorizar, en el momento y por separado, cualquier `push --force` de la reescritura de historial, tras avisar a quien tenga un clon.
-- Capa (3) de `MEMORIA.md` §5, datos de terceros: sigue abierta, sin urgencia; no se reabre salvo que Erick la traiga.
+- **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
+- **Abierto:** decidir cómo se desbloquea el login técnico en el Galaxy (ver «Estado de F5» arriba) — es hoy el único pendiente que frena el trabajo.
+- **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo
 
