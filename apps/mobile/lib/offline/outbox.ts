@@ -120,6 +120,19 @@ export function getConflicts(): OutboxItem[] {
   return rows.map(rowToItem);
 }
 
+export function getRoundOutboxItems(roundId: string): OutboxItem[] {
+  const rows = getDatabase().getAllSync<OutboxRow>(
+    `SELECT * FROM outbox
+     WHERE status IN ('pending', 'syncing', 'error', 'conflict')
+       AND entity_type = 'medicion'
+     ORDER BY created_at ASC, rowid ASC`
+  );
+
+  return rows
+    .map(rowToItem)
+    .filter((item) => item.payload.roundId === roundId);
+}
+
 /**
  * Mark item as syncing (before sync attempt)
  */

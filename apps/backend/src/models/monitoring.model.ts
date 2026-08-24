@@ -15,6 +15,7 @@ import type {
   ValidatedListControlPointsQuery,
   ValidatedListMonitoringRoundsQuery,
   ValidatedReadingHistoryQuery,
+  ValidatedUpdateMonitoringRoundStatusInput,
   ValidatedUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 
@@ -432,6 +433,88 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
     ...mapRoundRow(roundResult.rows[0]),
     points: pointsResult.rows.map(mapRoundPointWithControlPointRow)
   };
+};
+
+export const assertMonitoringRoundStatusTransition = (
+  currentStatus: string,
+  nextStatus: ValidatedUpdateMonitoringRoundStatusInput['status'],
+  hasPendingPoints: boolean
+) => {
+  if (currentStatus === 'closed' || currentStatus === 'cancelled') {
+    throw new AppError('A terminal round cannot be changed', 409, 'ROUND_TERMINAL');
+  }
+
+  if (nextStatus === 'active' && currentStatus !== 'draft') {
+    throw new AppError('Only a draft round can be activated', 409, 'INVALID_ROUND_TRANSITION');
+  }
+
+  if (nextStatus === 'closed') {
+    if (currentStatus !== 'active') {
+      throw new AppError('Only an active round can be closed', 409, 'INVALID_ROUND_TRANSITION');
+    }
+
+    if (hasPendingPoints) {
+      throw new AppError('The round still has pending points', 409, 'ROUND_HAS_PENDING_POINTS');
+    }
+  }
+
+  if (nextStatus === 'cancelled' && currentStatus !== 'draft' && currentStatus !== 'active') {
+    throw new AppError('Only a draft or active round can be cancelled', 409, 'INVALID_ROUND_TRANSITION');
+  }
+};
+
+export const updateMonitoringRoundStatus = async (
+  roundId: string,
+  input: ValidatedUpdateMonitoringRoundStatusInput,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const currentResult = await pool.query(
+    `
+      SELECT mr.status
+      FROM monitoring_rounds mr
+      WHERE mr.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundId, ...scope.params]
+  );
+
+  if (currentResult.rowCount === 0) {
+    return null;
+  }
+
+  let hasPendingPoints = false;
+
+  if (input.status === 'closed') {
+    const pendingResult = await pool.query(
+      `
+        SELECT 1
+        FROM monitoring_round_points
+        WHERE round_id = $1
+          AND status = 'pending'
+        LIMIT 1
+      `,
+      [roundId]
+    );
+    hasPendingPoints = (pendingResult.rowCount ?? 0) > 0;
+  }
+
+  assertMonitoringRoundStatusTransition(currentResult.rows[0].status, input.status, hasPendingPoints);
+
+  const updateScope = buildRoundProjectScopeCondition(projectScope, 3);
+  const result = await pool.query(
+    `
+      UPDATE monitoring_rounds mr
+      SET status = $2, updated_at = NOW()
+      WHERE id = $1
+      ${updateScope.clause}
+      RETURNING *
+    `,
+    [roundId, input.status, ...updateScope.params]
+  );
+
+  return result.rowCount === 0 ? null : mapRoundRow(result.rows[0]);
 };
 
 export const createControlPoint = async (

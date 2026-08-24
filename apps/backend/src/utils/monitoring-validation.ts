@@ -74,6 +74,12 @@ export const createMonitoringRoundSchema = z.object({
 
 export type ValidatedCreateMonitoringRoundInput = z.infer<typeof createMonitoringRoundSchema>;
 
+const updateMonitoringRoundStatusSchema = z.object({
+  status: z.enum(['active', 'closed', 'cancelled'])
+});
+
+export type ValidatedUpdateMonitoringRoundStatusInput = z.infer<typeof updateMonitoringRoundStatusSchema>;
+
 export const listMonitoringRoundsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -206,6 +212,16 @@ export const validateCreateMonitoringRoundInput = (input: unknown): ValidatedCre
 
   if (!parsedInput.success) {
     throw new AppError('Invalid monitoring round payload', 400, 'INVALID_ROUND_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateUpdateMonitoringRoundStatusInput = (input: unknown): ValidatedUpdateMonitoringRoundStatusInput => {
+  const parsedInput = updateMonitoringRoundStatusSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid monitoring round status payload', 400, 'INVALID_ROUND_STATUS_PAYLOAD', parsedInput.error.flatten());
   }
 
   return parsedInput.data;

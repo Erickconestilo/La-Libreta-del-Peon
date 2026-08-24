@@ -8,6 +8,7 @@ import {
   validateCreateReadingAttachmentInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
+  validateUpdateMonitoringRoundStatusInput,
   validateUpdateControlPointInput
 } from './monitoring-validation.js';
 
@@ -86,6 +87,15 @@ test('monitoring round creation defaults to draft status and requires a plain da
         roundDate: '2026-08-03T10:00:00.000Z'
       }),
     /Invalid monitoring round payload/
+  );
+});
+
+test('round status updates only accept non-terminal transitions', () => {
+  assert.equal(validateUpdateMonitoringRoundStatusInput({ status: 'active' }).status, 'active');
+  assert.equal(validateUpdateMonitoringRoundStatusInput({ status: 'closed' }).status, 'closed');
+  assert.throws(
+    () => validateUpdateMonitoringRoundStatusInput({ status: 'draft' }),
+    /Invalid monitoring round status payload/
   );
 });
 

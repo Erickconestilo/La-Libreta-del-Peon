@@ -5,6 +5,7 @@ import type {
   ControlPoint,
   ControlPointEnvironment,
   ControlPointSide,
+  ControlPointThreshold,
   FieldConditions,
   InstrumentReading,
   InstrumentType,
@@ -16,6 +17,13 @@ import type {
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
 import { enqueue, getPendingCount } from '@/lib/offline/outbox';
+import {
+  getCachedMonitoringRoundList,
+  getMonitoringRoundSnapshot,
+  saveMonitoringRoundList,
+  saveMonitoringRoundSnapshot,
+  type MonitoringRoundSnapshot
+} from '@/lib/offline/monitoring-cache';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
 import {
@@ -94,6 +102,7 @@ type ReadingAttachmentPayload = {
   photo: PreparedPhoto;
   readingClientRequestId: string;
   readingInput: Omit<CreateInstrumentReadingInput, 'photo'>;
+  roundId: string;
   roundPointId: string;
   title: string | null;
 };
@@ -139,6 +148,104 @@ const fetchMonitoringRounds = async (projectId: string, status?: MonitoringRound
 const fetchMonitoringRound = async (roundId: string) => {
   const response = await apiFetch<ApiEnvelope<MonitoringRoundDetail>>(`/rounds/${roundId}`);
   return response.data;
+};
+
+const fetchControlPointThresholds = async (controlPointId: string) => {
+  const response = await apiFetch<ApiEnvelope<ControlPointThreshold[]>>(`/control-points/${controlPointId}/thresholds`);
+  return response.data;
+};
+
+const fetchMonitoringRoundsWithCache = async (projectId: string, status?: MonitoringRoundStatus) => {
+  try {
+    const rounds = await fetchMonitoringRounds(projectId, status);
+
+    if (!status) {
+      const cachedAt = new Date().toISOString();
+      saveMonitoringRoundList(projectId, rounds, cachedAt);
+      return { cachedAt: null, isOfflineCache: false, rounds };
+    }
+
+    return { cachedAt: null, isOfflineCache: false, rounds };
+  } catch (error) {
+    if (status) {
+      throw error;
+    }
+
+    const cached = getCachedMonitoringRoundList(projectId);
+
+    if (!cached) {
+      throw error;
+    }
+
+    return {
+      cachedAt: cached.cachedAt,
+      isOfflineCache: true,
+      rounds: cached.rounds
+    };
+  }
+};
+
+const buildRoundSnapshot = (
+  round: MonitoringRoundDetail,
+  existing?: MonitoringRoundSnapshot | null
+): MonitoringRoundSnapshot => ({
+  cachedAt: new Date().toISOString(),
+  readingsByControlPointId: existing?.readingsByControlPointId ?? {},
+  round,
+  thresholdsByControlPointId: existing?.thresholdsByControlPointId ?? {}
+});
+
+const fetchMonitoringRoundWithCache = async (roundId: string) => {
+  try {
+    const round = await fetchMonitoringRound(roundId);
+    const snapshot = buildRoundSnapshot(round, getMonitoringRoundSnapshot(roundId));
+    saveMonitoringRoundSnapshot(roundId, snapshot);
+    return { cachedAt: null, isOfflineCache: false, round };
+  } catch (error) {
+    const cached = getMonitoringRoundSnapshot(roundId);
+
+    if (!cached) {
+      throw error;
+    }
+
+    return {
+      cachedAt: cached.cachedAt,
+      isOfflineCache: true,
+      round: cached.round
+    };
+  }
+};
+
+const prepareMonitoringRoundRequest = async (roundId: string) => {
+  if (!(await hasConnectivity())) {
+    throw new Error('Conecta el móvil para descargar la jornada antes de trabajar sin conexión.');
+  }
+
+  const round = await fetchMonitoringRound(roundId);
+  const readingsByControlPointId: Record<string, InstrumentReading[]> = {};
+  const thresholdsByControlPointId: Record<string, ControlPointThreshold[]> = {};
+
+  await Promise.all(
+    round.points.map(async (point) => {
+      const [readings, thresholds] = await Promise.all([
+        point.expectedInstrumentType === 'total_station'
+          ? Promise.resolve([] as InstrumentReading[])
+          : fetchReadingHistory(point.controlPointId, point.expectedInstrumentType),
+        fetchControlPointThresholds(point.controlPointId)
+      ]);
+      readingsByControlPointId[point.controlPointId] = readings;
+      thresholdsByControlPointId[point.controlPointId] = thresholds;
+    })
+  );
+
+  const snapshot: MonitoringRoundSnapshot = {
+    cachedAt: new Date().toISOString(),
+    readingsByControlPointId,
+    round,
+    thresholdsByControlPointId
+  };
+  saveMonitoringRoundSnapshot(roundId, snapshot);
+  return snapshot;
 };
 
 const fetchControlPoints = async (projectId: string, isActive?: boolean) => {
@@ -303,28 +410,84 @@ const shouldQueueReadingAfterError = (error: unknown) => {
 export const useMonitoringRounds = (projectId: string | null, status?: MonitoringRoundStatus) => {
   const query = useQuery({
     enabled: Boolean(projectId),
-    queryFn: () => fetchMonitoringRounds(projectId as string, status),
+    queryFn: () => fetchMonitoringRoundsWithCache(projectId as string, status),
     queryKey: ['monitoring-rounds', projectId, status ?? 'all'],
     staleTime: 1000 * 30
   });
 
   return {
     ...query,
-    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudieron cargar las rondas.') : null
+    cachedAt: query.data?.cachedAt ?? null,
+    data: query.data?.rounds,
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudieron cargar las rondas.') : null,
+    isOfflineCache: query.data?.isOfflineCache ?? false
   };
 };
 
 export const useMonitoringRound = (roundId: string | null) => {
   const query = useQuery({
     enabled: Boolean(roundId),
-    queryFn: () => fetchMonitoringRound(roundId as string),
+    queryFn: () => fetchMonitoringRoundWithCache(roundId as string),
     queryKey: ['monitoring-round', roundId],
     staleTime: 1000 * 15
   });
 
   return {
     ...query,
-    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar la ronda.') : null
+    cachedAt: query.data?.cachedAt ?? null,
+    data: query.data?.round,
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar la ronda.') : null,
+    isOfflineCache: query.data?.isOfflineCache ?? false
+  };
+};
+
+export const usePrepareMonitoringRound = (roundId: string | null) => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!roundId) {
+        throw new Error('Falta la ronda para preparar la jornada.');
+      }
+      return prepareMonitoringRoundRequest(roundId);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['monitoring-round', roundId] });
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar la jornada.') : null,
+    isPreparing: mutation.isPending,
+    prepareRound: mutation.mutateAsync
+  };
+};
+
+export const useUpdateMonitoringRoundStatus = (roundId: string | null) => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (status: Exclude<MonitoringRoundStatus, 'draft'>) => {
+      if (!roundId) {
+        throw new Error('Falta la ronda.');
+      }
+
+      const response = await apiFetch<ApiEnvelope<MonitoringRound>>(`/rounds/${roundId}`, {
+        body: JSON.stringify({ status }),
+        method: 'PATCH'
+      });
+      return response.data;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['monitoring-round', roundId] }),
+        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds'] })
+      ]);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo actualizar el estado de la ronda.') : null,
+    isUpdating: mutation.isPending,
+    updateStatus: mutation.mutateAsync
   };
 };
 
@@ -472,6 +635,7 @@ export const useCreateInstrumentReading = ({
               photo: persistentPhoto,
               readingClientRequestId: clientRequestId,
               readingInput,
+              roundId: roundId as string,
               roundPointId,
               title: null
             };
@@ -507,6 +671,7 @@ export const useCreateInstrumentReading = ({
         operation: 'insert',
         payload: {
           ...readingInput,
+          roundId: roundId as string,
           roundPointId
         }
       });
@@ -517,6 +682,7 @@ export const useCreateInstrumentReading = ({
           photo: persistentPhoto,
           readingClientRequestId: clientRequestId,
           readingInput,
+          roundId: roundId as string,
           roundPointId,
           title: null
         }, attachmentClientRequestId);

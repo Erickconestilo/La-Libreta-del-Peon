@@ -21,7 +21,8 @@ import {
   listControlPointThresholds,
   listMonitoringRounds,
   listProjectCodeCatalog,
-  updateControlPoint
+  updateControlPoint,
+  updateMonitoringRoundStatus
 } from '../models/monitoring.model.js';
 import {
   validateCodeCatalogQuery,
@@ -34,6 +35,7 @@ import {
   validateListControlPointsQuery,
   validateListMonitoringRoundsQuery,
   validateReadingHistoryQuery,
+  validateUpdateMonitoringRoundStatusInput,
   validateUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 import { isValidReadingPhotoPath } from '../utils/photo-validation.js';
@@ -274,6 +276,22 @@ export const getMonitoringRoundDetailController = async (request: Request, respo
     sendSuccess(response, round);
   } catch (error) {
     sendControllerError(response, error, 'ROUND_DETAIL_FAILED', 'Unable to load monitoring round');
+  }
+};
+
+export const updateMonitoringRoundStatusController = async (request: Request, response: Response) => {
+  try {
+    const roundId = routeParam(request, 'roundId');
+    const input = validateUpdateMonitoringRoundStatusInput(request.body);
+    const round = await updateMonitoringRoundStatus(roundId, input, getActorProjectScope(request.user));
+
+    if (!round) {
+      throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    }
+
+    sendSuccess(response, round);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUND_STATUS_UPDATE_FAILED', 'Unable to update monitoring round status');
   }
 };
 

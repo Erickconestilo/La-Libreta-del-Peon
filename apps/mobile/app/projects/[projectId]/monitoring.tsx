@@ -26,7 +26,7 @@ export default function MonitoringRoundsScreen() {
   const { currentUser } = useCurrentSession();
   const { data: projects } = useProjects();
   const [status, setStatus] = useState<MonitoringRoundStatus | null>(null);
-  const { data, errorMessage, isLoading, isRefetching, refetch } = useMonitoringRounds(projectId ?? null, status ?? undefined);
+  const { cachedAt, data, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRounds(projectId ?? null, status ?? undefined);
   const project = useMemo(() => (projects ?? []).find((item) => item.id === projectId), [projectId, projects]);
   const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const rounds = data ?? [];
@@ -70,6 +70,7 @@ export default function MonitoringRoundsScreen() {
             <Text style={styles.body}>{errorMessage}</Text>
           </View>
         ) : null}
+        {isOfflineCache ? <Text style={styles.warningText}>Rondas sin actualizar. Última copia: {cachedAt ?? 'fecha desconocida'}.</Text> : null}
 
         <FlatList
           contentContainerStyle={[styles.list, { paddingBottom: 32 + insets.bottom }]}
@@ -141,4 +142,5 @@ const styles = StyleSheet.create({
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   title: { color: colors.textPrimary, fontSize: 28, fontWeight: '900' },
+  warningText: { color: colors.amber, fontSize: 13, fontWeight: '700', lineHeight: 20, paddingHorizontal: spacing[3] },
 });

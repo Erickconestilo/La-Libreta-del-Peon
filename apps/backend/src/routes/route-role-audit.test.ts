@@ -24,7 +24,8 @@ type RouteExpectation = {
 };
 
 const auscultacionRoutesFromRoundsRouter: RouteExpectation[] = [
-  { method: 'get', path: '/:roundId', mustExcludeVisitante: true }
+  { method: 'get', path: '/:roundId', mustExcludeVisitante: true },
+  { method: 'patch', path: '/:roundId', mustExcludeVisitante: true }
 ];
 
 const auscultacionRoutesFromControlPointsRouter: RouteExpectation[] = [
