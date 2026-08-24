@@ -10,19 +10,26 @@ let runtimeBearerToken: string | null = null;
 let authFailureHandler: (() => void) | null = null;
 
 type ApiFetchInit = RequestInit & {
+  requestId?: string;
   skipAuth?: boolean;
 };
 
 export class ApiRequestError extends Error {
   code?: string;
   rawMessage?: string | null;
+  requestId?: string | null;
   status: number;
 
-  constructor(status: number, message: string, options: { code?: string; rawMessage?: string | null } = {}) {
+  constructor(
+    status: number,
+    message: string,
+    options: { code?: string; rawMessage?: string | null; requestId?: string | null } = {}
+  ) {
     super(message);
     this.name = 'ApiRequestError';
     this.code = options.code;
     this.rawMessage = options.rawMessage;
+    this.requestId = options.requestId;
     this.status = status;
   }
 }
@@ -55,13 +62,17 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
     throw new Error('La URL de API debe usar HTTPS en builds de producción.');
   }
 
-  const { skipAuth, ...requestInit } = init ?? {};
+  const { requestId, skipAuth, ...requestInit } = init ?? {};
   const method = (requestInit.method ?? 'GET').toUpperCase();
   const authToken = runtimeBearerToken ?? GUEST_PUBLIC_TOKEN;
 
   const request = async (token: string | null) => {
     const headers = new Headers(requestInit.headers);
     headers.set('Content-Type', 'application/json');
+
+    if (requestId) {
+      headers.set('X-Request-ID', requestId);
+    }
 
     if (!skipAuth && token) {
       headers.set('Authorization', `Bearer ${token}`);
@@ -128,7 +139,8 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
       getFriendlyApiErrorMessage(response.status, json.error?.message, json.error?.code),
       {
         code: json.error?.code,
-        rawMessage: json.error?.message
+        rawMessage: json.error?.message,
+        requestId: response.headers.get('x-request-id') ?? requestId ?? null
       }
     );
   }
@@ -157,6 +169,10 @@ const getFriendlyApiErrorMessage = (status: number, message?: string | null, cod
 
   if (status === 401 && (code === 'INVALID_TOKEN' || normalizedMessage === 'Invalid authentication token')) {
     return 'La sesión técnica es inválida. Revalida o entra de nuevo.';
+  }
+
+  if (status === 401 && code === 'INVALID_CREDENTIALS') {
+    return 'Correo o contraseña no válidos.';
   }
 
   if (status === 401 && (code === 'UNAUTHORIZED' || normalizedMessage === 'Authentication required')) {
