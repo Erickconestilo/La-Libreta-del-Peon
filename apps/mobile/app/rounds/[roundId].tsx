@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatShortDate, RoundStatusPill, RowChevron, StatePill } from '@/components/monitoring-ui';
@@ -30,6 +31,7 @@ export default function MonitoringRoundDetailScreen() {
   const { cachedAt, data: round, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRound(roundId ?? null);
   const { errorMessage: prepareErrorMessage, isPreparing, prepareRound } = usePrepareMonitoringRound(roundId ?? null);
   const { errorMessage: statusErrorMessage, isUpdating, updateStatus } = useUpdateMonitoringRoundStatus(roundId ?? null);
+  const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
   const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const points = round?.points ?? [];
   const pending = points.filter((item) => item.status === 'pending').length;
@@ -40,8 +42,10 @@ export default function MonitoringRoundDetailScreen() {
   const handlePrepare = async () => {
     try {
       await prepareRound();
+      setPrepareMessage('Jornada preparada en este dispositivo. Ya puedes trabajar sin conexión.');
     } catch {
       // El hook expone el motivo debajo de la cabecera.
+      setPrepareMessage(null);
     }
   };
 
@@ -82,6 +86,7 @@ export default function MonitoringRoundDetailScreen() {
               </View>
             ) : null}
             {round.status === 'active' && !canClose ? <Text style={styles.warningText}>No se puede cerrar: quedan {pending} puntos pendientes y {localPending} cambios locales por sincronizar.</Text> : null}
+            {prepareMessage ? <Text style={styles.successText}>{prepareMessage}</Text> : null}
             {prepareErrorMessage || statusErrorMessage ? <Text style={styles.errorText}>{prepareErrorMessage ?? statusErrorMessage}</Text> : null}
           </View>
         ) : null}
@@ -140,6 +145,7 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
   secondaryButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  successText: { color: colors.accentGreen, fontSize: 13, fontWeight: '800', lineHeight: 20 },
   summary: { flexDirection: 'row', gap: spacing[1] },
   summaryItem: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flex: 1, padding: spacing[1] },
   summaryLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },

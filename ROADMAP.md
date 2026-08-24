@@ -68,9 +68,9 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo y la app ya está preparada para la prueba real. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos".
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado; el Bloque 3 deja instalada en el Galaxy la release local `versionCode=2` y verifica el acceso a una obra, rondas y una ronda activa.
 
-Siguiente puerta: preparar una ronda autorizada, completar el recorrido de lecturas/fotos offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes.
+Siguiente puerta: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
