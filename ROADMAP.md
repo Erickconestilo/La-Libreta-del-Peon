@@ -72,6 +72,16 @@ El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El p
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. Siguiente puerta de F5: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
 
+### Mi jornada — implementación local 24-08-2026
+
+El flujo de rondas asignadas ya está implementado localmente: orden explícito
+por administrador, jornada personal agregada, tarjeta en Obras, continuación
+automática una vez por arranque, aplazamiento local hasta fin de día, panel
+admin y aviso de conflicto si cambia la planificación mientras hay datos
+locales pendientes. La migración 021 está versionada pero no aplicada y el
+backend todavía no se ha desplegado; por tanto, esta parte aún no se declara
+validada en Galaxy ni en producción.
+
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
 Tres decisiones que estaban abiertas y bloqueaban el avance. Se resuelven aquí con su razonamiento. Estado a 21-08-2026: **D1 aplicada y con test de regresión**, **D2 cerrada** (Erick decide quedarse en Free), **D3 vigente** como orden de fases. Ninguna queda pendiente de aplicar.
