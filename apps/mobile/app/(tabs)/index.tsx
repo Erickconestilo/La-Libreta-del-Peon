@@ -1,18 +1,21 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, ImageBackground, Modal, Pressable, RefreshControl, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ProjectSummary } from '@shared/types';
+import { formatShortDate, RoundStatusPill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
+import { useMyJourney } from '@/hooks/use-monitoring';
 import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function ProjectsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { currentUser } = useCurrentSession();
+  const { currentUser, isLoading: isSessionLoading } = useCurrentSession();
+  const { cachedAt: journeyCachedAt, data: journey, deferRound, errorMessage: journeyErrorMessage, isOfflineCache: isJourneyOffline, isLoading: isJourneyLoading } = useMyJourney();
   const { cachedAt, data, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useProjects();
   const [isLoadTakingLong, setIsLoadTakingLong] = useState(false);
   const {
@@ -23,8 +26,18 @@ export default function ProjectsScreen() {
   } = useProjectPhotoMutations(null);
   const [imageActionProject, setImageActionProject] = useState<ProjectSummary | null>(null);
   const projects = data ?? [];
+  const autoOpenedJourneyRef = useRef(false);
   const canCreateProject = currentUser?.role === 'admin';
   const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+
+  useEffect(() => {
+    if (autoOpenedJourneyRef.current || isSessionLoading || isJourneyLoading || !journey?.length) {
+      return;
+    }
+
+    autoOpenedJourneyRef.current = true;
+    router.push(`/rounds/${journey[0].id}` as never);
+  }, [isJourneyLoading, isSessionLoading, journey, router]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -96,6 +109,37 @@ export default function ProjectsScreen() {
           </Pressable>
         ) : null}
       </View>
+
+      {currentUser?.role === 'admin' || currentUser?.role === 'topografo' ? (
+        <View style={styles.journeyCard}>
+          <View style={styles.journeyHeader}>
+            <View style={styles.journeyTitleBlock}>
+              <Text style={styles.journeyEyebrow}>Mi jornada</Text>
+              <Text style={styles.journeyTitle}>{journey?.[0]?.name ?? (isJourneyLoading ? 'Cargando jornada...' : 'Sin rondas asignadas')}</Text>
+            </View>
+            {journey?.[0] ? <RoundStatusPill status={journey[0].status} /> : null}
+          </View>
+          {journey?.[0] ? (
+            <>
+              <Text style={styles.journeyMeta}>{journey[0].projectName} · {formatShortDate(journey[0].roundDate)}</Text>
+              <Text style={styles.journeyProgress}>{journey[0].takenPointCount}/{journey[0].totalPointCount} puntos tomados</Text>
+              <View style={styles.journeyActions}>
+                <Pressable onPress={() => router.push(`/rounds/${journey[0].id}` as never)} style={styles.journeyPrimaryButton}>
+                  <MaterialIcons color={colors.background} name="play-arrow" size={18} />
+                  <Text style={styles.journeyPrimaryText}>Continuar</Text>
+                </Pressable>
+                <Pressable onPress={() => deferRound(journey[0].id)} style={styles.journeySecondaryButton}>
+                  <MaterialIcons color={colors.textPrimary} name="schedule" size={18} />
+                  <Text style={styles.journeySecondaryText}>Después</Text>
+                </Pressable>
+              </View>
+              {journey[1] ? <Text style={styles.journeyNext}>Después: {journey[1].name} · {journey[1].projectName}</Text> : null}
+            </>
+          ) : null}
+          {isJourneyOffline ? <Text style={styles.journeyWarning}>Jornada sin actualizar. Última copia: {journeyCachedAt ?? 'desconocida'}.</Text> : null}
+          {journeyErrorMessage ? <Text style={styles.journeyError}>{journeyErrorMessage}</Text> : null}
+        </View>
+      ) : null}
 
       {errorMessage ? (
         <View style={styles.errorCard}>
@@ -418,6 +462,97 @@ const styles = StyleSheet.create({
     gap: spacing[1],
     paddingHorizontal: spacing[3],
     paddingTop: spacing[4],
+  },
+  journeyActions: {
+    flexDirection: 'row',
+    gap: spacing[1],
+    marginTop: spacing[1],
+  },
+  journeyCard: {
+    backgroundColor: colors.card,
+    borderColor: colors.accentGreen,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: spacing[1],
+    marginHorizontal: spacing[3],
+    marginTop: spacing[2],
+    padding: spacing[3],
+  },
+  journeyError: {
+    color: colors.red,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 19,
+  },
+  journeyEyebrow: {
+    color: colors.accentGreen,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  journeyHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  journeyMeta: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  journeyNext: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  journeyPrimaryButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  journeyPrimaryText: {
+    color: colors.background,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  journeyProgress: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  journeySecondaryButton: {
+    alignItems: 'center',
+    borderColor: '#2a2f3a',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  journeySecondaryText: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  journeyTitle: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  journeyTitleBlock: {
+    flex: 1,
+    gap: 2,
+  },
+  journeyWarning: {
+    color: colors.amber,
+    fontSize: 13,
+    fontWeight: '700',
   },
   imageOverlay: {
     backgroundColor: 'rgba(15, 17, 23, 0.68)',

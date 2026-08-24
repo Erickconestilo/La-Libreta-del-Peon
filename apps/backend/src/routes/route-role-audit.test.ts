@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import type { Router } from 'express';
 
 import { controlPointsRouter, roundsRouter } from './monitoring.routes.js';
+import { journeyRouter } from './journey.routes.js';
 import { projectsRouter } from './projects.routes.js';
 import type { RequireRoleMiddleware } from '../middleware/auth.js';
 
@@ -24,7 +25,9 @@ type RouteExpectation = {
 };
 
 const auscultacionRoutesFromRoundsRouter: RouteExpectation[] = [
-  { method: 'get', path: '/:roundId', mustExcludeVisitante: true }
+  { method: 'get', path: '/:roundId/export', mustExcludeVisitante: true },
+  { method: 'get', path: '/:roundId', mustExcludeVisitante: true },
+  { method: 'patch', path: '/:roundId', mustExcludeVisitante: true }
 ];
 
 const auscultacionRoutesFromControlPointsRouter: RouteExpectation[] = [
@@ -79,3 +82,13 @@ const auditRouter = (routerName: string, router: Router, expectations: RouteExpe
 auditRouter('roundsRouter', roundsRouter, auscultacionRoutesFromRoundsRouter);
 auditRouter('controlPointsRouter', controlPointsRouter, auscultacionRoutesFromControlPointsRouter);
 auditRouter('projectsRouter', projectsRouter, auscultacionRoutesFromProjectsRouter);
+
+test('project operators route is admin-only', () => {
+  const allowedRoles = findAllowedRoles(projectsRouter, 'get', '/:projectId/operators');
+  assert.deepEqual(allowedRoles, ['admin']);
+});
+
+test('personal journey route excludes visitor', () => {
+  const allowedRoles = findAllowedRoles(journeyRouter, 'get', '/');
+  assert.deepEqual(allowedRoles, ['admin', 'topografo']);
+});

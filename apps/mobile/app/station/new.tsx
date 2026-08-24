@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import type { CreateStationInput, DeviceType, StationStatus } from '@shared/type
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjects } from '@/hooks/use-projects';
 import { useCreateStation } from '@/hooks/use-stations';
+import { canCreateStationWithoutProject, resolveStationProjectId } from '@/lib/field-access';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 const STATUS_OPTIONS: Array<{ label: string; value: StationStatus }> = [
@@ -34,7 +35,7 @@ export default function NewStationScreen() {
   const initialProjectId = Array.isArray(params.projectId) ? params.projectId[0] : params.projectId;
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
-  const { data: projects } = useProjects();
+  const { data: projects, errorMessage: projectsErrorMessage, isLoading: isLoadingProjects, isOfflineCache } = useProjects();
   const { createStation, errorMessage, isCreating } = useCreateStation();
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
@@ -44,6 +45,7 @@ export default function NewStationScreen() {
   const [coordinate, setCoordinate] = useState<CapturedCoordinate | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const canCreateStation = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canCreateWithoutProject = canCreateStationWithoutProject(currentUser?.role);
 
   const projectOptions = useMemo(() => {
     return (projects ?? [])
@@ -53,6 +55,23 @@ export default function NewStationScreen() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [projects]);
+
+  useEffect(() => {
+    setProjectId(
+      resolveStationProjectId({
+        availableProjectIds: projectOptions.map((project) => project.id),
+        requestedProjectId: initialProjectId,
+        role: currentUser?.role
+      })
+    );
+  }, [currentUser?.role, initialProjectId, projectOptions]);
+
+  const projectSelectionError =
+    currentUser?.role === 'topografo' && !projectId
+      ? projectOptions.length === 0 && !isLoadingProjects
+        ? projectsErrorMessage ?? 'No tienes una obra asignada para crear esta estación.'
+        : 'Selecciona una obra asignada antes de crear la estación.'
+      : null;
 
   const handleCaptureGps = async () => {
     setIsLocating(true);
@@ -86,6 +105,11 @@ export default function NewStationScreen() {
 
     if (!trimmedName) {
       Alert.alert('Falta el nombre', 'Escribe un nombre claro para la estación.');
+      return;
+    }
+
+    if (!canCreateWithoutProject && !projectId) {
+      Alert.alert('Falta la obra', 'Selecciona una obra asignada antes de guardar la estación.');
       return;
     }
 
@@ -162,7 +186,7 @@ export default function NewStationScreen() {
 
           <Text style={styles.label}>Obra</Text>
           <View style={styles.chipGrid}>
-            <ChoiceChip label="Sin obra" selected={projectId === null} onPress={() => setProjectId(null)} />
+            {canCreateWithoutProject ? <ChoiceChip label="Sin obra" selected={projectId === null} onPress={() => setProjectId(null)} /> : null}
             {projectOptions.map((project) => (
               <ChoiceChip
                 key={project.id}
@@ -170,8 +194,11 @@ export default function NewStationScreen() {
                 selected={projectId === project.id}
                 onPress={() => setProjectId(project.id)}
               />
-            ))}
+              ))}
           </View>
+          {isOfflineCache ? <Text style={styles.warningText}>Obras mostradas sin actualizar. Necesitas conexión para guardar.</Text> : null}
+          {isLoadingProjects ? <Text style={styles.body}>Cargando obras asignadas...</Text> : null}
+          {projectSelectionError ? <Text style={styles.errorText}>{projectSelectionError}</Text> : null}
 
           <Text style={styles.label}>Estado</Text>
           <View style={styles.chipGrid}>
@@ -241,7 +268,7 @@ export default function NewStationScreen() {
           </View>
         ) : null}
 
-        <Pressable disabled={isCreating} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabledButton : null]}>
+        <Pressable disabled={isCreating || Boolean(projectSelectionError)} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating || Boolean(projectSelectionError) ? styles.disabledButton : null]}>
           <Text style={styles.primaryButtonText}>{isCreating ? 'Creando...' : 'Crear estación'}</Text>
         </Pressable>
       </ScrollView>
@@ -333,6 +360,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: spacing[0],
   },
+  errorText: {
+    color: colors.red,
+    fontSize: typography.fontSizeBody - 1,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
   eyebrow: {
     color: colors.accentGreen,
     fontSize: 12,
@@ -394,6 +427,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 14,
     fontWeight: '800',
+  },
+  warningText: {
+    color: colors.amber,
+    fontSize: typography.fontSizeBody - 1,
+    fontWeight: '700',
+    lineHeight: 20,
   },
   sectionTitle: {
     color: colors.textPrimary,

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildProjectScopeCondition, toIsoTimestamp } from './monitoring.model.js';
+import { AppError } from '../lib/app-error.js';
+import { assertMonitoringRoundStatusTransition, buildProjectScopeCondition, toIsoTimestamp } from './monitoring.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -34,5 +35,24 @@ test('normalizes database timestamps before an idempotent reading retry', () => 
   assert.equal(
     toIsoTimestamp('2026-07-31T08:45:25.061Z'),
     '2026-07-31T08:45:25.061Z'
+  );
+});
+
+test('only allows active rounds to close when no point is pending', () => {
+  assert.doesNotThrow(() => assertMonitoringRoundStatusTransition('active', 'closed', false));
+  assert.throws(
+    () => assertMonitoringRoundStatusTransition('active', 'closed', true),
+    (error: unknown) => error instanceof AppError && error.code === 'ROUND_HAS_PENDING_POINTS'
+  );
+  assert.throws(
+    () => assertMonitoringRoundStatusTransition('draft', 'closed', false),
+    (error: unknown) => error instanceof AppError && error.code === 'INVALID_ROUND_TRANSITION'
+  );
+});
+
+test('terminal rounds cannot be changed', () => {
+  assert.throws(
+    () => assertMonitoringRoundStatusTransition('closed', 'cancelled', false),
+    (error: unknown) => error instanceof AppError && error.code === 'ROUND_TERMINAL'
   );
 });

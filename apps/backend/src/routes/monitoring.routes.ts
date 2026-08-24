@@ -5,10 +5,12 @@ import {
   createReadingAttachmentController,
   createInstrumentReadingController,
   createRoundPointController,
+  exportMonitoringRoundController,
   getMonitoringRoundDetailController,
   getReadingHistoryController,
   listControlPointThresholdsController,
-  updateControlPointController
+  updateControlPointController,
+  updateMonitoringRoundController
 } from '../controllers/monitoring.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateUuidParam } from '../middleware/validate-uuid.js';
@@ -18,11 +20,27 @@ export const roundPointsRouter = Router();
 export const controlPointsRouter = Router();
 
 roundsRouter.get(
+  '/:roundId/export',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundId'),
+  exportMonitoringRoundController
+);
+
+roundsRouter.get(
   '/:roundId',
   requireAuth,
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundId'),
   getMonitoringRoundDetailController
+);
+
+roundsRouter.patch(
+  '/:roundId',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundId'),
+  updateMonitoringRoundController
 );
 
 roundsRouter.post(

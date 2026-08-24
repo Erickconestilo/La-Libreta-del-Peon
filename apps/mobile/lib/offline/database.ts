@@ -43,6 +43,8 @@ export async function applyMigrations(): Promise<void> {
   const migrations = [
     { version: 1 },
     { version: 2 },
+    { version: 3 },
+    { version: 4 },
   ];
 
   // Apply pending migrations
@@ -58,6 +60,14 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 2) {
           executeMigration002(db);
+        }
+
+        if (migration.version === 3) {
+          executeMigration003(db);
+        }
+
+        if (migration.version === 4) {
+          executeMigration004(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -138,6 +148,43 @@ function executeMigration002(db: SQLiteDatabase): void {
     );
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (2);
+  `);
+}
+
+function executeMigration003(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS monitoring_round_list_cache (
+      project_id TEXT PRIMARY KEY,
+      rounds_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS monitoring_round_cache (
+      round_id TEXT PRIMARY KEY,
+      snapshot_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (3);
+  `);
+}
+
+function executeMigration004(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS journey_cache (
+      cache_key TEXT PRIMARY KEY,
+      rounds_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS journey_deferred (
+      cache_key TEXT NOT NULL,
+      round_id TEXT NOT NULL,
+      deferred_until TEXT NOT NULL,
+      PRIMARY KEY (cache_key, round_id)
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (4);
   `);
 }
 

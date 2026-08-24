@@ -53,7 +53,8 @@ export default function NewMonitoringRoundScreen() {
         fieldConditions,
         instrumentSerial: instrumentSerial.trim() || null,
         name: name.trim(),
-        operatorId: currentUser?.id ?? null,
+        operatorId: currentUser?.role === 'topografo' ? currentUser.id : null,
+        executionOrder: 0,
         roundDate,
         status,
       });

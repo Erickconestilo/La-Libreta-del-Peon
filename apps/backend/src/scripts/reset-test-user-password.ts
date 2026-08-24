@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { loadedEnvPath } from '../lib/load-env.js';
 import { assertWriteAllowed } from './safety.js';
+import { generateTemporaryPassword } from './password-generator.js';
 
 /**
  * Resetea la contraseña de una cuenta técnica de QA existente vía la API de
@@ -41,8 +42,6 @@ const anonClient = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_
   auth: { autoRefreshToken: false, persistSession: false }
 });
 
-const buildPassword = () => `TopoField-reset-${Date.now()}!`;
-
 const findAuthUserByEmail = async (email: string) => {
   let page = 1;
   const perPage = 100;
@@ -79,7 +78,7 @@ const main = async () => {
     throw new Error(`No existe ningún usuario Auth con email ${targetEmail}. No se crea uno nuevo: este script solo resetea.`);
   }
 
-  const newPassword = buildPassword();
+  const newPassword = generateTemporaryPassword();
 
   const updateResult = await adminClient.auth.admin.updateUserById(existingUser.id, {
     password: newPassword

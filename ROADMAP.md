@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-verificado: 2026-08-21
+verificado: 2026-08-24
 -->
 
 # ROADMAP.md — TopoField
@@ -25,8 +25,8 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Validación de uso real en campo** | 🔵 **ABIERTA — es el siguiente bloque, ya sin bloqueo de despliegue** | PLAN Fase 4 (nunca ejecutada) |
-| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | ⚪ Pendiente | parte de MEMORIA Fase 4 |
+| **F5** | **Validación de uso real y encaje de producto** | 🔵 **ABIERTA — primero estabilizar campo, después validar mercado** | PLAN Fase 4 (nunca ejecutada) |
+| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato y generación local implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos nuevos reemplazando el blob genérico de lectura | ⚪ Pendiente. **Alcance precisado 21-08-2026:** los instrumentos reales de Erick son fisurómetro y potenciómetro (los más usados, según demanda), regla de peralte (en unos meses) y cinta de convergencia. Ver `MEMORIA.md` §7 — hay un **hallazgo de modelado bloqueante**: varios miden entre pares de puntos y el modelo actual solo admite un punto por lectura. | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
@@ -51,25 +51,36 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Por qué esta y no otra.** Todo el trabajo de las últimas semanas fue técnico: motor offline, seguridad entre obras, RLS, firma de release. Correcto, pero nadie salvo Erick ha tocado la app, y ni siquiera Erick la ha usado una jornada completa con datos reales. Abrir F6 (Excel) o F7 (instrumentos) ahora significa construir superficie nueva sobre un MVP cuyas fricciones reales nadie ha medido, y descubrirlas más tarde con más código que rehacer. F5 no requiere escribir código, así que es la fase más barata del roadmap y la que más criterio desbloquea.
 
-**Trabajo.** Ejecutar el Paso 1 de `PILOT_READINESS_CHECKLIST.md` (Erick, una obra real, un dispositivo, una jornada) registrando lo que pasa con la plantilla de investigación de `UX_RESEARCH_PLAN.md`: tiempo por tarea, errores, bloqueos, dudas repetidas, pasos sobrantes, elementos que se ignoran. No basta con marcar "funciona / no funciona".
+**Trabajo.** Ejecutar el Paso 1 de `PILOT_READINESS_CHECKLIST.md` (Erick, una obra real, un dispositivo, una jornada) registrando lo que pasa con la plantilla de investigación de `UX_RESEARCH_PLAN.md`: tiempo por tarea, errores, bloqueos, dudas repetidas, pasos sobrantes, elementos que se ignoran. Después realizar entrevistas cortas con profesionales del perfil objetivo para comprobar si el problema existe fuera de la experiencia personal de Erick. No basta con marcar "funciona / no funciona".
 
 **Criterio de salida.** Existe `docs/field/F5_HALLAZGOS_<fecha>.md` con:
 
 - los seis escenarios mínimos cubiertos (entrar a obra, localizar estación, revisar memoria visual, añadir foto o nota, registrar una lectura de ronda, consultar histórico);
 - una lista priorizada de fricciones, separando fallo real de fricción UX de deseo fuera de fase;
-- una decisión explícita por cada fricción: se corrige antes de F8, se corrige después, o se acepta.
+- una decisión explícita por cada fricción: se corrige antes de F8, se corrige después, o se acepta;
+- al menos cinco conversaciones con profesionales y una conclusión sobre el segmento inicial, problema repetido, alternativas actuales y disposición a probar.
 
 **Qué NO hacer durante F5.** No abrir F6 ni F7 en paralelo. No añadir features "ya que estamos". Si aparece un bug bloqueante, se corrige y se anota; cualquier otra cosa va a la lista de fricciones.
 
-### Estado de F5 (revisado 21-08-2026)
+**Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-F5 sigue abierta y **no ha empezado**: `docs/field/` está vacío, así que no existe todavía ningún `F5_HALLAZGOS_<fecha>.md` y no se cumple el criterio de salida. La frase de arriba —"F5 no requiere escribir código"— sigue siendo cierta sobre el trabajo de la fase, pero el 07-08-2026 se intentó ejecutar el Paso 1 dos veces y **las dos se pararon antes de llegar a campo** (fuente: bitácora de `MEMORIA.md` §12, commits `22d5bea`, `ba3a5cc`, `0a41c02`):
+### Estado de F5 (revisado 24-08-2026)
 
-1. **Build local sin URL de API — resuelto.** La release local no exportaba `EXPO_PUBLIC_API_BASE_URL`; se creó `apps/mobile/.env` (gitignored) y se documentó en `LOCAL_ANDROID_BUILD_RUNBOOK.md`.
-2. **403 en Rondas — no era un bug.** La app operaba en contexto invitado; el 403 es D1 funcionando como se diseñó. No prueba que la cuenta `topografo` vea Rondas con normalidad: es una afirmación distinta y sigue sin verificar.
-3. **Login técnico en el Galaxy — abierto.** `POST /api/v1/auth/login` contra Render responde `HTTP 200` con la contraseña restablecida, pero la misma prueba introducida por ADB en el dispositivo deja la UI en `Invalid credentials`. No se atribuye todavía a un defecto de la app: ADB puede alterar la entrada de credenciales.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-**Decisión pendiente de Erick:** cómo se resuelve el punto 3 — prueba manual tecleando en el Galaxy (barata, descarta el ruido de ADB, es lo primero que conviene intentar) o instrumentación de diagnóstico autorizada en la app. Hasta cerrarlo no se puede entrar en `campus-nord` / `maragall` ni empezar la jornada real de F5.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado; el Bloque 3 deja instalada en el Galaxy la release local `versionCode=2` y verifica el acceso a una obra, rondas y una ronda activa.
+
+El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. Siguiente puerta de F5: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
+
+### Mi jornada — implementación local 24-08-2026
+
+El flujo de rondas asignadas ya está implementado localmente: orden explícito
+por administrador, jornada personal agregada, tarjeta en Obras, continuación
+automática una vez por arranque, aplazamiento local hasta fin de día, panel
+admin y aviso de conflicto si cambia la planificación mientras hay datos
+locales pendientes. La migración 021 está versionada pero no aplicada y el
+backend todavía no se ha desplegado; por tanto, esta parte aún no se declara
+validada en Galaxy ni en producción.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 

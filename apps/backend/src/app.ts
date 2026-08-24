@@ -8,10 +8,12 @@ import { authenticateRequest } from './middleware/auth.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
 import { apiRateLimit } from './middleware/rate-limit.js';
+import { REQUEST_LOG_FORMAT, requestIdMiddleware } from './middleware/request-id.js';
 import { authRouter } from './routes/auth.routes.js';
 import { changeLogsRouter } from './routes/change-logs.routes.js';
 import { guideRouter } from './routes/guide.routes.js';
 import { incidentsRouter } from './routes/incidents.routes.js';
+import { journeyRouter } from './routes/journey.routes.js';
 import { controlPointsRouter, roundPointsRouter, roundsRouter } from './routes/monitoring.routes.js';
 import { projectsRouter } from './routes/projects.routes.js';
 import { prismsRouter } from './routes/prisms.routes.js';
@@ -41,7 +43,9 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
-app.use(morgan('dev'));
+morgan.token('request-id', (_request, response) => String(response.getHeader('X-Request-ID') ?? '-'));
+app.use(requestIdMiddleware);
+app.use(morgan(REQUEST_LOG_FORMAT));
 app.get('/api/v1/health', (_request, response) => {
   response.status(200).json({
     commit: process.env.RENDER_GIT_COMMIT ?? null,
@@ -57,6 +61,7 @@ app.use('/api/v1/change-logs', changeLogsRouter);
 app.use('/api/v1/control-points', controlPointsRouter);
 app.use('/api/v1/guide-entries', guideRouter);
 app.use('/api/v1/incidents', incidentsRouter);
+app.use('/api/v1/me/journey', journeyRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/prisms', prismsRouter);
 app.use('/api/v1/round-points', roundPointsRouter);

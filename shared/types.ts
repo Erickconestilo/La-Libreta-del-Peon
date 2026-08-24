@@ -397,8 +397,24 @@ export interface MonitoringRound {
   instrumentSerial: string | null;
   fieldConditions: FieldConditions | null;
   createdBy: string;
+  executionOrder: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface JourneyRound extends MonitoringRound {
+  projectCode: string;
+  projectName: string;
+  pendingPointCount: number;
+  takenPointCount: number;
+  totalPointCount: number;
+}
+
+export interface ProjectOperator {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'topografo';
 }
 
 export interface MonitoringRoundPoint {
@@ -497,6 +513,33 @@ export interface ReadingInsertResponse {
   delta: number | null;
   thresholdStatus: CalculatedThresholdStatus;
   autoConfirmed: boolean;
+}
+
+export interface RoundExportRow {
+  projectCode: string;
+  projectName: string;
+  roundName: string;
+  roundDate: string;
+  roundStatus: MonitoringRoundStatus;
+  controlPointCode: string;
+  controlPointName: string | null;
+  pk: string | null;
+  zone: string | null;
+  tramo: string | null;
+  seccion: string | null;
+  side: ControlPointSide | null;
+  instrumentType: InstrumentType;
+  pointStatus: MonitoringRoundPointStatus;
+  measuredAt: string | null;
+  valueNumeric: number | null;
+  valueText: string | null;
+  unit: string | null;
+  notes: string | null;
+  operator: string | null;
+  readingStatus: InstrumentReadingStatus | null;
+  delta: number | null;
+  thresholdStatus: CalculatedThresholdStatus;
+  attachmentCount: number;
 }
 
 // =====================================================

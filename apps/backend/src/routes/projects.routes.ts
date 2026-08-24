@@ -6,6 +6,7 @@ import {
   importProjectCodeCatalogController,
   listControlPointsController,
   listMonitoringRoundsController,
+  listProjectOperatorsController,
   listProjectCodeCatalogController
 } from '../controllers/monitoring.controller.js';
 import {
@@ -56,6 +57,13 @@ projectsRouter.get(
   requireRole(['admin', 'topografo']),
   validateUuidParam('projectId'),
   listMonitoringRoundsController
+);
+projectsRouter.get(
+  '/:projectId/operators',
+  requireAuth,
+  requireRole(['admin']),
+  validateUuidParam('projectId'),
+  listProjectOperatorsController
 );
 projectsRouter.post(
   '/:projectId/rounds',

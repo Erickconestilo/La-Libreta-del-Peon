@@ -21,6 +21,8 @@ export type PrismSketchItem = {
 };
 
 type PrismSketchProps = {
+  emptyBody?: string;
+  emptyTitle?: string;
   items: PrismSketchItem[];
   onSelect: (code: string) => void;
   selectedCode: string | null;
@@ -53,7 +55,7 @@ const SCALE_STEP = 0.35;
 const SELECTED_FOCUS_SCALE = 2.25;
 const PAN_EDGE_PADDING_RATIO = 0.35;
 
-export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps) {
+export function PrismSketch({ emptyBody, emptyTitle, items, onSelect, selectedCode }: PrismSketchProps) {
   const { width } = useWindowDimensions();
   const chartSize = Math.min(width - spacing[3] * 4, 340);
   const [scale, setScale] = useState(1);
@@ -213,10 +215,8 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
   if (items.length === 0) {
     return (
       <View style={styles.emptySketch}>
-        <Text style={styles.emptyTitle}>Sin croquis disponible</Text>
-        <Text style={styles.emptyBody}>
-          Esta estación aún no tiene observaciones de prisma con ángulo y distancia.
-        </Text>
+        <Text style={styles.emptyTitle}>{emptyTitle ?? 'Sin croquis disponible'}</Text>
+        <Text style={styles.emptyBody}>{emptyBody ?? 'Esta estación aún no tiene observaciones de prisma con ángulo y distancia.'}</Text>
       </View>
     );
   }
@@ -340,7 +340,8 @@ export function PrismSketch({ items, onSelect, selectedCode }: PrismSketchProps)
                       fill={selected ? '#FEF08A' : '#E2E8F0'}
                       fontSize={selected ? 11 : 9}
                       fontWeight="900"
-                      x={item.x + 8}
+                      textAnchor={item.x >= CENTER ? 'start' : 'end'}
+                      x={item.x + (item.x >= CENTER ? 8 : -8)}
                       y={item.y - 8}
                     >
                       {item.code}

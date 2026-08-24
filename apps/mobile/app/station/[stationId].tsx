@@ -38,6 +38,8 @@ const PHOTO_KINDS: Array<{ label: string; value: StationPhotoKind }> = [
   { label: 'Otro', value: 'other' }
 ];
 
+type PrismFilter = 'all' | 'active' | 'attention';
+
 let activeInlineCameraUploadStationId: string | null = null;
 
 export default function StationDetailScreen() {
@@ -118,8 +120,20 @@ export default function StationDetailScreen() {
     () => buildPrismSketchItems(prisms, prismData?.observations ?? []),
     [prisms, prismData?.observations]
   );
+  const [prismFilter, setPrismFilter] = useState<PrismFilter>('all');
+  const filteredPrismSketchItems = useMemo(() => {
+    if (prismFilter === 'all') {
+      return prismSketchItems;
+    }
+
+    if (prismFilter === 'active') {
+      return prismSketchItems.filter((item) => item.status === 'active');
+    }
+
+    return prismSketchItems.filter((item) => item.status !== 'active');
+  }, [prismFilter, prismSketchItems]);
   const [selectedPrismCode, setSelectedPrismCode] = useState<string | null>(null);
-  const selectedPrismSketchItem = prismSketchItems.find((item) => item.code === selectedPrismCode) ?? null;
+  const selectedPrismSketchItem = filteredPrismSketchItems.find((item) => item.code === selectedPrismCode) ?? null;
   const provisionalStationIncidents = useMemo(() => {
     return (stationIncidents ?? []).filter((incident) => incident.suggestion?.kind === 'new_station');
   }, [stationIncidents]);
@@ -134,15 +148,15 @@ export default function StationDetailScreen() {
   }, [data?.notes]);
 
   useEffect(() => {
-    if (prismSketchItems.length === 0) {
+    if (filteredPrismSketchItems.length === 0) {
       setSelectedPrismCode(null);
       return;
     }
 
-    if (!selectedPrismCode || !prismSketchItems.some((item) => item.code === selectedPrismCode)) {
-      setSelectedPrismCode(prismSketchItems[0].code);
+    if (!selectedPrismCode || !filteredPrismSketchItems.some((item) => item.code === selectedPrismCode)) {
+      setSelectedPrismCode(filteredPrismSketchItems[0].code);
     }
-  }, [prismSketchItems, selectedPrismCode]);
+  }, [filteredPrismSketchItems, selectedPrismCode]);
 
   useEffect(() => {
     if (
@@ -786,8 +800,29 @@ export default function StationDetailScreen() {
                 <Text style={styles.body}>{prismErrorMessage}</Text>
               ) : (
                 <>
+                  <View style={styles.prismFilterRow}>
+                    {([
+                      ['all', 'Todos'],
+                      ['active', 'Activos'],
+                      ['attention', 'Revisar']
+                    ] as Array<[PrismFilter, string]>).map(([value, label]) => (
+                      <Pressable
+                        key={value}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: prismFilter === value }}
+                        onPress={() => setPrismFilter(value)}
+                        style={[styles.prismFilterButton, prismFilter === value ? styles.prismFilterButtonSelected : null]}
+                      >
+                        <Text style={[styles.prismFilterText, prismFilter === value ? styles.prismFilterTextSelected : null]}>
+                          {label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
                   <PrismSketch
-                    items={prismSketchItems}
+                    emptyBody="No hay prismas con este estado en esta estación. Cambia el filtro para revisar el resto."
+                    emptyTitle="Sin prismas en este filtro"
+                    items={filteredPrismSketchItems}
                     onSelect={setSelectedPrismCode}
                     selectedCode={selectedPrismCode}
                   />
@@ -834,7 +869,7 @@ export default function StationDetailScreen() {
                     <SummaryChip label="Ángulo H" value={`${formatAngle(selectedPrismSketchItem.angleDeg)}°`} />
                   </View>
                   <Text style={styles.body}>
-                    Observaciones: {selectedPrismSketchItem.observationCount} · Última: {formatDate(selectedPrismSketchItem.lastObservedAt)}
+                    Observaciones: {selectedPrismSketchItem.observationCount} · Última: {formatDate(selectedPrismSketchItem.lastObservedAt)} · {formatObservationAge(selectedPrismSketchItem.lastObservedAt)}
                   </Text>
                   <Text style={styles.body}>
                     Constante prisma: {selectedPrismSketchItem.prismConstant ?? '—'}
@@ -1082,6 +1117,24 @@ const getObservationTimestamp = (observation: StationPrismObservation) => {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 };
 
+const formatObservationAge = (value: string | null) => {
+  if (!value) {
+    return 'sin observación';
+  }
+
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) {
+    return 'fecha no disponible';
+  }
+
+  const days = Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
+  if (days === 0) {
+    return 'hoy';
+  }
+
+  return days === 1 ? 'hace 1 día' : `hace ${days} días`;
+};
+
 const isFiniteNumber = (value: unknown): value is number => {
   return typeof value === 'number' && Number.isFinite(value);
 };
@@ -1254,6 +1307,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing[2],
+  },
+  prismFilterButton: {
+    alignItems: 'center',
+    borderColor: '#334155',
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 38,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  prismFilterButtonSelected: {
+    backgroundColor: '#12251c',
+    borderColor: colors.accentGreen,
+  },
+  prismFilterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[1],
+  },
+  prismFilterText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  prismFilterTextSelected: {
+    color: colors.accentGreen,
   },
   readingRow: {
     borderTopColor: '#2a2f3a',

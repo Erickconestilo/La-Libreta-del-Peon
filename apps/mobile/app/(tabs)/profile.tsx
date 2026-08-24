@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
     connectWithToken,
     currentUser,
     errorMessage,
+    authRequestDiagnostic,
     isLoading,
     isSessionInvalid,
     removeSession,
@@ -35,6 +37,7 @@ export default function ProfileScreen() {
   const [authMode, setAuthMode] = useState<'credentials' | 'token'>('credentials');
   const [technicalEmail, setTechnicalEmail] = useState('');
   const [technicalPassword, setTechnicalPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [outboxErrors, setOutboxErrors] = useState<OutboxItem[]>([]);
   const [isRetryingOutbox, setIsRetryingOutbox] = useState<string | null>(null);
   const isCredentialsMode = authMode === 'credentials';
@@ -80,6 +83,7 @@ export default function ProfileScreen() {
       if (isCredentialsMode) {
         await connectWithCredentials(technicalEmail, technicalPassword);
         setTechnicalPassword('');
+        setIsPasswordVisible(false);
         return;
       }
 
@@ -100,6 +104,16 @@ export default function ProfileScreen() {
         <Text style={styles.body}>{getRoleDescription(currentUser?.role)}</Text>
         {currentUser?.email ? <Text style={styles.body}>Cuenta: {currentUser.email}</Text> : null}
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+        {authRequestDiagnostic ? (
+          <View style={styles.diagnostic}>
+            <Text style={styles.caption}>
+              HTTP {authRequestDiagnostic.status ?? 'sin respuesta'} · Código {authRequestDiagnostic.code ?? 'no disponible'}
+            </Text>
+            {authRequestDiagnostic.requestId ? (
+              <Text style={styles.caption}>Código de soporte: {authRequestDiagnostic.requestId}</Text>
+            ) : null}
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.card}>
@@ -154,20 +168,35 @@ export default function ProfileScreen() {
               textContentType="username"
               value={technicalEmail}
             />
-            <TextInput
-              autoCapitalize="none"
-              autoComplete="password"
-              autoCorrect={false}
-              onChangeText={setTechnicalPassword}
-              onSubmitEditing={() => void handleConnect()}
-              placeholder="contraseña"
-              placeholderTextColor="#64748b"
-              returnKeyType="done"
-              secureTextEntry
-              style={styles.input}
-              textContentType="password"
-              value={technicalPassword}
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                autoCapitalize="none"
+                autoComplete="password"
+                autoCorrect={false}
+                onChangeText={setTechnicalPassword}
+                onSubmitEditing={() => void handleConnect()}
+                placeholder="contraseña"
+                placeholderTextColor="#64748b"
+                returnKeyType="done"
+                secureTextEntry={!isPasswordVisible}
+                style={[styles.input, styles.passwordInput]}
+                textContentType="password"
+                value={technicalPassword}
+              />
+              <Pressable
+                accessibilityLabel={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                accessibilityRole="button"
+                disabled={isLoading}
+                onPress={() => setIsPasswordVisible((visible) => !visible)}
+                style={styles.passwordToggle}
+              >
+                <MaterialIcons
+                  color={colors.textSecondary}
+                  name={isPasswordVisible ? 'visibility-off' : 'visibility'}
+                  size={22}
+                />
+              </Pressable>
+            </View>
             <Pressable
               disabled={isLoading}
               onPress={() => void handleConnect()}
@@ -410,6 +439,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20
   },
+  diagnostic: {
+    borderColor: '#2a2f3a',
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 4,
+    padding: 10
+  },
   input: {
     backgroundColor: '#151922',
     borderColor: '#2a2f3a',
@@ -419,6 +455,25 @@ const styles = StyleSheet.create({
     height: 56,
     padding: 12,
     textAlignVertical: 'center'
+  },
+  passwordInput: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    flex: 1
+  },
+  passwordRow: {
+    alignItems: 'center',
+    backgroundColor: '#151922',
+    borderColor: '#2a2f3a',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row'
+  },
+  passwordToggle: {
+    alignItems: 'center',
+    height: 56,
+    justifyContent: 'center',
+    width: 56
   },
   outboxCopy: {
     flex: 1,

@@ -12,11 +12,15 @@ import type {
   ValidatedCreateReadingAttachmentInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
+  ValidatedJourneyQuery,
   ValidatedListControlPointsQuery,
   ValidatedListMonitoringRoundsQuery,
+  ValidatedUpdateMonitoringRoundInput,
   ValidatedReadingHistoryQuery,
+  ValidatedUpdateMonitoringRoundStatusInput,
   ValidatedUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
+import type { RoundExportRow } from '../contracts/round-export.js';
 
 type ProjectScope = {
   clause: string;
@@ -111,6 +115,7 @@ const mapReadingAttachmentRow = (row: Record<string, unknown>) => ({
 const mapRoundRow = (row: Record<string, unknown>) => ({
   createdAt: row.created_at,
   createdBy: row.created_by,
+  executionOrder: Number(row.execution_order ?? 0),
   fieldConditions: row.field_conditions,
   id: row.id,
   instrumentSerial: row.instrument_serial,
@@ -323,6 +328,27 @@ export const createMonitoringRound = async (
   createdBy: string,
   projectScope: string[] | null = null
 ) => {
+  if (input.operatorId) {
+    const operatorResult = await pool.query(
+      `
+        SELECT u.id
+        FROM users u
+        INNER JOIN project_memberships pm ON pm.user_id = u.id
+        WHERE u.id = $1
+          AND u.role = 'topografo'
+          AND u.is_active = TRUE
+          AND pm.project_id = $2
+          AND pm.is_active = TRUE
+        LIMIT 1
+      `,
+      [input.operatorId, projectId]
+    );
+
+    if (operatorResult.rowCount === 0) {
+      throw new AppError('The assigned operator is not an active topographer in this project', 400, 'INVALID_ROUND_OPERATOR');
+    }
+  }
+
   const scope = buildProjectScopeCondition(projectScope, 'p', 9, 'id');
   const result = await pool.query(
     `
@@ -332,11 +358,12 @@ export const createMonitoringRound = async (
         round_date,
         status,
         operator_id,
+        execution_order,
         instrument_serial,
         field_conditions,
         created_by
       )
-      SELECT p.id, $2, $3::date, $4, $5, $6, $7, $8
+      SELECT p.id, $2, $3::date, $4, $5, $6, $7, $8, $9
       FROM projects p
       WHERE p.id = $1
       ${scope.clause}
@@ -348,6 +375,7 @@ export const createMonitoringRound = async (
       input.roundDate,
       input.status,
       input.operatorId ?? null,
+      input.executionOrder,
       input.instrumentSerial?.trim() || null,
       input.fieldConditions ?? null,
       createdBy,
@@ -388,7 +416,7 @@ export const listMonitoringRounds = async (
       WHERE mr.project_id = $1
       ${scope.clause}
       ${filters.join('\n')}
-      ORDER BY mr.round_date DESC, mr.created_at DESC
+      ORDER BY mr.round_date ASC, mr.execution_order ASC, mr.created_at ASC
       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
     `,
     params
@@ -432,6 +460,248 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
     ...mapRoundRow(roundResult.rows[0]),
     points: pointsResult.rows.map(mapRoundPointWithControlPointRow)
   };
+};
+
+export const assertMonitoringRoundStatusTransition = (
+  currentStatus: string,
+  nextStatus: ValidatedUpdateMonitoringRoundStatusInput['status'],
+  hasPendingPoints: boolean
+) => {
+  if (currentStatus === 'closed' || currentStatus === 'cancelled') {
+    throw new AppError('A terminal round cannot be changed', 409, 'ROUND_TERMINAL');
+  }
+
+  if (nextStatus === 'active' && currentStatus !== 'draft') {
+    throw new AppError('Only a draft round can be activated', 409, 'INVALID_ROUND_TRANSITION');
+  }
+
+  if (nextStatus === 'closed') {
+    if (currentStatus !== 'active') {
+      throw new AppError('Only an active round can be closed', 409, 'INVALID_ROUND_TRANSITION');
+    }
+
+    if (hasPendingPoints) {
+      throw new AppError('The round still has pending points', 409, 'ROUND_HAS_PENDING_POINTS');
+    }
+  }
+
+  if (nextStatus === 'cancelled' && currentStatus !== 'draft' && currentStatus !== 'active') {
+    throw new AppError('Only a draft or active round can be cancelled', 409, 'INVALID_ROUND_TRANSITION');
+  }
+};
+
+export const updateMonitoringRoundStatus = async (
+  roundId: string,
+  input: ValidatedUpdateMonitoringRoundStatusInput,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const currentResult = await pool.query(
+    `
+      SELECT mr.status
+      FROM monitoring_rounds mr
+      WHERE mr.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundId, ...scope.params]
+  );
+
+  if (currentResult.rowCount === 0) {
+    return null;
+  }
+
+  let hasPendingPoints = false;
+
+  if (input.status === 'closed') {
+    const pendingResult = await pool.query(
+      `
+        SELECT 1
+        FROM monitoring_round_points
+        WHERE round_id = $1
+          AND status = 'pending'
+        LIMIT 1
+      `,
+      [roundId]
+    );
+    hasPendingPoints = (pendingResult.rowCount ?? 0) > 0;
+  }
+
+  assertMonitoringRoundStatusTransition(currentResult.rows[0].status, input.status, hasPendingPoints);
+
+  const updateScope = buildRoundProjectScopeCondition(projectScope, 3);
+  const result = await pool.query(
+    `
+      UPDATE monitoring_rounds mr
+      SET status = $2, updated_at = NOW()
+      WHERE id = $1
+      ${updateScope.clause}
+      RETURNING *
+    `,
+    [roundId, input.status, ...updateScope.params]
+  );
+
+  return result.rowCount === 0 ? null : mapRoundRow(result.rows[0]);
+};
+
+export const updateMonitoringRound = async (
+  roundId: string,
+  input: ValidatedUpdateMonitoringRoundInput,
+  projectScope: string[] | null = null
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const scope = buildRoundProjectScopeCondition(projectScope, 2);
+    const currentResult = await client.query(
+      `
+        SELECT mr.*
+        FROM monitoring_rounds mr
+        WHERE mr.id = $1
+        ${scope.clause}
+        LIMIT 1
+      `,
+      [roundId, ...scope.params]
+    );
+
+    if (currentResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const current = currentResult.rows[0] as Record<string, unknown>;
+    const hasAssignmentChange = input.operatorId !== undefined || input.roundDate !== undefined || input.executionOrder !== undefined;
+
+    if (hasAssignmentChange && (current.status === 'closed' || current.status === 'cancelled')) {
+      throw new AppError('A terminal round cannot be reassigned', 409, 'ROUND_TERMINAL');
+    }
+
+    if (input.operatorId) {
+      const operatorResult = await client.query(
+        `
+          SELECT u.id
+          FROM users u
+          INNER JOIN project_memberships pm ON pm.user_id = u.id
+          WHERE u.id = $1
+            AND u.role = 'topografo'
+            AND u.is_active = TRUE
+            AND pm.project_id = $2
+            AND pm.is_active = TRUE
+          LIMIT 1
+        `,
+        [input.operatorId, current.project_id]
+      );
+
+      if (operatorResult.rowCount === 0) {
+        throw new AppError('The assigned operator is not an active topographer in this project', 400, 'INVALID_ROUND_OPERATOR');
+      }
+    }
+
+    if (input.status) {
+      let hasPendingPoints = false;
+      if (input.status === 'closed') {
+        const pendingResult = await client.query(
+          `SELECT 1 FROM monitoring_round_points WHERE round_id = $1 AND status = 'pending' LIMIT 1`,
+          [roundId]
+        );
+        hasPendingPoints = (pendingResult.rowCount ?? 0) > 0;
+      }
+      assertMonitoringRoundStatusTransition(String(current.status), input.status, hasPendingPoints);
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [roundId];
+    const addUpdate = (column: string, value: unknown) => {
+      params.push(value);
+      updates.push(`${column} = $${params.length}`);
+    };
+
+    if (input.status) addUpdate('status', input.status);
+    if (input.operatorId !== undefined) addUpdate('operator_id', input.operatorId);
+    if (input.roundDate !== undefined) addUpdate('round_date', input.roundDate);
+    if (input.executionOrder !== undefined) addUpdate('execution_order', input.executionOrder);
+
+    const updateScope = buildRoundProjectScopeCondition(projectScope, params.length + 1);
+    const result = await client.query(
+      `
+        UPDATE monitoring_rounds mr
+        SET ${updates.join(', ')}, updated_at = NOW()
+        WHERE mr.id = $1
+        ${updateScope.clause}
+        RETURNING mr.*
+      `,
+      [...params, ...updateScope.params]
+    );
+
+    await client.query('COMMIT');
+    return result.rowCount === 0 ? null : mapRoundRow(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const listProjectOperators = async (projectId: string) => {
+  const result = await pool.query(
+    `
+      SELECT u.id, u.email, u.full_name, u.role
+      FROM users u
+      INNER JOIN project_memberships pm ON pm.user_id = u.id
+      WHERE pm.project_id = $1
+        AND pm.is_active = TRUE
+        AND u.role = 'topografo'
+        AND u.is_active = TRUE
+      ORDER BY u.full_name ASC, u.email ASC
+    `,
+    [projectId]
+  );
+
+  return result.rows.map((row) => ({
+    email: row.email,
+    fullName: row.full_name,
+    id: row.id,
+    role: 'topografo' as const
+  }));
+};
+
+export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery, projectScope: string[] | null = null) => {
+  const scope = buildProjectScopeCondition(projectScope, 'mr', 2);
+  const params: unknown[] = [userId, ...scope.params, query.limit];
+  const limitParamIndex = params.length;
+
+  const result = await pool.query(
+    `
+      SELECT
+        mr.*,
+        p.code AS project_code,
+        p.name AS project_name,
+        COUNT(mrp.id)::int AS total_point_count,
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'pending')::int AS pending_point_count,
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count
+      FROM monitoring_rounds mr
+      INNER JOIN projects p ON p.id = mr.project_id
+      LEFT JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
+      WHERE mr.operator_id = $1
+        AND mr.status IN ('draft', 'active')
+        ${scope.clause}
+      GROUP BY mr.id, p.code, p.name
+      ORDER BY mr.round_date ASC, mr.execution_order ASC, mr.created_at ASC
+      LIMIT $${limitParamIndex}
+    `,
+    params
+  );
+
+  return result.rows.map((row) => ({
+    ...mapRoundRow(row),
+    pendingPointCount: Number(row.pending_point_count ?? 0),
+    projectCode: row.project_code,
+    projectName: row.project_name,
+    takenPointCount: Number(row.taken_point_count ?? 0),
+    totalPointCount: Number(row.total_point_count ?? 0)
+  }));
 };
 
 export const createControlPoint = async (
@@ -901,6 +1171,138 @@ export const getInstrumentReadingById = async (readingId: string, projectScope: 
   );
 
   return result.rowCount === 0 ? null : mapReadingRow(result.rows[0]);
+};
+
+export const getMonitoringRoundExportRows = async (
+  roundId: string,
+  projectScope: string[] | null = null
+): Promise<RoundExportRow[] | null> => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const roundResult = await pool.query(
+    `
+      SELECT mr.id
+      FROM monitoring_rounds mr
+      WHERE mr.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundId, ...scope.params]
+  );
+
+  if (roundResult.rowCount === 0) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `
+      SELECT
+        p.code AS project_code,
+        p.name AS project_name,
+        mr.name AS round_name,
+        mr.round_date,
+        mr.status AS round_status,
+        cp.code AS control_point_code,
+        cp.name AS control_point_name,
+        cp.pk,
+        cp.zona AS zone,
+        cp.tramo,
+        cp.seccion,
+        cp.side,
+        mrp.expected_instrument_type AS instrument_type,
+        mrp.status AS point_status,
+        ir.measured_at,
+        ir.value_numeric,
+        ir.value_text,
+        ir.unit,
+        ir.notes,
+        COALESCE(measured_user.full_name, measured_user.email, operator_user.full_name, operator_user.email) AS operator,
+        ir.reading_status,
+        prior.value_numeric AS previous_value,
+        threshold.warning_value,
+        threshold.alarm_value,
+        COALESCE(rule.auto_confirm_green, TRUE) AS auto_confirm_green,
+        CASE
+          WHEN ir.id IS NULL THEN 0
+          ELSE (SELECT COUNT(*)::int FROM reading_attachments ra WHERE ra.reading_id = ir.id)
+        END AS attachment_count
+      FROM monitoring_rounds mr
+      INNER JOIN projects p ON p.id = mr.project_id
+      INNER JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
+      LEFT JOIN instrument_readings ir ON ir.round_point_id = mrp.id
+      LEFT JOIN users measured_user ON measured_user.id = ir.measured_by
+      LEFT JOIN users operator_user ON operator_user.id = mr.operator_id
+      LEFT JOIN LATERAL (
+        SELECT prior_reading.value_numeric
+        FROM instrument_readings prior_reading
+        WHERE prior_reading.control_point_id = cp.id
+          AND prior_reading.instrument_type = COALESCE(ir.instrument_type, mrp.expected_instrument_type)
+          AND prior_reading.reading_status IN ('confirmed', 'reviewed')
+          AND ir.measured_at IS NOT NULL
+          AND prior_reading.measured_at < ir.measured_at
+        ORDER BY prior_reading.measured_at DESC, prior_reading.created_at DESC
+        LIMIT 1
+      ) prior ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT cpt.warning_value, cpt.alarm_value
+        FROM control_point_thresholds cpt
+        WHERE cpt.control_point_id = cp.id
+          AND cpt.instrument_type = COALESCE(ir.instrument_type, mrp.expected_instrument_type)
+          AND ir.measured_at IS NOT NULL
+          AND cpt.valid_from <= ir.measured_at
+          AND (cpt.valid_to IS NULL OR cpt.valid_to > ir.measured_at)
+        ORDER BY cpt.valid_from DESC
+        LIMIT 1
+      ) threshold ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT LOWER(pr.value) <> 'false' AS auto_confirm_green
+        FROM project_rules pr
+        WHERE pr.project_id = mr.project_id
+          AND pr.rule_type = 'auto_confirm_green'
+        LIMIT 1
+      ) rule ON TRUE
+      WHERE mr.id = $1
+      ORDER BY mrp.sort_order ASC, ir.measured_at ASC NULLS LAST, ir.created_at ASC NULLS LAST
+    `,
+    [roundId, ...scope.params]
+  );
+
+  return result.rows.map((row) => {
+    const evaluation = evaluateReadingStatus({
+      alarmValue: row.alarm_value === null ? null : Number(row.alarm_value),
+      autoConfirmGreen: Boolean(row.auto_confirm_green),
+      previousValue: row.previous_value === null ? null : Number(row.previous_value),
+      valueNumeric: row.value_numeric === null ? null : Number(row.value_numeric),
+      warningValue: row.warning_value === null ? null : Number(row.warning_value)
+    });
+
+    return {
+      attachmentCount: Number(row.attachment_count),
+      controlPointCode: row.control_point_code,
+      controlPointName: row.control_point_name,
+      delta: evaluation.delta,
+      instrumentType: row.instrument_type,
+      measuredAt: row.measured_at ? toIsoTimestamp(row.measured_at) : null,
+      notes: row.notes,
+      operator: row.operator,
+      pk: row.pk,
+      pointStatus: row.point_status,
+      projectCode: row.project_code,
+      projectName: row.project_name,
+      readingStatus: row.reading_status,
+      roundDate: String(row.round_date),
+      roundName: row.round_name,
+      roundStatus: row.round_status,
+      seccion: row.seccion,
+      side: row.side,
+      thresholdStatus: evaluation.thresholdStatus,
+      tramo: row.tramo,
+      unit: row.unit,
+      valueNumeric: row.value_numeric === null ? null : Number(row.value_numeric),
+      valueText: row.value_text,
+      zone: row.zone
+    };
+  });
 };
 
 export const createReadingAttachment = async (

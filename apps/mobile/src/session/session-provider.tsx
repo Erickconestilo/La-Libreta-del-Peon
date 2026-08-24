@@ -5,7 +5,9 @@ import * as SecureStore from 'expo-secure-store';
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { apiFetch, isApiRequestError, setApiAuthFailureHandler, setApiBearerToken } from '@/lib/api';
+import { createRandomId } from '@/lib/random-id';
 import { queryClient } from '@/lib/query-client';
+import { getAuthRequestDiagnostic, type AuthRequestDiagnostic } from './auth-diagnostics';
 import { resolveSessionAfterRefreshFailure } from './session-refresh';
 
 type ApiEnvelope<T> = {
@@ -50,6 +52,7 @@ type SessionContextValue = {
   connectWithToken: (token: string) => Promise<void>;
   currentUser: AuthSessionUser | null;
   errorMessage: string | null;
+  authRequestDiagnostic: AuthRequestDiagnostic | null;
   isLoading: boolean;
   isSessionInvalid: boolean;
   revalidateActiveSession: () => Promise<void>;
@@ -289,12 +292,14 @@ const getAuthMe = async () => {
 };
 
 const loginWithCredentialsRequest = async (email: string, password: string) => {
+  const requestId = createRandomId();
   const response = await apiFetch<ApiEnvelope<AuthLoginPayload>>('/auth/login', {
     body: JSON.stringify({
       email,
       password
     }),
     method: 'POST',
+    requestId,
     skipAuth: true
   });
 
@@ -315,6 +320,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthSessionUser | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [authRequestDiagnostic, setAuthRequestDiagnostic] = useState<AuthRequestDiagnostic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [savedSessions, setSavedSessions] = useState<StoredTechSession[]>([]);
   const [storedToken, setStoredToken] = useState<string | null>(null);
@@ -587,6 +593,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsLoading(true);
+    setAuthRequestDiagnostic(null);
     const previousSessions = savedSessions;
     const previousActiveSessionId = activeSessionId;
     const previousStoredToken = storedToken;
@@ -638,6 +645,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           : 'La sesión técnica es inválida. Revalida o pega un token nuevo.'
       );
       setErrorMessage(null);
+      setAuthRequestDiagnostic(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo validar el token.';
       setStoredToken(previousStoredToken);
@@ -659,6 +667,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsLoading(true);
+    setAuthRequestDiagnostic(null);
     const previousSessions = savedSessions;
     const previousActiveSessionId = activeSessionId;
     const previousStoredToken = storedToken;
@@ -690,6 +699,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const tokenInfo = getTokenWarning(payload.session.accessToken);
       setSessionWarning(isValid ? tokenInfo.warning : 'La sesión técnica es inválida. Revalida o pega un token nuevo.');
       setErrorMessage(null);
+      setAuthRequestDiagnostic(null);
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
@@ -699,6 +709,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setApiBearerToken(previousStoredToken);
       await applySession(previousActiveSessionId, previousSessions, { swallowAuthError: true });
       setErrorMessage(message);
+      setAuthRequestDiagnostic(getAuthRequestDiagnostic(error));
       throw new Error(message);
     } finally {
       setIsLoading(false);
@@ -774,9 +785,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSessionWarning(null);
       setIsSessionInvalid(false);
       setCurrentUser(null);
+      setAuthRequestDiagnostic(null);
       await SecureStore.deleteItemAsync(LEGACY_SESSION_KEY);
       await Storage.removeItemAsync(SESSION_STATE_KEY);
       setErrorMessage(null);
+      setAuthRequestDiagnostic(null);
     } catch (error) {
       setCurrentUser(null);
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo volver a modo visitante.');
@@ -820,6 +833,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       connectWithToken,
       currentUser,
       errorMessage,
+      authRequestDiagnostic,
       isLoading,
       isSessionInvalid,
       revalidateActiveSession,
@@ -834,6 +848,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       activeSessionId,
       currentUser,
       errorMessage,
+      authRequestDiagnostic,
       isLoading,
       isSessionInvalid,
       savedSessions,
