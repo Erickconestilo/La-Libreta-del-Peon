@@ -64,15 +64,13 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-### Estado de F5 (revisado 21-08-2026)
+### Estado de F5 (revisado 24-08-2026)
 
-F5 sigue abierta y **no ha empezado**: `docs/field/` está vacío, así que no existe todavía ningún `F5_HALLAZGOS_<fecha>.md` y no se cumple el criterio de salida. La frase de arriba —"F5 no requiere escribir código"— sigue siendo cierta sobre el trabajo de la fase, pero el 07-08-2026 se intentó ejecutar el Paso 1 dos veces y **las dos se pararon antes de llegar a campo** (fuente: bitácora de `MEMORIA.md` §12, commits `22d5bea`, `ba3a5cc`, `0a41c02`):
+F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-1. **Build local sin URL de API — resuelto.** La release local no exportaba `EXPO_PUBLIC_API_BASE_URL`; se creó `apps/mobile/.env` (gitignored) y se documentó en `LOCAL_ANDROID_BUILD_RUNBOOK.md`.
-2. **403 en Rondas — no era un bug.** La app operaba en contexto invitado; el 403 es D1 funcionando como se diseñó. No prueba que la cuenta `topografo` vea Rondas con normalidad: es una afirmación distinta y sigue sin verificar.
-3. **Login técnico en el Galaxy — abierto.** `POST /api/v1/auth/login` contra Render responde `HTTP 200` con la contraseña restablecida, pero la misma prueba introducida por ADB en el dispositivo deja la UI en `Invalid credentials`. No se atribuye todavía a un defecto de la app: ADB puede alterar la entrada de credenciales.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo y la app ya está preparada para la prueba real. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos".
 
-**Decisión pendiente de Erick:** cómo se resuelve el punto 3 — prueba manual tecleando en el Galaxy (barata, descarta el ruido de ADB, es lo primero que conviene intentar) o instrumentación de diagnóstico autorizada en la app. Hasta cerrarlo no se puede entrar en `campus-nord` / `maragall` ni empezar la jornada real de F5.
+Siguiente puerta: preparar una ronda autorizada, completar el recorrido de lecturas/fotos offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
