@@ -158,6 +158,12 @@ function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boo
                 }}
               />
               <Stack.Screen
+                name="admin/journey"
+                options={{
+                  title: 'Organizar jornada'
+                }}
+              />
+              <Stack.Screen
                 name="history"
                 options={{
                   title: 'Historial'

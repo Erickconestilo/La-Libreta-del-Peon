@@ -50,6 +50,12 @@ export default function MonitoringRoundsScreen() {
               <MaterialIcons color={colors.textPrimary} name="place" size={18} />
               <Text style={styles.secondaryButtonText}>Puntos</Text>
             </Pressable>
+            {currentUser?.role === 'admin' ? (
+              <Pressable onPress={() => router.push(`/admin/journey?projectId=${projectId}` as never)} style={styles.secondaryButton}>
+                <MaterialIcons color={colors.textPrimary} name="assignment" size={18} />
+                <Text style={styles.secondaryButtonText}>Organizar jornada</Text>
+              </Pressable>
+            ) : null}
           </View>
           <View style={styles.filters}>
             {FILTERS.map((filter) => (

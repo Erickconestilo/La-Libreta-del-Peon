@@ -28,7 +28,7 @@ export default function MonitoringRoundDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
-  const { cachedAt, data: round, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRound(roundId ?? null);
+  const { assignmentConflict, cachedAt, data: round, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRound(roundId ?? null);
   const { errorMessage: prepareErrorMessage, isPreparing, prepareRound } = usePrepareMonitoringRound(roundId ?? null);
   const { errorMessage: statusErrorMessage, isUpdating, updateStatus } = useUpdateMonitoringRoundStatus(roundId ?? null);
   const [prepareMessage, setPrepareMessage] = useState<string | null>(null);
@@ -71,6 +71,7 @@ export default function MonitoringRoundDetailScreen() {
             <View style={styles.summary}><SummaryItem label="Pendientes" value={pending} /><SummaryItem label="Tomados" value={taken} /><SummaryItem label="Total" value={points.length} /></View>
             <Text style={styles.body}>{round.instrumentSerial ? `Serie ${round.instrumentSerial}` : 'Serie de instrumento sin indicar'}{round.fieldConditions ? ` · Condición ${round.fieldConditions}` : ''}</Text>
             {isOfflineCache ? <Text style={styles.warningText}>Ronda sin actualizar. Última copia: {cachedAt ?? 'fecha desconocida'}.</Text> : null}
+            {assignmentConflict ? <Text style={styles.warningText}>La asignación de esta ronda cambió mientras había datos locales pendientes. No se borró nada; revisa la planificación antes de sincronizar.</Text> : null}
             {canEdit ? (
               <View style={styles.actionGroup}>
                 <Pressable disabled={isPreparing} onPress={() => void handlePrepare()} style={[styles.secondaryButton, isPreparing ? styles.disabled : null]}>

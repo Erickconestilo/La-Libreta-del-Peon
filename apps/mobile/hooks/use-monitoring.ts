@@ -9,14 +9,16 @@ import type {
   FieldConditions,
   InstrumentReading,
   InstrumentType,
+  JourneyRound,
   MonitoringRound,
   MonitoringRoundPoint,
   MonitoringRoundStatus,
+  ProjectOperator,
   ReadingInsertResponse
 } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
-import { enqueue, getPendingCount } from '@/lib/offline/outbox';
+import { enqueue, getPendingCount, getRoundOutboxItems } from '@/lib/offline/outbox';
 import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
@@ -24,6 +26,8 @@ import {
   saveMonitoringRoundSnapshot,
   type MonitoringRoundSnapshot
 } from '@/lib/offline/monitoring-cache';
+import { deferJourneyRound, getCachedJourney, getDeferredJourneyRoundIds, saveJourney } from '@/lib/offline/journey-cache';
+import { useCurrentSession } from '@/hooks/use-auth';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
 import {
@@ -60,8 +64,15 @@ export type CreateMonitoringRoundInput = {
   instrumentSerial: string | null;
   name: string;
   operatorId: string | null;
+  executionOrder: number;
   roundDate: string;
   status: MonitoringRoundStatus;
+};
+
+export type UpdateMonitoringRoundAssignmentInput = {
+  executionOrder?: number;
+  operatorId?: string | null;
+  roundDate?: string;
 };
 
 export type CreateControlPointInput = {
@@ -150,6 +161,23 @@ const fetchMonitoringRound = async (roundId: string) => {
   return response.data;
 };
 
+const fetchMyJourney = async () => {
+  const response = await apiFetch<ApiEnvelope<JourneyRound[]>>('/me/journey');
+  return response.data;
+};
+
+const fetchMyJourneyWithCache = async (cacheKey: string) => {
+  try {
+    const rounds = await fetchMyJourney();
+    saveJourney(cacheKey, rounds);
+    return { cachedAt: null, isOfflineCache: false, rounds };
+  } catch (error) {
+    const cached = getCachedJourney(cacheKey);
+    if (!cached) throw error;
+    return { cachedAt: cached.cachedAt, isOfflineCache: true, rounds: cached.rounds };
+  }
+};
+
 const fetchControlPointThresholds = async (controlPointId: string) => {
   const response = await apiFetch<ApiEnvelope<ControlPointThreshold[]>>(`/control-points/${controlPointId}/thresholds`);
   return response.data;
@@ -198,9 +226,17 @@ const buildRoundSnapshot = (
 const fetchMonitoringRoundWithCache = async (roundId: string) => {
   try {
     const round = await fetchMonitoringRound(roundId);
-    const snapshot = buildRoundSnapshot(round, getMonitoringRoundSnapshot(roundId));
+    const cached = getMonitoringRoundSnapshot(roundId);
+    const assignmentConflict = Boolean(
+      cached &&
+      getRoundOutboxItems(roundId).length > 0 &&
+      (cached.round.operatorId !== round.operatorId ||
+        cached.round.roundDate !== round.roundDate ||
+        cached.round.executionOrder !== round.executionOrder)
+    );
+    const snapshot = buildRoundSnapshot(round, cached);
     saveMonitoringRoundSnapshot(roundId, snapshot);
-    return { cachedAt: null, isOfflineCache: false, round };
+    return { assignmentConflict, cachedAt: null, isOfflineCache: false, round };
   } catch (error) {
     const cached = getMonitoringRoundSnapshot(roundId);
 
@@ -209,6 +245,7 @@ const fetchMonitoringRoundWithCache = async (roundId: string) => {
     }
 
     return {
+      assignmentConflict: false,
       cachedAt: cached.cachedAt,
       isOfflineCache: true,
       round: cached.round
@@ -264,6 +301,19 @@ const createRoundRequest = async ({ projectId, input }: { projectId: string; inp
   const response = await apiFetch<ApiEnvelope<MonitoringRound>>(`/projects/${projectId}/rounds`, {
     body: JSON.stringify(input),
     method: 'POST'
+  });
+  return response.data;
+};
+
+const fetchProjectOperators = async (projectId: string) => {
+  const response = await apiFetch<ApiEnvelope<ProjectOperator[]>>(`/projects/${projectId}/operators`);
+  return response.data;
+};
+
+const updateRoundAssignmentRequest = async (roundId: string, input: UpdateMonitoringRoundAssignmentInput) => {
+  const response = await apiFetch<ApiEnvelope<MonitoringRound>>(`/rounds/${roundId}`, {
+    body: JSON.stringify(input),
+    method: 'PATCH'
   });
   return response.data;
 };
@@ -424,6 +474,69 @@ export const useMonitoringRounds = (projectId: string | null, status?: Monitorin
   };
 };
 
+export const useMyJourney = () => {
+  const { activeSessionId, currentUser } = useCurrentSession();
+  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const query = useQuery({
+    enabled: currentUser?.role === 'admin' || currentUser?.role === 'topografo',
+    queryFn: () => fetchMyJourneyWithCache(cacheKey),
+    queryKey: ['my-journey', cacheKey],
+    staleTime: 1000 * 30
+  });
+
+  const deferredIds = getDeferredJourneyRoundIds(cacheKey);
+  const rounds = (query.data?.rounds ?? []).filter((round) => !deferredIds.has(round.id));
+
+  return {
+    ...query,
+    cachedAt: query.data?.cachedAt ?? null,
+    data: rounds,
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar Mi jornada.') : null,
+    isOfflineCache: query.data?.isOfflineCache ?? false,
+    deferRound: (roundId: string) => {
+      const until = new Date();
+      until.setHours(23, 59, 59, 999);
+      deferJourneyRound(cacheKey, roundId, until.toISOString());
+      void query.refetch();
+    }
+  };
+};
+
+export const useProjectOperators = (projectId: string | null) => {
+  const query = useQuery({
+    enabled: Boolean(projectId),
+    queryFn: () => fetchProjectOperators(projectId as string),
+    queryKey: ['project-operators', projectId],
+    staleTime: 1000 * 60
+  });
+
+  return {
+    ...query,
+    data: query.data ?? [],
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudieron cargar los topógrafos.') : null
+  };
+};
+
+export const useUpdateMonitoringRoundAssignment = () => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({ input, roundId }: { input: UpdateMonitoringRoundAssignmentInput; roundId: string }) =>
+      updateRoundAssignmentRequest(roundId, input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-journey'] })
+      ]);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo actualizar la asignación.') : null,
+    isUpdating: mutation.isPending,
+    updateAssignment: mutation.mutateAsync
+  };
+};
+
 export const useMonitoringRound = (roundId: string | null) => {
   const query = useQuery({
     enabled: Boolean(roundId),
@@ -434,6 +547,7 @@ export const useMonitoringRound = (roundId: string | null) => {
 
   return {
     ...query,
+    assignmentConflict: query.data?.assignmentConflict ?? false,
     cachedAt: query.data?.cachedAt ?? null,
     data: query.data?.round,
     errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar la ronda.') : null,
