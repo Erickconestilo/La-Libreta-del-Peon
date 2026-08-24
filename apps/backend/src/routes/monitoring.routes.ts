@@ -9,8 +9,8 @@ import {
   getMonitoringRoundDetailController,
   getReadingHistoryController,
   listControlPointThresholdsController,
-  updateMonitoringRoundStatusController,
-  updateControlPointController
+  updateControlPointController,
+  updateMonitoringRoundController
 } from '../controllers/monitoring.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateUuidParam } from '../middleware/validate-uuid.js';
@@ -40,7 +40,7 @@ roundsRouter.patch(
   requireAuth,
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundId'),
-  updateMonitoringRoundStatusController
+  updateMonitoringRoundController
 );
 
 roundsRouter.post(

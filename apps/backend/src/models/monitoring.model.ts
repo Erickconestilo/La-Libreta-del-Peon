@@ -12,8 +12,10 @@ import type {
   ValidatedCreateReadingAttachmentInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
+  ValidatedJourneyQuery,
   ValidatedListControlPointsQuery,
   ValidatedListMonitoringRoundsQuery,
+  ValidatedUpdateMonitoringRoundInput,
   ValidatedReadingHistoryQuery,
   ValidatedUpdateMonitoringRoundStatusInput,
   ValidatedUpdateControlPointInput
@@ -113,6 +115,7 @@ const mapReadingAttachmentRow = (row: Record<string, unknown>) => ({
 const mapRoundRow = (row: Record<string, unknown>) => ({
   createdAt: row.created_at,
   createdBy: row.created_by,
+  executionOrder: Number(row.execution_order ?? 0),
   fieldConditions: row.field_conditions,
   id: row.id,
   instrumentSerial: row.instrument_serial,
@@ -325,6 +328,27 @@ export const createMonitoringRound = async (
   createdBy: string,
   projectScope: string[] | null = null
 ) => {
+  if (input.operatorId) {
+    const operatorResult = await pool.query(
+      `
+        SELECT u.id
+        FROM users u
+        INNER JOIN project_memberships pm ON pm.user_id = u.id
+        WHERE u.id = $1
+          AND u.role = 'topografo'
+          AND u.is_active = TRUE
+          AND pm.project_id = $2
+          AND pm.is_active = TRUE
+        LIMIT 1
+      `,
+      [input.operatorId, projectId]
+    );
+
+    if (operatorResult.rowCount === 0) {
+      throw new AppError('The assigned operator is not an active topographer in this project', 400, 'INVALID_ROUND_OPERATOR');
+    }
+  }
+
   const scope = buildProjectScopeCondition(projectScope, 'p', 9, 'id');
   const result = await pool.query(
     `
@@ -334,11 +358,12 @@ export const createMonitoringRound = async (
         round_date,
         status,
         operator_id,
+        execution_order,
         instrument_serial,
         field_conditions,
         created_by
       )
-      SELECT p.id, $2, $3::date, $4, $5, $6, $7, $8
+      SELECT p.id, $2, $3::date, $4, $5, $6, $7, $8, $9
       FROM projects p
       WHERE p.id = $1
       ${scope.clause}
@@ -350,6 +375,7 @@ export const createMonitoringRound = async (
       input.roundDate,
       input.status,
       input.operatorId ?? null,
+      input.executionOrder,
       input.instrumentSerial?.trim() || null,
       input.fieldConditions ?? null,
       createdBy,
@@ -390,7 +416,7 @@ export const listMonitoringRounds = async (
       WHERE mr.project_id = $1
       ${scope.clause}
       ${filters.join('\n')}
-      ORDER BY mr.round_date DESC, mr.created_at DESC
+      ORDER BY mr.round_date ASC, mr.execution_order ASC, mr.created_at ASC
       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
     `,
     params
@@ -516,6 +542,166 @@ export const updateMonitoringRoundStatus = async (
   );
 
   return result.rowCount === 0 ? null : mapRoundRow(result.rows[0]);
+};
+
+export const updateMonitoringRound = async (
+  roundId: string,
+  input: ValidatedUpdateMonitoringRoundInput,
+  projectScope: string[] | null = null
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const scope = buildRoundProjectScopeCondition(projectScope, 2);
+    const currentResult = await client.query(
+      `
+        SELECT mr.*
+        FROM monitoring_rounds mr
+        WHERE mr.id = $1
+        ${scope.clause}
+        LIMIT 1
+      `,
+      [roundId, ...scope.params]
+    );
+
+    if (currentResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const current = currentResult.rows[0] as Record<string, unknown>;
+    const hasAssignmentChange = input.operatorId !== undefined || input.roundDate !== undefined || input.executionOrder !== undefined;
+
+    if (hasAssignmentChange && (current.status === 'closed' || current.status === 'cancelled')) {
+      throw new AppError('A terminal round cannot be reassigned', 409, 'ROUND_TERMINAL');
+    }
+
+    if (input.operatorId) {
+      const operatorResult = await client.query(
+        `
+          SELECT u.id
+          FROM users u
+          INNER JOIN project_memberships pm ON pm.user_id = u.id
+          WHERE u.id = $1
+            AND u.role = 'topografo'
+            AND u.is_active = TRUE
+            AND pm.project_id = $2
+            AND pm.is_active = TRUE
+          LIMIT 1
+        `,
+        [input.operatorId, current.project_id]
+      );
+
+      if (operatorResult.rowCount === 0) {
+        throw new AppError('The assigned operator is not an active topographer in this project', 400, 'INVALID_ROUND_OPERATOR');
+      }
+    }
+
+    if (input.status) {
+      let hasPendingPoints = false;
+      if (input.status === 'closed') {
+        const pendingResult = await client.query(
+          `SELECT 1 FROM monitoring_round_points WHERE round_id = $1 AND status = 'pending' LIMIT 1`,
+          [roundId]
+        );
+        hasPendingPoints = (pendingResult.rowCount ?? 0) > 0;
+      }
+      assertMonitoringRoundStatusTransition(String(current.status), input.status, hasPendingPoints);
+    }
+
+    const updates: string[] = [];
+    const params: unknown[] = [roundId];
+    const addUpdate = (column: string, value: unknown) => {
+      params.push(value);
+      updates.push(`${column} = $${params.length}`);
+    };
+
+    if (input.status) addUpdate('status', input.status);
+    if (input.operatorId !== undefined) addUpdate('operator_id', input.operatorId);
+    if (input.roundDate !== undefined) addUpdate('round_date', input.roundDate);
+    if (input.executionOrder !== undefined) addUpdate('execution_order', input.executionOrder);
+
+    const updateScope = buildRoundProjectScopeCondition(projectScope, params.length + 1);
+    const result = await client.query(
+      `
+        UPDATE monitoring_rounds mr
+        SET ${updates.join(', ')}, updated_at = NOW()
+        WHERE mr.id = $1
+        ${updateScope.clause}
+        RETURNING mr.*
+      `,
+      [...params, ...updateScope.params]
+    );
+
+    await client.query('COMMIT');
+    return result.rowCount === 0 ? null : mapRoundRow(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const listProjectOperators = async (projectId: string) => {
+  const result = await pool.query(
+    `
+      SELECT u.id, u.email, u.full_name, u.role
+      FROM users u
+      INNER JOIN project_memberships pm ON pm.user_id = u.id
+      WHERE pm.project_id = $1
+        AND pm.is_active = TRUE
+        AND u.role = 'topografo'
+        AND u.is_active = TRUE
+      ORDER BY u.full_name ASC, u.email ASC
+    `,
+    [projectId]
+  );
+
+  return result.rows.map((row) => ({
+    email: row.email,
+    fullName: row.full_name,
+    id: row.id,
+    role: 'topografo' as const
+  }));
+};
+
+export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery, projectScope: string[] | null = null) => {
+  const scope = buildProjectScopeCondition(projectScope, 'mr', 2);
+  const params: unknown[] = [userId, ...scope.params, query.limit];
+  const limitParamIndex = params.length;
+
+  const result = await pool.query(
+    `
+      SELECT
+        mr.*,
+        p.code AS project_code,
+        p.name AS project_name,
+        COUNT(mrp.id)::int AS total_point_count,
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'pending')::int AS pending_point_count,
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count
+      FROM monitoring_rounds mr
+      INNER JOIN projects p ON p.id = mr.project_id
+      LEFT JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
+      WHERE mr.operator_id = $1
+        AND mr.status IN ('draft', 'active')
+        ${scope.clause}
+      GROUP BY mr.id, p.code, p.name
+      ORDER BY mr.round_date ASC, mr.execution_order ASC, mr.created_at ASC
+      LIMIT $${limitParamIndex}
+    `,
+    params
+  );
+
+  return result.rows.map((row) => ({
+    ...mapRoundRow(row),
+    pendingPointCount: Number(row.pending_point_count ?? 0),
+    projectCode: row.project_code,
+    projectName: row.project_name,
+    takenPointCount: Number(row.taken_point_count ?? 0),
+    totalPointCount: Number(row.total_point_count ?? 0)
+  }));
 };
 
 export const createControlPoint = async (

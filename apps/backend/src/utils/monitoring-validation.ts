@@ -68,23 +68,38 @@ export const createMonitoringRoundSchema = z.object({
   instrumentSerial: z.string().trim().max(120).nullable().optional(),
   name: z.string().trim().min(1).max(200),
   operatorId: z.string().uuid().nullable().optional(),
+  executionOrder: z.number().int().min(0).max(9999).default(0),
   roundDate: z.string().date(),
   status: roundStatusSchema.default('draft')
 });
 
 export type ValidatedCreateMonitoringRoundInput = z.infer<typeof createMonitoringRoundSchema>;
 
-const updateMonitoringRoundStatusSchema = z.object({
-  status: z.enum(['active', 'closed', 'cancelled'])
-});
+const updateMonitoringRoundSchema = z
+  .object({
+    executionOrder: z.number().int().min(0).max(9999).optional(),
+    operatorId: z.string().uuid().nullable().optional(),
+    roundDate: z.string().date().optional(),
+    status: z.enum(['active', 'closed', 'cancelled']).optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, 'At least one round field is required');
 
-export type ValidatedUpdateMonitoringRoundStatusInput = z.infer<typeof updateMonitoringRoundStatusSchema>;
+export type ValidatedUpdateMonitoringRoundInput = z.infer<typeof updateMonitoringRoundSchema>;
+export type ValidatedUpdateMonitoringRoundStatusInput = Pick<ValidatedUpdateMonitoringRoundInput, 'status'> & {
+  status: NonNullable<ValidatedUpdateMonitoringRoundInput['status']>;
+};
 
 export const listMonitoringRoundsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: roundStatusSchema.optional()
 });
+
+export const journeyQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50)
+});
+
+export type ValidatedJourneyQuery = z.infer<typeof journeyQuerySchema>;
 
 export type ValidatedListMonitoringRoundsQuery = z.infer<typeof listMonitoringRoundsQuerySchema>;
 
@@ -218,10 +233,34 @@ export const validateCreateMonitoringRoundInput = (input: unknown): ValidatedCre
 };
 
 export const validateUpdateMonitoringRoundStatusInput = (input: unknown): ValidatedUpdateMonitoringRoundStatusInput => {
-  const parsedInput = updateMonitoringRoundStatusSchema.safeParse(input);
+  const parsedInput = updateMonitoringRoundSchema.safeParse(input);
 
   if (!parsedInput.success) {
     throw new AppError('Invalid monitoring round status payload', 400, 'INVALID_ROUND_STATUS_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  if (!parsedInput.data.status || Object.keys(parsedInput.data).some((key) => key !== 'status')) {
+    throw new AppError('Only a round status is allowed here', 400, 'INVALID_ROUND_STATUS_PAYLOAD');
+  }
+
+  return { status: parsedInput.data.status };
+};
+
+export const validateUpdateMonitoringRoundInput = (input: unknown): ValidatedUpdateMonitoringRoundInput => {
+  const parsedInput = updateMonitoringRoundSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid monitoring round update payload', 400, 'INVALID_ROUND_UPDATE_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateJourneyQuery = (input: unknown): ValidatedJourneyQuery => {
+  const parsedInput = journeyQuerySchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError('Invalid journey query', 400, 'INVALID_JOURNEY_QUERY', parsedInput.error.flatten());
   }
 
   return parsedInput.data;

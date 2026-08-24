@@ -9,6 +9,8 @@ import {
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateRoundExportQuery,
+  validateJourneyQuery,
+  validateUpdateMonitoringRoundInput,
   validateUpdateMonitoringRoundStatusInput,
   validateUpdateControlPointInput
 } from './monitoring-validation.js';
@@ -80,6 +82,10 @@ test('monitoring round creation defaults to draft status and requires a plain da
     }).status,
     'draft'
   );
+  assert.equal(
+    validateCreateMonitoringRoundInput({ name: 'Ronda', roundDate: '2026-08-03' }).executionOrder,
+    0
+  );
 
   assert.throws(
     () =>
@@ -98,6 +104,15 @@ test('round status updates only accept non-terminal transitions', () => {
     () => validateUpdateMonitoringRoundStatusInput({ status: 'draft' }),
     /Invalid monitoring round status payload/
   );
+});
+
+test('journey assignments accept explicit order and nullable operator', () => {
+  assert.deepEqual(
+    validateUpdateMonitoringRoundInput({ executionOrder: 2, operatorId: null, roundDate: '2026-08-04' }),
+    { executionOrder: 2, operatorId: null, roundDate: '2026-08-04' }
+  );
+  assert.equal(validateJourneyQuery({}).limit, 50);
+  assert.throws(() => validateUpdateMonitoringRoundInput({}), /Invalid monitoring round update payload/);
 });
 
 test('round export only accepts CSV or XLSX and defaults to CSV', () => {

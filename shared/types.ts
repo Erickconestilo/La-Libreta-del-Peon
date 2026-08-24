@@ -397,8 +397,24 @@ export interface MonitoringRound {
   instrumentSerial: string | null;
   fieldConditions: FieldConditions | null;
   createdBy: string;
+  executionOrder: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface JourneyRound extends MonitoringRound {
+  projectCode: string;
+  projectName: string;
+  pendingPointCount: number;
+  takenPointCount: number;
+  totalPointCount: number;
+}
+
+export interface ProjectOperator {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'topografo';
 }
 
 export interface MonitoringRoundPoint {

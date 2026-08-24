@@ -21,8 +21,11 @@ import {
   listControlPoints,
   listControlPointThresholds,
   listMonitoringRounds,
+  listMyJourney,
+  listProjectOperators,
   listProjectCodeCatalog,
   updateControlPoint,
+  updateMonitoringRound,
   updateMonitoringRoundStatus
 } from '../models/monitoring.model.js';
 import { roundExportRowsToCsv, roundExportRowsToXlsx } from '../lib/round-export.js';
@@ -36,12 +39,15 @@ import {
   validateCreateRoundPointInput,
   validateListControlPointsQuery,
   validateListMonitoringRoundsQuery,
+  validateJourneyQuery,
   validateReadingHistoryQuery,
   validateRoundExportQuery,
   validateUpdateMonitoringRoundStatusInput,
+  validateUpdateMonitoringRoundInput,
   validateUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 import { isValidReadingPhotoPath } from '../utils/photo-validation.js';
+import { canEditMonitoringAssignment } from '../lib/monitoring-assignment.js';
 
 const sendControllerError = (response: Response, error: unknown, fallbackCode: string, fallbackMessage: string) => {
   if (error instanceof AppError) {
@@ -237,6 +243,12 @@ export const createMonitoringRoundController = async (request: Request, response
     assertProjectAccess(request.user, projectId);
 
     const input = validateCreateMonitoringRoundInput(request.body);
+    if (request.user.role === 'topografo') {
+      if (input.operatorId && input.operatorId !== request.user.id) {
+        throw new AppError('A topographer can only create a round assigned to their own account', 403, 'ADMIN_ASSIGNMENT_REQUIRED');
+      }
+      input.operatorId = request.user.id;
+    }
     const round = await createMonitoringRound(projectId, input, request.user.id, getActorProjectScope(request.user));
 
     if (!round) {
@@ -321,6 +333,46 @@ export const updateMonitoringRoundStatusController = async (request: Request, re
     sendSuccess(response, round);
   } catch (error) {
     sendControllerError(response, error, 'ROUND_STATUS_UPDATE_FAILED', 'Unable to update monitoring round status');
+  }
+};
+
+export const updateMonitoringRoundController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const roundId = routeParam(request, 'roundId');
+    const input = validateUpdateMonitoringRoundInput(request.body);
+
+    if (!canEditMonitoringAssignment(request.user.role, input)) {
+      throw new AppError('Only an admin can assign or order rounds', 403, 'ADMIN_ASSIGNMENT_REQUIRED');
+    }
+
+    const round = await updateMonitoringRound(roundId, input, getActorProjectScope(request.user));
+    if (!round) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    sendSuccess(response, round);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUND_UPDATE_FAILED', 'Unable to update monitoring round');
+  }
+};
+
+export const listProjectOperatorsController = async (request: Request, response: Response) => {
+  try {
+    const projectId = routeParam(request, 'projectId');
+    assertProjectAccess(request.user!, projectId);
+    const operators = await listProjectOperators(projectId);
+    sendSuccess(response, operators);
+  } catch (error) {
+    sendControllerError(response, error, 'PROJECT_OPERATORS_LIST_FAILED', 'Unable to load project operators');
+  }
+};
+
+export const listMyJourneyController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const query = validateJourneyQuery(request.query);
+    const journey = await listMyJourney(request.user.id, query, getActorProjectScope(request.user));
+    sendSuccess(response, journey);
+  } catch (error) {
+    sendControllerError(response, error, 'JOURNEY_LIST_FAILED', 'Unable to load your journey');
   }
 };
 
