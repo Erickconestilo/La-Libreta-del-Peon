@@ -8,6 +8,7 @@ import {
   validateCreateReadingAttachmentInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
+  validateRoundExportQuery,
   validateUpdateMonitoringRoundStatusInput,
   validateUpdateControlPointInput
 } from './monitoring-validation.js';
@@ -97,6 +98,12 @@ test('round status updates only accept non-terminal transitions', () => {
     () => validateUpdateMonitoringRoundStatusInput({ status: 'draft' }),
     /Invalid monitoring round status payload/
   );
+});
+
+test('round export only accepts CSV or XLSX and defaults to CSV', () => {
+  assert.equal(validateRoundExportQuery({}).format, 'csv');
+  assert.equal(validateRoundExportQuery({ format: 'xlsx' }).format, 'xlsx');
+  assert.throws(() => validateRoundExportQuery({ format: 'pdf' }), /Invalid round export format/);
 });
 
 test('control point creation requires code and a valid environment', () => {

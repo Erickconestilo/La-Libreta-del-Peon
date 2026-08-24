@@ -14,6 +14,7 @@ import {
   createMonitoringRound,
   createMonitoringRoundPoint,
   getInstrumentReadingById,
+  getMonitoringRoundExportRows,
   getMonitoringRoundDetail,
   getReadingHistory,
   importProjectCodeCatalog,
@@ -24,6 +25,7 @@ import {
   updateControlPoint,
   updateMonitoringRoundStatus
 } from '../models/monitoring.model.js';
+import { roundExportRowsToCsv, roundExportRowsToXlsx } from '../lib/round-export.js';
 import {
   validateCodeCatalogQuery,
   validateCreateControlPointInput,
@@ -35,6 +37,7 @@ import {
   validateListControlPointsQuery,
   validateListMonitoringRoundsQuery,
   validateReadingHistoryQuery,
+  validateRoundExportQuery,
   validateUpdateMonitoringRoundStatusInput,
   validateUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
@@ -276,6 +279,32 @@ export const getMonitoringRoundDetailController = async (request: Request, respo
     sendSuccess(response, round);
   } catch (error) {
     sendControllerError(response, error, 'ROUND_DETAIL_FAILED', 'Unable to load monitoring round');
+  }
+};
+
+export const exportMonitoringRoundController = async (request: Request, response: Response) => {
+  try {
+    const roundId = routeParam(request, 'roundId');
+    const { format } = validateRoundExportQuery(request.query);
+    const rows = await getMonitoringRoundExportRows(roundId, getActorProjectScope(request.user));
+
+    if (!rows) {
+      throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    }
+
+    const filename = `topofield-ronda-${roundId}.${format}`;
+    response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    if (format === 'csv') {
+      response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      response.send(roundExportRowsToCsv(rows));
+      return;
+    }
+
+    const workbook = await roundExportRowsToXlsx(rows);
+    response.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').send(workbook);
+  } catch (error) {
+    sendControllerError(response, error, 'ROUND_EXPORT_FAILED', 'Unable to export monitoring round');
   }
 };
 

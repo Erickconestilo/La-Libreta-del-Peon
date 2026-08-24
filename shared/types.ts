@@ -499,6 +499,33 @@ export interface ReadingInsertResponse {
   autoConfirmed: boolean;
 }
 
+export interface RoundExportRow {
+  projectCode: string;
+  projectName: string;
+  roundName: string;
+  roundDate: string;
+  roundStatus: MonitoringRoundStatus;
+  controlPointCode: string;
+  controlPointName: string | null;
+  pk: string | null;
+  zone: string | null;
+  tramo: string | null;
+  seccion: string | null;
+  side: ControlPointSide | null;
+  instrumentType: InstrumentType;
+  pointStatus: MonitoringRoundPointStatus;
+  measuredAt: string | null;
+  valueNumeric: number | null;
+  valueText: string | null;
+  unit: string | null;
+  notes: string | null;
+  operator: string | null;
+  readingStatus: InstrumentReadingStatus | null;
+  delta: number | null;
+  thresholdStatus: CalculatedThresholdStatus;
+  attachmentCount: number;
+}
+
 // =====================================================
 // MODELO OBRAS (ADR 001, Fase 1)
 // =====================================================

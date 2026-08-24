@@ -5,6 +5,7 @@ import {
   createReadingAttachmentController,
   createInstrumentReadingController,
   createRoundPointController,
+  exportMonitoringRoundController,
   getMonitoringRoundDetailController,
   getReadingHistoryController,
   listControlPointThresholdsController,
@@ -17,6 +18,14 @@ import { validateUuidParam } from '../middleware/validate-uuid.js';
 export const roundsRouter = Router();
 export const roundPointsRouter = Router();
 export const controlPointsRouter = Router();
+
+roundsRouter.get(
+  '/:roundId/export',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundId'),
+  exportMonitoringRoundController
+);
 
 roundsRouter.get(
   '/:roundId',

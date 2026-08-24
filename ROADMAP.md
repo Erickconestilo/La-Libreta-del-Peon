@@ -26,7 +26,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Validación de uso real y encaje de producto** | 🔵 **ABIERTA — primero estabilizar campo, después validar mercado** | PLAN Fase 4 (nunca ejecutada) |
-| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | ⚪ Pendiente | parte de MEMORIA Fase 4 |
+| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato y generación local implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos nuevos reemplazando el blob genérico de lectura | ⚪ Pendiente. **Alcance precisado 21-08-2026:** los instrumentos reales de Erick son fisurómetro y potenciómetro (los más usados, según demanda), regla de peralte (en unos meses) y cinta de convergencia. Ver `MEMORIA.md` §7 — hay un **hallazgo de modelado bloqueante**: varios miden entre pares de puntos y el modelo actual solo admite un punto por lectura. | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
@@ -70,7 +70,7 @@ F5 sigue abierta y está en **estabilización de campo**. La auditoría y el pla
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado; el Bloque 3 deja instalada en el Galaxy la release local `versionCode=2` y verifica el acceso a una obra, rondas y una ronda activa.
 
-Siguiente puerta: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
+El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. Siguiente puerta de F5: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 

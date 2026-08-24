@@ -298,3 +298,19 @@ export const validateReadingHistoryQuery = (input: unknown): ValidatedReadingHis
 
   return parsedInput.data;
 };
+
+const roundExportQuerySchema = z.object({
+  format: z.enum(['csv', 'xlsx']).default('csv')
+});
+
+export type ValidatedRoundExportQuery = z.infer<typeof roundExportQuerySchema>;
+
+export const validateRoundExportQuery = (input: unknown): ValidatedRoundExportQuery => {
+  const parsed = roundExportQuerySchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw new AppError('Invalid round export format', 400, 'INVALID_ROUND_EXPORT_FORMAT', parsed.error.flatten());
+  }
+
+  return parsed.data;
+};
