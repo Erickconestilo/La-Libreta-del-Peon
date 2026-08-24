@@ -74,13 +74,15 @@ El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XL
 
 ### Mi jornada — implementación local 24-08-2026
 
-El flujo de rondas asignadas ya está implementado localmente: orden explícito
-por administrador, jornada personal agregada, tarjeta en Obras, continuación
+El flujo de rondas asignadas ya está implementado: orden explícito por
+administrador, jornada personal agregada, tarjeta en Obras, continuación
 automática una vez por arranque, aplazamiento local hasta fin de día, panel
 admin y aviso de conflicto si cambia la planificación mientras hay datos
-locales pendientes. La migración 021 está versionada pero no aplicada y el
-backend todavía no se ha desplegado; por tanto, esta parte aún no se declara
-validada en Galaxy ni en producción.
+locales pendientes. La migración 021 ya está aplicada y verificada en Supabase
+(`execution_order` e índice de cola), y la release local `versionCode=2` está
+instalada en el Galaxy. Render todavía sirve `b5de27f` y devuelve 404 en
+`GET /api/v1/me/journey`, así que falta activar el despliegue del backend antes
+de declarar esta parte operativa en producción.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 

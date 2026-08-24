@@ -24,7 +24,7 @@ tabla de tareas.
 - El operador asignado debe ser un topógrafo activo con membresía activa en la
   misma obra. `null` deja la ronda sin asignar.
 - La migración `021_monitoring_round_assignment_order.sql` añade
-  `execution_order`; queda preparada pero no se aplica sin autorización.
+  `execution_order`; ya está aplicada y verificada en Supabase `topofield`.
 
 ## Comportamiento móvil
 
@@ -39,7 +39,9 @@ tabla de tareas.
 
 ## Límites de despliegue
 
-El contrato queda verificado localmente con TypeScript y tests. Para usarlo en
-Galaxy hay que aplicar la migración 021 con autorización explícita, publicar el
-backend compatible y generar una release móvil; ninguna de esas acciones se
-ejecuta como parte de este cambio local.
+El contrato queda verificado localmente con TypeScript y tests, aplicado en
+Supabase y presente en la release instalada en el Galaxy. Render todavía no
+publica el backend compatible: `/api/v1/health` sigue en `b5de27f` y
+`GET /api/v1/me/journey` responde 404. Hasta activar ese despliegue, la tarjeta
+de Mi jornada muestra el aviso de función pendiente y no debe usarse como
+flujo operativo de campo.
