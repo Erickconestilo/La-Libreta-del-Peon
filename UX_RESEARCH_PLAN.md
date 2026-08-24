@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-08-24
 -->
 
 # UX_RESEARCH_PLAN.md — Plan de Investigación UX y Usabilidad
@@ -42,6 +42,30 @@ Las pruebas deben intentar parecerse al uso real:
 - 3 a 5 compañeros de trabajo para primera ronda.
 - 1 admin o encargado para validar lectura de valor operativo.
 - Repetir con al menos 2 personas tras los primeros arreglos importantes.
+
+## Complemento de validación de mercado
+
+La prueba de usabilidad responde si una persona puede usar la app. No responde
+si el problema es suficientemente frecuente para que otra empresa la pruebe.
+Para esa segunda pregunta se harán 5 a 8 entrevistas breves con perfiles
+externos o de otros equipos, sin enseñar primero una demo larga.
+
+Preguntas recomendadas:
+
+- ¿Cómo conserváis hoy fotos, notas, incidencias y referencias de una obra?
+- ¿Qué se pierde o se busca más a menudo entre una jornada y la siguiente?
+- ¿Qué parte sigue en Excel, WhatsApp, papel o en el controlador del equipo?
+- ¿Qué aplicación habéis probado y por qué no sustituyó vuestro flujo?
+- Si una herramienta resolviera este problema, ¿quién tendría que aprobarla?
+- ¿Qué dato nunca confiaríais a una app sin exportación o historial?
+
+No preguntar "¿te gusta mi app?" ni aceptar "suena bien" como evidencia de
+demanda. Registrar ejemplos concretos del último trabajo realizado, frecuencia,
+coste del problema y alternativa actual.
+
+Las entrevistas deben usar una descripción neutra y datos inventados; no se
+comparten nombres de obras, clientes, códigos ni capturas con información
+real.
 
 ## Escenarios mínimos
 ### Escenario 1 — Encontrar estación
@@ -120,6 +144,7 @@ Cada hallazgo debe registrarse con este formato:
 - lista de tareas bloqueadas;
 - lista de mejoras rápidas;
 - lista de ideas fuera de fase;
+- matriz de alternativas actuales y problemas repetidos en entrevistas;
 - decisión explícita:
   - corregir antes del piloto;
   - aceptar para piloto;

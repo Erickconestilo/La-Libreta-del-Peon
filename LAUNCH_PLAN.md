@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-08-24
 -->
 
 # LAUNCH_PLAN.md — Plan de Piloto, Lanzamiento y Activación Inicial
@@ -110,6 +110,23 @@ El piloto se considera útil si permite responder:
 - qué valor ven sin explicación larga;
 - qué seguirían resolviendo fuera de la app;
 - qué correcciones son obligatorias antes de ampliar uso.
+
+## Validación antes de ampliar el piloto
+
+Antes de invitar a otra persona o presentar TopoField como producto, se debe
+completar una validación de campo y una validación de problema:
+
+1. Erick completa una jornada o bloque representativo con una obra asignada,
+   registrando tiempos, errores y bloqueos.
+2. Se entrevista a 5–8 profesionales del perfil objetivo sobre su flujo actual,
+   sin pedirles que evalúen una demo como primera pregunta.
+3. Se comparan los problemas repetidos contra las funciones existentes y se
+   clasifica cada idea como corregir ahora, probar después o descartar.
+4. Solo se prepara una demo o build para terceros cuando el flujo de login,
+   obra, estación, memoria visual y lectura no tenga bloqueos P0/P1 abiertos.
+
+La IA puede ayudar a ordenar notas y comparar alternativas, pero no sustituye
+las entrevistas ni puede considerarse prueba de disposición de pago.
 
 ## Marketing proporcional
 En esta fase, marketing significa:

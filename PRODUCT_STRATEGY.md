@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-08-24
 -->
 
 # PRODUCT_STRATEGY.md — Estrategia de Producto TopoField
@@ -51,6 +51,55 @@ TopoField debe resolver mejor que WhatsApp, notas o memoria informal estos tres 
 **TopoField es una herramienta móvil de campo para no perder contexto, fotos, referencias, rondas de auscultación y decisiones operativas de obra.**
 
 No se presenta como “suite topográfica completa”. Se presenta como una capa operativa simple y útil para trabajar mejor en campo.
+
+## Hipótesis de encaje de producto
+
+La hipótesis que debe validarse no es “los topógrafos necesitan otra app”. Es
+más concreta:
+
+> Equipos pequeños que ya usan software del instrumento, Excel, WhatsApp y
+> fotos sueltas necesitan una capa ligera para conservar contexto de obra,
+> memoria visual, incidencias y rondas de auscultación sin perder trazabilidad.
+
+TopoField no debe competir inicialmente con el software nativo de una estación
+total, con una plataforma GIS completa ni con una suite de monitorización
+automática. Su espacio posible está entre la captura técnica y la coordinación
+operativa diaria.
+
+La hipótesis queda abierta hasta entrevistar a profesionales externos y
+observar una jornada real. La existencia de funciones parecidas en Survey123,
+QField, Trimble o Leica demuestra que offline, formularios, fotos y mapas son
+expectativas del mercado; no demuestra que TopoField tenga una ventaja.
+
+## Alternativas que debemos respetar
+
+Cuando se pregunte por el valor de TopoField, comparar contra el flujo que la
+persona usa hoy, no solo contra otras apps:
+
+- software del controlador de la estación o nivel;
+- Excel o plantillas de campaña;
+- WhatsApp y fotos del teléfono;
+- notas de papel o memoria del equipo;
+- QField/Survey123/GIS cuando ya existe una infraestructura GIS;
+- plataformas del fabricante o de monitorización cuando el proyecto tiene
+  presupuesto y automatización.
+
+La pregunta útil es qué información se pierde entre esas herramientas y qué
+parte merece estar en TopoField. No se debe vender como sustituto universal.
+
+## Criterio de ampliación
+
+Una función nueva entra solo si cumple al menos dos de estas condiciones:
+
+- aparece en tres o más conversaciones independientes;
+- desbloquea una tarea que hoy se abandona o se resuelve fuera;
+- reduce errores o tiempo en una prueba observada;
+- ayuda a justificar adopción ante un encargado;
+- mantiene el foco en equipos pequeños y trabajo de campo.
+
+El croquis avanzado de prismas queda como candidato prioritario, pero se
+define después de observar qué referencia necesita el usuario: norte,
+orientación de estación, PK, tramo, fotografía o un plano base.
 
 ## Evolución aprobada — auscultación MVP
 TopoField empieza desde estaciones, prismas y memoria visual, pero el rumbo de producto aprobado es evolucionar hacia:

@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-08-24
 -->
 
 # Checklist de Piloto
@@ -11,6 +11,8 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 
 Comprobaciones técnicas:
 
+- [ ] Para un `topografo`, el alta de estación exige una obra asignada y no
+  ofrece enviar `Sin obra`; probarlo en el dispositivo antes de una jornada.
 - [ ] **Confirmar que Supabase "topofield" está activo, no pausado**, antes de salir a campo. El free tier lo pausa solo tras varios días de inactividad (pasó el 02-08-2026); si está pausado, login y toda la app fallan sin que haya ningún bug en el código. Reactivar es gratis y no destructivo, pero tarda 1-2 minutos en levantar.
 - [ ] Confirmar que la cuenta tecnica de Erick entra y conserva sesion ante un fallo transitorio de red.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
@@ -24,6 +26,9 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 - [ ] Cronometrar seis escenarios reales: entrar a una obra, localizar una estacion, revisar memoria visual, anadir foto o nota, registrar una lectura de ronda, consultar historico.
 - [ ] Anotar cada duda, bloqueo, paso sobrante y elemento que se ignora, en el momento y no de memoria al final de la jornada.
 - [ ] Clasificar cada hallazgo en fallo real, friccion UX o deseo fuera de fase, y decidir por cada uno: se corrige antes del Paso 2, se corrige despues, o se acepta.
+- [ ] Hablar con 5-8 profesionales o equipos comparables sobre su flujo actual,
+  pérdidas de contexto y alternativas; registrar ejemplos concretos, no solo
+  opiniones sobre la demo.
 - [ ] No arreglar nada durante la jornada salvo un bloqueo total: anotar y seguir. Corregir sobre la marcha destruye la medicion.
 
 ## Paso 2 - Sumar a otra persona del equipo
