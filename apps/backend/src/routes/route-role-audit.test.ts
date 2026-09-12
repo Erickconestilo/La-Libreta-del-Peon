@@ -42,7 +42,7 @@ const auscultacionRoutesFromProjectsRouter: RouteExpectation[] = [
   { method: 'get', path: '/:projectId/control-points', mustExcludeVisitante: true }
 ];
 
-const findAllowedRoles = (router: Router, method: string, path: string): Array<'admin' | 'topografo' | 'visitante'> | null => {
+const findAllowedRoles = (router: Router, method: string, path: string): Array<'admin' | 'topografo' | 'supervisor' | 'visitante'> | null => {
   for (const layer of router.stack as unknown as Array<{ route?: { path: string; stack: Array<{ method: string; handle: unknown }> } }>) {
     if (!layer.route || layer.route.path !== path) continue;
 
@@ -88,6 +88,13 @@ auditRouter('projectsRouter', projectsRouter, auscultacionRoutesFromProjectsRout
 test('project operators route is admin-only', () => {
   const allowedRoles = findAllowedRoles(projectsRouter, 'get', '/:projectId/operators');
   assert.deepEqual(allowedRoles, ['admin']);
+});
+
+test('read-only monitoring routes allow supervisor while write routes do not', () => {
+  assert.deepEqual(findAllowedRoles(roundsRouter, 'get', '/:roundId'), ['admin', 'topografo', 'supervisor']);
+  assert.deepEqual(findAllowedRoles(roundsRouter, 'post', '/:roundId/completion-reports'), ['admin', 'topografo']);
+  assert.deepEqual(findAllowedRoles(roundsRouter, 'get', '/:roundId/export'), ['admin', 'topografo']);
+  assert.deepEqual(findAllowedRoles(controlPointsRouter, 'get', '/:controlPointId/readings'), ['admin', 'topografo', 'supervisor']);
 });
 
 test('personal journey route excludes visitor', () => {

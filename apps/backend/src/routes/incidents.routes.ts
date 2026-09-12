@@ -9,7 +9,7 @@ export const incidentsRouter = Router();
 incidentsRouter.get(
   '/',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateOptionalUuidQuery('stationId'),
   listIncidentsController
 );

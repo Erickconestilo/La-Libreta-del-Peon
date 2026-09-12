@@ -26,20 +26,20 @@ export const stationsRouter = Router();
 stationsRouter.get(
   '/',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateOptionalUuidQuery('projectId'),
   listStationsController
 );
 stationsRouter.get(
   '/messages',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   listRecentStationMessagesController
 );
 stationsRouter.get(
   '/:stationId/photos',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateUuidParam('stationId'),
   listStationPhotosController
 );
@@ -61,7 +61,7 @@ stationsRouter.delete(
 stationsRouter.get(
   '/:stationId/messages',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('stationId'),
   listStationMessagesController
 );
@@ -75,14 +75,14 @@ stationsRouter.post(
 stationsRouter.get(
   '/:stationId/prisms',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateUuidParam('stationId'),
   listStationPrismsController
 );
 stationsRouter.get(
   '/:stationId',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateUuidParam('stationId'),
   getStationByIdController
 );

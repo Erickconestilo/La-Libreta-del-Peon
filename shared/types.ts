@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'topografo' | 'visitante';
+export type UserRole = 'admin' | 'topografo' | 'supervisor' | 'visitante';
 export type AuthProvider = 'guest' | 'supabase';
 export type ProjectAccessLevel = 'read' | 'write';
 

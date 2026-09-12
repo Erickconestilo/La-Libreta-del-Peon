@@ -20,12 +20,12 @@ import { validateUuidParam } from '../middleware/validate-uuid.js';
 
 export const projectsRouter = Router();
 
-projectsRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listProjectsController);
+projectsRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'supervisor', 'visitante']), listProjectsController);
 projectsRouter.post('/', requireAuth, requireRole(['admin']), createProjectController);
 projectsRouter.get(
   '/:projectId/code-catalog',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('projectId'),
   listProjectCodeCatalogController
 );
@@ -40,7 +40,7 @@ projectsRouter.post(
 projectsRouter.get(
   '/:projectId',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateUuidParam('projectId'),
   getProjectByIdController
 );
@@ -54,7 +54,7 @@ projectsRouter.patch(
 projectsRouter.get(
   '/:projectId/rounds',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('projectId'),
   listMonitoringRoundsController
 );
@@ -75,7 +75,7 @@ projectsRouter.post(
 projectsRouter.get(
   '/:projectId/control-points',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('projectId'),
   listControlPointsController
 );

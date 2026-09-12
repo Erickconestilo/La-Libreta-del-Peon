@@ -26,6 +26,6 @@ export const getUserProfileById = async (userId: string) => {
     fullName: row.full_name as string,
     id: row.id as string,
     isActive: row.is_active as boolean,
-    role: row.role as 'admin' | 'topografo' | 'visitante'
+    role: row.role as 'admin' | 'topografo' | 'supervisor' | 'visitante'
   };
 };

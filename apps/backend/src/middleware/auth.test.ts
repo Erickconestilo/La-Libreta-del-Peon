@@ -59,7 +59,7 @@ const buildRequest = (user: AuthenticatedUser | undefined): Request => {
   return { user } as unknown as Request;
 };
 
-const runMiddleware = async (roles: Array<'admin' | 'topografo' | 'visitante'>, user: AuthenticatedUser | undefined) => {
+const runMiddleware = async (roles: Array<'admin' | 'topografo' | 'supervisor' | 'visitante'>, user: AuthenticatedUser | undefined) => {
   const request = buildRequest(user);
   const { response, state } = buildResponse();
   let nextCalledWith: unknown = 'not-called';
@@ -109,4 +109,21 @@ test('las 5 rutas de auscultación restringidas el 02-08-2026 (D1) rechazan a vi
     const { nextCalledWith } = await runMiddleware(auscultacionRoles, user);
     assert.equal(nextCalledWith, null, `${user.role} debe poder pasar con los roles de auscultación`);
   }
+});
+
+test('requireRole permite al supervisor solo cuando la ruta lo declara', async () => {
+  const supervisorUser: AuthenticatedUser = {
+    authProvider: 'supabase',
+    email: 'supervisor@topofield.local',
+    id: 'supervisor-user',
+    projectIds: ['project-a'],
+    projectAccess: { 'project-a': 'read' },
+    role: 'supervisor'
+  };
+
+  const allowed = await runMiddleware(['admin', 'topografo', 'supervisor'], supervisorUser);
+  assert.equal(allowed.nextCalledWith, null);
+
+  const denied = await runMiddleware(['admin', 'topografo'], supervisorUser);
+  assert.equal(denied.state.statusCode, 403);
 });

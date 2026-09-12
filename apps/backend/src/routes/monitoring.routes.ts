@@ -32,7 +32,7 @@ roundsRouter.get(
 roundsRouter.get(
   '/:roundId',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('roundId'),
   getMonitoringRoundDetailController
 );
@@ -48,7 +48,7 @@ roundsRouter.patch(
 roundsRouter.get(
   '/:roundId/completion-reports',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('roundId'),
   listWorkCompletionReportsController
 );
@@ -97,7 +97,7 @@ controlPointsRouter.patch(
 controlPointsRouter.get(
   '/:controlPointId/readings',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('controlPointId'),
   getReadingHistoryController
 );
@@ -113,7 +113,7 @@ controlPointsRouter.post(
 controlPointsRouter.get(
   '/:controlPointId/thresholds',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateUuidParam('controlPointId'),
   listControlPointThresholdsController
 );
