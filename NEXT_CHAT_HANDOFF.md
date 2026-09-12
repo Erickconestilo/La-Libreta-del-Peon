@@ -71,6 +71,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
    SQLite por sesión y estación más el outbox (migración local 007). Después
    decidir el croquis fotográfico según evidencia y no según una demo.
 7. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
+8. Alinear las 12 dependencias Expo detectadas por `npx expo install --check`
+   en un bloque aislado, sin mezclar el diff previo de `apps/mobile/package.json`.
 
 ## Cambios locales que no se deben mezclar
 
@@ -106,7 +108,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   quedan pendientes.
 - Verificación local posterior a los borradores: backend compila y tiene
   `85/85` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
-  `73` tests. `docs:check` revisa 35 documentos sin avisos.
+  `73` tests. `docs:check` revisa 36 documentos sin avisos. La comprobación
+  Expo sigue pendiente: detecta 12 actualizaciones compatibles no aplicadas.
 
 ## Comandos de verificación
 
