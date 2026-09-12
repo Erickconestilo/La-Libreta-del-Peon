@@ -68,7 +68,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó y verificó la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la instalación y validación física siguen pendientes porque ADB no detecta el Galaxy.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.
 
@@ -92,17 +92,22 @@ Las migraciones `022_project_membership_access_level.sql`,
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
 Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2`.
 La fuente y la release móvil local están preparadas con `versionCode=4`; la
-firma y el APK universal fueron verificados. La siguiente puerta es instalarla
-en Galaxy y validar: montaje/referencia, captura, incidencia, parte parcial,
-cierre, reconexión sin duplicados y consulta desde la cuenta supervisora de
-solo lectura.
+firma y el APK universal fueron verificados. La release se instaló en el Galaxy
+`SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
+consulta supervisora también quedó validada: login real, única obra
+`Campus Nord`, rondas, punto, histórico y evidencia visibles; la UI muestra
+consulta sin escritura. La siguiente puerta es validar con la cuenta operador
+el recorrido de preparación, captura offline, parte parcial, cierre,
+reconexión sin duplicados y exportación manual.
 
 El rol global `supervisor` está implementado en `026_supervisor_role.sql` y en
 la app móvil: consulta acotada por membresía, sin Mi jornada ni controles de
 escritura, outbox reintentable o exportación. La migración está aplicada en
 Supabase, Render reconoce el rol y la cuenta `supervisor-piloto@topofield.local`
-tiene una única membresía activa `read` en `campus-nord`. Solo sigue pendiente
-la validación física en Galaxy.
+tiene una única membresía activa `read` en `campus-nord`. En Galaxy se
+confirmaron el perfil `Supervisor`, la obra autorizada, la consulta de ronda,
+el histórico y una evidencia, además de la persistencia de sesión tras
+reinicio. La validación del operador offline sigue pendiente.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
