@@ -18,6 +18,7 @@ import { enqueue } from '@/lib/offline/outbox';
 import {
   getCachedMountingVisit,
   getCachedMountingVisits,
+  mergeCachedMountingVisitUpdate,
   mergeServerMountingVisits,
   saveMountingVisits,
   type CachedMountingEvidence,
@@ -141,7 +142,10 @@ const createMountingVisit = async ({
   const clientRequestId = createRandomId();
   if (await hasConnectivity()) {
     try {
-      return await createMountingVisitRequest(stationId, input, clientRequestId);
+      const remoteVisit = await createMountingVisitRequest(stationId, input, clientRequestId);
+      const cached = getCachedMountingVisits(cacheKey, stationId)?.visits ?? [];
+      saveMountingVisits(cacheKey, stationId, [remoteVisit, ...cached.filter((visit) => visit.clientRequestId !== clientRequestId)]);
+      return remoteVisit;
     } catch (error) {
       if (!shouldQueueMountingOperation(error)) throw error;
     }
@@ -166,13 +170,73 @@ const createMountingVisit = async ({
   return localVisit;
 };
 
-const updateMountingVisit = async (stationId: string, visitId: string, input: UpdateMountingVisitInput) => {
-  const response = await apiFetch<ApiEnvelope<MountingVisit>>(`/stations/${stationId}/mounting-visits/${visitId}`, {
-    body: JSON.stringify(input),
-    method: 'PATCH'
+const updateMountingVisit = async ({
+  cacheKey,
+  input,
+  sessionId,
+  stationId,
+  visitId
+}: {
+  cacheKey: string;
+  input: UpdateMountingVisitInput;
+  sessionId: string | null;
+  stationId: string;
+  visitId: string;
+}) => {
+  if (!sessionId) {
+    throw new Error('Necesitas una sesión técnica para actualizar la visita.');
+  }
+
+  if (await hasConnectivity()) {
+    try {
+      const response = await apiFetch<ApiEnvelope<MountingVisit>>(`/stations/${stationId}/mounting-visits/${visitId}`, {
+        body: JSON.stringify(input),
+        method: 'PATCH'
+      });
+
+      return response.data;
+    } catch (error) {
+      if (!shouldQueueMountingOperation(error)) throw error;
+    }
+  }
+
+  const cachedVisit = getCachedMountingVisit(cacheKey, stationId, visitId);
+  if (!cachedVisit) {
+    throw new Error('No se pudo conservar el estado de la visita sin conexión. Vuelve a cargar la memoria de montaje e inténtalo de nuevo.');
+  }
+
+  const now = new Date().toISOString();
+  const updatedVisit = mergeCachedMountingVisitUpdate(cachedVisit, input, now);
+  const updateClientRequestId = createRandomId();
+
+  const cachedVisits = getCachedMountingVisits(cacheKey, stationId)?.visits ?? [];
+  saveMountingVisits(
+    cacheKey,
+    stationId,
+    [updatedVisit, ...cachedVisits.filter((visit) => visit.id !== visitId)]
+  );
+  enqueue({
+    clientRequestId: updateClientRequestId,
+    entityType: 'medicion',
+    id: createRandomId(),
+    operation: 'update',
+    sessionId,
+    payload: {
+      kind: 'mounting_visit_update',
+      stationId,
+      updateInput: input,
+      visitClientRequestId: cachedVisit.clientRequestId,
+      visitId,
+      visitInput: {
+        changeSummary: cachedVisit.changeSummary,
+        notes: cachedVisit.notes,
+        status: 'draft',
+        visitedAt: cachedVisit.visitedAt
+      }
+    }
   });
 
-  return response.data;
+  return updatedVisit;
 };
 
 const requestSignedMountingEvidenceUpload = async ({
@@ -408,7 +472,13 @@ export const useMountingVisitMutations = (stationId: string | null, projectId: s
         throw new Error('Falta el id de estación para actualizar la visita.');
       }
 
-      return updateMountingVisit(stationId, visitId, input);
+      return updateMountingVisit({
+        cacheKey: sessionCacheKey,
+        input,
+        sessionId: activeSessionId,
+        stationId,
+        visitId
+      });
     },
     onSuccess: invalidateAndFlush
   });

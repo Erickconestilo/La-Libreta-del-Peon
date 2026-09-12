@@ -1,4 +1,4 @@
-import type { MountingEvidence, MountingVisit } from '@shared/types';
+import type { MountingEvidence, MountingVisit, UpdateMountingVisitInput } from '@shared/types';
 
 import { getDatabase } from './database';
 
@@ -80,6 +80,19 @@ export const upsertCachedMountingVisit = (
   const next = current.filter((item) => item.id !== visit.id && item.clientRequestId !== visit.clientRequestId);
   saveMountingVisits(cacheKey, stationId, [visit, ...next]);
 };
+
+export const mergeCachedMountingVisitUpdate = (
+  visit: CachedMountingVisit,
+  input: UpdateMountingVisitInput,
+  updatedAt: string
+): CachedMountingVisit => ({
+  ...visit,
+  ...(input.changeSummary !== undefined ? { changeSummary: input.changeSummary } : {}),
+  ...(input.notes !== undefined ? { notes: input.notes } : {}),
+  ...(input.status !== undefined ? { status: input.status } : {}),
+  syncState: 'pending',
+  updatedAt
+});
 
 export const upsertCachedMountingEvidence = (
   cacheKey: string,

@@ -5,6 +5,7 @@ import type { MountingVisit } from '@shared/types';
 import { applyMigrations, closeDatabase, getDatabase } from '../database';
 import {
   getCachedMountingVisits,
+  mergeCachedMountingVisitUpdate,
   mergeServerMountingVisits,
   saveMountingVisits,
   type CachedMountingVisit
@@ -58,5 +59,14 @@ describe('mounting visit cache', () => {
     expect(mergeServerMountingVisits([serverVisit], [cachedPendingVisit])).toEqual([
       expect.objectContaining({ id: 'server-visit-id', notes: 'Versión del servidor' })
     ]);
+  });
+
+  it('merges an offline status update without losing the visit identity', () => {
+    expect(mergeCachedMountingVisitUpdate(cachedPendingVisit, { status: 'completed' }, '2026-09-12T10:00:00.000Z')).toEqual({
+      ...cachedPendingVisit,
+      status: 'completed',
+      syncState: 'pending',
+      updatedAt: '2026-09-12T10:00:00.000Z'
+    });
   });
 });

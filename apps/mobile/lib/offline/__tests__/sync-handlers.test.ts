@@ -225,6 +225,46 @@ describe('syncOutboxItem', () => {
     );
   });
 
+  it('resolves a local mounting visit before applying an offline status update', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce({ data: { id: 'visit-server-id' }, error: null } as never)
+      .mockResolvedValueOnce({ data: { id: 'visit-server-id', status: 'completed' }, error: null } as never);
+
+    const updateItem: OutboxItem = {
+      ...mountingVisitItem,
+      clientRequestId: '6c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      id: '5c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      operation: 'update',
+      payload: {
+        kind: 'mounting_visit_update',
+        stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
+        updateInput: { status: 'completed' },
+        visitClientRequestId: mountingVisitItem.clientRequestId,
+        visitId: 'local-visit-id',
+        visitInput: mountingVisitItem.payload.visitInput
+      }
+    };
+
+    await syncOutboxItem(updateItem);
+
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      1,
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits',
+      expect.objectContaining({
+        body: expect.stringContaining(`"clientRequestId":"${mountingVisitItem.clientRequestId}"`),
+        method: 'POST'
+      })
+    );
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      2,
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits/visit-server-id',
+      {
+        body: JSON.stringify({ status: 'completed' }),
+        method: 'PATCH'
+      }
+    );
+  });
+
   it('resolves a local mounting visit before uploading its evidence', async () => {
     mockApiFetch
       .mockResolvedValueOnce({

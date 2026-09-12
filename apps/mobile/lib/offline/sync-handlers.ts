@@ -26,6 +26,8 @@ export const syncOutboxItem = async (item: OutboxItem): Promise<void> => {
       await syncReadingAttachment(item);
     } else if (item.payload.kind === 'mounting_evidence') {
       await syncMountingEvidence(item);
+    } else if (item.payload.kind === 'mounting_visit_update') {
+      await syncMountingVisitUpdate(item);
     } else if (item.payload.kind === 'mounting_visit') {
       await syncMountingVisit(item);
     } else if (item.payload.kind === 'work_completion_report') {
@@ -128,6 +130,50 @@ const syncMountingVisit = async (item: OutboxItem): Promise<void> => {
 
   if (!response.data) {
     throw new Error('Server returned no mounting visit');
+  }
+};
+
+const syncMountingVisitUpdate = async (item: OutboxItem): Promise<void> => {
+  const stationId = item.payload.stationId;
+  const visitId = item.payload.visitId;
+  const visitClientRequestId = item.payload.visitClientRequestId;
+  const visitInput = item.payload.visitInput;
+  const updateInput = item.payload.updateInput;
+
+  if (
+    typeof stationId !== 'string' ||
+    typeof visitId !== 'string' ||
+    typeof visitClientRequestId !== 'string' ||
+    !visitInput ||
+    typeof visitInput !== 'object' ||
+    !updateInput ||
+    typeof updateInput !== 'object'
+  ) {
+    throw new Error('Invalid mounting visit update outbox payload');
+  }
+
+  const visitResponse = await apiFetch<ApiEnvelope<MountingVisit>>(`/stations/${stationId}/mounting-visits`, {
+    body: JSON.stringify({
+      clientRequestId: visitClientRequestId,
+      ...(visitInput as Record<string, unknown>)
+    }),
+    method: 'POST'
+  });
+
+  if (!visitResponse.data) {
+    throw new Error('Server returned no mounting visit for update');
+  }
+
+  const response = await apiFetch<ApiEnvelope<MountingVisit>>(
+    `/stations/${stationId}/mounting-visits/${visitResponse.data.id}`,
+    {
+      body: JSON.stringify(updateInput),
+      method: 'PATCH'
+    }
+  );
+
+  if (!response.data) {
+    throw new Error('Server returned no updated mounting visit');
   }
 };
 
