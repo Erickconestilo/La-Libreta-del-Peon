@@ -170,6 +170,12 @@ function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boo
                 }}
               />
               <Stack.Screen
+                name="rounds/[roundId]/summary"
+                options={{
+                  title: 'Resumen de ronda'
+                }}
+              />
+              <Stack.Screen
                 name="history"
                 options={{
                   title: 'Historial'

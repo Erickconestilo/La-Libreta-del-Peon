@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChoiceChip, formatShortDate, StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useControlPoints, useReadingHistory, useUpdateControlPoint } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 export default function ControlPointDetailScreen() {
@@ -19,7 +20,7 @@ export default function ControlPointDetailScreen() {
   const [instrumentType, setInstrumentType] = useState<MonitoringInstrumentType | undefined>(undefined);
   const { data, errorMessage, isLoading, isRefetching, refetch } = useReadingHistory(controlPointId ?? null, instrumentType);
   const { errorMessage: updateError, isUpdating, updateControlPoint } = useUpdateControlPoint(projectId ?? null, controlPointId ?? null);
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
   const pointCode = point?.code ?? (Array.isArray(params.code) ? params.code[0] : params.code) ?? 'Punto';
   const pointName = point?.name ?? (Array.isArray(params.name) ? params.name[0] : params.name);
 
@@ -70,6 +71,7 @@ const styles = StyleSheet.create({
   readingTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   secondaryButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  readOnlyLabel: { color: '#7dd3fc', fontSize: 12, fontWeight: '800' },
   sectionTitle: { color: colors.textPrimary, fontSize: typography.fontSizeTitle, fontWeight: '900', marginTop: spacing[1] },
   title: { color: colors.textPrimary, fontSize: 28, fontWeight: '900' },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },

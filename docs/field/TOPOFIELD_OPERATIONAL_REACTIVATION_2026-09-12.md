@@ -33,6 +33,9 @@ observada y entrevistas con profesionales.
   `partial`, `completed` y `blocked`, conteos calculados y motivos pendientes.
 - El parte usa el outbox existente para sobrevivir a pérdida de cobertura y
   reinicio; una respuesta del servidor es la única que cuenta como recibida.
+- La consulta supervisora en móvil puede abrir una ronda, revisar sus puntos,
+  leer el histórico recibido y consultar el resumen, pero no muestra controles
+  de escritura para una membresía `read`.
 - Formularios iniciales para testigo fotográfico, fisurómetro digital,
   potenciómetro con pares amarillo-azul, amarillo-marrón y azul-marrón, y
   tipos explícitos para clinómetro/cinta sin afirmar que el protocolo esté

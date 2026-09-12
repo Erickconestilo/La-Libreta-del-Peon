@@ -107,11 +107,10 @@ export default function MonitoringRoundDetailScreen() {
             const status = pointStatus[item.status];
             return (
               <Pressable
-                disabled={!canEdit}
                 onPress={() => router.push({ pathname: '/round-points/[roundPointId]/reading', params: { controlPointId: item.controlPointId, code: item.controlPointCode, instrumentType: item.expectedInstrumentType, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)}
                 style={[styles.pointCard, !canEdit ? styles.disabled : null]}
               >
-                <View style={styles.cardTop}><StatePill label={status.label} tone={status.tone} />{canEdit ? <RowChevron /> : null}</View>
+                <View style={styles.cardTop}><StatePill label={status.label} tone={status.tone} />{canEdit ? <RowChevron /> : <Text style={styles.readOnlyLabel}>Consulta</Text>}</View>
                 <Text style={styles.pointCode}>{item.controlPointCode}</Text>
                 <Text numberOfLines={1} style={styles.pointName}>{item.controlPointName ?? 'Sin nombre'}</Text>
                 <Text style={styles.meta}>{instrument?.label ?? item.expectedInstrumentType}</Text>
@@ -149,6 +148,7 @@ const styles = StyleSheet.create({
   pointName: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
   primaryButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.accentGreen, borderRadius: 8, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
+  readOnlyLabel: { color: '#7dd3fc', fontSize: 12, fontWeight: '800' },
   secondaryButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   successText: { color: colors.accentGreen, fontSize: 13, fontWeight: '800', lineHeight: 20 },
