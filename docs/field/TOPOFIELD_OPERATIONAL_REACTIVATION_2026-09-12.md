@@ -39,6 +39,9 @@ observada y entrevistas con profesionales.
 - El resumen puede preparar una entrega autenticada en `CSV` o `XLSX` y abrir
   la hoja nativa de compartir. La aplicación no envía el archivo por su cuenta
   ni lo marca como entregado o revisado: esa confirmación sigue siendo manual.
+- La exportación exige permiso efectivo `write`. Una cuenta supervisora con
+  membresía `read` puede consultar ronda, puntos, histórico y partes recibidos,
+  pero no puede generar ni compartir una exportación.
 - Formularios iniciales para testigo fotográfico, fisurómetro digital,
   potenciómetro con pares amarillo-azul, amarillo-marrón y azul-marrón, y
   tipos explícitos para clinómetro/cinta sin afirmar que el protocolo esté

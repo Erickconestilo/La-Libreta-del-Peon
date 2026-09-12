@@ -99,6 +99,18 @@ test('read-only project membership can consult but cannot write', () => {
   );
 });
 
+test('read-only project membership cannot export operational data', () => {
+  const supervisorMembership = {
+    ...surveyorA,
+    projectAccess: { [projectA]: 'read' as const }
+  };
+
+  assert.throws(
+    () => assertProjectWriteAccess(supervisorMembership, projectA),
+    (error: unknown) => error instanceof AppError && error.code === 'READ_ONLY_PROJECT_MEMBERSHIP'
+  );
+});
+
 test('canActorAccessProject mirrors access semantics for each role', () => {
   assert.equal(canActorAccessProject(adminUser, null), true);
   assert.equal(canActorAccessProject(visitorUser, 'whatever'), true);

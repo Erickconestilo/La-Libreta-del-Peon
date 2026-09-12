@@ -315,6 +315,13 @@ export const exportMonitoringRoundController = async (request: Request, response
   try {
     const roundId = routeParam(request, 'roundId');
     const { format } = validateRoundExportQuery(request.query);
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+
+    if (!round) {
+      throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    }
+
+    assertProjectWriteAccess(request.user, round.projectId);
     const rows = await getMonitoringRoundExportRows(roundId, getActorProjectScope(request.user));
 
     if (!rows) {
