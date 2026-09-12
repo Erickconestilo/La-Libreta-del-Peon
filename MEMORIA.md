@@ -356,8 +356,9 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
   compartidos, rutas protegidas y pantalla móvil para visitas append-only con
   evidencias fotográficas. El servidor deriva el `project_id` de la estación,
   valida permiso `write`, comprueba rutas exactas de Storage y conserva
-  `clientRequestId` para reintentos. Supervisor puede consultar, pero no
-  escribir. Verificación local: backend build y `83/83` tests; TypeScript
+  `clientRequestId` para reintentos. La visita nueva nace como `draft` y se
+  puede marcar como realizada o no realizable desde la UI. Supervisor puede
+  consultar, pero no escribir. Verificación local: backend build y `85/85` tests; TypeScript
   móvil limpio y `14` suites/`64` tests. Pendientes: autorización/aplicación
   remota, despliegue y validación real de cámara/Storage en Galaxy.
 - **Auditoría de dependencia del exportador (24-08-2026):** `exceljs@4.4.0` queda instalado. `npm audit --workspace apps/backend --omit=dev` devuelve 2 vulnerabilidades moderadas transitivas de `uuid`; la corrección disponible exige `npm audit fix --force` y degradaría ExcelJS a `3.4.0`, por lo que queda pendiente revisión explícita antes de producción.

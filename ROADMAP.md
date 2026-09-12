@@ -147,7 +147,8 @@ que el actor tenga permiso `write`, que una evidencia use la ruta exacta de
 su visita y que un prisma opcional pertenezca a la misma obra. El supervisor
 puede consultar visitas a través de la ruta protegida, pero no crear visitas
 ni evidencias. La pantalla móvil `Visitas de montaje` ya permite abrir una
-visita, añadir fotos desde cámara/galería y consultar el historial.
+visita, añadir fotos desde cámara/galería, marcarla como realizada o no
+realizable y consultar el historial.
 
 Este bloque es implementación local, no validación de campo: siguen
 pendientes aplicar la migración con autorización, desplegar el contrato y

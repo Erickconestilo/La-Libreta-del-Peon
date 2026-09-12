@@ -32,6 +32,7 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 
 - `GET /api/v1/stations/:stationId/mounting-visits`
 - `POST /api/v1/stations/:stationId/mounting-visits`
+- `PATCH /api/v1/stations/:stationId/mounting-visits/:visitId`
 - `POST /api/v1/stations/:stationId/mounting-visits/:visitId/evidence`
 - `POST /api/v1/uploads/photos/sign` con `entityType=mounting_visit`
 
@@ -46,6 +47,10 @@ La posición es relativa a la fotografía, no una coordenada geográfica. Esta
 versión no afirma orientación norte, precisión métrica, visibilidad actual ni
 soporte CAD. El `prismId` queda opcional para no obligar a inventar una
 identidad cuando el código solo se puede leer visualmente en campo.
+
+Una visita nueva siempre empieza en `draft`. Solo una actualización autenticada
+con permiso `write` puede marcarla `completed` o `blocked`; eso evita que una
+creación incompleta se presente como trabajo ya realizado.
 
 ## Estado Y Verificación
 

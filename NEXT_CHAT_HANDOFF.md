@@ -88,7 +88,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   validación física de respuestas tardías entre cuentas sigue pendiente.
 - La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
   append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
-  montaje`. No se ha aplicado la migración ni se ha desplegado el endpoint;
+  montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.
+  No se ha aplicado la migración ni se ha desplegado el endpoint;
   la validación física y la comprobación de almacenamiento quedan pendientes.
 
 ## Comandos de verificación
