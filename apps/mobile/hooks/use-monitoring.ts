@@ -20,7 +20,7 @@ import type {
 } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
-import { enqueue, getPendingCount, getRoundOutboxItems } from '@/lib/offline/outbox';
+import { enqueue, enqueueMany, getPendingCount, getRoundOutboxItems, type EnqueueParams } from '@/lib/offline/outbox';
 import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
@@ -887,7 +887,7 @@ export const useCreateInstrumentReading = ({
         }
       }
 
-      enqueue({
+      const outboxItems: EnqueueParams[] = [{
         clientRequestId,
         entityType: 'medicion',
         id: createRandomId(),
@@ -897,22 +897,32 @@ export const useCreateInstrumentReading = ({
           roundId: roundId as string,
           roundPointId
         }
-      });
+      }];
 
       if (persistentPhoto && attachmentClientRequestId) {
-        enqueueReadingAttachment({
-          notes: null,
-          photo: persistentPhoto,
-          readingClientRequestId: clientRequestId,
-          readingInput,
-          roundId: roundId as string,
-          roundPointId,
-          title: null
-        }, attachmentClientRequestId);
+        outboxItems.push({
+          clientRequestId: attachmentClientRequestId,
+          entityType: 'medicion',
+          id: createRandomId(),
+          operation: 'update',
+          payload: {
+            kind: 'reading_attachment',
+            notes: null,
+            photo: persistentPhoto,
+            readingClientRequestId: clientRequestId,
+            readingInput,
+            roundId: roundId as string,
+            roundPointId,
+            title: null
+          }
+        });
       }
 
+      enqueueMany(outboxItems);
+
       console.log(
-        `[useCreateInstrumentReading] Enqueued reading with clientRequestId ${clientRequestId} for later sync`
+        `[useCreateInstrumentReading] Enqueued reading ${clientRequestId}` +
+        `${persistentPhoto ? ` and photo attachment ${attachmentClientRequestId}` : ''} for later sync`
       );
 
       return { clientRequestId, mode: 'queued', photoPending: Boolean(persistentPhoto) };

@@ -25,7 +25,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — Supabase actualizado y cuenta supervisora preparada; falta desplegar el rol, generar/instalar Android v4 y validar en Galaxy** | PLAN Fase 4 (nunca ejecutada) |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor y release v4 ya validados; corrección de adjuntos pendiente de desplegar** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato y generación local implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local inicial:** testigo fotográfico, fisurómetro digital, potenciómetro y parte de zona; pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
@@ -68,7 +68,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó y verificó la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la instalación y validación física siguen pendientes porque ADB no detecta el Galaxy.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos, pero aún está solo en la rama local. Falta desplegarlo y ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.
 
@@ -90,19 +90,24 @@ La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada r
 Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
-Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2`.
+Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2`; el commit local `b0572a0` todavía no está desplegado.
 La fuente y la release móvil local están preparadas con `versionCode=4`; la
-firma y el APK universal fueron verificados. La siguiente puerta es instalarla
-en Galaxy y validar: montaje/referencia, captura, incidencia, parte parcial,
-cierre, reconexión sin duplicados y consulta desde la cuenta supervisora de
-solo lectura.
+firma y el APK universal fueron verificados. La release se instaló en el Galaxy
+`SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
+consulta supervisora también quedó validada: login real, única obra
+`Campus Nord`, rondas, punto, histórico y evidencia visibles; la UI muestra
+consulta sin escritura. La siguiente puerta es desplegar `b0572a0` y validar con la cuenta operador
+el recorrido de preparación, captura offline, parte parcial, cierre,
+reconexión sin duplicados y exportación manual.
 
 El rol global `supervisor` está implementado en `026_supervisor_role.sql` y en
 la app móvil: consulta acotada por membresía, sin Mi jornada ni controles de
 escritura, outbox reintentable o exportación. La migración está aplicada en
 Supabase, Render reconoce el rol y la cuenta `supervisor-piloto@topofield.local`
-tiene una única membresía activa `read` en `campus-nord`. Solo sigue pendiente
-la validación física en Galaxy.
+tiene una única membresía activa `read` en `campus-nord`. En Galaxy se
+confirmaron el perfil `Supervisor`, la obra autorizada, la consulta de ronda,
+el histórico y una evidencia, además de la persistencia de sesión tras
+reinicio. La validación del operador offline sigue pendiente.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 

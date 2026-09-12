@@ -79,23 +79,41 @@ actualización. Una foto no prueba una medición; un parte parcial no cierra una
 ronda; una lectura fuera de umbral es apoyo operativo y no una alerta
 certificada de seguridad.
 
+## Validación Galaxy completada el 12-09-2026
+
+La release local `versionCode=4` se instaló en el Galaxy `SM-S938B`, serial
+`R5CY21X6FLE`, con `adb install -r`, cuyo resultado literal fue `Success`.
+
+Con la cuenta supervisora se verificó en pantalla:
+
+- Perfil: `Supervisor` y correo `supervisor-piloto@topofield.local`.
+- Obras: solo `Campus Nord`.
+- Obra: aviso literal de consulta supervisora y acciones de escritura
+  desactivadas.
+- Rondas: `E2E-Galaxy-20260731-Atc` abrió correctamente.
+- Punto: aparece como `Consulta` y sin formulario de captura.
+- Histórico: se muestran lecturas recibidas (`7 mm` y `5 mm`) y una evidencia
+  asociada.
+- Reinicio: tras `force-stop` y reapertura la app volvió a abrir dentro de la
+  obra autorizada, sin mostrar `Sin sesión`.
+
+La validación supervisora está cerrada. No se borró la cuenta temporal ni se
+modificaron datos remotos durante esta prueba.
+
 ## Pendiente antes de declarar el bloque operativo
 
-1. Instalar en el Galaxy la release local `versionCode=4` ya generada y verificada.
-2. Validar online/offline: montaje, referencia, captura, incidencia, parte
-   parcial, cierre, reinicio, reconexión e idempotencia.
-3. Desplegar la rama que contiene el rol `supervisor`, generar la release
-   local `versionCode=4`, instalarla en Galaxy y probar lectura contra
-   escritura con la cuenta sintética.
-4. Confirmar con datos autorizados el formato de exportación y el canal de
+1. Validar con una cuenta operadora autorizada el recorrido online/offline:
+   montaje, referencia, captura, incidencia, parte parcial, cierre, reinicio,
+   reconexión e idempotencia.
+2. Confirmar con datos autorizados el formato de exportación y el canal de
    entrega; no enviar automáticamente por WhatsApp o correo.
 
 Las migraciones `022`, `023`, `024` y `026` ya están aplicadas en el proyecto
 Supabase `topofield`. La cuenta `supervisor-piloto@topofield.local` tiene rol
 global `supervisor` y una única membresía activa `read` en `campus-nord`.
-Render sirve el commit F5 anterior; todavía falta desplegar el commit que
-contiene el rol supervisor. La instalación física no se ha podido completar
-en esta sesión porque `adb devices` no detecta el Galaxy.
+Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2` y
+reconoce el rol supervisor. La instalación física y la consulta supervisora
+están verificadas; queda la validación de escritura/offline con el operador.
 
 ## Próximas decisiones que no se deben adivinar
 
@@ -111,7 +129,7 @@ En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
 backend `74/74` tests, móvil `52/52` tests y `npm run docs:check` sin errores.
 La fuente y la release Android quedan en `versionCode=4`; el AAB y el APK
 universal están firmados y verificados con `CN=TopoField Android Release`.
-Estos resultados no sustituyen la validación física
-en Galaxy. La entrega privada de fotos sigue pendiente: las
+Estos resultados se complementan con la validación física supervisora en
+Galaxy descrita arriba. La entrega privada de fotos sigue pendiente: las
 lecturas exponen el `public_url` heredado del contrato actual y este bloque no
 lo convierte en una URL firmada ni modifica Storage.

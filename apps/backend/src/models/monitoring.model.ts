@@ -1406,14 +1406,14 @@ export const getInstrumentReadingContext = async (readingId: string, projectScop
     [readingId, ...scope.params]
   );
 
-  return result.rowCount === 0
-    ? null
-    : {
-        id: result.rows[0].id as string,
-        projectId: result.rows[0].project_id as string,
-        roundPointId: result.rows[0].round_point_id as string
-      };
+  return result.rowCount === 0 ? null : mapInstrumentReadingContextRow(result.rows[0]);
 };
+
+export const mapInstrumentReadingContextRow = (row: Record<string, unknown>) => ({
+  id: row.id as string,
+  projectId: row.project_id as string,
+  roundPointId: row.round_point_id as string
+});
 
 export const getMonitoringRoundExportRows = async (
   roundId: string,
