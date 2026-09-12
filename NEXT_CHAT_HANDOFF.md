@@ -91,8 +91,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
   montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.
   La captura offline local usa SQLite 007, caché por sesión/estación y el
-  outbox existente. No se ha aplicado la migración PostgreSQL ni se ha
-  desplegado el endpoint; la validación física y la comprobación de Storage
+  outbox existente. La posición relativa opcional usa una cuadrícula 3x3 y
+  las consultas muestran el título como etiqueta sobre la miniatura, sin
+  afirmar precisión métrica. No se ha aplicado la migración PostgreSQL ni se
+  ha desplegado el endpoint; la validación física y la comprobación de Storage
   quedan pendientes.
 
 ## Comandos de verificación

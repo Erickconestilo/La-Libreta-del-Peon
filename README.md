@@ -55,12 +55,13 @@ Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.
 - Guías Leica offline renderizadas dentro del APK.
 - Subida de fotos a Supabase Storage para obras, estaciones, memoria visual, prismas y adjuntos de lectura.
 - Auscultación: rondas de monitorización, puntos de control con umbrales vigentes, captura de lectura offline, histórico por punto y catálogo de códigos por obra.
+- Memoria de montaje: visitas append-only con fotos, posición relativa opcional, caché SQLite por sesión y sincronización mediante outbox.
 - Perfil con diagnóstico del outbox: operaciones en error con motivo, intentos y reintento manual.
-- Roles `admin`, `topografo` y `visitante`, con alcance por obra vía `project_memberships`.
+- Roles `admin`, `topografo`, `supervisor` y `visitante`, con alcance por obra vía `project_memberships`.
 
 ## Limitaciones conocidas
 
 - **Distribución:** la APK firmada localmente no puede instalarse encima de una instalación EAS anterior (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Hay que desinstalar la anterior o reutilizar su keystore. El keystore local debe respaldarse fuera del repo antes de distribuir nada.
 - **Cobertura de tests:** unitaria y centrada en control de acceso, scope entre obras, rutas de foto y validación de payloads. No sustituye QA funcional en dispositivo.
 - **Nadie externo ha usado la app todavía.** Es la limitación más importante del proyecto ahora mismo y el motivo de que F5 sea la fase abierta.
-- **Deuda técnica aceptada conscientemente:** las lecturas se guardan en un campo genérico en lugar de una estructura por tipo de instrumento. Se reestructura en F7, cuando exista una campaña real que lo exija.
+- **Deuda técnica aceptada conscientemente:** las lecturas se guardan en un campo genérico en lugar de una estructura por tipo de instrumento. Se reestructura cuando exista una campaña real que lo exija.
