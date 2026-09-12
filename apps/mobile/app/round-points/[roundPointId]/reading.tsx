@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CalculatedThresholdStatus, PotentiometerPair, PotentiometerMeasurementPayload } from '@shared/types';
@@ -166,7 +166,7 @@ export default function ReadingCaptureScreen() {
         {canEdit && errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar la lectura</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
         {canEdit && feedback ? <View style={[styles.feedback, feedback.type === 'queued' ? styles.feedbackPending : null]}>{feedback.type === 'queued' ? <><Text style={styles.feedbackTitle}>Lectura guardada sin conexión</Text><Text style={styles.body}>El umbral se evaluará automáticamente cuando el servidor reciba la lectura.</Text>{feedback.photoPending ? <Text style={styles.pendingText}>La foto también queda pendiente de sincronizar.</Text> : null}</> : <><View style={styles.feedbackHeader}><Text style={styles.feedbackTitle}>{feedback.autoConfirmed ? 'Lectura confirmada' : 'Lectura pendiente de revisión'}</Text><ThresholdPill status={feedback.status} /></View>{feedback.delta !== null ? <Text style={styles.body}>Variación respecto a la anterior: {feedback.delta}</Text> : <Text style={styles.body}>No hay variación comparable todavía.</Text>}{feedback.photoPending ? <Text style={styles.pendingText}>La lectura está guardada; la foto se enviará automáticamente al recuperar conexión.</Text> : null}</>}</View> : null}
         {canEdit ? <Pressable disabled={isCreating} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}><Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar lectura'}</Text></Pressable> : null}
-        {!canEdit ? <View style={styles.historySection}><Text style={styles.historyTitle}>Lecturas recibidas</Text>{isHistoryLoading ? <Text style={styles.body}>Cargando histórico...</Text> : null}{historyError ? <Text style={styles.errorText}>{historyError}</Text> : null}{!isHistoryLoading && !historyError && history.length === 0 ? <Text style={styles.body}>Todavía no hay lecturas recibidas para este punto.</Text> : null}{history.map((item) => <View key={item.id} style={styles.historyCard}><View style={styles.feedbackHeader}><Text style={styles.historyValue}>{item.valueNumeric ?? item.valueText ?? 'Sin valor'}{item.unit ? ` ${item.unit}` : ''}</Text><ThresholdPill status={item.thresholdStatus ?? 'unknown'} /></View><Text style={styles.body}>{new Date(item.measuredAt).toLocaleString('es-ES')}</Text>{item.notes ? <Text style={styles.body}>{item.notes}</Text> : null}</View>)}</View> : null}
+        {!canEdit ? <View style={styles.historySection}><Text style={styles.historyTitle}>Lecturas recibidas</Text>{isHistoryLoading ? <Text style={styles.body}>Cargando histórico...</Text> : null}{historyError ? <Text style={styles.errorText}>{historyError}</Text> : null}{!isHistoryLoading && !historyError && history.length === 0 ? <Text style={styles.body}>Todavía no hay lecturas recibidas para este punto.</Text> : null}{history.map((item) => <View key={item.id} style={styles.historyCard}><View style={styles.feedbackHeader}><Text style={styles.historyValue}>{item.valueNumeric ?? item.valueText ?? 'Sin valor'}{item.unit ? ` ${item.unit}` : ''}</Text><ThresholdPill status={item.thresholdStatus ?? 'unknown'} /></View><Text style={styles.body}>{new Date(item.measuredAt).toLocaleString('es-ES')}</Text>{item.notes ? <Text style={styles.body}>{item.notes}</Text> : null}{item.attachments?.length ? <View style={styles.attachments}><Text style={styles.attachmentLabel}>Evidencias ({item.attachments.length})</Text><View style={styles.attachmentRow}>{item.attachments.map((attachment) => <Image key={attachment.id} accessibilityLabel={attachment.title ?? 'Foto de la lectura'} source={{ uri: attachment.publicUrl }} style={styles.attachmentImage} />)}</View></View> : null}</View>)}</View> : null}
         {feedback ? <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable> : null}
         {!canEdit ? <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable> : null}
       </ScrollView>
@@ -177,6 +177,10 @@ export default function ReadingCaptureScreen() {
 const styles = StyleSheet.create({
   body: { color: colors.textSecondary, fontSize: typography.fontSizeBody - 1, lineHeight: 21 },
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[3] },
+  attachmentImage: { backgroundColor: '#111827', borderRadius: 6, height: 72, width: 72 },
+  attachmentLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
+  attachmentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
+  attachments: { gap: spacing[1] },
   chips: { flexDirection: 'row', gap: spacing[1] },
   container: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing[2], padding: spacing[3] },

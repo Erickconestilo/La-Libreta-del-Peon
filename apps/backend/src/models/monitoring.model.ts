@@ -109,6 +109,9 @@ const mapReadingRow = (row: Record<string, unknown>) => ({
   measuredBy: row.measured_by,
   notes: row.notes,
   rawPayload: row.raw_payload,
+  attachments: Array.isArray(row.attachments)
+    ? row.attachments.map((attachment) => mapReadingAttachmentRow(attachment as Record<string, unknown>))
+    : [],
   readingStatus: row.reading_status,
   roundPointId: row.round_point_id,
   unit: row.unit,
@@ -983,11 +986,33 @@ export const getReadingHistory = async (
 
   const result = await pool.query(
     `
-      SELECT *
-      FROM instrument_readings
-      WHERE control_point_id = $1
+      SELECT
+        ir.*,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', ra.id,
+                'reading_id', ra.reading_id,
+                'storage_path', ra.storage_path,
+                'public_url', ra.public_url,
+                'attachment_type', ra.attachment_type,
+                'title', ra.title,
+                'notes', ra.notes,
+                'uploaded_by', ra.uploaded_by,
+                'uploaded_at', ra.uploaded_at
+              )
+              ORDER BY ra.uploaded_at DESC
+            )
+            FROM reading_attachments ra
+            WHERE ra.reading_id = ir.id
+          ),
+          '[]'::json
+        ) AS attachments
+      FROM instrument_readings ir
+      WHERE ir.control_point_id = $1
       ${filters.join('\n')}
-      ORDER BY measured_at DESC, created_at DESC
+      ORDER BY ir.measured_at DESC, ir.created_at DESC
       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
     `,
     params

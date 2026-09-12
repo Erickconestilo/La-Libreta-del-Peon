@@ -479,6 +479,7 @@ export interface InstrumentReading {
   measuredBy: string;
   notes: string | null;
   rawPayload: Record<string, unknown> | null;
+  attachments?: ReadingAttachment[];
   delta?: number | null;
   thresholdStatus?: CalculatedThresholdStatus;
   createdAt: string;

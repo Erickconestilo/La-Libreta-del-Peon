@@ -82,6 +82,7 @@ La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada r
 - captura inicial de testigo fotográfico, fisurómetro digital, potenciómetro y clinómetro/cinta como tipos explícitos, sin conversiones inventadas;
 - tratamiento de una ronda como encargo ordenado por obra, fecha y responsable, reutilizando el dominio existente;
 - recorrido móvil de consulta para membresías `read`, preparación sin conexión y resumen operativo de ronda;
+- histórico de lecturas con sus evidencias asociadas visibles en consulta, manteniendo escritura solo para membresías `write`;
 - documentación de cobertura de equipos, límites y puertas de piloto.
 
 Las migraciones `022_project_membership_access_level.sql`,

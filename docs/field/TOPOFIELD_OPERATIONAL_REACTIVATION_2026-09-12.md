@@ -34,8 +34,8 @@ observada y entrevistas con profesionales.
 - El parte usa el outbox existente para sobrevivir a pérdida de cobertura y
   reinicio; una respuesta del servidor es la única que cuenta como recibida.
 - La consulta supervisora en móvil puede abrir una ronda, revisar sus puntos,
-  leer el histórico recibido y consultar el resumen, pero no muestra controles
-  de escritura para una membresía `read`.
+  leer el histórico recibido con sus evidencias fotográficas y consultar el
+  resumen, pero no muestra controles de escritura para una membresía `read`.
 - Formularios iniciales para testigo fotográfico, fisurómetro digital,
   potenciómetro con pares amarillo-azul, amarillo-marrón y azul-marrón, y
   tipos explícitos para clinómetro/cinta sin afirmar que el protocolo esté
@@ -98,4 +98,6 @@ certificada de seguridad.
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
 backend `70/70` tests, móvil `49/49` tests y `npm run docs:check` sin errores.
 Estos resultados prueban el árbol local, no el despliegue remoto ni la
-validación física en Galaxy.
+validación física en Galaxy. La entrega privada de fotos sigue pendiente: las
+lecturas exponen el `public_url` heredado del contrato actual y este bloque no
+lo convierte en una URL firmada ni modifica Storage.
