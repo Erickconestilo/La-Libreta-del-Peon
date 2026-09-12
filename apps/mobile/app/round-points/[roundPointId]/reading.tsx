@@ -224,6 +224,7 @@ export default function ReadingCaptureScreen() {
         <View style={styles.hero}><Text style={styles.eyebrow}>{instrument?.label ?? 'Instrumento'}</Text><Text style={styles.title}>{Array.isArray(params.code) ? params.code[0] : params.code}</Text><Text style={styles.body}>{Array.isArray(params.name) ? params.name[0] : params.name || 'Punto de control'}</Text></View>
         {isDraftReady && draftStatus === 'restored' ? <View style={styles.draftNotice}><Text style={styles.draftNoticeText}>Borrador recuperado de este punto. Revisa los datos antes de guardar.</Text></View> : null}
         {!isRoundLoading && !canEdit ? <View style={styles.readOnlyCard}><Text style={styles.readOnlyTitle}>Consulta supervisora</Text><Text style={styles.body}>Esta membresía permite consultar la lectura recibida por el servidor, pero no modificarla ni crear otra.</Text></View> : null}
+        {!isRoundLoading && canEdit && captureCopy.protocolStatus === 'provisional' && captureCopy.protocolNote ? <View style={styles.protocolWarning}><Text style={styles.protocolWarningTitle}>Captura provisional</Text><Text style={styles.body}>{captureCopy.protocolNote}</Text></View> : null}
         {!isRoundLoading && canEdit ? <View style={styles.card}>
           {isPhotoWitness ? <Text style={styles.protocolNote}>Registro fotográfico del testigo. La imagen y la fecha son la evidencia; no se inventa una medida.</Text> : <><Text style={styles.label}>Tipo de valor</Text><View style={styles.chips}><ChoiceChip label="Número" onPress={() => setMode('numeric')} selected={mode === 'numeric'} /><ChoiceChip label="Texto" onPress={() => setMode('text')} selected={mode === 'text'} /></View>{mode === 'numeric' ? <><Text style={styles.label}>Lectura</Text><TextInput keyboardType="decimal-pad" onChangeText={setNumericValue} placeholder="Ej. 2,40" placeholderTextColor="#64748b" style={styles.input} value={numericValue} /></> : <><Text style={styles.label}>Lectura</Text><TextInput onChangeText={setTextValue} placeholder="Ej. estable, seco, sin acceso" placeholderTextColor="#64748b" style={styles.input} value={textValue} /></>}</>}
           {instrumentType === 'potentiometer' ? <View style={styles.protocolBlock}>
@@ -292,6 +293,8 @@ const styles = StyleSheet.create({
   protocolBlock: { borderColor: '#475569', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[2] },
   protocolNote: { color: colors.amber, fontSize: 12, lineHeight: 18 },
   protocolTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '900' },
+  protocolWarning: { backgroundColor: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.55)', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
+  protocolWarningTitle: { color: colors.amber, fontSize: 14, fontWeight: '900' },
   readOnlyCard: { backgroundColor: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.45)', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
   readOnlyTitle: { color: '#7dd3fc', fontSize: typography.fontSizeBody, fontWeight: '900' },
   photoAction: { alignItems: 'center', borderColor: '#475569', borderRadius: 8, borderWidth: 1, flex: 1, paddingVertical: spacing[2] },
