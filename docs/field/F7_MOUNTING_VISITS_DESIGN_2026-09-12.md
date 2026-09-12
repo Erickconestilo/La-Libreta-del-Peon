@@ -27,6 +27,12 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
   `mounting-visits/<visitId>/<uploadId>.<ext>`.
 - Los reintentos de creación usan `clientRequestId`; una repetición devuelve
   el registro existente en vez de crear otro.
+- En móvil, la visita y sus evidencias pendientes se guardan por sesión y
+  estación en SQLite; el outbox conserva el orden visita → evidencia y la
+  foto local sobrevive al cierre de la aplicación.
+- Si una evidencia se encola antes de tener id remoto, el sincronizador crea o
+  recupera primero la visita por su `clientRequestId` y luego sube la foto y
+  crea la evidencia con su propia clave idempotente.
 
 ## Rutas
 
@@ -54,8 +60,10 @@ creación incompleta se presente como trabajo ya realizado.
 
 ## Estado Y Verificación
 
-Implementado localmente en `codex/f5-field-stability`; la migración no está
-aplicada a Supabase y el endpoint no está desplegado. Las regresiones cubren
-validación, ruta exacta de Storage, roles y scope por `stations.project_id`.
-La aceptación de campo requiere crear una visita, cerrar/reabrir la app,
-añadir una foto real y comprobar que la segunda visita no altera la primera.
+Implementado localmente en `codex/f5-field-stability` mediante `d270da3`,
+`a83beeb` y `8150c68`; la migración PostgreSQL no está aplicada a Supabase
+y el endpoint no está desplegado. Las regresiones cubren validación, ruta
+exacta de Storage, roles, scope por `stations.project_id`, caché por sesión y
+sincronización ordenada de evidencia. La aceptación de campo requiere crear
+una visita, cerrar/reabrir la app sin red, añadir una foto real, reconectar y
+comprobar que la segunda visita no altera la primera ni duplica la evidencia.

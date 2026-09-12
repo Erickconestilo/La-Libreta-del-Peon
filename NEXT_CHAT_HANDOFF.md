@@ -61,10 +61,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 4. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 5. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-6. Validar en campo la pantalla local de visitas de montaje; la migración
-   `027_station_mounting_visits.sql` y sus rutas están preparadas, pero no
-   aplicadas ni desplegadas. Después decidir el croquis fotográfico según
-   evidencia y no según una demo.
+6. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
+   validar en campo la pantalla local de visitas de montaje, incluida cámara,
+   Storage, reinicio y reconexión. La captura offline local ya usa caché
+   SQLite por sesión y estación más el outbox (migración local 007). Después
+   decidir el croquis fotográfico según evidencia y no según una demo.
 7. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
 
 ## Cambios locales que no se deben mezclar
@@ -89,8 +90,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
   append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
   montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.
-  No se ha aplicado la migración ni se ha desplegado el endpoint;
-  la validación física y la comprobación de almacenamiento quedan pendientes.
+  La captura offline local usa SQLite 007, caché por sesión/estación y el
+  outbox existente. No se ha aplicado la migración PostgreSQL ni se ha
+  desplegado el endpoint; la validación física y la comprobación de Storage
+  quedan pendientes.
 
 ## Comandos de verificación
 

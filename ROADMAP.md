@@ -148,11 +148,15 @@ su visita y que un prisma opcional pertenezca a la misma obra. El supervisor
 puede consultar visitas a través de la ruta protegida, pero no crear visitas
 ni evidencias. La pantalla móvil `Visitas de montaje` ya permite abrir una
 visita, añadir fotos desde cámara/galería, marcarla como realizada o no
-realizable y consultar el historial.
+realizable y consultar el historial. La captura pendiente puede continuar sin
+red: SQLite conserva la memoria por sesión y estación, el outbox ordena la
+visita antes que sus evidencias y la foto queda persistida localmente hasta
+el reintento.
 
 Este bloque es implementación local, no validación de campo: siguen
 pendientes aplicar la migración con autorización, desplegar el contrato y
-observar si los códigos manuales y la posición relativa resuelven una tarea
+comprobar en Galaxy cámara, Storage, reinicio y reconexión. Solo después se
+decidirá si los códigos manuales y la posición relativa resuelven una tarea
 repetida antes de ampliar el croquis.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
