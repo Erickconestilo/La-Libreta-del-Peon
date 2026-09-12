@@ -125,6 +125,12 @@ evitando enviar operaciones de otra cuenta bajo el token activo. Está
 verificado en TypeScript/Jest local con `62` tests y quedó en el commit
 `1d82a9f`; falta observarlo en el Galaxy durante un cambio real de cuenta.
 
+También se separaron las claves de React Query por sesión para las consultas
+protegidas y las actualizaciones optimistas. Así, una respuesta que llegue
+después de cambiar de cuenta no puede repoblar la misma clave con datos de otra
+obra. La regresión móvil queda en `14` suites y `64` tests; falta observarlo
+con tráfico real en el Galaxy. El código quedó en `dedf77b`.
+
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
 Tres decisiones que estaban abiertas y bloqueaban el avance. Se resuelven aquí con su razonamiento. Estado a 21-08-2026: **D1 aplicada y con test de regresión**, **D2 cerrada** (Erick decide quedarse en Free), **D3 vigente** como orden de fases. Ninguna queda pendiente de aplicar.

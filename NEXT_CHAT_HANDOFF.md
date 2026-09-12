@@ -80,6 +80,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   filas antiguas se marcan `__unassigned__`, y un flush antiguo se abandona si
   cambia la sesión durante una request. Falta validarlo en un cambio real de
   cuenta en el Galaxy.
+- Las consultas protegidas de React Query usan namespaces por sesión y las
+  actualizaciones optimistas se limitan a la cuenta activa. El contrato
+  `getSessionCacheKey` está cubierto por una regresión en `dedf77b`; la
+  validación física de respuestas tardías entre cuentas sigue pendiente.
 
 ## Comandos de verificación
 

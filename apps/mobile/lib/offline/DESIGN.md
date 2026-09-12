@@ -80,6 +80,12 @@ vuelo, el motor abandona ese flush por generación y deja el item en estado
 recuperable para una futura revalidación. Además, las sesiones guardadas se
 emparejan por `userId` o correo normalizado, nunca solo por rol.
 
+Las consultas protegidas en memoria siguen la misma frontera mediante
+`getSessionCacheKey`: una cuenta autenticada usa `session:<id>` y el acceso de
+visitante usa `guest`. Esto incluye las actualizaciones optimistas de listas y
+detalles, para que una respuesta tardía no se escriba en el caché de otra
+cuenta.
+
 ### 2. Estados y Transiciones
 
 ```
