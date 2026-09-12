@@ -16,7 +16,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Rama activa: `codex/f5-field-stability`.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
-- Últimos commits locales de la rama: `a868867` (scope de prismas y regresión),
+- Últimos commits locales de la rama: `aa5e523` (integridad SQL de visitas de
+  montaje), `f6623b0` (handoff y auditoría de dependencias), `a868867` (scope de prismas y regresión),
   `cd82af6` (fixture genérico validado), `db088f2` (fixtures neutros y
   documentación), `15d9472` (auditoría autónoma local y documentación viva),
   `8ef354d` (scope defensivo de incidencias), `f4a0ae1` (auditoría estática de
