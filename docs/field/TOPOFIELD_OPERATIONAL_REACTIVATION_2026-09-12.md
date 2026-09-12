@@ -81,15 +81,18 @@ certificada de seguridad.
 
 ## Pendiente antes de declarar el bloque operativo
 
-1. Autorizar y aplicar en Supabase las migraciones `022`, `023` y `024`.
-2. Desplegar el mismo commit en Render y comprobar `/api/v1/health`.
-3. Generar e instalar una release local del mismo commit en el Galaxy.
-4. Validar online/offline: montaje, referencia, captura, incidencia, parte
+1. Instalar en el Galaxy la release local `versionCode=3` ya generada y verificada.
+2. Validar online/offline: montaje, referencia, captura, incidencia, parte
    parcial, cierre, reinicio, reconexión e idempotencia.
-5. Crear una cuenta supervisora individual con membresía `read` solo después
+3. Crear una cuenta supervisora individual con membresía `read` solo después
    de autorización de Erick y probar lectura contra escritura.
-6. Confirmar con datos autorizados el formato de exportación y el canal de
+4. Confirmar con datos autorizados el formato de exportación y el canal de
    entrega; no enviar automáticamente por WhatsApp o correo.
+
+Las migraciones `022`, `023` y `024` ya están aplicadas en el proyecto
+Supabase `topofield`. Render sirve el commit `1ca0a84...` y sus rutas F5
+responden `401` sin bearer en vez de `404`. La instalación física no se ha
+podido completar en esta sesión porque `adb devices` no detecta el Galaxy.
 
 ## Próximas decisiones que no se deben adivinar
 
@@ -102,8 +105,9 @@ certificada de seguridad.
 ## Evidencia técnica de este bloque
 
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
-backend `70/70` tests, móvil `49/49` tests y `npm run docs:check` sin errores.
-Estos resultados prueban el árbol local, no el despliegue remoto ni la
-validación física en Galaxy. La entrega privada de fotos sigue pendiente: las
+backend `71/71` tests, móvil `51/51` tests y `npm run docs:check` sin errores.
+Además, Render devuelve el commit F5 esperado y la release Android `versionCode=3`
+está firmada y verificada. Estos resultados no sustituyen la validación física
+en Galaxy. La entrega privada de fotos sigue pendiente: las
 lecturas exponen el `public_url` heredado del contrato actual y este bloque no
 lo convierte en una URL firmada ni modifica Storage.
