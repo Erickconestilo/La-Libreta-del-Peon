@@ -21,7 +21,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   topógrafo.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
-- Últimos commits locales de la rama: `aa5e523` (integridad SQL de visitas de
+- Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
+  `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
+  `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
+  (idempotencia de evidencias), `d8579ed`/`014b8af` (testigo fotográfico),
+  seguidos de `aa5e523` (integridad SQL de visitas de
   montaje), `f6623b0` (handoff y auditoría de dependencias), `a868867` (scope de prismas y regresión),
   `cd82af6` (fixture genérico validado), `db088f2` (fixtures neutros y
   documentación), `15d9472` (auditoría autónoma local y documentación viva),
@@ -50,8 +54,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   manifiesto confirma `versionCode=4` y `com.ciudadanoinusual.topofield`;
   `bundletool validate` y `jarsigner -verify` devuelven código 0. La variante
   `jarsigner -verify -strict` conserva la advertencia esperable del certificado
-  local autofirmado, no una validación de Play Store. No se instaló porque el
-  objetivo de este bloque era verificar compilación, no usar el Galaxy.
+  local autofirmado, no una validación de Play Store. La misma v4 fue instalada
+  y validada históricamente en el Galaxy para la consulta supervisora; esta
+  recompilación posterior no se instaló porque ADB no detectó el dispositivo.
 
 ## Estado desplegado
 
@@ -157,6 +162,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Los cambios de estado de visitas de montaje también son offline-first:
   actualizan la caché y encolan un `mounting_visit_update`; al sincronizar se
   resuelve primero la visita local y después se aplica el `PATCH`.
+- El replay de una evidencia cuyo visit fue creado y marcado offline fuerza la
+  recreación como `draft`; el estado `completed` o `blocked` se aplica después
+  mediante su operación `PATCH`, porque el backend no acepta estados terminales
+  en el POST de creación.
 - La regresión móvil de `field-access` cubre el estado de carga y el bloqueo
   explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
