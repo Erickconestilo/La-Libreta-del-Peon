@@ -29,6 +29,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Última mejora local de operación: el Perfil lista errores y conflictos del
   outbox por sesión; solo los errores admiten reintento y los conflictos quedan
   como revisión necesaria sin exponer payloads ni reintentar a ciegas.
+- La especificación offline está alineada con esa capacidad: la resolución
+  `Usar mío`/`Usar servidor`/`Descartar` queda explícitamente fuera del MVP
+  hasta tener contrato, permisos y prueba de concurrencia.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`

@@ -148,6 +148,12 @@ se ha desplegado desde esta sesión.
     los conflictos muestran `Revisión necesaria` sin reenvío automático y sin
     exponer `conflictData`, cuerpos HTTP, tokens ni payloads. La regresión está
     en `apps/mobile/lib/offline/__tests__/outbox-diagnostics.test.ts`.
+23. La documentación de diseño describía una pantalla futura con acciones
+    `Usar mío`, `Usar servidor` y `Descartar cambio local`, pero esas acciones
+    no tienen todavía contrato de resolución ni prueba de concurrencia. Se
+    actualizó `apps/mobile/lib/offline/DESIGN.md` para distinguir el diagnóstico
+    disponible en Perfil de la resolución futura; así el diseño no promete una
+    operación destructiva que el MVP no puede ejecutar de forma segura.
 
 ## Evidencia local
 

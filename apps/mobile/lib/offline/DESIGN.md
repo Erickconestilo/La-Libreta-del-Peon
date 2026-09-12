@@ -146,18 +146,29 @@ literalmente `Property 'crypto' doesn't exist`.
 - `navigator.onLine` (poco fiable en móvil)
 - Polling agresivo (consume batería)
 
-### 5. Resolución de Conflictos
+### 5. Diagnóstico de Conflictos (MVP)
 
 **Tipos de conflicto:**
 - **Escritura concurrente:** Otro usuario modificó el mismo registro
 - **Borrado remoto:** El recurso fue eliminado en servidor
 - **Validación fallida:** Datos locales violan constraints del servidor
 
-**UI de resolución:**
-- Pantalla `/offline/conflicts` (lista de conflictos pendientes)
-- Por cada conflicto: mostrar diff local vs. servidor
-- Opciones: "Usar mío" | "Usar servidor" | "Resolver manualmente"
-- Botón "Descartar cambio local" (elimina de outbox sin sincronizar)
+**UI disponible:**
+- El Perfil lista los conflictos del outbox de la sesión activa como
+  `Revisión necesaria`.
+- Se muestra únicamente el estado seguro y, cuando existe, el código HTTP
+  `409`; no se renderiza el payload del servidor ni el diff local.
+- Los conflictos no tienen reintento automático ni botón de resolución en el
+  MVP. Evita que una decisión no revisada sobrescriba una lectura, una foto o
+  una incidencia de campo.
+
+**Fuera del MVP:**
+- Una pantalla dedicada `/offline/conflicts`.
+- Comparación local-servidor y las acciones `Usar mío`, `Usar servidor` o
+  `Descartar cambio local`.
+- Esas acciones requieren primero un contrato de resolución explícito,
+  permisos de obra y una prueba de concurrencia; no se deben inferir desde un
+  `409`.
 
 ---
 
