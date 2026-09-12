@@ -24,7 +24,7 @@ export default function MountingVisitsScreen() {
   const { currentUser } = useCurrentSession();
   const { data: station } = useStationDetail(stationId ?? null);
   const { data: visits, errorMessage: visitsError, isLoading } = useMountingVisits(stationId ?? null);
-  const { createVisit, errorMessage: mutationError, isMutating, uploadEvidence } = useMountingVisitMutations(stationId ?? null);
+  const { createVisit, errorMessage: mutationError, isMutating, updateVisit, uploadEvidence } = useMountingVisitMutations(stationId ?? null);
   const [notes, setNotes] = useState('');
   const [changeSummary, setChangeSummary] = useState('');
   const [title, setTitle] = useState('');
@@ -60,6 +60,13 @@ export default function MountingVisitsScreen() {
     });
     setTitle('');
     setEvidenceNotes('');
+  };
+
+  const handleUpdateStatus = async (visitId: string, status: MountingVisitStatus) => {
+    await updateVisit({
+      input: { status },
+      visitId
+    });
   };
 
   return (
@@ -181,6 +188,18 @@ export default function MountingVisitsScreen() {
                 </View>
               </View>
             ))}
+            {canEdit && visit.status === 'draft' ? (
+              <View style={styles.actionRow}>
+                <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'completed').catch(() => undefined)} style={[styles.primaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                  <MaterialIcons color={colors.background} name="done" size={18} />
+                  <Text style={styles.primaryButtonText}>Marcar realizada</Text>
+                </Pressable>
+                <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'blocked').catch(() => undefined)} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                  <MaterialIcons color={colors.textPrimary} name="block" size={18} />
+                  <Text style={styles.secondaryButtonText}>No realizable</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         ))}
       </ScrollView>

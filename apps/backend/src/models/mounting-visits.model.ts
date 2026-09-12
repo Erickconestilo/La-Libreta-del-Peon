@@ -2,7 +2,8 @@ import { pool } from '../db/pool.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
 import type {
   ValidatedCreateMountingEvidenceInput,
-  ValidatedCreateMountingVisitInput
+  ValidatedCreateMountingVisitInput,
+  ValidatedUpdateMountingVisitInput
 } from '../utils/mounting-validation.js';
 
 type Scope = {
@@ -219,6 +220,46 @@ export const createMountingVisit = async (
   );
 
   return existing.rowCount ? getMountingVisitById(existing.rows[0].id, projectScope) : null;
+};
+
+export const updateMountingVisit = async (
+  visitId: string,
+  routeStationId: string,
+  input: ValidatedUpdateMountingVisitInput,
+  projectScope: string[] | null = null
+) => {
+  const params: unknown[] = [visitId, routeStationId];
+  const assignments: string[] = [];
+
+  if (input.status !== undefined) {
+    params.push(input.status);
+    assignments.push(`v.status = $${params.length}`);
+  }
+  if (input.notes !== undefined) {
+    params.push(input.notes);
+    assignments.push(`v.notes = $${params.length}`);
+  }
+  if (input.changeSummary !== undefined) {
+    params.push(input.changeSummary);
+    assignments.push(`v.change_summary = $${params.length}`);
+  }
+
+  const scope = buildMountingVisitStationScope(projectScope, params.length + 1);
+  const result = await pool.query(
+    `
+      UPDATE station_mounting_visits v
+      SET ${assignments.join(', ')}, updated_at = NOW()
+      FROM stations s
+      WHERE v.id = $1
+        AND v.station_id = $2
+        AND s.id = v.station_id
+        ${scope.clause}
+      RETURNING v.id
+    `,
+    [...params, ...scope.params]
+  );
+
+  return result.rowCount ? getMountingVisitById(visitId, projectScope) : null;
 };
 
 export const createMountingEvidence = async (

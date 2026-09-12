@@ -20,7 +20,8 @@ import {
 import {
   createMountingEvidenceController,
   createMountingVisitController,
-  listMountingVisitsController
+  listMountingVisitsController,
+  updateMountingVisitController
 } from '../controllers/mounting-visits.controller.js';
 import { listStationPrismsController } from '../controllers/prisms.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -90,6 +91,14 @@ stationsRouter.post(
   requireRole(['admin', 'topografo']),
   validateUuidParam('stationId'),
   createMountingVisitController
+);
+stationsRouter.patch(
+  '/:stationId/mounting-visits/:visitId',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('stationId'),
+  validateUuidParam('visitId'),
+  updateMountingVisitController
 );
 stationsRouter.post(
   '/:stationId/mounting-visits/:visitId/evidence',

@@ -8,6 +8,9 @@ const mountingVisitSchema = z.object({
   notes: z.string().trim().max(2000).nullable().optional(),
   changeSummary: z.string().trim().max(2000).nullable().optional(),
   clientRequestId: z.string().uuid()
+}).refine((input) => input.status === 'draft', {
+  message: 'A new mounting visit must start as draft',
+  path: ['status']
 });
 
 const mountingEvidenceSchema = z.object({
@@ -21,8 +24,17 @@ const mountingEvidenceSchema = z.object({
   clientRequestId: z.string().uuid()
 });
 
+const updateMountingVisitSchema = z.object({
+  status: z.enum(['draft', 'completed', 'blocked']).optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+  changeSummary: z.string().trim().max(2000).nullable().optional()
+}).refine((input) => Object.keys(input).length > 0, {
+  message: 'At least one mounting visit field is required'
+});
+
 export type ValidatedCreateMountingVisitInput = z.infer<typeof mountingVisitSchema>;
 export type ValidatedCreateMountingEvidenceInput = z.infer<typeof mountingEvidenceSchema>;
+export type ValidatedUpdateMountingVisitInput = z.infer<typeof updateMountingVisitSchema>;
 
 export const validateCreateMountingVisitInput = (input: unknown): ValidatedCreateMountingVisitInput => {
   const parsed = mountingVisitSchema.safeParse(input);
@@ -47,6 +59,21 @@ export const validateCreateMountingEvidenceInput = (input: unknown): ValidatedCr
       'Invalid mounting evidence payload',
       400,
       'INVALID_MOUNTING_EVIDENCE_PAYLOAD',
+      parsed.error.flatten()
+    );
+  }
+
+  return parsed.data;
+};
+
+export const validateUpdateMountingVisitInput = (input: unknown): ValidatedUpdateMountingVisitInput => {
+  const parsed = updateMountingVisitSchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw new AppError(
+      'Invalid mounting visit update payload',
+      400,
+      'INVALID_MOUNTING_VISIT_UPDATE_PAYLOAD',
       parsed.error.flatten()
     );
   }

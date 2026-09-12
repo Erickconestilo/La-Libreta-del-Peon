@@ -6,6 +6,7 @@ import type {
   MountingEvidence,
   MountingEvidenceKind,
   MountingVisit,
+  UpdateMountingVisitInput,
   PhotoContentType,
   SignedPhotoUpload
 } from '@shared/types';
@@ -52,6 +53,15 @@ const createMountingVisit = async (stationId: string, input: CreateMountingVisit
       clientRequestId: createRandomId()
     }),
     method: 'POST'
+  });
+
+  return response.data;
+};
+
+const updateMountingVisit = async (stationId: string, visitId: string, input: UpdateMountingVisitInput) => {
+  const response = await apiFetch<ApiEnvelope<MountingVisit>>(`/stations/${stationId}/mounting-visits/${visitId}`, {
+    body: JSON.stringify(input),
+    method: 'PATCH'
   });
 
   return response.data;
@@ -178,12 +188,24 @@ export const useMountingVisitMutations = (stationId: string | null) => {
     onSuccess: invalidate
   });
 
-  const error = createMutation.error ?? evidenceMutation.error ?? null;
+  const updateMutation = useMutation({
+    mutationFn: ({ input, visitId }: { input: UpdateMountingVisitInput; visitId: string }) => {
+      if (!stationId) {
+        throw new Error('Falta el id de estación para actualizar la visita.');
+      }
+
+      return updateMountingVisit(stationId, visitId, input);
+    },
+    onSuccess: invalidate
+  });
+
+  const error = createMutation.error ?? evidenceMutation.error ?? updateMutation.error ?? null;
 
   return {
     createVisit: createMutation.mutateAsync,
     errorMessage: error ? getErrorMessage(error) : null,
-    isMutating: createMutation.isPending || evidenceMutation.isPending,
+    isMutating: createMutation.isPending || evidenceMutation.isPending || updateMutation.isPending,
+    updateVisit: updateMutation.mutateAsync,
     uploadEvidence: evidenceMutation.mutateAsync
   };
 };

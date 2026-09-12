@@ -9,9 +9,14 @@ import {
   createMountingEvidence,
   createMountingVisit,
   getMountingVisitById,
-  listMountingVisits
+  listMountingVisits,
+  updateMountingVisit
 } from '../models/mounting-visits.model.js';
-import { validateCreateMountingEvidenceInput, validateCreateMountingVisitInput } from '../utils/mounting-validation.js';
+import {
+  validateCreateMountingEvidenceInput,
+  validateCreateMountingVisitInput,
+  validateUpdateMountingVisitInput
+} from '../utils/mounting-validation.js';
 import { isValidMountingVisitPhotoPath } from '../utils/photo-validation.js';
 
 const routeParam = (request: Request, name: string) => {
@@ -138,5 +143,40 @@ export const createMountingEvidenceController = async (request: Request, respons
     sendSuccess(response, evidence, 201);
   } catch (error) {
     sendControllerError(response, error, 'MOUNTING_EVIDENCE_CREATE_FAILED', 'Unable to attach mounting evidence');
+  }
+};
+
+export const updateMountingVisitController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    }
+
+    const stationId = routeParam(request, 'stationId');
+    const visitId = routeParam(request, 'visitId');
+    if (!stationId || !visitId) {
+      throw new AppError('Station id and visit id are required', 400, 'MOUNTING_VISIT_ID_REQUIRED');
+    }
+
+    const projectScope = getActorProjectScope(request.user);
+    const visit = await getMountingVisitById(visitId, projectScope);
+    if (!visit || visit.stationId !== stationId) {
+      throw new AppError('Mounting visit not found', 404, 'MOUNTING_VISIT_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, visit.projectId);
+
+    const updated = await updateMountingVisit(
+      visitId,
+      stationId,
+      validateUpdateMountingVisitInput(request.body),
+      projectScope
+    );
+    if (!updated) {
+      throw new AppError('Mounting visit not found', 404, 'MOUNTING_VISIT_NOT_FOUND');
+    }
+
+    sendSuccess(response, updated);
+  } catch (error) {
+    sendControllerError(response, error, 'MOUNTING_VISIT_UPDATE_FAILED', 'Unable to update mounting visit');
   }
 };

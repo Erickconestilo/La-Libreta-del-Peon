@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { validateCreateMountingEvidenceInput, validateCreateMountingVisitInput } from './mounting-validation.js';
+import {
+  validateCreateMountingEvidenceInput,
+  validateCreateMountingVisitInput,
+  validateUpdateMountingVisitInput
+} from './mounting-validation.js';
 
 const clientRequestId = '44444444-4444-4444-8444-444444444444';
 
@@ -15,6 +19,16 @@ test('mounting visit input keeps the visit status explicit and idempotent', () =
 
   assert.equal(visit.status, 'draft');
   assert.equal(visit.clientRequestId, clientRequestId);
+});
+
+test('new mounting visits cannot be created as already completed', () => {
+  assert.throws(
+    () => validateCreateMountingVisitInput({
+      clientRequestId,
+      status: 'completed'
+    }),
+    /Invalid mounting visit payload/
+  );
 });
 
 test('mounting evidence constrains relative photo positions to the image', () => {
@@ -37,5 +51,13 @@ test('mounting evidence constrains relative photo positions to the image', () =>
       storagePath: 'mounting-visits/33333333-3333-4333-8333-333333333333/44444444-4444-4444-8444-444444444444.jpg'
     }),
     /Invalid mounting evidence payload/
+  );
+});
+
+test('mounting visit updates require an explicit field', () => {
+  assert.deepEqual(validateUpdateMountingVisitInput({ status: 'completed' }), { status: 'completed' });
+  assert.throws(
+    () => validateUpdateMountingVisitInput({}),
+    /Invalid mounting visit update payload/
   );
 });

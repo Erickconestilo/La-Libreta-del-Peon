@@ -271,6 +271,12 @@ export interface CreateMountingVisitInput {
   clientRequestId: string;
 }
 
+export interface UpdateMountingVisitInput {
+  status?: MountingVisitStatus;
+  notes?: string | null;
+  changeSummary?: string | null;
+}
+
 export interface CreateMountingEvidenceInput {
   prismId?: string | null;
   kind: MountingEvidenceKind;
