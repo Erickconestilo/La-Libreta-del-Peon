@@ -22,6 +22,7 @@ Comprobaciones técnicas:
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 - [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.
 - [ ] Registrar una captura como testigo fotográfico, una lectura digital y los tres pares del potenciómetro sin cobertura; distinguir guardado local de recibido por servidor.
+- [ ] Antes de usar otro instrumento, consultar [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md): una captura provisional no sustituye el procedimiento del equipo ni representa automáticamente pares, perfiles o referencias de carril.
 - [ ] Crear un parte parcial de zona y comprobar que no presenta el trabajo como 100 % completado si quedan puntos pendientes.
 
 Observación de uso (esto es lo que cierra F5, no lo anterior):
