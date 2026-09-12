@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-12 | Codex | codex/f5-field-stability | Ejecutar plan maestro de cierre TopoField: auditoría final, documentación activa, verificación Render, E2E Galaxy, exportación y preparación de siguientes bloques | abierto |
 | 2026-09-12 | Codex | codex/f5-field-stability | Cierre F5: reconciliar documentación, publicar la corrección de scope de adjuntos, validar E2E operador offline con foto/parte/cierre y comprobar exportaciones | cerrado parcialmente (documentación reconciliada, PR #10 fusionada, Render en `6a1b19f`, checks locales verdes; E2E Galaxy pendiente por `adb.exe: no devices/emulators found`) |
 | 2026-09-12 | Codex | codex/f5-field-stability | Diagnosticar y corregir la pérdida de fotos de lecturas offline tras reinicio de Galaxy; reforzar cola atómica y recuperación de operaciones interrumpidas; repetir E2E real | cerrado parcialmente (corrección móvil `68e001a` y corrección backend `b0572a0` verificadas localmente; la repetición real queda pendiente de desplegar el backend corregido) |
 | 2026-09-12 | Codex | codex/f5-field-stability | Activación F5 autorizada: aplicar migraciones 022-024 en Supabase, publicar y desplegar Render, generar release Android y validar Galaxy; supervisor queda pendiente de identidad exacta | cerrado parcialmente (022-024 aplicadas; PR #5/#6 y Render verificados; release v3 generada y firmada; Galaxy bloqueado por ADB sin dispositivo; supervisor pendiente de validación física) |
@@ -383,6 +384,8 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 ## 12. Bitácora de avances (una línea por hito, con contexto)
 
 - **2026-09-12 — Cierre de publicación F5 y compuerta física (Codex):** la reconciliación de `ROADMAP.md`/`MEMORIA.md` quedó en el commit `77cbedf`; la PR #10 se fusionó mediante GitHub con `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`. Render devolvió literalmente `{"commit":"6a1b19fa9384e77797b956b6710af9f7a0ec7ff0","status":"ok"}`; `/api/v1/projects/00000000-0000-0000-0000-000000000000/rounds` y `/api/v1/me/journey` devolvieron HTTP `401` con `UNAUTHORIZED`. La batería local pasó backend `75/75`, móvil `12 suites/54 tests`, TypeScript móvil sin salida y `docs:check` con `32 documentos`. El E2E físico no se ejecutó: `adb devices -l` devolvió `List of devices attached` seguido de `adb.exe: no devices/emulators found`; no se instaló ni se tocó el Galaxy.
+
+- **2026-09-12 — Auditoría de dependencias y continuidad de sesión (Codex):** `npm audit fix --workspace apps/backend` actualizó `morgan` y `qs` sin `--force`. La auditoría posterior queda en `2 moderate` transitivas de `uuid` dentro de `exceljs`; la solución disponible degradaría `exceljs` a `3.4.0`, así que no se aplica. Se creó el `NEXT_CHAT_HANDOFF.md` activo con el estado de rama, Render, Galaxy y las compuertas de validación; `package-lock.json` es el único lockfile modificado por este bloque.
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
