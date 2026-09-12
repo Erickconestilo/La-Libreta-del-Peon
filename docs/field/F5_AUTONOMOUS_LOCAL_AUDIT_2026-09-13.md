@@ -52,6 +52,11 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     escritura. La pantalla ahora resuelve `allowed`, `loading` o `read-only`
     con la misma función de permisos efectivos y no muestra controles de alta
     cuando la ronda carece de permiso de escritura.
+11. `canWriteProject` permitía un comportamiento fail-open para sesiones
+    antiguas de `topografo` que no traían `projectAccess`: la interfaz mostraba
+    controles aunque el mapa de permisos todavía no estuviera disponible. Se
+    cambió a fail-closed; hasta recibir el mapa del servidor, solo `admin` o
+    una membresía explícita `write` pueden habilitar escritura.
 
 ## Evidencia local
 
@@ -62,6 +67,9 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 ℹ tests 94
 ℹ pass 94
 ℹ fail 0
+
+Test Suites: 17 passed, 17 total
+Tests:       75 passed, 75 total
 
 check-docs: 38 documentos revisados en raíz y docs/.
 
