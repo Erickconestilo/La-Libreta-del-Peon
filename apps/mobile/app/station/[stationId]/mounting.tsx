@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useMountingVisitMutations, useMountingVisits, MOUNTING_EVIDENCE_KINDS } from '@/hooks/use-mounting-visits';
+import { useStationPrisms } from '@/hooks/use-prisms';
 import { useStationDetail } from '@/hooks/use-stations';
 import { canWriteProject } from '@/lib/field-access';
 import {
@@ -29,6 +30,7 @@ export default function MountingVisitsScreen() {
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
   const { currentUser } = useCurrentSession();
   const { data: station } = useStationDetail(stationId ?? null);
+  const { data: prismData } = useStationPrisms(stationId ?? null);
   const { data: visits, errorMessage: visitsError, isLoading, isOfflineCache } = useMountingVisits(stationId ?? null);
   const { createVisit, errorMessage: mutationError, isMutating, updateVisit, uploadEvidence } = useMountingVisitMutations(stationId ?? null, station?.projectId ?? null);
   const [notes, setNotes] = useState('');
@@ -36,6 +38,7 @@ export default function MountingVisitsScreen() {
   const [title, setTitle] = useState('');
   const [evidenceNotes, setEvidenceNotes] = useState('');
   const [kind, setKind] = useState<MountingEvidenceKind>('general');
+  const [selectedPrismId, setSelectedPrismId] = useState<string | null>(null);
   const [photoAnchorKey, setPhotoAnchorKey] = useState<MountingPhotoAnchorKey | null>(null);
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const canEdit = canWriteProject(currentUser, station?.projectId);
@@ -64,6 +67,7 @@ export default function MountingVisitsScreen() {
       notes: evidenceNotes.trim() || null,
       positionX: selectedPhotoAnchor?.x ?? null,
       positionY: selectedPhotoAnchor?.y ?? null,
+      prismId: kind === 'prism' ? selectedPrismId : null,
       source,
       title: title.trim() || null,
       visitId: activeVisitId
@@ -71,6 +75,7 @@ export default function MountingVisitsScreen() {
     setTitle('');
     setEvidenceNotes('');
     setPhotoAnchorKey(null);
+    setSelectedPrismId(null);
   };
 
   const handleUpdateStatus = async (visitId: string, status: MountingVisitStatus) => {
@@ -144,6 +149,22 @@ export default function MountingVisitsScreen() {
                 </Pressable>
               ))}
             </View>
+            {kind === 'prism' ? (
+              <View style={styles.prismPicker}>
+                <Text style={styles.label}>Prisma relacionado (opcional)</Text>
+                <View style={styles.chips}>
+                  <Pressable accessibilityRole="button" accessibilityState={{ selected: selectedPrismId === null }} onPress={() => setSelectedPrismId(null)} style={[styles.chip, selectedPrismId === null ? styles.chipActive : null]}>
+                    <Text style={[styles.chipText, selectedPrismId === null ? styles.chipTextActive : null]}>Sin vincular</Text>
+                  </Pressable>
+                  {(prismData?.prisms ?? []).map((prism) => (
+                    <Pressable accessibilityLabel={`Vincular prisma ${prism.code}`} accessibilityRole="button" accessibilityState={{ selected: selectedPrismId === prism.id }} key={prism.id} onPress={() => setSelectedPrismId(prism.id)} style={[styles.chip, selectedPrismId === prism.id ? styles.chipActive : null]}>
+                      <Text style={[styles.chipText, selectedPrismId === prism.id ? styles.chipTextActive : null]}>{prism.code}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {!prismData?.prisms.length ? <Text style={styles.caption}>No hay prismas cargados para vincular; puedes conservar el código en el título.</Text> : null}
+              </View>
+            ) : null}
             <TextInput
               onChangeText={setTitle}
               placeholder="Código o título corto"
@@ -293,6 +314,7 @@ const styles = StyleSheet.create({
   offlineNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 10, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
+  prismPicker: { gap: spacing[1] },
   readOnlyNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
