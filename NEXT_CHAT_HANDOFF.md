@@ -18,6 +18,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   firmar fotos de lecturas.
 - Último commit local antes del hardening de caché: `18dee00` (paridad
   CSV/XLSX y regresión de exportación).
+- Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
+  regresión de migración SQLite 005).
 - GitHub `main` verificado por API tras fusionar la PR #14:
   `eb88db922a03b1e01a47f90dba8346542df3f212`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
