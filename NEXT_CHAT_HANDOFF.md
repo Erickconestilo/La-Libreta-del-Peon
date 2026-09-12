@@ -16,10 +16,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Rama activa: `codex/f5-field-stability`.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
-- Últimos commits locales de la rama: `15d9472` (auditoría autónoma local y
-  documentación viva), `8ef354d` (scope defensivo de incidencias), `f4a0ae1`
-  (auditoría estática de rutas), `703f36b` (verificación de release Android),
-  `8150c68` (visitas de montaje
+- Últimos commits locales de la rama: `a868867` (scope de prismas y regresión),
+  `cd82af6` (fixture genérico validado), `db088f2` (fixtures neutros y
+  documentación), `15d9472` (auditoría autónoma local y documentación viva),
+  `8ef354d` (scope defensivo de incidencias), `f4a0ae1` (auditoría estática de
+  rutas), `703f36b` (verificación de release Android), `8150c68` (visitas de montaje
   offline-first), `c0d0e8e` (trazabilidad offline), `ee80825`/`534cc42`
   (croquis fotográfico relativo y documentación) y `5f92a66`/`3cce1dd`
   (borradores de lectura persistentes y documentación), seguidos de
@@ -97,8 +98,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
 - La auditoría local vigente está en
   `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`; documenta la revisión
-  de rutas, la corrección defensiva de incidencias y la evidencia de la release
-  sin confundirla con el E2E físico.
+  de rutas, las correcciones defensivas de incidencias y prismas, el fixture
+  genérico y la evidencia de la release sin confundirlas con el E2E físico.
+- La rama local añade `a868867` después del despliegue verificado de Render
+  (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
+  remotamente.
 - La plantilla de obra genérica está en
   `docs/field/GENERIC_PROJECT_TEMPLATE.md` y su fixture CSV en
   `data/generic-project-code-catalog.csv`; ambos usan únicamente códigos y
@@ -133,7 +137,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   ha desplegado el endpoint; la validación física y la comprobación de Storage
   quedan pendientes.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `88/88` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
+  `90/90` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
   `73` tests. `docs:check` revisa 38 documentos sin avisos y `npx expo install
   --check` devuelve `Dependencies are up to date`.
 

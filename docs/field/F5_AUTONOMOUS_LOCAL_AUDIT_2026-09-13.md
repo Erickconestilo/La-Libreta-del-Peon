@@ -68,6 +68,14 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 - Revisar las dos vulnerabilidades moderadas transitivas de `uuid` sin usar
   `npm audit fix --force`, porque la solucion propuesta degrada `exceljs`.
 
+La comprobación no destructiva `npm audit fix --workspace apps/backend
+--dry-run --json` confirma que no hay cambios de actualización seguros: el
+remedio propuesto instala `exceljs@3.4.0` (`isSemVerMajor: true`) y la cadena
+vulnerable procede de `exceljs/node_modules/uuid@8.3.2`. El exportador recibe
+datos ya validados y no expone una ruta de ejecución de UUID v3/v5/v6 con
+buffers controlados por el usuario; se mantiene la dependencia actual hasta
+probar una sustitución compatible de `exceljs`.
+
 ## Criterio de lectura
 
 El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma

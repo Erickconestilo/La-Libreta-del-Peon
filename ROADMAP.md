@@ -71,8 +71,12 @@ F5 sigue abierta y está en **estabilización de campo**. La auditoría y el pla
 La auditoría local vigente de 13-09-2026 está en
 `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
-de incidencias con referencias cruzadas. El Galaxy, la exportación con datos
-autorizados y la validación observada siguen siendo compuertas externas.
+de incidencias y prismas con referencias cruzadas. También deja el catálogo de
+ejemplo y sus fixtures sin nomenclatura de cliente. Backend local: `90/90`
+tests. Estos últimos cambios siguen solo en la rama local; Render continúa
+sirviendo `6a1b19f` hasta una publicación remota autorizada. El Galaxy, la
+exportación con datos autorizados y la validación observada siguen siendo
+compuertas externas.
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
