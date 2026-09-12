@@ -24,6 +24,20 @@ export const canWriteProject = (user: AuthSessionUser | null | undefined, projec
   return user.projectAccess?.[projectId] === 'write';
 };
 
+export type WriteScreenAccessState = 'loading' | 'allowed' | 'read-only';
+
+export const getWriteScreenAccessState = (
+  user: AuthSessionUser | null | undefined,
+  projectId: string | null | undefined,
+  resourceLoaded: boolean
+): WriteScreenAccessState => {
+  if (!resourceLoaded) {
+    return 'loading';
+  }
+
+  return canWriteProject(user, projectId) ? 'allowed' : 'read-only';
+};
+
 export const resolveStationProjectId = ({
   availableProjectIds,
   requestedProjectId,

@@ -1,6 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { canCreateStationWithoutProject, canWriteProject, resolveStationProjectId } from '../field-access';
+import {
+  canCreateStationWithoutProject,
+  canWriteProject,
+  getWriteScreenAccessState,
+  resolveStationProjectId
+} from '../field-access';
 
 describe('field access', () => {
   it('solo permite estaciones sin obra a admin', () => {
@@ -85,5 +90,21 @@ describe('field access', () => {
     expect(canCreateStationWithoutProject(user.role)).toBe(false);
     expect(canWriteProject(user, 'obra-a')).toBe(false);
     expect(canWriteProject(user, 'obra-b')).toBe(false);
+  });
+
+  it('no abre una pantalla de escritura para cuentas sin permiso efectivo', () => {
+    const supervisor = {
+      authProvider: 'supabase' as const,
+      email: 'supervisor@example.test',
+      fullName: 'Supervisor',
+      id: 'supervisor-1',
+      isActive: true,
+      projectAccess: { 'obra-a': 'write' as const },
+      role: 'supervisor' as const
+    };
+
+    expect(getWriteScreenAccessState(supervisor, 'obra-a', false)).toBe('loading');
+    expect(getWriteScreenAccessState(supervisor, 'obra-a', true)).toBe('read-only');
+    expect(getWriteScreenAccessState(null, 'obra-a', true)).toBe('read-only');
   });
 });

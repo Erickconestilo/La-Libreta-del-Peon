@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WorkCompletionStatus } from '@shared/types';
 import { ChoiceChip, formatShortDate } from '@/components/monitoring-ui';
+import { useCurrentSession } from '@/hooks/use-auth';
 import { useCreateWorkCompletionReport, useMonitoringRound } from '@/hooks/use-monitoring';
+import { getWriteScreenAccessState } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 const STATUS_OPTIONS: Array<{ label: string; value: WorkCompletionStatus }> = [
@@ -20,8 +22,10 @@ export default function WorkCompletionScreen() {
   const roundId = Array.isArray(params.roundId) ? params.roundId[0] : params.roundId;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data: round } = useMonitoringRound(roundId ?? null);
+  const { currentUser } = useCurrentSession();
+  const { data: round, errorMessage: roundError, isLoading: isRoundLoading } = useMonitoringRound(roundId ?? null);
   const { createReport, errorMessage, isCreating } = useCreateWorkCompletionReport(roundId ?? null);
+  const writeScreenState = getWriteScreenAccessState(currentUser, round?.projectId, Boolean(round));
   const pendingPointCount = useMemo(
     () => round?.points.filter((point) => point.status === 'pending').length ?? 0,
     [round?.points]
@@ -74,7 +78,18 @@ export default function WorkCompletionScreen() {
           </Text>
         </View>
 
-        <View style={styles.card}>
+        {isRoundLoading && !round ? <View style={styles.card}><Text style={styles.body}>Cargando la ronda...</Text></View> : null}
+        {roundError ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo cargar la ronda</Text><Text style={styles.body}>{roundError}</Text></View> : null}
+        {writeScreenState === 'read-only' ? (
+          <View style={styles.readOnlyCard}>
+            <MaterialIcons color="#7dd3fc" name="visibility" size={22} />
+            <View style={styles.readOnlyCopy}>
+              <Text style={styles.readOnlyTitle}>Consulta de solo lectura</Text>
+              <Text style={styles.body}>Esta cuenta puede consultar la ronda, pero no crear partes ni modificar su estado.</Text>
+            </View>
+          </View>
+        ) : null}
+        {writeScreenState === 'allowed' ? <View style={styles.card}>
           <Text style={styles.label}>Zona o tramo trabajado</Text>
           <TextInput onChangeText={setZoneLabel} placeholder="Ej. Zona de acceso norte" placeholderTextColor="#64748b" style={styles.input} value={zoneLabel} />
           <Text style={styles.label}>Resultado de la visita</Text>
@@ -88,14 +103,16 @@ export default function WorkCompletionScreen() {
           <TextInput multiline onChangeText={setPendingReasons} placeholder="Sin acceso\nSensor dañado" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={pendingReasons} />
           <Text style={styles.label}>Notas para el relevo</Text>
           <TextInput multiline onChangeText={setNotes} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
-        </View>
+        </View> : null}
 
-        {feedback ? <View style={styles.success}><MaterialIcons color={colors.accentGreen} name="check-circle" size={20} /><Text style={styles.successText}>{feedback}</Text></View> : null}
-        {errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar el parte</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
-        <Pressable disabled={isCreating || !zoneLabel.trim()} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}>
-          <MaterialIcons color={colors.background} name="assignment-turned-in" size={19} />
-          <Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar parte'}</Text>
-        </Pressable>
+        {writeScreenState === 'allowed' ? <>
+          {feedback ? <View style={styles.success}><MaterialIcons color={colors.accentGreen} name="check-circle" size={20} /><Text style={styles.successText}>{feedback}</Text></View> : null}
+          {errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar el parte</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
+          <Pressable disabled={isCreating || !zoneLabel.trim()} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}>
+            <MaterialIcons color={colors.background} name="assignment-turned-in" size={19} />
+            <Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar parte'}</Text>
+          </Pressable>
+        </> : null}
         <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable>
       </ScrollView>
     </>
@@ -118,6 +135,9 @@ const styles = StyleSheet.create({
   multiline: { minHeight: 90, textAlignVertical: 'top' },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 8, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: spacing[3] },
   primaryButtonText: { color: colors.background, fontSize: typography.fontSizeBody, fontWeight: '900' },
+  readOnlyCard: { alignItems: 'flex-start', backgroundColor: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.45)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[2], padding: spacing[3] },
+  readOnlyCopy: { flex: 1, gap: spacing[1] },
+  readOnlyTitle: { color: '#7dd3fc', fontSize: typography.fontSizeBody, fontWeight: '900' },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingVertical: spacing[2] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   success: { alignItems: 'center', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.4)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[3] },

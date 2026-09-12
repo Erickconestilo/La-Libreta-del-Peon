@@ -47,6 +47,11 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
    `reading_id, storage_path` y falla deliberadamente si existen duplicados
    históricos; la API usa `ON CONFLICT DO NOTHING`. No se ha aplicado a
    Supabase ni se han borrado filas.
+10. El deep link de `Parte de zona` podía mostrar el formulario a una cuenta
+    supervisora o con membresía `read`, aunque el backend ya rechazaba la
+    escritura. La pantalla ahora resuelve `allowed`, `loading` o `read-only`
+    con la misma función de permisos efectivos y no muestra controles de alta
+    cuando la ronda carece de permiso de escritura.
 
 ## Evidencia local
 
