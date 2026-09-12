@@ -100,7 +100,7 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     formulario escalar fuera suficiente para su procedimiento. Ahora la
     captura distingue los slices confirmados del MVP (testigo fotográfico,
     potenciómetro, nivel digital y fisurómetro digital) de los formularios
-    provisionales. Para convergencia, peralte, piezómetro, inclinómetro,
+    provisionales, tanto al añadir el punto como al abrir la captura. Para convergencia, peralte, piezómetro, inclinómetro,
     clinómetro, linómetro y distanciómetro se muestra la limitación concreta
     sin inventar pares, perfiles, referencias de carril ni parámetros de
     fabricante. La matriz está en
