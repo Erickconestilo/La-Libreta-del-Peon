@@ -29,6 +29,10 @@ puntos y los umbrales dentro de la transaccion de creacion de obra. Si una
 campaña real necesita otros codigos, el admin puede importar su CSV por la
 ruta protegida de catalogo; ese proceso no se versiona en Git.
 
+El fixture se valida en CI por
+`apps/backend/src/lib/generic-project-catalog-fixture.test.ts`, usando el mismo
+parser que utiliza la importación de producción.
+
 ## Limites
 
 No se incluyen nombres de obras, clientes, itinerarios reales, frecuencias de

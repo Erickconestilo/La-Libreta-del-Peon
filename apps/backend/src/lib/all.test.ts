@@ -2,6 +2,7 @@ import './access-control.test.js';
 import '../middleware/auth.test.js';
 import '../middleware/request-id.test.js';
 import './generic-project-template.test.js';
+import './generic-project-catalog-fixture.test.js';
 import './monitoring-reading-evaluation.test.js';
 import './round-export.test.js';
 import './round-export-parity.test.js';
