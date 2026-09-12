@@ -285,7 +285,10 @@ describe('syncOutboxItem', () => {
     expect(mockApiFetch).toHaveBeenNthCalledWith(
       3,
       '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits/visit-server-id/evidence',
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({
+        body: expect.stringContaining(`"clientRequestId":"8c0f6d27-bb52-43bb-a41a-a10ee1c37b99"`),
+        method: 'POST'
+      })
     );
     expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
   });

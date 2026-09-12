@@ -206,6 +206,7 @@ const syncMountingEvidence = async (item: OutboxItem): Promise<void> => {
     `/stations/${stationId}/mounting-visits/${resolvedVisitId}/evidence`,
     {
       body: JSON.stringify({
+        clientRequestId: item.clientRequestId,
         ...(evidenceInput as Record<string, unknown>),
         storagePath: signedUploadResponse.data.path
       }),
