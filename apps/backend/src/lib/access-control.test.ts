@@ -109,6 +109,19 @@ test('read-only project membership can consult but cannot write', () => {
   );
 });
 
+test('topografo without a server project access map cannot write despite a legacy project id', () => {
+  const legacySession = {
+    ...surveyorA
+  };
+
+  assert.doesNotThrow(() => assertProjectAccess(legacySession, projectA));
+  assert.throws(
+    () => assertProjectWriteAccess(legacySession, projectA),
+    (error: unknown) => error instanceof AppError && error.code === 'PROJECT_ACCESS_REQUIRED'
+  );
+  assert.equal(canActorWriteProject(legacySession, projectA), false);
+});
+
 test('supervisor is scoped and always read-only even with a write membership', () => {
   assert.deepEqual(getActorProjectScope(supervisorUser), [projectA]);
   assert.doesNotThrow(() => assertProjectAccess(supervisorUser, projectA));
