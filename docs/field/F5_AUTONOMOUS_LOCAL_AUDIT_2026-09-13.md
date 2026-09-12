@@ -90,6 +90,12 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     fuerza `draft` y deja el estado terminal al PATCH encolado. La regresión
     comprueba el cuerpo enviado y evita un error 422 en ese orden de trabajo.
 
+17. La secuencia completa de outbox se cubre ahora con SQLite y mocks de red:
+    creación de visita, cambio de estado y evidencia se procesan en orden,
+    terminan como `3/3` sincronizadas y la evidencia recrea la visita como
+    `draft` antes de adjuntarse. Esto no sustituye la comprobación real de
+    Storage ni la consulta a Supabase.
+
 ## Evidencia local
 
 ```text
@@ -101,7 +107,7 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 ℹ fail 0
 
 Test Suites: 18 passed, 18 total
-Tests:       80 passed, 80 total
+Tests:       81 passed, 81 total
 
 check-docs: 38 documentos revisados en raíz y docs/.
 
