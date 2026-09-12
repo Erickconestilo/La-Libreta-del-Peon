@@ -15,6 +15,7 @@ describe('monitoring cache', () => {
     const db = getDatabase();
     db.runSync('DELETE FROM monitoring_round_list_cache');
     db.runSync('DELETE FROM monitoring_round_cache');
+    db.runSync('DELETE FROM mounting_visit_cache');
   });
 
   it('persists the latest round list and its timestamp', () => {
@@ -45,7 +46,7 @@ describe('monitoring cache', () => {
 
   it('invalidates unscoped legacy cache rows during migration', async () => {
     const db = getDatabase();
-    db.runSync('DELETE FROM schema_version WHERE version IN (5, 6)');
+    db.runSync('DELETE FROM schema_version WHERE version IN (5, 6, 7)');
     db.execSync('DROP TABLE outbox');
     db.execSync(`
       CREATE TABLE outbox (

@@ -124,6 +124,10 @@ test('mounting visit routes separate consultation from evidence writes', () => {
     'admin',
     'topografo'
   ]);
+  assert.deepEqual(findAllowedRoles(stationsRouter, 'patch', '/:stationId/mounting-visits/:visitId'), [
+    'admin',
+    'topografo'
+  ]);
   assert.deepEqual(findAllowedRoles(stationsRouter, 'post', '/:stationId/mounting-visits/:visitId/evidence'), [
     'admin',
     'topografo'

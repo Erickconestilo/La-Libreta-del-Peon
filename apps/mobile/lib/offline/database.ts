@@ -47,6 +47,7 @@ export async function applyMigrations(): Promise<void> {
     { version: 4 },
     { version: 5 },
     { version: 6 },
+    { version: 7 },
   ];
 
   // Apply pending migrations
@@ -78,6 +79,10 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 6) {
           executeMigration006(db);
+        }
+
+        if (migration.version === 7) {
+          executeMigration007(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -248,6 +253,24 @@ function executeMigration006(db: SQLiteDatabase): void {
       ON outbox(session_id, status, created_at ASC);
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (6);
+  `);
+}
+
+/**
+ * Caché local de memoria de montaje, separada por sesión y estación.
+ * Las visitas pendientes se conservan aquí hasta que el outbox las publique.
+ */
+function executeMigration007(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS mounting_visit_cache (
+      cache_key TEXT NOT NULL,
+      station_id TEXT NOT NULL,
+      visits_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL,
+      PRIMARY KEY (cache_key, station_id)
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (7);
   `);
 }
 

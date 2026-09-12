@@ -23,8 +23,8 @@ export default function MountingVisitsScreen() {
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
   const { currentUser } = useCurrentSession();
   const { data: station } = useStationDetail(stationId ?? null);
-  const { data: visits, errorMessage: visitsError, isLoading } = useMountingVisits(stationId ?? null);
-  const { createVisit, errorMessage: mutationError, isMutating, updateVisit, uploadEvidence } = useMountingVisitMutations(stationId ?? null);
+  const { data: visits, errorMessage: visitsError, isLoading, isOfflineCache } = useMountingVisits(stationId ?? null);
+  const { createVisit, errorMessage: mutationError, isMutating, updateVisit, uploadEvidence } = useMountingVisitMutations(stationId ?? null, station?.projectId ?? null);
   const [notes, setNotes] = useState('');
   const [changeSummary, setChangeSummary] = useState('');
   const [title, setTitle] = useState('');
@@ -88,6 +88,12 @@ export default function MountingVisitsScreen() {
 
         {visitsError ? <Text style={styles.errorText}>{visitsError}</Text> : null}
         {mutationError ? <Text style={styles.errorText}>{mutationError}</Text> : null}
+        {isOfflineCache ? (
+          <View style={styles.offlineNotice}>
+            <MaterialIcons color={colors.amber} name="cloud-off" size={18} />
+            <Text style={styles.body}>Sin conexión: mostrando la última memoria guardada en este dispositivo.</Text>
+          </View>
+        ) : null}
 
         {canEdit ? (
           <View style={styles.card}>
@@ -180,7 +186,7 @@ export default function MountingVisitsScreen() {
             {visit.notes ? <Text style={styles.body}>{visit.notes}</Text> : null}
             {visit.evidence.map((evidence) => (
               <View key={evidence.id} style={styles.evidence}>
-                <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} source={{ uri: evidence.publicUrl }} style={styles.evidenceImage} />
+                <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
                 <View style={styles.evidenceBody}>
                   <Text style={styles.evidenceTitle}>{evidence.title ?? 'Evidencia sin título'}</Text>
                   <Text style={styles.caption}>{evidence.kind === 'prism' ? 'Prisma' : evidence.kind === 'reference' ? 'Referencia' : evidence.kind === 'access' ? 'Acceso' : 'General'}</Text>
@@ -232,6 +238,7 @@ const styles = StyleSheet.create({
   hero: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 18, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
   input: { backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, color: colors.textPrimary, padding: 12 },
   multiline: { minHeight: 76, textAlignVertical: 'top' },
+  offlineNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 10, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
   readOnlyNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },

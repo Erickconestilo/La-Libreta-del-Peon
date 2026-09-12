@@ -84,6 +84,31 @@ const workCompletionReportItem: OutboxItem = {
   syncedAt: null,
 };
 
+const mountingVisitItem: OutboxItem = {
+  clientRequestId: '7c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+  conflictData: null,
+  createdAt: '2026-09-12 09:00:00',
+  entityType: 'medicion',
+  errorMessage: null,
+  id: '6b0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+  lastSyncAttemptAt: null,
+  operation: 'insert',
+  sessionId: 'session:test',
+  payload: {
+    kind: 'mounting_visit',
+    stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
+    visitInput: {
+      changeSummary: 'Cambio de referencia',
+      notes: 'Acceso despejado',
+      status: 'draft',
+      visitedAt: '2026-09-12T09:00:00.000Z'
+    }
+  },
+  retryCount: 0,
+  status: 'pending',
+  syncedAt: null
+};
+
 describe('syncOutboxItem', () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
@@ -175,6 +200,94 @@ describe('syncOutboxItem', () => {
         method: 'POST'
       }
     );
+  });
+
+  it('creates a persisted mounting visit with its original clientRequestId', async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      data: { id: 'visit-server-id' },
+      error: null
+    } as never);
+
+    await syncOutboxItem(mountingVisitItem);
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits',
+      {
+        body: JSON.stringify({
+          clientRequestId: mountingVisitItem.clientRequestId,
+          changeSummary: 'Cambio de referencia',
+          notes: 'Acceso despejado',
+          status: 'draft',
+          visitedAt: '2026-09-12T09:00:00.000Z'
+        }),
+        method: 'POST'
+      }
+    );
+  });
+
+  it('resolves a local mounting visit before uploading its evidence', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce({
+        data: { id: 'visit-server-id' },
+        error: null
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          path: 'mounting-visits/visit-server-id/evidence-request.jpg',
+          signedUrl: 'https://storage.example/mounting-upload'
+        },
+        error: null
+      } as never)
+      .mockResolvedValueOnce({ data: { id: 'evidence-server-id' }, error: null } as never);
+
+    await syncOutboxItem({
+      ...mountingVisitItem,
+      clientRequestId: '8c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      id: '9c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      operation: 'update',
+      payload: {
+        evidenceInput: {
+          kind: 'prism',
+          notes: 'Foto cercana',
+          positionX: null,
+          positionY: null,
+          prismId: null,
+          title: 'PR-01'
+        },
+        kind: 'mounting_evidence',
+        photo: {
+          contentType: 'image/jpeg',
+          fileSizeBytes: 1024,
+          height: 800,
+          localUri: 'file:///documents/topofield-offline-photos/mounting.jpg',
+          width: 1200
+        },
+        stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
+        visitClientRequestId: mountingVisitItem.clientRequestId,
+        visitId: 'local-visit-id',
+        visitInput: mountingVisitItem.payload.visitInput
+      }
+    });
+
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      1,
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      2,
+      '/uploads/photos/sign',
+      expect.objectContaining({
+        body: expect.stringContaining('"entityType":"mounting_visit"'),
+        method: 'POST'
+      })
+    );
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      3,
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits/visit-server-id/evidence',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
   });
 
   it('recreates the reading idempotently before attaching its persisted photo', async () => {
