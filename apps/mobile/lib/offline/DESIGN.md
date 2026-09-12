@@ -1,8 +1,8 @@
 # Diseño del Motor Offline — TopoField Fase 2
 
 **Fecha:** 2026-07-26
-**Última verificación:** 2026-07-29
-**Estado:** IMPLEMENTADO Y VALIDADO EN GALAXY REAL
+**Última verificación:** 2026-09-12
+**Estado:** IMPLEMENTADO; FASE 2 VALIDADA EN GALAXY, HARDENING DE CACHÉ PENDIENTE DE VALIDACIÓN FÍSICA
 **Referencia:** MEMORIA.md §8, Plan Maestro Fase 2
 
 ---
@@ -51,15 +51,21 @@ CREATE TABLE IF NOT EXISTS outbox (
 CREATE INDEX idx_outbox_status ON outbox(status) WHERE status IN ('pending', 'error');
 CREATE INDEX idx_outbox_entity_type ON outbox(entity_type);
 
--- Cache local de datos leídos (opcional, para queries offline)
--- Solo para entidades que necesitan búsqueda offline
--- Por ahora: omitido, se cachea en memoria via react-query
+-- Cache local de datos leídos para la jornada offline
+-- Las claves incluyen la sesión técnica local para no mezclar cuentas
 ```
 
 **Migraciones versionadas:**
 - `lib/offline/migrations/001_initial_schema.sql`
-- `lib/offline/migrations/002_...sql` (futuras)
+- `lib/offline/migrations/002_...sql` (caché de Obras)
+- `lib/offline/migrations/005_monitoring_cache_session_scope.sql`
 - Aplicadas secuencialmente al abrir la app via `applyMigrations()`
+
+La migración local 005 invalida las tablas de caché de rondas creadas antes
+de esta versión: esas filas no tenían `cache_key` y no se pueden atribuir de
+forma segura a una cuenta. La caché nueva usa `(cache_key, project_id)` para
+listas y `(cache_key, round_id)` para snapshots. `cache_key` deriva de la
+sesión técnica activa, o es `guest` cuando no hay sesión.
 
 ### 2. Estados y Transiciones
 

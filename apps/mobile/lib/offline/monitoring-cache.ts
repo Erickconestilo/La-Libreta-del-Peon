@@ -24,32 +24,39 @@ export type MonitoringRoundSnapshot = {
 };
 
 type CacheRow = {
+  cache_key: string;
   cached_at: string;
   round_id: string;
   snapshot_json: string;
 };
 
 type ListCacheRow = {
+  cache_key: string;
   cached_at: string;
   project_id: string;
   rounds_json: string;
 };
 
-export const saveMonitoringRoundList = (projectId: string, rounds: MonitoringRound[], cachedAt = new Date().toISOString()) => {
+export const saveMonitoringRoundList = (
+  cacheKey: string,
+  projectId: string,
+  rounds: MonitoringRound[],
+  cachedAt = new Date().toISOString()
+) => {
   getDatabase().runSync(
     `
-      INSERT INTO monitoring_round_list_cache (project_id, rounds_json, cached_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(project_id) DO UPDATE SET rounds_json = excluded.rounds_json, cached_at = excluded.cached_at
+      INSERT INTO monitoring_round_list_cache (cache_key, project_id, rounds_json, cached_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(cache_key, project_id) DO UPDATE SET rounds_json = excluded.rounds_json, cached_at = excluded.cached_at
     `,
-    [projectId, JSON.stringify(rounds), cachedAt]
+    [cacheKey, projectId, JSON.stringify(rounds), cachedAt]
   );
 };
 
-export const getCachedMonitoringRoundList = (projectId: string) => {
+export const getCachedMonitoringRoundList = (cacheKey: string, projectId: string) => {
   const row = getDatabase().getFirstSync<ListCacheRow>(
-    'SELECT project_id, rounds_json, cached_at FROM monitoring_round_list_cache WHERE project_id = ?',
-    [projectId]
+    'SELECT cache_key, project_id, rounds_json, cached_at FROM monitoring_round_list_cache WHERE cache_key = ? AND project_id = ?',
+    [cacheKey, projectId]
   );
 
   if (!row) {
@@ -63,21 +70,21 @@ export const getCachedMonitoringRoundList = (projectId: string) => {
   };
 };
 
-export const saveMonitoringRoundSnapshot = (roundId: string, snapshot: MonitoringRoundSnapshot) => {
+export const saveMonitoringRoundSnapshot = (cacheKey: string, roundId: string, snapshot: MonitoringRoundSnapshot) => {
   getDatabase().runSync(
     `
-      INSERT INTO monitoring_round_cache (round_id, snapshot_json, cached_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(round_id) DO UPDATE SET snapshot_json = excluded.snapshot_json, cached_at = excluded.cached_at
+      INSERT INTO monitoring_round_cache (cache_key, round_id, snapshot_json, cached_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(cache_key, round_id) DO UPDATE SET snapshot_json = excluded.snapshot_json, cached_at = excluded.cached_at
     `,
-    [roundId, JSON.stringify(snapshot), snapshot.cachedAt]
+    [cacheKey, roundId, JSON.stringify(snapshot), snapshot.cachedAt]
   );
 };
 
-export const getMonitoringRoundSnapshot = (roundId: string) => {
+export const getMonitoringRoundSnapshot = (cacheKey: string, roundId: string) => {
   const row = getDatabase().getFirstSync<CacheRow>(
-    'SELECT round_id, snapshot_json, cached_at FROM monitoring_round_cache WHERE round_id = ?',
-    [roundId]
+    'SELECT cache_key, round_id, snapshot_json, cached_at FROM monitoring_round_cache WHERE cache_key = ? AND round_id = ?',
+    [cacheKey, roundId]
   );
 
   if (!row) {
