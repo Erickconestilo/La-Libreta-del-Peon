@@ -1,11 +1,11 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-12
 -->
 
 # MEMORIA.md — TopoField, estado de decisiones (rework)
 
-**Última actualización:** 24 de agosto de 2026
+**Última actualización:** 12 de septiembre de 2026
 **Rol de este archivo:** el **porqué** de cada decisión, qué se verificó, con qué evidencia y en qué fecha, más la bitácora cronológica. Si hay contradicción entre este archivo y un resumen anterior (incluida cualquier auditoría externa), **manda lo verificado aquí**, con fecha de verificación.
 
 **Qué NO es este archivo (desde el 02-08-2026):** no es la fuente de verdad sobre en qué fase está el proyecto ni sobre qué toca hacer ahora. Eso vive en **`ROADMAP.md`**. Si este archivo y `ROADMAP.md` discrepan sobre el estado de una fase o el siguiente paso, manda `ROADMAP.md`.
@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-12 | Codex | codex/f5-field-stability | Reactivación operativa: permisos de obra, evidencias de campo, partes de finalización, captura específica y consulta de supervisor; implementación local sin cambios remotos | cerrado (verificación local verde; migraciones 022-024 preparadas pero no aplicadas; Galaxy, Render y supervisor pendientes) |
 | 2026-07-26 | Cowork | — | Auditoría, adenda, evaluación, corrección TopoTask, inventario inicial Supabase, plan de fases consolidado | cerrado (solo lectura/documentación, sin commits) |
 | 2026-07-26 | Claude Code | main | Fase 0: inventario completo de 8 migraciones no versionadas, 23 tablas Supabase, reconciliación 6 commits locales, análisis de riesgo y recomendaciones (sin aplicar nada) | cerrado |
 | 2026-07-26 | Cowork | — | Segunda lectura del informe de Fase 0 de Claude Code: verificación de conteos reales (COUNT(*)), corrección de §3 (había datos, no cero), corrección de una cita errónea sobre §8 | cerrado (solo lectura) |
@@ -301,11 +302,13 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 ---
 
-## 12a. Lista consolidada de pendientes (31-07-2026)
+## 12a. Lista consolidada de pendientes (12-09-2026)
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Ahora (bloquea piloto real o es fricción activa):**
+- **Implementado localmente (12-09-2026):** reactivación operativa para campañas manuales: permiso efectivo `read/write` por membresía, parte idempotente de finalización de zona, sincronización offline del parte y captura inicial de testigo fotográfico, fisurómetro digital y potenciómetro. Las migraciones `022_project_membership_access_level.sql`, `023_work_completion_reports.sql` y `024_field_instrument_catalog.sql` están preparadas, pero no aplicadas ni desplegadas.
+- **Pendiente de entorno (12-09-2026):** aplicar `022`-`024` con autorización explícita, publicar el mismo estado en Render, generar una release local compatible y repetir en Galaxy el recorrido montaje/referencia/captura/incidencia/parte/reconexión. El supervisor identificado debe tener cuenta propia y membresía `read`; el token público `visitante` sigue fuera de auscultación.
 - **Implementado y aplicado (24-08-2026):** Mi jornada usa las rondas existentes como trabajo asignado; `admin` puede asignar topógrafo, fecha y `executionOrder`, el móvil obtiene `GET /api/v1/me/journey`, conserva la cola y aplaza localmente hasta fin de día. La migración 021 está aplicada y verificada en Supabase, y la release local está instalada en el Galaxy. Falta que Render publique el backend compatible y validar el recorrido autenticado completo.
 - **Corregido en móvil (24-08-2026):** un topógrafo ya no puede seleccionar `Sin obra` al crear una estación; la obra única se autoselecciona, una obra pasada por navegación se acepta solo si está entre sus obras disponibles y la pantalla muestra un bloqueo comprensible si no tiene ninguna. La pantalla de rondas vacía ahora ofrece crear la primera ronda/preparar puntos y separa el error de carga con botón de reintento.
 - **Completado localmente (24-08-2026):** preparación offline de una ronda, caché de puntos/histórico/umbrales, cierre operativo con pendientes y build release local `versionCode=2` instalada en el Galaxy sin perder datos. Sigue abierta la prueba real de lectura/foto sin red, reinicio y sincronización idempotente.
@@ -322,7 +325,8 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 - **Auditoría de dependencia del exportador (24-08-2026):** `exceljs@4.4.0` queda instalado. `npm audit --workspace apps/backend --omit=dev` devuelve 2 vulnerabilidades moderadas transitivas de `uuid`; la corrección disponible exige `npm audit fix --force` y degradaría ExcelJS a `3.4.0`, por lo que queda pendiente revisión explícita antes de producción.
 - **Completado (24-08-2026):** instalar en Galaxy la release local firmada; `adb install -r` devolvió `Success`, `versionCode=2` y `lastUpdateTime=2026-08-24 17:59:01`. La primera instalación original se conservó.
 - Catálogo semilla genérico/real del producto (Fase 1, enmienda 5).
-- Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro.
+- Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro y exista un procedimiento confirmado.
+- Visitas de montaje agrupadas, croquis fotográfico anotable, formularios de pares para convergencia/peralte y entrega preparada a proveedor.
 
 **Aparcado (sin retorno claro ahora):**
 - Purga de historial git de nombres reales de obra: el worktree real fue sustituido por la copia saneada el 01-08-2026; solo queda autorización explícita posterior para cualquier `push --force` tras avisar a colaboradores.
@@ -363,6 +367,9 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
+- **2026-09-12 — Reactivación operativa local (Codex):** añadidos permisos efectivos `read/write` por membresía sin crear un rol global nuevo, parte idempotente de finalización de zona con outbox y captura inicial de testigo fotográfico, fisurómetro digital y potenciómetro. El backend propaga `projectAccess` en login/refresh y el móvil oculta escritura en obras de solo lectura. Preparadas, no aplicadas, las migraciones `022_project_membership_access_level.sql`, `023_work_completion_reports.sql` y `024_field_instrument_catalog.sql`; no se tocó Supabase, Render, EAS, Play Store ni datos remotos. Verificación literal: `npm run build --workspace apps/backend` terminó con `> tsc -p tsconfig.json`; `npm test --workspace apps/backend` terminó con `ℹ tests 70`, `ℹ pass 70`, `ℹ fail 0`; `npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó sin salida y código 0; `npm test --workspace apps/mobile` terminó con `Test Suites: 11 passed, 11 total` y `Tests: 49 passed, 49 total`; `npm run docs:check` terminó con `check-docs: 31 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`. El Galaxy, Render y la cuenta supervisora quedan pendientes de validación/aplicación autorizada.
+
+- **2026-09-01 — Revisión quincenal de documentación: una contradicción corregida en `ROADMAP.md` (Cowork):** `node scripts/check-docs.mjs` devolvió literalmente `31 documentos revisados en raíz y docs/. / Sin errores ni avisos.`, y ningún documento vivo está rancio (el más antiguo, 30 días). El chequeo no detecta contradicciones de contenido y había una: «Pendientes que no son fases» seguía dando por abierto «decidir cómo se desbloquea el login técnico en el Galaxy» y lo llamaba «el único pendiente que frena el trabajo», cuando «Estado de F5» del mismo archivo y la bitácora del 24-08 ya lo daban por confirmado (Render `200` con rol `topografo`, perfil activo en la release local). Corregida esa línea y nombrado el bloqueo real de hoy: la corrección del lockfile `a545eed` sigue solo en `codex/f5-field-stability`, `main` local y `origin/main` (último fetch 07-08-2026) apuntan a `b5de27f`, y `GET /api/v1/me/journey` devuelve `404`. **No verificado desde aquí:** la entrada del 24-08 afirma que la PR #1 se fusionó en `main` con `5503e847`; ese objeto no existe en esta copia (`fatal: Not a valid object name`), así que o el merge quedó en GitHub sin fetch local, o no llegó a ocurrir — conviene comprobarlo desde la máquina de Erick antes de dar por hecho el estado de `main`. No se tocó código, Supabase, Render ni migraciones.
 - **2026-08-24 — Mi jornada aplicada y publicada (Codex):** se aplicó la migración 021 en Supabase `topofield`; la columna `execution_order` quedó como `integer NOT NULL DEFAULT 0`, el índice `idx_monitoring_rounds_operator_queue` existe y la migración quedó registrada como `021_monitoring_round_assignment_order`. La rama `codex/f5-field-stability` se publicó y la PR #1 se fusionó en `main` con `5503e847`; no se aplicó ninguna otra migración ni se tocó Play Store/EAS.
 - **2026-08-24 — Release local de Mi jornada instalada (Codex):** `npm run mobile:build-local-android` falló primero por `ninja: error: manifest 'build.ninja' still dirty after 100 tries`; se repitió sin `clean` y terminó con `BUILD SUCCESSFUL in 8m 33s`. La AAB fue firmada como `CN=TopoField Android Release`, el APK universal pasó `apksigner verify`, `adb install -r` devolvió `Success`, y el Galaxy quedó en `versionName=1.0.0`, `versionCode=2`, `lastUpdateTime=2026-08-24 20:45:41`.
 - **2026-08-24 — Bloqueo de Render verificado (Codex):** tras la fusión, `/api/v1/health` sigue devolviendo `{"commit":"b5de27f06c82d1c96a0ecb4612ca063a840b3cbe","status":"ok"}` y `GET /api/v1/me/journey` devuelve literalmente `404 Route not found`. La captura del Galaxy muestra la app nueva, pero Mi jornada indica `Función pendiente de publicar. Vuelve a intentarlo más tarde.`; falta activar o esperar el despliegue de Render antes de usar la función en campo.

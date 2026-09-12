@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-verificado: 2026-08-24
+  verificado: 2026-09-12
 -->
 
 # ROADMAP.md — TopoField
@@ -25,9 +25,9 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Validación de uso real y encaje de producto** | 🔵 **ABIERTA — primero estabilizar campo, después validar mercado** | PLAN Fase 4 (nunca ejecutada) |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — implementación local en preparación; falta aplicar/desplegar y probar en Galaxy** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato y generación local implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
-| **F7** | Instrumentos nuevos reemplazando el blob genérico de lectura | ⚪ Pendiente. **Alcance precisado 21-08-2026:** los instrumentos reales de Erick son fisurómetro y potenciómetro (los más usados, según demanda), regla de peralte (en unos meses) y cinta de convergencia. Ver `MEMORIA.md` §7 — hay un **hallazgo de modelado bloqueante**: varios miden entre pares de puntos y el modelo actual solo admite un punto por lectura. | MEMORIA Fase 6 |
+| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local inicial:** testigo fotográfico, fisurómetro digital, potenciómetro y parte de zona; pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
 
@@ -47,9 +47,9 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Estado actual:** producción tiene todo — F4 completa, D1 aplicada, D2 decidida. F5 queda sin ningún bloqueo técnico ni de despliegue.
 
-## F5 — Validación de uso real en campo (fase actual)
+## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
-**Por qué esta y no otra.** Todo el trabajo de las últimas semanas fue técnico: motor offline, seguridad entre obras, RLS, firma de release. Correcto, pero nadie salvo Erick ha tocado la app, y ni siquiera Erick la ha usado una jornada completa con datos reales. Abrir F6 (Excel) o F7 (instrumentos) ahora significa construir superficie nueva sobre un MVP cuyas fricciones reales nadie ha medido, y descubrirlas más tarde con más código que rehacer. F5 no requiere escribir código, así que es la fase más barata del roadmap y la que más criterio desbloquea.
+**Por qué esta y no otra.** Todo el trabajo anterior fue técnico: motor offline, seguridad entre obras, RLS y firma de release. La reactivación añade solo la superficie mínima que falta para representar el trabajo real de campo, y deja la validación observada como puerta obligatoria antes de ampliar F6 o F7. Así no se confunde una implementación local con evidencia de uso o de mercado.
 
 **Trabajo.** Ejecutar el Paso 1 de `PILOT_READINESS_CHECKLIST.md` (Erick, una obra real, un dispositivo, una jornada) registrando lo que pasa con la plantilla de investigación de `UX_RESEARCH_PLAN.md`: tiempo por tarea, errores, bloqueos, dudas repetidas, pasos sobrantes, elementos que se ignoran. Después realizar entrevistas cortas con profesionales del perfil objetivo para comprobar si el problema existe fuera de la experiencia personal de Erick. No basta con marcar "funciona / no funciona".
 
@@ -60,29 +60,37 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 - una decisión explícita por cada fricción: se corrige antes de F8, se corrige después, o se acepta;
 - al menos cinco conversaciones con profesionales y una conclusión sobre el segmento inicial, problema repetido, alternativas actuales y disposición a probar.
 
-**Qué NO hacer durante F5.** No abrir F6 ni F7 en paralelo. No añadir features "ya que estamos". Si aparece un bug bloqueante, se corrige y se anota; cualquier otra cosa va a la lista de fricciones.
+**Qué NO hacer durante F5.** No abrir el alcance completo de F6 o F7 en paralelo. Los formularios iniciales de evidencia y equipos incluidos en la reactivación son un slice acotado, no la aprobación de todos los protocolos. No añadir features "ya que estamos". Si aparece un bug bloqueante, se corrige y se anota; cualquier otra cosa va a la lista de fricciones.
 
 **Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-### Estado de F5 (revisado 24-08-2026)
+### Estado de F5 (revisado 12-09-2026)
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado; el Bloque 3 deja instalada en el Galaxy la release local `versionCode=2` y verifica el acceso a una obra, rondas y una ronda activa.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado; el Bloque 3 dejó instalada la release local `versionCode=2`.
 
-El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. Siguiente puerta de F5: completar una lectura/foto offline, reiniciar la app, sincronizar sin duplicados y cerrar la ronda solo cuando no queden puntos ni elementos locales pendientes. El piloto de dos móviles queda documentado, pero la segunda cuenta/membresía requiere autorización explícita de Erick.
+El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.
 
-### Mi jornada — implementación local 24-08-2026
+### Reactivación operativa — implementación local 12-09-2026
 
-El flujo de rondas asignadas ya está implementado: orden explícito por
-administrador, jornada personal agregada, tarjeta en Obras, continuación
-automática una vez por arranque, aplazamiento local hasta fin de día, panel
-admin y aviso de conflicto si cambia la planificación mientras hay datos
-locales pendientes. La migración 021 ya está aplicada y verificada en Supabase
-(`execution_order` e índice de cola), y la release local `versionCode=2` está
-instalada en el Galaxy. Render todavía sirve `b5de27f` y devuelve 404 en
-`GET /api/v1/me/journey`, así que falta activar el despliegue del backend antes
-de declarar esta parte operativa en producción.
+La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada real:
+
+- permiso efectivo por membresía (`read`/`write`) en backend y móvil, manteniendo los roles globales existentes;
+- parte idempotente de finalización de zona con estados parcial, completado y bloqueado;
+- outbox para partes offline y regresión de sincronización;
+- captura inicial de testigo fotográfico, fisurómetro digital, potenciómetro y clinómetro/cinta como tipos explícitos, sin conversiones inventadas;
+- tratamiento de una ronda como encargo ordenado por obra, fecha y responsable, reutilizando el dominio existente;
+- documentación de cobertura de equipos, límites y puertas de piloto.
+
+Las migraciones `022_project_membership_access_level.sql`,
+`023_work_completion_reports.sql` y `024_field_instrument_catalog.sql` están
+preparadas en local y **no se han aplicado a Supabase ni desplegado en Render**.
+Por tanto, este bloque no se puede declarar operativo en producción todavía.
+La siguiente puerta es aplicar esas migraciones con autorización explícita,
+desplegar la misma rama y validar en Galaxy: montaje/referencia, captura,
+incidencia, parte parcial, cierre, reconexión sin duplicados y consulta desde
+una cuenta supervisora de solo lectura.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
@@ -123,16 +131,21 @@ No es configuración que un agente pueda aplicar: implica gasto recurrente, así
 
 Razonamiento. El motivo original del proyecto es sustituir un Excel. Pero "sustituir el Excel" tiene dos mitades muy distintas y se estaban tratando como una: **exportar** (producir el entregable que el jefe o el cliente espera recibir) e **importar** (traerse el histórico antiguo). Exportar es lo que cierra el bucle: si TopoField no puede generar el documento que el flujo real consume, la app queda como cuaderno paralelo por bueno que sea el motor offline, y el usuario acaba volviendo al Excel para el último paso. Importar el histórico, en cambio, es más caro, arrastra los errores del Excel viejo, y no aporta nada hasta que el flujo de captura esté validado — importar datos a un flujo no validado es importar problemas.
 
-F7 (piezómetro, inclinómetro) va después porque hoy no hay una campaña real que los exija. Añadir un tipo de instrumento sin un caso que lo pida es entusiasmo técnico, no producto. Se reabre en cuanto exista una campaña concreta que lo necesite; entonces el trabajo estará mejor definido.
+Los formularios especializados de F7 (piezómetro, inclinómetro, convergencia y
+peralte) siguen después porque el procedimiento exacto de cada equipo aún no
+está confirmado. El slice inicial solo conserva evidencia y valores observados
+sin inventar semántica; no equivale a una integración de fabricante ni a una
+validación del protocolo.
 
 Contraargumento razonable: el blob genérico de `instrument_readings` es deuda técnica conocida y cuanto más tiempo pase, más datos habrá que migrar cuando se estructure. Es cierto, y es el mejor argumento para adelantar F7. Se acepta el riesgo: el volumen de lecturas hoy es mínimo, y migrar cien filas es barato comparado con diseñar un esquema para instrumentos que todavía no se sabe cómo se usarán en campo.
 
 ## Pendientes que no son fases
 
-Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo puede resolver Erick (revisado 21-08-2026):
+Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo puede resolver Erick (revisado 12-09-2026):
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
-- **Abierto:** decidir cómo se desbloquea el login técnico en el Galaxy (ver «Estado de F5» arriba) — es hoy el único pendiente que frena el trabajo.
+- **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
+- **Abierto — bloqueante operativo:** fusionar/publicar el slice de reactivación y aplicar las migraciones `022`-`024` en Supabase con autorización explícita. Hasta entonces Render y el Galaxy no representan el estado local de permisos, partes e instrumentos.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo

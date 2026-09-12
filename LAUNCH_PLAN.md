@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-12
 -->
 
 # LAUNCH_PLAN.md — Plan de Piloto, Lanzamiento y Activación Inicial
@@ -22,6 +22,7 @@ El piloto debe separarse en dos niveles:
 - compañeros de trabajo;
 - peones/topógrafos de campo;
 - encargado o jefe que necesite ver valor operativo;
+- supervisor identificado con acceso de lectura por obra;
 - si aparece oportunidad, una empresa piloto concreta.
 
 ## Requisitos previos al piloto
@@ -61,6 +62,7 @@ El piloto debe separarse en dos niveles:
 - prueba rápida de apertura de obra;
 - prueba rápida de foto o nota.
 - si se activa auscultación: prueba rápida de ronda, punto pendiente, lectura y estado de sincronización.
+- si se activa el flujo operativo: prueba de parte parcial, estado local y fecha de recepción del servidor.
 
 ## Materiales mínimos de lanzamiento
 - guía de uso de 1 página;
@@ -101,6 +103,7 @@ El feedback debe poder clasificarse rápido en:
 - una persona nueva puede entrar a una obra y encontrar una estación;
 - memoria visual usable;
 - rol y permisos entendibles;
+- el supervisor ve solo datos recibidos por servidor y no dispone de controles de escritura;
 - fallos reportables sin ambigüedad.
 
 ## Criterio de “piloto válido”

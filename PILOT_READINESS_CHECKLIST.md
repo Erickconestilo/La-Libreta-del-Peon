@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-12
 -->
 
 # Checklist de Piloto
@@ -20,6 +20,9 @@ Comprobaciones técnicas:
 - [x] **Confirmar que Render publica el commit que se pretende probar** consultando `/api/v1/health`. **Resuelto el 02-08-2026:** Erick autorizó y ejecutó el `push --force-with-lease`; Render redesplegó a `a0ba934`, con F4, D1 y D2 ya incluidas. Sigue siendo un buen hábito comprobarlo antes de cada sesión de campo (dos segundos, `curl` a `/api/v1/health`), no porque quede pendiente sino porque es gratis verificar.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
+- [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.
+- [ ] Registrar una captura como testigo fotográfico, una lectura digital y los tres pares del potenciómetro sin cobertura; distinguir guardado local de recibido por servidor.
+- [ ] Crear un parte parcial de zona y comprobar que no presenta el trabajo como 100 % completado si quedan puntos pendientes.
 
 Observación de uso (esto es lo que cierra F5, no lo anterior):
 
@@ -39,3 +42,5 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 - [x] **D2 decidida (02-08-2026): no gastar por ahora.** Requiere plan Pro de Supabase (25 USD/mes); Erick decide quedarse en Free. Mitigación: comprobar que el proyecto no esté pausado antes de cada sesión (primer punto de este checklist). Se reabre si F5 muestra pausas frecuentes o al sumar una segunda persona (F8).
 - [ ] Avisar a cualquier colaborador con un clon antes de pedir el `push --force` que publicaria el historial saneado.
 - [ ] Establecer quien revoca cuentas, reasigna membresias y responde ante perdida de un dispositivo.
+- [ ] Dar al supervisor una cuenta individual con membresías `read`; comprobar que consulta obra, fotos, incidencias, lecturas y partes, pero recibe `403` al escribir, adjuntar, exportar o cambiar la planificación.
+- [ ] Repetir la jornada desde dos cuentas sin compartir credenciales y verificar que ningún dato local pendiente se muestra como recibido al supervisor.
