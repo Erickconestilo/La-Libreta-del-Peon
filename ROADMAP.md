@@ -110,6 +110,11 @@ confirmaron el perfil `Supervisor`, la obra autorizada, la consulta de ronda,
 el histórico y una evidencia, además de la persistencia de sesión tras
 reinicio. La validación del operador offline sigue pendiente.
 
+El 12-09-2026 se corrigió una deriva local de seguridad: la caché de listas y
+snapshots de rondas ahora usa la sesión técnica además de la obra/ronda. La
+migración SQLite 005 invalida filas antiguas que no tenían propietario y sus
+regresiones pasan localmente; falta observar este comportamiento en el Galaxy.
+
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
 Tres decisiones que estaban abiertas y bloqueaban el avance. Se resuelven aquí con su razonamiento. Estado a 21-08-2026: **D1 aplicada y con test de regresión**, **D2 cerrada** (Erick decide quedarse en Free), **D3 vigente** como orden de fases. Ninguna queda pendiente de aplicar.

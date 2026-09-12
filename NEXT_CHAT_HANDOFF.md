@@ -16,9 +16,12 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Rama activa: `codex/f5-field-stability`.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
-- Últimos commits locales: `7136cfd` (auditoría de dependencias y handoff) y
-  `53a8a05` (auditoría de scope y documentación activa).
-- GitHub `main` verificado por API tras fusionar la PR #12: `a0c152020cb4455072c1d38f8c85d69d651fe8bc`.
+- Último commit local antes del hardening de caché: `18dee00` (paridad
+  CSV/XLSX y regresión de exportación).
+- Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
+  regresión de migración SQLite 005).
+- GitHub `main` verificado por API tras fusionar la PR #14:
+  `eb88db922a03b1e01a47f90dba8346542df3f212`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
 
@@ -67,6 +70,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   y `qs` realizada por la auditoría; build y tests backend ya pasan con él.
 - La auditoría actual está archivada en
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
+- La caché local de rondas y snapshots quedó separada por sesión en la
+  migración SQLite 005; la caché anterior se invalida al actualizar para
+  evitar contaminación entre cuentas.
 
 ## Comandos de verificación
 

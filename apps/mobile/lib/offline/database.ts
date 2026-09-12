@@ -45,6 +45,7 @@ export async function applyMigrations(): Promise<void> {
     { version: 2 },
     { version: 3 },
     { version: 4 },
+    { version: 5 },
   ];
 
   // Apply pending migrations
@@ -68,6 +69,10 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 4) {
           executeMigration004(db);
+        }
+
+        if (migration.version === 5) {
+          executeMigration005(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -185,6 +190,40 @@ function executeMigration004(db: SQLiteDatabase): void {
     );
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (4);
+  `);
+}
+
+/**
+ * Separa la caché de auscultación por sesión local. Las tablas anteriores no
+ * tenían propietario y se descartan para no exponer datos entre cuentas.
+ */
+function executeMigration005(db: SQLiteDatabase): void {
+  db.execSync(`
+    DROP TABLE IF EXISTS monitoring_round_list_cache_scoped;
+    CREATE TABLE monitoring_round_list_cache_scoped (
+      cache_key TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      rounds_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL,
+      PRIMARY KEY (cache_key, project_id)
+    );
+
+    DROP TABLE IF EXISTS monitoring_round_cache_scoped;
+    CREATE TABLE monitoring_round_cache_scoped (
+      cache_key TEXT NOT NULL,
+      round_id TEXT NOT NULL,
+      snapshot_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL,
+      PRIMARY KEY (cache_key, round_id)
+    );
+
+    DROP TABLE IF EXISTS monitoring_round_list_cache;
+    ALTER TABLE monitoring_round_list_cache_scoped RENAME TO monitoring_round_list_cache;
+
+    DROP TABLE IF EXISTS monitoring_round_cache;
+    ALTER TABLE monitoring_round_cache_scoped RENAME TO monitoring_round_cache;
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (5);
   `);
 }
 
