@@ -233,6 +233,61 @@ describe('Sync Engine', () => {
       expect((syncedItems[1].payload as any).order).toBe(2);
     });
 
+    it('solo sincroniza los items de la sesión solicitante', async () => {
+      outbox.enqueue({
+        id: 'session-a-item',
+        clientRequestId: 'session-a-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: { owner: 'a' }
+      });
+      outbox.enqueue({
+        id: 'session-b-item',
+        clientRequestId: 'session-b-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:b',
+        payload: { owner: 'b' }
+      });
+
+      const syncedItems: OutboxItem[] = [];
+      const mockSyncCallback = jest.fn<(item: OutboxItem) => Promise<void>>().mockImplementation(async (item) => {
+        syncedItems.push(item);
+      });
+
+      await flushOutbox(mockSyncCallback, 'session:a');
+
+      expect(syncedItems.map((item) => item.sessionId)).toEqual(['session:a']);
+      expect(outbox.getPending('session:a')).toHaveLength(0);
+      expect(outbox.getPending('session:b').map((item) => item.id)).toEqual(['session-b-item']);
+    });
+
+    it('no marca como sincronizado un item si la sesión cambia durante la request', async () => {
+      outbox.enqueue({
+        id: 'stale-item',
+        clientRequestId: 'stale-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: { owner: 'a' }
+      });
+
+      const mockSyncCallback = jest.fn<(item: OutboxItem) => Promise<void>>().mockImplementation(async () => {
+        stopSyncEngine();
+      });
+
+      await flushOutbox(mockSyncCallback, 'session:a');
+
+      const row = getDatabase().getFirstSync<{ status: string }>(
+        'SELECT status FROM outbox WHERE id = ?',
+        ['stale-item']
+      );
+      expect(row?.status).toBe('syncing');
+      expect(outbox.getPending('session:a')).toHaveLength(0);
+      expect(outbox.getPending('session:b')).toHaveLength(0);
+    });
+
     it('debe respetar backoff exponencial entre retries', async () => {
       outbox.enqueue({
         id: 'test-1',

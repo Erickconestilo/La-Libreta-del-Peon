@@ -10,7 +10,15 @@
  */
 
 import * as Network from 'expo-network';
-import { getPending, markSyncing, markSynced, markError, markConflict, recoverInterruptedItems, retryItem } from './outbox';
+import {
+  getPending,
+  markSyncing,
+  markSynced,
+  markError,
+  markConflict,
+  recoverInterruptedItems,
+  retryItem
+} from './outbox';
 import type { OutboxItem } from './outbox';
 
 // Configuración de retry
@@ -29,21 +37,30 @@ const MAX_RETRIES = RETRY_DELAYS.length;
 let isFlushingNow = false;
 let connectivityCheckInterval: NodeJS.Timeout | null = null;
 let lastConnectivityState: boolean | null = null;
+let activeSyncSessionId: string | null = null;
+let syncGeneration = 0;
 
 /**
  * Inicializar el motor de sincronización
  * Debe llamarse al arrancar la app
  */
-export function initSyncEngine(syncCallback: (item: OutboxItem) => Promise<void>): void {
-  console.log('[SyncEngine] Initializing...');
+export function initSyncEngine(syncCallback: (item: OutboxItem) => Promise<void>, sessionId: string): void {
+  if (!sessionId.trim()) {
+    throw new Error('Sync engine sessionId is required');
+  }
 
-  recoverInterruptedItems();
+  console.log('[SyncEngine] Initializing...');
+  activeSyncSessionId = sessionId;
+  syncGeneration += 1;
+  const generation = syncGeneration;
+
+  recoverInterruptedItems(sessionId);
 
   // Iniciar monitoreo de conectividad
-  startConnectivityMonitoring(syncCallback);
+  startConnectivityMonitoring(syncCallback, sessionId, generation);
 
   // Intentar flush inicial (si hay conectividad)
-  void flushOutbox(syncCallback);
+  void flushOutbox(syncCallback, sessionId, generation);
 }
 
 /**
@@ -51,6 +68,8 @@ export function initSyncEngine(syncCallback: (item: OutboxItem) => Promise<void>
  * Útil para tests y cleanup
  */
 export function stopSyncEngine(): void {
+  syncGeneration += 1;
+  activeSyncSessionId = null;
   if (connectivityCheckInterval) {
     clearInterval(connectivityCheckInterval);
     connectivityCheckInterval = null;
@@ -75,7 +94,11 @@ export async function hasConnectivity(): Promise<boolean> {
 /**
  * Monitorear cambios de conectividad
  */
-function startConnectivityMonitoring(syncCallback: (item: OutboxItem) => Promise<void>): void {
+function startConnectivityMonitoring(
+  syncCallback: (item: OutboxItem) => Promise<void>,
+  sessionId: string,
+  generation: number
+): void {
   // Polling cada 30s (no hay listener nativo confiable en expo-network)
   connectivityCheckInterval = setInterval(() => {
     void (async () => {
@@ -88,7 +111,7 @@ function startConnectivityMonitoring(syncCallback: (item: OutboxItem) => Promise
 
         // Un fallo transitorio del servidor no cambia la conectividad. Hacer
         // flush en cada sondeo permite que el backoff de la outbox se cumpla.
-        void flushOutbox(syncCallback);
+        void flushOutbox(syncCallback, sessionId, generation);
       }
 
       lastConnectivityState = connected;
@@ -105,7 +128,21 @@ function startConnectivityMonitoring(syncCallback: (item: OutboxItem) => Promise
  * Flush outbox: sincronizar todos los items pendientes
  * @returns Número de items sincronizados con éxito
  */
-export async function flushOutbox(syncCallback: (item: OutboxItem) => Promise<void>): Promise<number> {
+export async function flushOutbox(
+  syncCallback: (item: OutboxItem) => Promise<void>,
+  sessionId?: string,
+  expectedGeneration?: number
+): Promise<number> {
+  const scopedSessionId = sessionId ?? activeSyncSessionId ?? undefined;
+  const generation = expectedGeneration ?? syncGeneration;
+  const isCurrentSync = () =>
+    generation === syncGeneration && (!activeSyncSessionId || activeSyncSessionId === scopedSessionId);
+
+  if (!isCurrentSync()) {
+    console.log('[SyncEngine] Session changed, skipping stale flush');
+    return 0;
+  }
+
   // Evitar flush concurrente
   if (isFlushingNow) {
     console.log('[SyncEngine] Flush already in progress, skipping');
@@ -122,7 +159,7 @@ export async function flushOutbox(syncCallback: (item: OutboxItem) => Promise<vo
   isFlushingNow = true;
 
   try {
-    const pending = getPending();
+    const pending = getPending(scopedSessionId);
 
     if (pending.length === 0) {
       console.log('[SyncEngine] No pending items');
@@ -135,7 +172,12 @@ export async function flushOutbox(syncCallback: (item: OutboxItem) => Promise<vo
 
     // Sincronizar items secuencialmente (no en paralelo, para evitar race conditions)
     for (const item of pending) {
-      const success = await syncItem(item, syncCallback);
+      if (!isCurrentSync()) {
+        console.log('[SyncEngine] Session changed during flush, stopping stale work');
+        break;
+      }
+
+      const success = await syncItem(item, syncCallback, scopedSessionId, isCurrentSync);
       if (success) {
         successCount++;
       }
@@ -152,7 +194,14 @@ export async function flushOutbox(syncCallback: (item: OutboxItem) => Promise<vo
  * Sincronizar un item individual
  * @returns true si se sincronizó con éxito
  */
-async function syncItem(item: OutboxItem, syncCallback: (item: OutboxItem) => Promise<void>): Promise<boolean> {
+async function syncItem(
+  item: OutboxItem,
+  syncCallback: (item: OutboxItem) => Promise<void>,
+  sessionId: string | undefined,
+  isCurrentSync: () => boolean
+): Promise<boolean> {
+  if (!isCurrentSync()) return false;
+
   // Verificar si debe reintentar (backoff exponencial)
   if (item.retryCount > 0 && item.lastSyncAttemptAt) {
     const delayMs = getRetryDelay(item.retryCount - 1);
@@ -168,22 +217,34 @@ async function syncItem(item: OutboxItem, syncCallback: (item: OutboxItem) => Pr
   // Verificar límite de reintentos
   if (item.retryCount >= MAX_RETRIES) {
     console.warn(`[SyncEngine] Item ${item.id} exceeded max retries, marking as error`);
-    markError(item.id, `Max retries exceeded (${MAX_RETRIES})`);
+    markError(item.id, `Max retries exceeded (${MAX_RETRIES})`, sessionId);
     return false;
   }
 
   // Marcar como syncing
-  markSyncing(item.id);
+  if (!isCurrentSync()) return false;
+  markSyncing(item.id, sessionId);
 
   try {
     // Ejecutar el callback de sincronización (inyectado desde el hook)
+    if (!isCurrentSync()) return false;
     await syncCallback(item);
 
+    if (!isCurrentSync()) {
+      console.log(`[SyncEngine] Session changed while syncing item ${item.id}; leaving it recoverable`);
+      return false;
+    }
+
     // Éxito: marcar como synced
-    markSynced(item.id);
+    markSynced(item.id, sessionId);
     console.log(`[SyncEngine] Item ${item.id} synced successfully`);
     return true;
   } catch (err: unknown) {
+    if (!isCurrentSync()) {
+      console.log(`[SyncEngine] Session changed after item ${item.id} started; leaving it recoverable`);
+      return false;
+    }
+
     const error = err as { code?: string; message?: string; rawMessage?: string | null; status?: number };
 
     console.error(
@@ -198,26 +259,26 @@ async function syncItem(item: OutboxItem, syncCallback: (item: OutboxItem) => Pr
     switch (errorType) {
       case 'conflict':
         // 409 Conflict: requiere intervención manual
-        markConflict(item.id, { serverError: error });
+        markConflict(item.id, { serverError: error }, sessionId);
         console.warn(`[SyncEngine] Conflict detected for item ${item.id}`);
         break;
 
       case 'validation':
         // 422 Validation error: no retry automático
-        markError(item.id, error.message || 'Validation error');
+        markError(item.id, error.message || 'Validation error', sessionId);
         console.warn(`[SyncEngine] Validation error for item ${item.id}`);
         break;
 
       case 'network':
       case 'server':
         // Errores transitorios: volver a pending para retry
-        retryItem(item.id);
+        retryItem(item.id, sessionId);
         console.log(`[SyncEngine] Item ${item.id} will retry (${errorType})`);
         break;
 
       default:
         // Error desconocido: marcar como error sin retry
-        markError(item.id, error.message || 'Unknown error');
+        markError(item.id, error.message || 'Unknown error', sessionId);
         console.error(`[SyncEngine] Unknown error for item ${item.id}`);
     }
 
@@ -275,7 +336,7 @@ function parseSqliteUtcDate(sqliteDatetime: string): number {
 /**
  * Forzar retry de un item con error
  */
-export function forceRetry(itemId: string): void {
-  retryItem(itemId);
+export function forceRetry(itemId: string, sessionId?: string): void {
+  retryItem(itemId, sessionId);
   console.log(`[SyncEngine] Item ${itemId} marked for retry`);
 }

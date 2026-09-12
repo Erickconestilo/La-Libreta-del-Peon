@@ -238,13 +238,13 @@ const buildRoundSnapshot = (
   thresholdsByControlPointId: existing?.thresholdsByControlPointId ?? {}
 });
 
-const fetchMonitoringRoundWithCache = async (cacheKey: string, roundId: string) => {
+const fetchMonitoringRoundWithCache = async (cacheKey: string, sessionId: string | null, roundId: string) => {
   try {
     const round = await fetchMonitoringRound(roundId);
     const cached = getMonitoringRoundSnapshot(cacheKey, roundId);
     const assignmentConflict = Boolean(
       cached &&
-      getRoundOutboxItems(roundId).length > 0 &&
+      getRoundOutboxItems(roundId, sessionId ?? undefined).length > 0 &&
       (cached.round.operatorId !== round.operatorId ||
         cached.round.roundDate !== round.roundDate ||
         cached.round.executionOrder !== round.executionOrder)
@@ -471,12 +471,17 @@ const uploadAndAttachReadingPhoto = async ({
   });
 };
 
-const enqueueReadingAttachment = (attachment: ReadingAttachmentPayload, clientRequestId: string) => {
+const enqueueReadingAttachment = (
+  attachment: ReadingAttachmentPayload,
+  clientRequestId: string,
+  sessionId: string
+) => {
   enqueue({
     clientRequestId,
     entityType: 'medicion',
     id: createRandomId(),
     operation: 'update',
+    sessionId,
     payload: {
       kind: 'reading_attachment',
       ...attachment
@@ -575,7 +580,7 @@ export const useMonitoringRound = (roundId: string | null) => {
   const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
   const query = useQuery({
     enabled: Boolean(roundId),
-    queryFn: () => fetchMonitoringRoundWithCache(cacheKey, roundId as string),
+    queryFn: () => fetchMonitoringRoundWithCache(cacheKey, activeSessionId, roundId as string),
     queryKey: ['monitoring-round', cacheKey, roundId],
     staleTime: 1000 * 15
   });
@@ -615,6 +620,7 @@ export const useCreateWorkCompletionReport = (roundId: string | null) => {
   const mutation = useMutation({
     mutationFn: async (input: CreateWorkCompletionReportInput) => {
       if (!roundId) throw new Error('Falta la ronda para crear el parte.');
+      if (!activeSessionId) throw new Error('Necesitas una sesión técnica para crear el parte.');
       const clientRequestId = createRandomId();
 
       if (await hasConnectivity()) {
@@ -631,6 +637,7 @@ export const useCreateWorkCompletionReport = (roundId: string | null) => {
         entityType: 'medicion',
         id: createRandomId(),
         operation: 'insert',
+        sessionId: activeSessionId,
         payload: { kind: 'work_completion_report', roundId, ...input }
       });
       return { clientRequestId, mode: 'queued' as const, report: null };
@@ -641,7 +648,7 @@ export const useCreateWorkCompletionReport = (roundId: string | null) => {
         queryClient.invalidateQueries({ queryKey: ['work-completion-reports', roundId] }),
         queryClient.invalidateQueries({ queryKey: ['my-journey'] })
       ]);
-      if (await hasConnectivity()) void flushOutbox(syncOutboxItem);
+      if (activeSessionId && await hasConnectivity()) void flushOutbox(syncOutboxItem, activeSessionId);
     }
   });
 
@@ -855,6 +862,9 @@ export const useCreateInstrumentReading = ({
       if (!roundPointId) {
         throw new Error('Falta el punto de la ronda.');
       }
+      if (!activeSessionId) {
+        throw new Error('Necesitas una sesión técnica para registrar una lectura.');
+      }
 
       const clientRequestId = createRandomId();
       const { photo, ...readingInput } = input;
@@ -886,7 +896,7 @@ export const useCreateInstrumentReading = ({
               await deletePreparedPhoto(persistentPhoto);
             } catch (error) {
               console.warn('[useCreateInstrumentReading] Photo sync failed, enqueueing:', error);
-              enqueueReadingAttachment(attachment, attachmentClientRequestId);
+              enqueueReadingAttachment(attachment, attachmentClientRequestId, activeSessionId);
               return { mode: 'synced', photoPending: true, response };
             }
           }
@@ -906,6 +916,7 @@ export const useCreateInstrumentReading = ({
         entityType: 'medicion',
         id: createRandomId(),
         operation: 'insert',
+        sessionId: activeSessionId,
         payload: {
           ...readingInput,
           roundId: roundId as string,
@@ -919,6 +930,7 @@ export const useCreateInstrumentReading = ({
           entityType: 'medicion',
           id: createRandomId(),
           operation: 'update',
+          sessionId: activeSessionId,
           payload: {
             kind: 'reading_attachment',
             notes: null,
@@ -948,7 +960,9 @@ export const useCreateInstrumentReading = ({
       ]);
 
       if (await hasConnectivity()) {
-        void flushOutbox(syncOutboxItem);
+        if (activeSessionId) {
+          void flushOutbox(syncOutboxItem, activeSessionId);
+        }
       }
     }
   });
@@ -956,7 +970,7 @@ export const useCreateInstrumentReading = ({
   return {
     errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo guardar la lectura.') : null,
     isCreating: mutation.isPending,
-    pendingCount: getPendingCount(),
+    pendingCount: getPendingCount(activeSessionId ?? undefined),
     submitReading: mutation.mutateAsync
   };
 };

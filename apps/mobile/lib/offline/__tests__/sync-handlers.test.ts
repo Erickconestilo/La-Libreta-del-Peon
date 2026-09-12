@@ -28,6 +28,7 @@ const stationMessageItem: OutboxItem = {
   id: '59c530b4-b39c-4547-aa5d-e7b78fbd8ed9',
   lastSyncAttemptAt: null,
   operation: 'insert',
+  sessionId: 'session:test',
   payload: {
     body: 'Mensaje offline',
     stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
@@ -46,6 +47,7 @@ const instrumentReadingItem: OutboxItem = {
   id: '0d88a337-9c75-4853-83e1-0e4b03a3f7a2',
   lastSyncAttemptAt: null,
   operation: 'insert',
+  sessionId: 'session:test',
   payload: {
     measuredAt: '2026-07-31T08:00:00.000Z',
     notes: 'Lectura tomada sin cobertura',
@@ -68,6 +70,7 @@ const workCompletionReportItem: OutboxItem = {
   id: '8c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
   lastSyncAttemptAt: null,
   operation: 'insert',
+  sessionId: 'session:test',
   payload: {
     kind: 'work_completion_report',
     notes: 'Acceso bloqueado en el último punto',

@@ -29,7 +29,7 @@ export default function MonitoringRoundDetailScreen() {
   const roundId = Array.isArray(params.roundId) ? params.roundId[0] : params.roundId;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { currentUser } = useCurrentSession();
+  const { activeSessionId, currentUser } = useCurrentSession();
   const { assignmentConflict, cachedAt, data: round, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRound(roundId ?? null);
   const { errorMessage: prepareErrorMessage, isPreparing, prepareRound } = usePrepareMonitoringRound(roundId ?? null);
   const { errorMessage: statusErrorMessage, isUpdating, updateStatus } = useUpdateMonitoringRoundStatus(roundId ?? null);
@@ -39,7 +39,7 @@ export default function MonitoringRoundDetailScreen() {
   const points = round?.points ?? [];
   const pending = points.filter((item) => item.status === 'pending').length;
   const taken = points.filter((item) => item.status === 'taken').length;
-  const localPending = roundId ? getRoundOutboxItems(roundId).length : 0;
+  const localPending = roundId ? getRoundOutboxItems(roundId, activeSessionId ?? undefined).length : 0;
   const canClose = Boolean(round && round.status === 'active' && pending === 0 && localPending === 0);
 
   const handlePrepare = async () => {

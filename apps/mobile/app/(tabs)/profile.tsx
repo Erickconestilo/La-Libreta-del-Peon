@@ -44,7 +44,7 @@ export default function ProfileScreen() {
 
   const refreshOutboxErrors = () => {
     try {
-      setOutboxErrors(getErrors());
+      setOutboxErrors(activeSessionId ? getErrors(activeSessionId) : []);
     } catch (error) {
       console.warn('[Profile] Unable to load outbox diagnostics:', error);
       setOutboxErrors([]);
@@ -69,9 +69,10 @@ export default function ProfileScreen() {
     setIsRetryingOutbox(itemId);
 
     try {
-      forceRetry(itemId);
+      if (!activeSessionId) return;
+      forceRetry(itemId, activeSessionId);
       refreshOutboxErrors();
-      await flushOutbox(syncOutboxItem);
+      await flushOutbox(syncOutboxItem, activeSessionId);
     } finally {
       refreshOutboxErrors();
       setIsRetryingOutbox(null);

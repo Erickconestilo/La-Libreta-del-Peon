@@ -45,8 +45,23 @@ describe('monitoring cache', () => {
 
   it('invalidates unscoped legacy cache rows during migration', async () => {
     const db = getDatabase();
-    db.runSync('DELETE FROM schema_version WHERE version = 5');
+    db.runSync('DELETE FROM schema_version WHERE version IN (5, 6)');
+    db.execSync('DROP TABLE outbox');
     db.execSync(`
+      CREATE TABLE outbox (
+        id TEXT PRIMARY KEY,
+        client_request_id TEXT NOT NULL UNIQUE,
+        entity_type TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        synced_at TEXT,
+        last_sync_attempt_at TEXT,
+        retry_count INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
+        conflict_data TEXT
+      );
       DROP TABLE monitoring_round_list_cache;
       DROP TABLE monitoring_round_cache;
       CREATE TABLE monitoring_round_list_cache (

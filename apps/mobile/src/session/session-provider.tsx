@@ -9,6 +9,7 @@ import { createRandomId } from '@/lib/random-id';
 import { queryClient } from '@/lib/query-client';
 import { getAuthRequestDiagnostic, type AuthRequestDiagnostic } from './auth-diagnostics';
 import { resolveSessionAfterRefreshFailure } from './session-refresh';
+import { findStoredSessionForUser } from './session-identity';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -39,6 +40,7 @@ type StoredTechSession = {
   refreshToken?: string | null;
   role: AuthSessionUser['role'];
   token: string;
+  userId?: string | null;
 };
 
 type SessionStore = {
@@ -129,7 +131,8 @@ const parseSessionStore = (raw: string | null): SessionStore => {
             lastUsedAt: String(entry.lastUsedAt),
             refreshToken: typeof entry.refreshToken === 'string' ? entry.refreshToken : null,
             role: entry.role,
-            token: String(entry.token)
+            token: String(entry.token),
+            userId: typeof entry.userId === 'string' ? entry.userId : null
           }))
       : [];
 
@@ -165,7 +168,8 @@ const loadStateFromStorage = async (): Promise<SessionStore> => {
     label: 'Sesión técnica',
     lastUsedAt: nowIso(),
     role: 'admin',
-    token: legacyToken
+    token: legacyToken,
+    userId: null
   };
 
   return { activeSessionId: fallbackSession.id, sessions: [fallbackSession] };
@@ -389,7 +393,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       lastUsedAt: now,
       refreshToken: payload.session.refreshToken,
       role: payload.user.role,
-      token: payload.session.accessToken
+      token: payload.session.accessToken,
+      userId: payload.user.id
     } satisfies StoredTechSession;
   };
 
@@ -558,7 +563,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
               fullName: user.fullName,
               label: normalizeLabel(user.role, user.fullName),
               lastUsedAt: now,
-              role: user.role
+              role: user.role,
+              userId: user.id
             };
 
             const sessions = nextState.sessions.map((session) =>
@@ -609,7 +615,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
 
       const now = nowIso();
-      const existingSession = previousSessions.find((session) => session.role === authenticatedUser.role);
+      const existingSession = findStoredSessionForUser(previousSessions, authenticatedUser);
       const mergedSession: StoredTechSession = existingSession
         ? {
             ...existingSession,
@@ -618,7 +624,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             label: normalizeLabel(authenticatedUser.role, authenticatedUser.fullName),
             lastUsedAt: now,
             role: authenticatedUser.role,
-            token: trimmedToken
+            token: trimmedToken,
+            userId: authenticatedUser.id
           }
         : {
             createdAt: now,
@@ -628,7 +635,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             label: normalizeLabel(authenticatedUser.role, authenticatedUser.fullName),
             lastUsedAt: now,
             role: authenticatedUser.role,
-            token: trimmedToken
+            token: trimmedToken,
+            userId: authenticatedUser.id
           };
 
       const nextSessions = existingSession
@@ -683,7 +691,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
 
       const now = nowIso();
-      const existingSession = previousSessions.find((session) => session.role === user.role);
+      const existingSession = findStoredSessionForUser(previousSessions, user);
       const mergedSession = createSessionFromPayload(payload, existingSession);
       mergedSession.label = normalizeLabel(user.role, user.fullName);
       mergedSession.lastUsedAt = now;

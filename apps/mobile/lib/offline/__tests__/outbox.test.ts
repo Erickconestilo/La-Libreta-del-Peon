@@ -141,6 +141,74 @@ describe('Outbox API', () => {
       expect(pending[0].id).toBe('first');
       expect(pending[1].id).toBe('second');
     });
+
+    it('separa las operaciones pendientes por sesión local', () => {
+      outbox.enqueue({
+        id: 'session-a-item',
+        clientRequestId: 'session-a-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: { owner: 'a' }
+      });
+      outbox.enqueue({
+        id: 'session-b-item',
+        clientRequestId: 'session-b-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:b',
+        payload: { owner: 'b' }
+      });
+
+      expect(outbox.getPending('session:a').map((item) => item.id)).toEqual(['session-a-item']);
+      expect(outbox.getPending('session:b').map((item) => item.id)).toEqual(['session-b-item']);
+      expect(outbox.getPending('session:a')[0].sessionId).toBe('session:a');
+    });
+
+    it('no permite cambiar el estado de una operación desde otra sesión', () => {
+      outbox.enqueue({
+        id: 'owned-item',
+        clientRequestId: 'owned-request',
+        entityType: 'station_message',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: {}
+      });
+
+      outbox.markError('owned-item', 'wrong session', 'session:b');
+      expect(outbox.getPending('session:a')).toHaveLength(1);
+      expect(outbox.getErrors('session:a')).toHaveLength(0);
+    });
+  });
+
+  it('aísla en cuarentena las filas creadas por una versión anterior sin sesión', async () => {
+    const db = getDatabase();
+    db.runSync('DELETE FROM schema_version');
+    db.execSync('DROP TABLE outbox');
+    db.execSync(`
+      CREATE TABLE outbox (
+        id TEXT PRIMARY KEY,
+        client_request_id TEXT NOT NULL UNIQUE,
+        entity_type TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        synced_at TEXT,
+        last_sync_attempt_at TEXT,
+        retry_count INTEGER NOT NULL DEFAULT 0,
+        error_message TEXT,
+        conflict_data TEXT
+      );
+      INSERT INTO outbox (id, client_request_id, entity_type, operation, payload)
+      VALUES ('legacy-item', 'legacy-request', 'station_message', 'insert', '{}');
+    `);
+
+    await applyMigrations();
+
+    expect(outbox.getPending('session:a')).toHaveLength(0);
+    expect(db.getFirstSync<{ session_id: string }>('SELECT session_id FROM outbox WHERE id = ?', ['legacy-item'])?.session_id)
+      .toBe('__unassigned__');
   });
 
   describe('markSyncing', () => {

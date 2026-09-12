@@ -66,16 +66,16 @@ export default function RootLayout() {
 }
 
 function OfflineSyncBootstrap({ enabled }: { enabled: boolean }) {
-  const { isLoading, storedToken } = useSession();
+  const { activeSessionId, isLoading, storedToken } = useSession();
 
   useEffect(() => {
-    if (!enabled || isLoading || !storedToken) {
+    if (!enabled || isLoading || !storedToken || !activeSessionId) {
       return;
     }
 
-    initSyncEngine(syncOutboxItem);
+    initSyncEngine(syncOutboxItem, activeSessionId);
     return stopSyncEngine;
-  }, [enabled, isLoading, storedToken]);
+  }, [activeSessionId, enabled, isLoading, storedToken]);
 
   return null;
 }

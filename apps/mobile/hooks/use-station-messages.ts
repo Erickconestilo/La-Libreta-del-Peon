@@ -7,6 +7,7 @@ import { enqueue, getPendingCount } from '@/lib/offline/outbox';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
 import { createRandomId } from '@/lib/random-id';
+import { useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -80,12 +81,17 @@ export const useRecentStationMessages = (enabled = true) => {
 };
 
 export const useCreateStationMessage = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (input: CreateStationMessageInput) => {
       if (!stationId) {
         throw new Error('Station id is required.');
+      }
+
+      if (!activeSessionId) {
+        throw new Error('Necesitas una sesión técnica para enviar mensajes.');
       }
 
       const connected = await hasConnectivity();
@@ -109,6 +115,7 @@ export const useCreateStationMessage = (stationId: string | null) => {
         clientRequestId,
         entityType: 'station_message',
         operation: 'insert',
+        sessionId: activeSessionId,
         payload: {
           ...input,
           stationId,
@@ -137,7 +144,9 @@ export const useCreateStationMessage = (stationId: string | null) => {
       // Intentar flush automático si hay conectividad
       const connected = await hasConnectivity();
       if (connected) {
-        void flushOutbox(syncOutboxItem);
+        if (activeSessionId) {
+          void flushOutbox(syncOutboxItem, activeSessionId);
+        }
       }
     }
   });
@@ -146,6 +155,6 @@ export const useCreateStationMessage = (stationId: string | null) => {
     createMessage: mutation.mutateAsync,
     errorMessage: mutation.error ? getErrorMessage(mutation.error) : null,
     isCreating: mutation.isPending,
-    pendingCount: getPendingCount(), // Útil para mostrar badge en UI
+    pendingCount: getPendingCount(activeSessionId ?? undefined), // Útil para mostrar badge en UI
   };
 };

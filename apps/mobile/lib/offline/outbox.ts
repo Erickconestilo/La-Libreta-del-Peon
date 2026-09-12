@@ -4,11 +4,13 @@
  */
 
 import { getDatabase } from './database';
+import { normalizeOutboxSessionId, UNASSIGNED_OUTBOX_SESSION_ID } from './session-scope';
 import type { OfflineQueueEntityType, OfflineQueueStatus } from '@shared/types';
 
 export interface OutboxItem {
   id: string;
   clientRequestId: string;
+  sessionId: string;
   entityType: OfflineQueueEntityType;
   operation: 'insert' | 'update' | 'delete';
   payload: Record<string, unknown>;
@@ -24,6 +26,7 @@ export interface OutboxItem {
 interface OutboxRow {
   id: string;
   client_request_id: string;
+  session_id: string;
   entity_type: string;
   operation: string;
   payload: string; // JSON string
@@ -39,6 +42,8 @@ interface OutboxRow {
 export interface EnqueueParams {
   id: string;
   clientRequestId: string;
+  /** Required in production. Tests may omit it and use the test scope. */
+  sessionId?: string;
   entityType: OfflineQueueEntityType;
   operation: 'insert' | 'update' | 'delete';
   payload: Record<string, unknown>;
@@ -48,6 +53,7 @@ function rowToItem(row: OutboxRow): OutboxItem {
   return {
     id: row.id,
     clientRequestId: row.client_request_id,
+    sessionId: row.session_id,
     entityType: row.entity_type as OfflineQueueEntityType,
     operation: row.operation as 'insert' | 'update' | 'delete',
     payload: JSON.parse(row.payload),
@@ -84,10 +90,22 @@ export function enqueueMany(items: EnqueueParams[]): void {
 
   try {
     for (const item of items) {
+      const sessionId = normalizeOutboxSessionId(item.sessionId);
+      if (!sessionId && process.env.NODE_ENV !== 'test') {
+        throw new Error('Outbox sessionId is required for production writes');
+      }
+
       db.runSync(
-        `INSERT INTO outbox (id, client_request_id, entity_type, operation, payload)
-         VALUES (?, ?, ?, ?, ?)`,
-        [item.id, item.clientRequestId, item.entityType, item.operation, JSON.stringify(item.payload)]
+        `INSERT INTO outbox (id, client_request_id, session_id, entity_type, operation, payload)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          item.id,
+          item.clientRequestId,
+          sessionId ?? UNASSIGNED_OUTBOX_SESSION_ID,
+          item.entityType,
+          item.operation,
+          JSON.stringify(item.payload)
+        ]
       );
     }
 
@@ -105,16 +123,18 @@ export function enqueueMany(items: EnqueueParams[]): void {
 /**
  * Get all pending items (status = 'pending')
  */
-export function getPending(): OutboxItem[] {
+export function getPending(sessionId?: string): OutboxItem[] {
   const db = getDatabase();
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return [];
 
   // Desempate por rowid: created_at solo tiene precisión de 1 segundo, así que
   // dos items encolados en el mismo segundo no tendrían orden garantizado sin
   // esto. rowid (columna implícita de SQLite) crece de forma monótona con
   // cada INSERT, así que sí refleja el orden real de encolado.
   const rows = db.getAllSync<OutboxRow>(
-    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at ASC, rowid ASC',
-    ['pending']
+    'SELECT * FROM outbox WHERE session_id = ? AND status = ? ORDER BY created_at ASC, rowid ASC',
+    [scopedSessionId, 'pending']
   );
 
   return rows.map(rowToItem);
@@ -123,13 +143,15 @@ export function getPending(): OutboxItem[] {
 /**
  * Get all items with errors
  */
-export function getErrors(): OutboxItem[] {
+export function getErrors(sessionId?: string): OutboxItem[] {
   const db = getDatabase();
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return [];
 
   // Mismo desempate por rowid que en getPending() — ver comentario allí.
   const rows = db.getAllSync<OutboxRow>(
-    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC, rowid DESC',
-    ['error']
+    'SELECT * FROM outbox WHERE session_id = ? AND status = ? ORDER BY created_at DESC, rowid DESC',
+    [scopedSessionId, 'error']
   );
 
   return rows.map(rowToItem);
@@ -138,24 +160,31 @@ export function getErrors(): OutboxItem[] {
 /**
  * Get all items with conflicts
  */
-export function getConflicts(): OutboxItem[] {
+export function getConflicts(sessionId?: string): OutboxItem[] {
   const db = getDatabase();
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return [];
 
   // Mismo desempate por rowid que en getPending() — ver comentario allí.
   const rows = db.getAllSync<OutboxRow>(
-    'SELECT * FROM outbox WHERE status = ? ORDER BY created_at DESC, rowid DESC',
-    ['conflict']
+    'SELECT * FROM outbox WHERE session_id = ? AND status = ? ORDER BY created_at DESC, rowid DESC',
+    [scopedSessionId, 'conflict']
   );
 
   return rows.map(rowToItem);
 }
 
-export function getRoundOutboxItems(roundId: string): OutboxItem[] {
+export function getRoundOutboxItems(roundId: string, sessionId?: string): OutboxItem[] {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return [];
+
   const rows = getDatabase().getAllSync<OutboxRow>(
     `SELECT * FROM outbox
-     WHERE status IN ('pending', 'syncing', 'error', 'conflict')
+     WHERE session_id = ?
+       AND status IN ('pending', 'syncing', 'error', 'conflict')
        AND entity_type = 'medicion'
-     ORDER BY created_at ASC, rowid ASC`
+     ORDER BY created_at ASC, rowid ASC`,
+    [scopedSessionId]
   );
 
   return rows
@@ -166,14 +195,17 @@ export function getRoundOutboxItems(roundId: string): OutboxItem[] {
 /**
  * Mark item as syncing (before sync attempt)
  */
-export function markSyncing(id: string): void {
+export function markSyncing(id: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
   db.runSync(
     `UPDATE outbox
      SET status = 'syncing', last_sync_attempt_at = datetime('now'), retry_count = retry_count + 1
-     WHERE id = ?`,
-    [id]
+     WHERE id = ? AND session_id = ?`,
+    [id, scopedSessionId]
   );
 }
 
@@ -181,12 +213,16 @@ export function markSyncing(id: string): void {
  * Recover items left in `syncing` when the previous app process stopped.
  * Retrying is safe because server mutations use clientRequestId idempotency.
  */
-export function recoverInterruptedItems(): number {
+export function recoverInterruptedItems(sessionId?: string): number {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return 0;
+
   const db = getDatabase();
   const result = db.runSync(
     `UPDATE outbox
      SET status = 'pending', last_sync_attempt_at = NULL, error_message = NULL, conflict_data = NULL
-     WHERE status = 'syncing'`
+     WHERE status = 'syncing' AND session_id = ?`,
+    [scopedSessionId]
   );
   const recovered = typeof result.changes === 'number' ? result.changes : 0;
 
@@ -200,77 +236,96 @@ export function recoverInterruptedItems(): number {
 /**
  * Mark item as synced (after successful sync)
  */
-export function markSynced(id: string): void {
+export function markSynced(id: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
   db.runSync(
     `UPDATE outbox
      SET status = 'synced', synced_at = datetime('now'), error_message = NULL
-     WHERE id = ?`,
-    [id]
+     WHERE id = ? AND session_id = ?`,
+    [id, scopedSessionId]
   );
 }
 
 /**
  * Mark item as error (after failed sync)
  */
-export function markError(id: string, errorMessage: string): void {
+export function markError(id: string, errorMessage: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
   db.runSync(
     `UPDATE outbox
      SET status = 'error', error_message = ?
-     WHERE id = ?`,
-    [errorMessage, id]
+     WHERE id = ? AND session_id = ?`,
+    [errorMessage, id, scopedSessionId]
   );
 }
 
 /**
  * Mark item as conflict (after 409 response)
  */
-export function markConflict(id: string, conflictData: Record<string, unknown>): void {
+export function markConflict(id: string, conflictData: Record<string, unknown>, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
   db.runSync(
     `UPDATE outbox
      SET status = 'conflict', conflict_data = ?
-     WHERE id = ?`,
-    [JSON.stringify(conflictData), id]
+     WHERE id = ? AND session_id = ?`,
+    [JSON.stringify(conflictData), id, scopedSessionId]
   );
 }
 
 /**
  * Retry item (reset to pending)
  */
-export function retryItem(id: string): void {
+export function retryItem(id: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
   db.runSync(
     `UPDATE outbox
      SET status = 'pending', error_message = NULL, conflict_data = NULL
-     WHERE id = ?`,
-    [id]
+     WHERE id = ? AND session_id = ?`,
+    [id, scopedSessionId]
   );
 }
 
 /**
  * Delete item from outbox (after conflict resolution or manual discard)
  */
-export function deleteItem(id: string): void {
+export function deleteItem(id: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
   const db = getDatabase();
 
-  db.runSync('DELETE FROM outbox WHERE id = ?', [id]);
+  db.runSync('DELETE FROM outbox WHERE id = ? AND session_id = ?', [id, scopedSessionId]);
 }
 
 /**
  * Get count of pending items
  */
-export function getPendingCount(): number {
+export function getPendingCount(sessionId?: string): number {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return 0;
+
   const db = getDatabase();
 
-  const result = db.getFirstSync<{ count: number }>('SELECT COUNT(*) as count FROM outbox WHERE status = ?', [
-    'pending',
-  ]);
+  const result = db.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM outbox WHERE session_id = ? AND status = ?',
+    [scopedSessionId, 'pending']
+  );
 
   return result?.count ?? 0;
 }

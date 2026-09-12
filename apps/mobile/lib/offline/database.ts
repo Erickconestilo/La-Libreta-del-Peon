@@ -46,6 +46,7 @@ export async function applyMigrations(): Promise<void> {
     { version: 3 },
     { version: 4 },
     { version: 5 },
+    { version: 6 },
   ];
 
   // Apply pending migrations
@@ -73,6 +74,10 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 5) {
           executeMigration005(db);
+        }
+
+        if (migration.version === 6) {
+          executeMigration006(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -224,6 +229,25 @@ function executeMigration005(db: SQLiteDatabase): void {
     ALTER TABLE monitoring_round_cache_scoped RENAME TO monitoring_round_cache;
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (5);
+  `);
+}
+
+/**
+ * Impide que una operación pendiente se envíe usando la cuenta que esté
+ * activa después de cambiar de usuario en el mismo dispositivo.
+ */
+function executeMigration006(db: SQLiteDatabase): void {
+  db.execSync(`
+    ALTER TABLE outbox ADD COLUMN session_id TEXT NOT NULL DEFAULT '__unassigned__';
+
+    UPDATE outbox
+    SET session_id = '__unassigned__'
+    WHERE session_id IS NULL OR trim(session_id) = '';
+
+    CREATE INDEX IF NOT EXISTS idx_outbox_session_status_created
+      ON outbox(session_id, status, created_at ASC);
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (6);
   `);
 }
 
