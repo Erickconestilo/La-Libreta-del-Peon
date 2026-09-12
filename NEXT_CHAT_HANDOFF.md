@@ -16,6 +16,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Rama activa: `codex/f5-field-stability`.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
+- Últimos commits locales de la rama: `8150c68` (visitas de montaje
+  offline-first), `c0d0e8e` (trazabilidad offline) y `ee80825`/`534cc42`
+  (croquis fotográfico relativo y documentación).
 - Último commit local antes del hardening de caché: `18dee00` (paridad
   CSV/XLSX y regresión de exportación).
 - Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
@@ -96,6 +99,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   afirmar precisión métrica. No se ha aplicado la migración PostgreSQL ni se
   ha desplegado el endpoint; la validación física y la comprobación de Storage
   quedan pendientes.
+- Verificación local posterior al croquis: backend compila y tiene `85/85`
+  tests; móvil TypeScript sale sin errores y Jest tiene `16` suites y `71`
+  tests. `docs:check` revisa 35 documentos sin avisos.
 
 ## Comandos de verificación
 

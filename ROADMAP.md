@@ -136,9 +136,11 @@ con tráfico real en el Galaxy. El código quedó en `dedf77b`.
 La rama incorpora una primera separación entre la galería histórica de una
 estación y las visitas de montaje. Una visita conserva fecha, estado, notas y
 el resumen de cambios; sus evidencias tienen `clientRequestId`, tipo, foto,
-notas y posición relativa opcional. Esto permite registrar una foto general o
-de prisma sin sobrescribir visitas anteriores y deja el contrato listo para
-un croquis fotográfico posterior.
+notas y posición relativa opcional. La pantalla ofrece una cuadrícula 3x3 para
+marcar aproximadamente un código o elemento sobre la foto y lo muestra como
+etiqueta al consultar, sin convertirlo en coordenada. Esto permite registrar
+una foto general o de prisma sin sobrescribir visitas anteriores y deja el
+contrato listo para un croquis fotográfico posterior.
 
 La migración `027_station_mounting_visits.sql` está preparada con RLS de
 denegación directa, índices y claves de idempotencia, pero no está aplicada
