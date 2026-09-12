@@ -57,6 +57,11 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     controles aunque el mapa de permisos todavía no estuviera disponible. Se
     cambió a fail-closed; hasta recibir el mapa del servidor, solo `admin` o
     una membresía explícita `write` pueden habilitar escritura.
+12. La misma deriva existía en el backend: `assertProjectWriteAccess` podía
+    aceptar una sesión `topografo` que conservara `projectIds` pero no trajera
+    `projectAccess`. `f90c995` la cierra: toda escritura de topógrafo exige el
+    mapa efectivo y el nivel `write`; si falta, devuelve `PROJECT_ACCESS_REQUIRED`.
+    Se añadió regresión en `apps/backend/src/lib/access-control.test.ts`.
 
 ## Evidencia local
 
@@ -64,8 +69,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 94
-ℹ pass 94
+ℹ tests 95
+ℹ pass 95
 ℹ fail 0
 
 Test Suites: 17 passed, 17 total

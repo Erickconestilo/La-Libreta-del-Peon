@@ -14,10 +14,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Hardening local más reciente: `3465cde`, `4562d89` y `ce8bc40`, protegen las relaciones
+- Hardening local más reciente: `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protegen las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
-  migración 028 para deduplicación concurrente y bloquean los deep links de
-  escritura para cuentas sin permiso efectivo.
+  migración 028 para deduplicación concurrente, bloquean los deep links de
+  escritura y exigen en backend el mapa efectivo para cualquier escritura de
+  topógrafo.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Últimos commits locales de la rama: `aa5e523` (integridad SQL de visitas de
@@ -73,6 +74,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - No generar `versionCode=5` salvo que aparezca un bug móvil reproducible.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
+- La autorización de escritura es fail-closed en móvil y backend: una sesión
+  topógrafo sin `projectAccess` no puede escribir aunque conserve `projectIds`.
+  La regresión backend está en `f90c995`; este commit aún no está desplegado.
 
 ## Trabajo pendiente prioritario
 

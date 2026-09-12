@@ -84,7 +84,10 @@ compuertas externas.
 La barrera móvil de permisos también falla cerrado: una sesión de `topografo`
 sin `projectAccess` todavía no puede mostrar controles de escritura hasta que
 `/auth/me` entregue el mapa efectivo de membresías. La regresión está cubierta
-en `apps/mobile/lib/__tests__/field-access.test.ts`.
+en `apps/mobile/lib/__tests__/field-access.test.ts`. El backend aplica la misma
+regla desde `f90c995`: `assertProjectWriteAccess` exige el nivel `write` explícito
+del mapa efectivo y devuelve `PROJECT_ACCESS_REQUIRED` si el mapa falta; este
+commit aún debe publicarse antes de considerarlo activo en Render.
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
