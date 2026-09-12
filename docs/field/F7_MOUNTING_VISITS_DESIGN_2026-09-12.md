@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: field-design
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # F7: Visitas De Montaje
@@ -36,6 +36,9 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 - Si una evidencia se encola antes de tener id remoto, el sincronizador crea o
   recupera primero la visita por su `clientRequestId` y luego sube la foto y
   crea la evidencia con su propia clave idempotente.
+- En la pantalla móvil, una evidencia de tipo `prism` puede vincularse
+  opcionalmente a un prisma cargado para esa estación; si no hay catálogo
+  disponible, se conserva el código en el título sin forzar una relación.
 
 La pantalla de consulta puede mostrar una posición relativa aproximada sobre
 la miniatura mediante una cuadrícula 3x3. Esa posición solo sirve para
