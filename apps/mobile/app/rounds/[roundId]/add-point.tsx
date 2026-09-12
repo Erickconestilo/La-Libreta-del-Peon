@@ -8,6 +8,7 @@ import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useControlPoints, useCreateRoundPoint, useMonitoringRound } from '@/hooks/use-monitoring';
 import { colors, spacing, typography } from '@/src/theme';
 import { canWriteProject } from '@/lib/field-access';
+import { getReadingCaptureCopy } from '@/lib/monitoring-reading-form';
 
 export default function AddRoundPointScreen() {
   const params = useLocalSearchParams<{ roundId: string }>();
@@ -20,6 +21,7 @@ export default function AddRoundPointScreen() {
   const { createRoundPoint, errorMessage, isCreating } = useCreateRoundPoint(roundId ?? null);
   const [selectedControlPointId, setSelectedControlPointId] = useState<string | null>(null);
   const [instrumentType, setInstrumentType] = useState<MonitoringInstrumentType>('digital_level');
+  const instrumentCaptureCopy = getReadingCaptureCopy(instrumentType);
   const canEdit = canWriteProject(currentUser, round?.projectId);
   const availablePoints = useMemo(() => {
     const alreadyAdded = new Set((round?.points ?? []).map((item) => item.controlPointId));
@@ -52,6 +54,7 @@ export default function AddRoundPointScreen() {
           <Text style={styles.body}>Selecciona una referencia activa y el instrumento que se utilizará en esta pasada.</Text>
           <Text style={styles.label}>Instrumento</Text>
           <View style={styles.chips}>{MONITORING_INSTRUMENTS.map((item) => <ChoiceChip key={item.value} label={item.label} onPress={() => setInstrumentType(item.value)} selected={instrumentType === item.value} />)}</View>
+          {instrumentCaptureCopy.protocolStatus === 'provisional' && instrumentCaptureCopy.protocolNote ? <View style={styles.protocolWarning}><Text style={styles.protocolWarningTitle}>Captura provisional</Text><Text style={styles.body}>{instrumentCaptureCopy.protocolNote}</Text></View> : null}
           {errorMessage ?? pointsError ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo preparar el punto</Text><Text style={styles.body}>{errorMessage ?? pointsError}</Text></View> : null}
         </View>
         <FlatList
@@ -87,6 +90,8 @@ const styles = StyleSheet.create({
   pointCardSelected: { borderColor: colors.accentGreen, borderWidth: 2 },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 8, paddingVertical: spacing[2] },
   primaryButtonText: { color: colors.background, fontSize: typography.fontSizeBody, fontWeight: '900' },
+  protocolWarning: { backgroundColor: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.55)', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[2] },
+  protocolWarningTitle: { color: colors.amber, fontSize: 13, fontWeight: '900' },
   restricted: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: spacing[2], justifyContent: 'center', padding: spacing[4] },
   selectedText: { color: colors.accentGreen, fontSize: 13, fontWeight: '900' },
   title: { color: colors.textPrimary, fontSize: 26, fontWeight: '900' },
