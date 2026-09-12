@@ -1,12 +1,9 @@
 import type { Station } from '@shared/types';
 
 export const getStationDisplayName = (station: Pick<Station, 'externalId' | 'name'>) => {
-  if (
-    station.externalId === 'trimble-station-002' ||
-    station.name.trim().toLowerCase() === 'estacionamiento norte sarria'
-  ) {
-    return 'Estacionamiento Norte ***REMOVED*** E02';
+  if (station.name.trim()) {
+    return station.name;
   }
 
-  return station.name;
+  return station.externalId?.trim() || 'Estación sin nombre';
 };
