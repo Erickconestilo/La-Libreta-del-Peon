@@ -7,6 +7,11 @@ import { controlPointsRouter, roundPointsRouter, roundsRouter } from './monitori
 import { journeyRouter } from './journey.routes.js';
 import { projectsRouter } from './projects.routes.js';
 import { stationsRouter } from './stations.routes.js';
+import { changeLogsRouter } from './change-logs.routes.js';
+import { guideRouter } from './guide.routes.js';
+import { incidentsRouter } from './incidents.routes.js';
+import { prismsRouter } from './prisms.routes.js';
+import { uploadsRouter } from './uploads.routes.js';
 import type { RequireRoleMiddleware } from '../middleware/auth.js';
 
 /**
@@ -132,4 +137,66 @@ test('mounting visit routes separate consultation from evidence writes', () => {
     'admin',
     'topografo'
   ]);
+});
+
+type RouteLayer = {
+  route?: {
+    path: string;
+    stack: Array<{ handle: unknown; method: string }>;
+  };
+};
+
+const businessRouters: Array<[string, Router]> = [
+  ['changeLogsRouter', changeLogsRouter],
+  ['guideRouter', guideRouter],
+  ['incidentsRouter', incidentsRouter],
+  ['journeyRouter', journeyRouter],
+  ['projectsRouter', projectsRouter],
+  ['prismsRouter', prismsRouter],
+  ['controlPointsRouter', controlPointsRouter],
+  ['roundPointsRouter', roundPointsRouter],
+  ['roundsRouter', roundsRouter],
+  ['stationsRouter', stationsRouter],
+  ['uploadsRouter', uploadsRouter]
+];
+
+const routeLayers = (router: Router) => (router.stack as unknown as RouteLayer[])
+  .filter((layer): layer is Required<RouteLayer> => Boolean(layer.route));
+
+test('every business endpoint is protected by auth and an explicit role gate', () => {
+  for (const [routerName, router] of businessRouters) {
+    for (const layer of routeLayers(router)) {
+      const handlers = layer.route.stack.map((routeLayer) => routeLayer.handle as { allowedRoles?: unknown; name?: string });
+
+      assert.ok(
+        handlers.some((handler) => handler.name === 'requireAuth'),
+        `${routerName} ${layer.route.path}: falta requireAuth`
+      );
+      assert.ok(
+        handlers.some((handler) => Array.isArray(handler.allowedRoles)),
+        `${routerName} ${layer.route.path}: falta requireRole explícito`
+      );
+    }
+  }
+});
+
+test('public visitor access is limited to GET routes and supervisors are never granted writes', () => {
+  for (const [routerName, router] of businessRouters) {
+    for (const layer of routeLayers(router)) {
+      const method = layer.route.stack.find((routeLayer) => routeLayer.method)?.method;
+      const roleMiddleware = layer.route.stack.find((routeLayer) => {
+        const handle = routeLayer.handle as Partial<RequireRoleMiddleware>;
+        return Array.isArray(handle.allowedRoles);
+      });
+      const allowedRoles = (roleMiddleware?.handle as RequireRoleMiddleware | undefined)?.allowedRoles ?? [];
+
+      if (allowedRoles.includes('visitante')) {
+        assert.equal(method, 'get', `${routerName} ${layer.route.path}: visitante solo puede leer`);
+      }
+
+      if (allowedRoles.includes('supervisor')) {
+        assert.equal(method, 'get', `${routerName} ${layer.route.path}: supervisor solo puede consultar`);
+      }
+    }
+  }
 });
