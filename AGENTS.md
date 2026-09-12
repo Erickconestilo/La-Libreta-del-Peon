@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # AGENTS.md — TopoField
