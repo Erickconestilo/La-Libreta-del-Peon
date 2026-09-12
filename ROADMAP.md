@@ -76,8 +76,10 @@ deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
   local: `96/96` tests. El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
 para integridad de tenant, con regresión local; sigue sin aplicarse en
-Supabase. Estos últimos cambios siguen solo en la rama local; Render continúa
-sirviendo `6a1b19f` hasta una publicación remota autorizada. El Galaxy, la
+Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
+observado el 13-09-2026 sirviendo `eb88db9`, que es anterior a los hardenings
+locales posteriores y debe volver a verificarse tras una publicación remota.
+El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.
 

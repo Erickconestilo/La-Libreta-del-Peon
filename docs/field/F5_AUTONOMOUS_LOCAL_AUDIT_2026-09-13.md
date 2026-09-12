@@ -12,6 +12,12 @@ Esta auditoria cubre lo que puede verificarse sin el Galaxy, sin aplicar
 migraciones y sin modificar Supabase, Render, EAS o Play Store. No sustituye
 la prueba fisica, la jornada observada ni las entrevistas profesionales.
 
+La comprobación pública del 13-09-2026 observó Render vivo: `/api/v1/health`
+respondió `200` con commit `eb88db922a03b1e01a47f90dba8346542df3f212`, y las
+rutas protegidas de rondas y `GET /api/v1/me/journey` respondieron `401` sin
+bearer. Ese hash remoto es anterior a los hardenings locales posteriores; no
+se ha desplegado desde esta sesión.
+
 ## Hallazgos y acciones
 
 1. La superficie de rutas de negocio exige `requireAuth` y un `requireRole`

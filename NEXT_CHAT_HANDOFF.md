@@ -62,10 +62,13 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado desplegado
 
 - Render: `https://la-libreta-del-peon-1.onrender.com`.
-- Último despliegue funcional verificado: `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`.
-- Verificado el 12-09-2026: `/api/v1/health` devuelve `200` y estado `ok` con
-  commit `6a1b19f`; rondas y `GET /api/v1/me/journey` sin bearer devuelven
+- Último despliegue observado: `/api/v1/health` devolvió `200` y estado `ok`
+  con commit `eb88db922a03b1e01a47f90dba8346542df3f212` el 13-09-2026.
+  Las rutas de rondas y `GET /api/v1/me/journey` sin bearer devolvieron
   `401 UNAUTHORIZED`, nunca `404`.
+- El commit remoto observado (`eb88db9`) es anterior a los hardenings locales
+  posteriores de esta rama; no contiene automáticamente los commits locales
+  más recientes hasta una publicación mediante PR y despliegue.
 - No aplicar migraciones ni cambiar Supabase Auth/RLS sin autorización explícita
   en el momento.
 
