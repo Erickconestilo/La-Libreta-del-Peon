@@ -93,7 +93,7 @@ test('requireRole rechaza con 401 cuando no hay usuario autenticado', async () =
   assert.equal(state.statusCode, 401);
 });
 
-test('las 5 rutas de auscultación restringidas el 02-08-2026 (D1) rechazan a visitante', async () => {
+test('las rutas de auscultación restringidas el 02-08-2026 (D1) rechazan a visitante', async () => {
   // Regresión directa de D1: si alguien reintroduce 'visitante' en alguna de
   // estas listas, esta prueba falla. La lista de roles vive en las rutas
   // (monitoring.routes.ts, projects.routes.ts); aquí se fija el contrato
