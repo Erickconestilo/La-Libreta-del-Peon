@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+  verificado: 2026-09-13
 rol: handoff
 -->
 
@@ -21,7 +21,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   (croquis fotográfico relativo y documentación) y `5f92a66`/`3cce1dd`
   (borradores de lectura persistentes y documentación), seguidos de
   `1292aea`/`1cf27b0` (reconciliación documental y plantilla de campo) y
-  `6d9f31c` (alineación de dependencias Expo).
+  `6d9f31c` (alineación de dependencias Expo) y `b7641c4` (evidencia de la
+  alineación).
 - Último commit local antes del hardening de caché: `18dee00` (paridad
   CSV/XLSX y regresión de exportación).
 - Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
@@ -33,6 +34,14 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `20d8520f0db6022cc2163a51cd9a3464c7600010`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
+- La release local se recompiló el 13-09-2026 después de alinear Expo:
+  `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`,
+  `40,128,211` bytes, firmada como `CN=TopoField Android Release`. El
+  manifiesto confirma `versionCode=4` y `com.ciudadanoinusual.topofield`;
+  `bundletool validate` y `jarsigner -verify` devuelven código 0. La variante
+  `jarsigner -verify -strict` conserva la advertencia esperable del certificado
+  local autofirmado, no una validación de Play Store. No se instaló porque el
+  objetivo de este bloque era verificar compilación, no usar el Galaxy.
 
 ## Estado desplegado
 
@@ -78,8 +87,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 
 - `apps/mobile/package.json` tiene un diff previo de los scripts `android`/`ios`.
 - Las capturas `topofield-*.png` son evidencia no versionada.
-- El `package-lock.json` incluye únicamente la actualización segura de `morgan`
-  y `qs` realizada por la auditoría; build y tests backend ya pasan con él.
+- El `package-lock.json` incluye la alineación de Expo 56 del commit `6d9f31c`
+  además de la actualización segura de `morgan` y `qs`; build y tests backend
+  pasan con él.
 - La auditoría actual está archivada en
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
 - La caché local de rondas y snapshots quedó separada por sesión en la
