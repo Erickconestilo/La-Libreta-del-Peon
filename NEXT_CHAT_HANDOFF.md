@@ -125,6 +125,12 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `docs/field/GENERIC_PROJECT_TEMPLATE.md` y su fixture CSV en
   `data/generic-project-code-catalog.csv`; ambos usan únicamente códigos y
   zonas ficticias, sin datos de cliente.
+- La cobertura móvil de instrumentos está explicitada en
+  `docs/field/INSTRUMENT_COVERAGE_MATRIX.md`: testigo fotográfico,
+  potenciómetro, nivel digital y fisurómetro digital tienen captura de MVP
+  confirmada; los demás formularios genéricos muestran estado provisional y
+  no afirman representar pares, perfiles, ambos carriles o protocolos de
+  fabricante.
 - La caché local de rondas y snapshots quedó separada por sesión en la
   migración SQLite 005; la caché anterior se invalida al actualizar para
   evitar contaminación entre cuentas.

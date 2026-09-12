@@ -96,6 +96,17 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     `draft` antes de adjuntarse. Esto no sustituye la comprobación real de
     Storage ni la consulta a Supabase.
 
+18. El catálogo móvil exponía todos los tipos de auscultación como si el
+    formulario escalar fuera suficiente para su procedimiento. Ahora la
+    captura distingue los slices confirmados del MVP (testigo fotográfico,
+    potenciómetro, nivel digital y fisurómetro digital) de los formularios
+    provisionales. Para convergencia, peralte, piezómetro, inclinómetro,
+    clinómetro, linómetro y distanciómetro se muestra la limitación concreta
+    sin inventar pares, perfiles, referencias de carril ni parámetros de
+    fabricante. La matriz está en
+    `docs/field/INSTRUMENT_COVERAGE_MATRIX.md` y la regresión en
+    `apps/mobile/lib/__tests__/monitoring-reading-form.test.ts`.
+
 ## Evidencia local
 
 ```text
