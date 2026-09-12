@@ -305,14 +305,22 @@ describe('syncOutboxItem', () => {
         stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
         visitClientRequestId: mountingVisitItem.clientRequestId,
         visitId: 'local-visit-id',
-        visitInput: mountingVisitItem.payload.visitInput
+        visitInput: {
+          changeSummary: 'Cambio de referencia',
+          notes: 'Acceso despejado',
+          status: 'completed',
+          visitedAt: '2026-09-12T09:00:00.000Z'
+        }
       }
     });
 
     expect(mockApiFetch).toHaveBeenNthCalledWith(
       1,
       '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits',
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({
+        body: expect.stringContaining('"status":"draft"'),
+        method: 'POST'
+      })
     );
     expect(mockApiFetch).toHaveBeenNthCalledWith(
       2,

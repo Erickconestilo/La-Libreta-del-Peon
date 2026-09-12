@@ -212,7 +212,9 @@ const syncMountingEvidence = async (item: OutboxItem): Promise<void> => {
     const visitResponse = await apiFetch<ApiEnvelope<MountingVisit>>(`/stations/${stationId}/mounting-visits`, {
       body: JSON.stringify({
         clientRequestId: visitClientRequestId,
-        ...(visitInput as Record<string, unknown>)
+        ...(visitInput as Record<string, unknown>),
+        // Creation is always draft; a later outbox update carries the final status.
+        status: 'draft'
       }),
       method: 'POST'
     });
