@@ -73,7 +73,7 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias, prismas y visitas de montaje con referencias cruzadas. También
 deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
-  local: `95/95` tests. El contrato backend de exportación está alineado con
+  local: `96/96` tests. El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
 para integridad de tenant, con regresión local; sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render continúa

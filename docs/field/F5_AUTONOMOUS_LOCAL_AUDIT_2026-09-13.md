@@ -69,8 +69,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 95
-ℹ pass 95
+ℹ tests 96
+ℹ pass 96
 ℹ fail 0
 
 Test Suites: 17 passed, 17 total
