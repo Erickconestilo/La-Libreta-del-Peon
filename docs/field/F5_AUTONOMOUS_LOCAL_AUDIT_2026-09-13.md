@@ -134,14 +134,23 @@ se ha desplegado desde esta sesión.
     cubren ambos rechazos; el importador sigue protegido por
     `assertWriteAllowed` y no se ejecutó contra ninguna base remota.
 
+21. Los scripts históricos `apply-migration-016.ts` y
+    `apply-migration-017.ts` no tenían la guarda común antes de ejecutar SQL;
+    eso dejaba una ruta manual de escritura sin la confirmación explícita de
+    entorno que sí usan los scripts actuales. Ambos llaman ahora a
+    `assertWriteAllowed` con un nombre propio. La regresión de `safety.ts`
+    confirma que una base de producción probable se bloquea sin
+    `TOPOFIELD_ALLOW_PRODUCTION_WRITE` y solo se permite con coincidencia
+    explícita. No se ejecutó ninguna de las dos migraciones.
+
 ## Evidencia local
 
 ```text
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 98
-ℹ pass 98
+ℹ tests 99
+ℹ pass 99
 ℹ fail 0
 
 Test Suites: 19 passed, 19 total

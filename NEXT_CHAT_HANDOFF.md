@@ -129,6 +129,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - El importador manual MapEst ahora falla cerrado si una estación no mapea a
   una obra única; la regresión está en
   `apps/backend/src/scripts/mapest-project-mapping.test.ts`.
+- Los scripts históricos de aplicación de migraciones 016 y 017 pasan ahora
+  por `assertWriteAllowed`; la guarda está cubierta en
+  `apps/backend/src/scripts/safety.test.ts` y no se ejecutó SQL remoto.
 - La rama local añade `a868867` después del despliegue verificado de Render
   (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
   remotamente.
@@ -189,7 +192,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `98/98` tests; móvil TypeScript sale sin errores y Jest tiene `19` suites y
+  `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `19` suites y
   `85` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
