@@ -63,6 +63,14 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     mapa efectivo y el nivel `write`; si falta, devuelve `PROJECT_ACCESS_REQUIRED`.
     Se añadió regresión en `apps/backend/src/lib/access-control.test.ts`.
 
+13. El formulario móvil de `fissure_witness` exigía una foto, pero la interfaz
+    la etiquetaba como opcional y enviaba la unidad por defecto `mm` aunque el
+    registro solo contiene evidencia fotográfica. Se corrigió con
+    `getReadingCaptureCopy`: la foto es obligatoria, la unidad queda oculta y
+    el payload envía `unit: null`; las lecturas escalares mantienen su unidad.
+    La regresión está en
+    `apps/mobile/lib/__tests__/monitoring-reading-form.test.ts`.
+
 ## Evidencia local
 
 ```text
@@ -73,8 +81,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 ℹ pass 96
 ℹ fail 0
 
-Test Suites: 17 passed, 17 total
-Tests:       75 passed, 75 total
+Test Suites: 18 passed, 18 total
+Tests:       78 passed, 78 total
 
 check-docs: 38 documentos revisados en raíz y docs/.
 
