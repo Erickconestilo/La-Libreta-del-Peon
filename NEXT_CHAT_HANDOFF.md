@@ -20,8 +20,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   CSV/XLSX y regresión de exportación).
 - Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
   regresión de migración SQLite 005).
-- GitHub `main` verificado por API tras fusionar la PR #16:
-  `bae03f2968993deacc363793860302a7107deda8`.
+- Hardening local en `1d82a9f`: migración SQLite 006, outbox filtrado por sesión
+  y cancelación por generación durante cambios de cuenta; 13 suites y 62 tests
+  móviles pasan.
+- GitHub `main` verificado por API tras fusionar la PR #17:
+  `20d8520f0db6022cc2163a51cd9a3464c7600010`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
 
@@ -73,6 +76,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - La caché local de rondas y snapshots quedó separada por sesión en la
   migración SQLite 005; la caché anterior se invalida al actualizar para
   evitar contaminación entre cuentas.
+- El outbox local quedó separado por sesión en la migración SQLite 006. Las
+  filas antiguas se marcan `__unassigned__`, y un flush antiguo se abandona si
+  cambia la sesión durante una request. Falta validarlo en un cambio real de
+  cuenta en el Galaxy.
 
 ## Comandos de verificación
 

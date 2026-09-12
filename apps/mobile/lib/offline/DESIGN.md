@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-07-26
 **Última verificación:** 2026-09-12
-**Estado:** IMPLEMENTADO; FASE 2 VALIDADA EN GALAXY, HARDENING DE CACHÉ PENDIENTE DE VALIDACIÓN FÍSICA
+**Estado:** IMPLEMENTADO; FASE 2 VALIDADA EN GALAXY, AISLAMIENTO DE CACHÉ Y OUTBOX POR SESIÓN VERIFICADOS LOCALMENTE
 **Referencia:** MEMORIA.md §8, Plan Maestro Fase 2
 
 ---
@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 CREATE TABLE IF NOT EXISTS outbox (
   id TEXT PRIMARY KEY, -- UUID local
   client_request_id TEXT NOT NULL UNIQUE, -- UUID para idempotencia
+  session_id TEXT NOT NULL DEFAULT '__unassigned__', -- sesión técnica local propietaria
   entity_type TEXT NOT NULL, -- 'station_message', 'incident', 'station_photo', etc.
   operation TEXT NOT NULL, -- 'insert', 'update', 'delete'
   payload TEXT NOT NULL, -- JSON del objeto a sincronizar
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 
 CREATE INDEX idx_outbox_status ON outbox(status) WHERE status IN ('pending', 'error');
 CREATE INDEX idx_outbox_entity_type ON outbox(entity_type);
+CREATE INDEX idx_outbox_session_status_created ON outbox(session_id, status, created_at ASC);
 
 -- Cache local de datos leídos para la jornada offline
 -- Las claves incluyen la sesión técnica local para no mezclar cuentas
@@ -59,6 +61,7 @@ CREATE INDEX idx_outbox_entity_type ON outbox(entity_type);
 - `lib/offline/migrations/001_initial_schema.sql`
 - `lib/offline/migrations/002_...sql` (caché de Obras)
 - `lib/offline/migrations/005_monitoring_cache_session_scope.sql`
+- `lib/offline/migrations/006_outbox_session_scope.sql`
 - Aplicadas secuencialmente al abrir la app via `applyMigrations()`
 
 La migración local 005 invalida las tablas de caché de rondas creadas antes
@@ -66,6 +69,16 @@ de esta versión: esas filas no tenían `cache_key` y no se pueden atribuir de
 forma segura a una cuenta. La caché nueva usa `(cache_key, project_id)` para
 listas y `(cache_key, round_id)` para snapshots. `cache_key` deriva de la
 sesión técnica activa, o es `guest` cuando no hay sesión.
+
+La migración local 006 añade `session_id` al outbox. El motor solo lee,
+recupera, marca o reintenta operaciones pertenecientes a la sesión activa.
+Las filas creadas por versiones anteriores quedan con el valor reservado
+`__unassigned__` y no se sincronizan automáticamente, porque no se puede
+demostrar a qué cuenta pertenecían. Cambiar de cuenta no cambia el propietario
+de una operación pendiente. Si la cuenta cambia mientras una request está en
+vuelo, el motor abandona ese flush por generación y deja el item en estado
+recuperable para una futura revalidación. Además, las sesiones guardadas se
+emparejan por `userId` o correo normalizado, nunca solo por rol.
 
 ### 2. Estados y Transiciones
 
@@ -105,6 +118,7 @@ const clientRequestId = createRandomId();
 outbox.enqueue({
   entityType: 'station_message',
   operation: 'insert',
+  sessionId: activeSessionId,
   payload: { ...message, clientRequestId },
   clientRequestId,
 });
