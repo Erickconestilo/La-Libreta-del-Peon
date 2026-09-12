@@ -27,6 +27,10 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 5. La release local se recompilo despues de alinear Expo 56. El manifiesto
    confirma `versionCode=4` y el paquete de TopoField. El AAB no se instalo
    durante esta sesion porque ADB no detecto el Galaxy.
+6. Los listados de prismas y observaciones por estación descartan una
+   referencia cuyo prisma pertenezca a otra obra; se mantiene visible un
+   prisma legacy sin `project_id` cuando no contradice la obra de su estación.
+   La regresión vive en `apps/backend/src/models/prisms.model.test.ts`.
 
 ## Evidencia local
 
@@ -34,8 +38,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 88
-ℹ pass 88
+ℹ tests 90
+ℹ pass 90
 ℹ fail 0
 
 check-docs: 38 documentos revisados en raíz y docs/.

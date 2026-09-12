@@ -11,6 +11,7 @@ import './project-code-catalog-csv.test.js';
 import './scoped-resource-access.test.js';
 import '../models/incidents.model.test.js';
 import '../models/monitoring.model.test.js';
+import '../models/prisms.model.test.js';
 import '../routes/route-role-audit.test.js';
 import '../scripts/password-generator.test.js';
 import '../utils/monitoring-validation.test.js';

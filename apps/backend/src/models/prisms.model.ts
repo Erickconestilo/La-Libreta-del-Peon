@@ -22,7 +22,7 @@ const buildPrismScopeCondition = (projectIds: string[] | null, baseOffset: numbe
   };
 };
 
-const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
+export const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
   if (projectIds === null) {
     return { params: [], clause: '' };
   }
@@ -33,7 +33,8 @@ const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffs
 
   return {
     params: [projectIds],
-    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])`
+    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])
+      AND (p.project_id IS NULL OR p.project_id = s.project_id)`
   };
 };
 
