@@ -38,7 +38,7 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 ℹ pass 88
 ℹ fail 0
 
-check-docs: 36 documentos revisados en raíz y docs/.
+check-docs: 38 documentos revisados en raíz y docs/.
 
 Sin errores ni avisos.
 

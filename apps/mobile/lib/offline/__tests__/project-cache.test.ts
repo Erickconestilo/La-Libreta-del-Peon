@@ -4,7 +4,7 @@ import { applyMigrations, closeDatabase, getDatabase } from '../database';
 import { getCachedProjectList, saveProjectList } from '../project-cache';
 
 const project = {
-  code: 'L8',
+  code: 'EJEMPLO',
   createdAt: '2026-07-31T00:00:00.000Z',
   description: null,
   id: 'project-1',
