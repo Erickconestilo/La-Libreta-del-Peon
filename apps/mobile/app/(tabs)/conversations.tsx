@@ -64,7 +64,8 @@ const availableTags: BitacoraTag[] = ['Incidencia', 'Mensaje', 'Nota', 'Propuest
 export default function BitacoraScreen() {
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentSession();
-  const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor';
+  const canOpenDailyReport = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const projectsQuery = useProjects();
   const stationsQuery = useStations();
   const incidentsQuery = useRecentIncidents(canUseTeamTools);
@@ -275,7 +276,7 @@ export default function BitacoraScreen() {
             <Text style={styles.eyebrow}>Bitácora</Text>
             <Text style={styles.title}>Acceso de equipo</Text>
             <Text style={styles.body}>
-              La bitácora reúne notas, incidencias y mensajes con fecha y hora para admin y topógrafo.
+              La bitácora reúne notas, incidencias y mensajes con fecha y hora para las cuentas técnicas autorizadas.
             </Text>
           </View>
         </View>
@@ -303,10 +304,12 @@ export default function BitacoraScreen() {
             </View>
           ) : null}
 
-          <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.dailyReportButton}>
-            <MaterialIcons color={colors.background} name="event-note" size={17} />
-            <Text style={styles.dailyReportButtonText}>Parte diario</Text>
-          </Pressable>
+          {canOpenDailyReport ? (
+            <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.dailyReportButton}>
+              <MaterialIcons color={colors.background} name="event-note" size={17} />
+              <Text style={styles.dailyReportButtonText}>Parte diario</Text>
+            </Pressable>
+          ) : null}
 
           <Text style={styles.sectionLabel}>Obra</Text>
           <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>

@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatShortDate, RoundStatusPill, StatePill } from '@/components/monitoring-ui';
+import { useCurrentSession } from '@/hooks/use-auth';
 import { useMonitoringRound, useShareMonitoringRound, useWorkCompletionReports } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 export default function MonitoringRoundSummaryScreen() {
@@ -13,6 +15,7 @@ export default function MonitoringRoundSummaryScreen() {
   const roundId = Array.isArray(params.roundId) ? params.roundId[0] : params.roundId;
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { currentUser } = useCurrentSession();
   const { cachedAt, data: round, errorMessage, isOfflineCache, isLoading } = useMonitoringRound(roundId ?? null);
   const { data: reports, errorMessage: reportsError } = useWorkCompletionReports(roundId ?? null);
   const { errorMessage: shareErrorMessage, isSharing, shareExport } = useShareMonitoringRound(roundId ?? null);
@@ -21,6 +24,7 @@ export default function MonitoringRoundSummaryScreen() {
   const taken = points.filter((point) => point.status === 'taken').length;
   const pending = points.filter((point) => point.status === 'pending').length;
   const skipped = points.filter((point) => point.status === 'skipped' || point.status === 'cancelled').length;
+  const canExport = canWriteProject(currentUser, round?.projectId);
 
   const handleShare = async (format: 'csv' | 'xlsx') => {
     setShareMessage(null);
@@ -60,17 +64,24 @@ export default function MonitoringRoundSummaryScreen() {
             {!reportsError && reports.length === 0 ? <Text style={styles.body}>Todavía no hay partes recibidos.</Text> : null}
             {reports.map((report) => <View key={report.id} style={styles.reportRow}><View style={styles.pointCopy}><Text style={styles.pointCode}>{report.zoneLabel}</Text><Text style={styles.body}>{report.completedPointCount} realizados · {report.pendingPointCount} pendientes</Text><Text style={styles.body}>{new Date(report.reportedAt).toLocaleString('es-ES')}</Text></View><StatePill label={report.status === 'completed' ? 'Completado' : report.status === 'blocked' ? 'Bloqueado' : 'Parcial'} tone={report.status === 'completed' ? 'success' : report.status === 'blocked' ? 'danger' : 'warning'} /></View>)}
           </View>
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Entrega manual</Text>
-            <Text style={styles.body}>Prepara el mismo contenido de la ronda en CSV o Excel. La app no lo envía automáticamente ni lo marca como revisado.</Text>
-            <View style={styles.shareActions}>
-              <Pressable disabled={isSharing} onPress={() => void handleShare('csv')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
-              <Pressable disabled={isSharing} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
+          {canExport ? (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Entrega manual</Text>
+              <Text style={styles.body}>Prepara el mismo contenido de la ronda en CSV o Excel. La app no lo envía automáticamente ni lo marca como revisado.</Text>
+              <View style={styles.shareActions}>
+                <Pressable disabled={isSharing} onPress={() => void handleShare('csv')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
+                <Pressable disabled={isSharing} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
+              </View>
+              {isSharing ? <Text style={styles.body}>Preparando archivo...</Text> : null}
+              {shareMessage ? <Text style={styles.success}>{shareMessage}</Text> : null}
+              {shareErrorMessage ? <Text style={styles.errorText}>{shareErrorMessage}</Text> : null}
             </View>
-            {isSharing ? <Text style={styles.body}>Preparando archivo...</Text> : null}
-            {shareMessage ? <Text style={styles.success}>{shareMessage}</Text> : null}
-            {shareErrorMessage ? <Text style={styles.errorText}>{shareErrorMessage}</Text> : null}
-          </View>
+          ) : (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Consulta supervisora</Text>
+              <Text style={styles.body}>La exportación está reservada a admin y topógrafo. Aquí solo se muestran datos recibidos por el servidor.</Text>
+            </View>
+          )}
           <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable>
         </> : null}
       </ScrollView>

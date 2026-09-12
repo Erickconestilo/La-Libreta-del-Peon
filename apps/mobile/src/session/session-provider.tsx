@@ -74,11 +74,13 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 const nowIso = () => new Date().toISOString();
 const newSessionId = () => `${Date.now().toString(36)}-${Math.floor(Math.random() * 10000)}`;
 
-const isTechnicalRole = (role: AuthSessionUser['role']) => role === 'admin' || role === 'topografo';
+const isTechnicalRole = (role: AuthSessionUser['role']) =>
+  role === 'admin' || role === 'topografo' || role === 'supervisor';
 
 const roleLabel = (role: AuthSessionUser['role']) => {
   if (role === 'admin') return 'Administrador';
   if (role === 'topografo') return 'Topógrafo';
+  if (role === 'supervisor') return 'Supervisor';
   return 'Visitante';
 };
 
@@ -114,7 +116,7 @@ const parseSessionStore = (raw: string | null): SessionStore => {
               typeof entry.label === 'string' &&
               typeof entry.createdAt === 'string' &&
               typeof entry.lastUsedAt === 'string' &&
-              (entry.role === 'admin' || entry.role === 'topografo' || entry.role === 'visitante')
+              (entry.role === 'admin' || entry.role === 'topografo' || entry.role === 'supervisor' || entry.role === 'visitante')
             );
           })
           .map((entry) => ({
@@ -603,7 +605,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const authenticatedUser = await getAuthMe();
 
       if (!isTechnicalRole(authenticatedUser.role)) {
-        throw new Error('El token debe ser de admin o topógrafo.');
+        throw new Error('El token debe pertenecer a una cuenta técnica autorizada.');
       }
 
       const now = nowIso();
@@ -677,7 +679,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const user = payload.user;
 
       if (!isTechnicalRole(user.role)) {
-        throw new Error('La cuenta debe ser admin o topógrafo.');
+        throw new Error('La cuenta no tiene un rol técnico autorizado.');
       }
 
       const now = nowIso();
