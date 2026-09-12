@@ -109,8 +109,8 @@ en esta sesión porque `adb devices` no detecta el Galaxy.
 
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
 backend `74/74` tests, móvil `52/52` tests y `npm run docs:check` sin errores.
-La fuente Android queda en `versionCode=4`; la release Android `versionCode=3`
-anterior está firmada y verificada, mientras la v4 queda pendiente de generar.
+La fuente y la release Android quedan en `versionCode=4`; el AAB y el APK
+universal están firmados y verificados con `CN=TopoField Android Release`.
 Estos resultados no sustituyen la validación física
 en Galaxy. La entrega privada de fotos sigue pendiente: las
 lecturas exponen el `public_url` heredado del contrato actual y este bloque no

@@ -68,7 +68,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó en el commit desplegado, se generó la release local `versionCode=3` y se creó la cuenta sintética de consulta con membresía `read`; la instalación y validación física siguen pendientes porque ADB no detecta el Galaxy. El rol global `supervisor` queda implementado localmente y aplicado remotamente mediante `026_supervisor_role.sql`; la cuenta QA ya está migrada y solo faltan el despliegue de ese código, la release `versionCode=4` y la validación externa.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó y verificó la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la instalación y validación física siguen pendientes porque ADB no detecta el Galaxy.
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.
 
@@ -88,21 +88,21 @@ La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada r
 - documentación de cobertura de equipos, límites y puertas de piloto.
 
 Las migraciones `022_project_membership_access_level.sql`,
-`023_work_completion_reports.sql` y `024_field_instrument_catalog.sql` están
-aplicadas en el proyecto Supabase `topofield`, y Render sirve el commit
-`1ca0a84ea6cb2adbcb18d67eadcbf1b70200d6aa`. La fuente móvil ya está preparada
-con `versionCode=4`; la release firmada v3 anterior está generada y verificada,
-pero la v4 todavía debe generarse. La siguiente puerta es instalarla
+`023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
+`026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
+Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2`.
+La fuente y la release móvil local están preparadas con `versionCode=4`; la
+firma y el APK universal fueron verificados. La siguiente puerta es instalarla
 en Galaxy y validar: montaje/referencia, captura, incidencia, parte parcial,
-cierre, reconexión sin duplicados y consulta desde una cuenta supervisora de
+cierre, reconexión sin duplicados y consulta desde la cuenta supervisora de
 solo lectura.
 
 El rol global `supervisor` está implementado en `026_supervisor_role.sql` y en
 la app móvil: consulta acotada por membresía, sin Mi jornada ni controles de
-escritura, outbox reintentable o exportación. La migración ya está aplicada en
-Supabase y la cuenta `supervisor-piloto@topofield.local` tiene una única
-membresía activa `read` en `campus-nord`. Siguen pendientes el despliegue del
-commit que contiene el rol, la release `versionCode=4` y la validación externa.
+escritura, outbox reintentable o exportación. La migración está aplicada en
+Supabase, Render reconoce el rol y la cuenta `supervisor-piloto@topofield.local`
+tiene una única membresía activa `read` en `campus-nord`. Solo sigue pendiente
+la validación física en Galaxy.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
@@ -157,7 +157,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — bloqueante de validación:** desplegar el commit del rol, instalar la release `versionCode=4` en el Galaxy y ejecutar el recorrido offline completo y la consulta supervisora. Supabase ya representa el slice de reactivación; el Galaxy no se puede validar mientras ADB no detecte el dispositivo.
+- **Abierto — bloqueante de validación:** instalar la release `versionCode=4` en el Galaxy y ejecutar el recorrido offline completo y la consulta supervisora. Supabase y Render ya representan el slice de reactivación; el Galaxy no se puede validar mientras ADB no detecte el dispositivo.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo
