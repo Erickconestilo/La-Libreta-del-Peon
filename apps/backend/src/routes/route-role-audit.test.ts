@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import type { Router } from 'express';
 
-import { controlPointsRouter, roundsRouter } from './monitoring.routes.js';
+import { controlPointsRouter, roundPointsRouter, roundsRouter } from './monitoring.routes.js';
 import { journeyRouter } from './journey.routes.js';
 import { projectsRouter } from './projects.routes.js';
 import type { RequireRoleMiddleware } from '../middleware/auth.js';
@@ -13,8 +13,8 @@ import type { RequireRoleMiddleware } from '../middleware/auth.js';
  * de roles: si alguien reintroduce 'visitante' en una ruta de auscultación
  * (por ejemplo copiando el patrón de una ruta pública para una nueva),
  * esta prueba falla sin depender de que alguien recuerde actualizar un test
- * en paralelo. Existe porque el 02-08-2026 se quitó 'visitante' de 5 rutas
- * (D1, ver ROADMAP.md) y hasta entonces no había ninguna prueba que
+ * en paralelo. Existe porque el 02-08-2026 se quitó 'visitante' de las rutas
+ * de auscultación (D1, ver ROADMAP.md) y hasta entonces no había ninguna prueba que
  * protegiera esa decisión de una regresión silenciosa.
  */
 
@@ -27,9 +27,14 @@ type RouteExpectation = {
 const auscultacionRoutesFromRoundsRouter: RouteExpectation[] = [
   { method: 'get', path: '/:roundId/export', mustExcludeVisitante: true },
   { method: 'get', path: '/:roundId', mustExcludeVisitante: true },
-  { method: 'patch', path: '/:roundId', mustExcludeVisitante: true }
-  ,{ method: 'get', path: '/:roundId/completion-reports', mustExcludeVisitante: true }
-  ,{ method: 'post', path: '/:roundId/completion-reports', mustExcludeVisitante: true }
+  { method: 'patch', path: '/:roundId', mustExcludeVisitante: true },
+  { method: 'get', path: '/:roundId/completion-reports', mustExcludeVisitante: true },
+  { method: 'post', path: '/:roundId/completion-reports', mustExcludeVisitante: true }
+];
+
+const auscultacionRoutesFromRoundPointsRouter: RouteExpectation[] = [
+  { method: 'post', path: '/:roundPointId/readings', mustExcludeVisitante: true },
+  { method: 'post', path: '/:roundPointId/readings/:readingId/attachments', mustExcludeVisitante: true }
 ];
 
 const auscultacionRoutesFromControlPointsRouter: RouteExpectation[] = [
@@ -61,7 +66,7 @@ const findAllowedRoles = (router: Router, method: string, path: string): Array<'
 
 const auditRouter = (routerName: string, router: Router, expectations: RouteExpectation[]) => {
   for (const expectation of expectations) {
-    test(`${routerName} ${expectation.method.toUpperCase()} ${expectation.path}: visitante excluido`, () => {
+      test(`${routerName} ${expectation.method.toUpperCase()} ${expectation.path}: visitante excluido`, () => {
       const allowedRoles = findAllowedRoles(router, expectation.method, expectation.path);
 
       assert.ok(
@@ -82,6 +87,7 @@ const auditRouter = (routerName: string, router: Router, expectations: RouteExpe
 };
 
 auditRouter('roundsRouter', roundsRouter, auscultacionRoutesFromRoundsRouter);
+auditRouter('roundPointsRouter', roundPointsRouter, auscultacionRoutesFromRoundPointsRouter);
 auditRouter('controlPointsRouter', controlPointsRouter, auscultacionRoutesFromControlPointsRouter);
 auditRouter('projectsRouter', projectsRouter, auscultacionRoutesFromProjectsRouter);
 
@@ -95,6 +101,11 @@ test('read-only monitoring routes allow supervisor while write routes do not', (
   assert.deepEqual(findAllowedRoles(roundsRouter, 'post', '/:roundId/completion-reports'), ['admin', 'topografo']);
   assert.deepEqual(findAllowedRoles(roundsRouter, 'get', '/:roundId/export'), ['admin', 'topografo']);
   assert.deepEqual(findAllowedRoles(controlPointsRouter, 'get', '/:controlPointId/readings'), ['admin', 'topografo', 'supervisor']);
+  assert.deepEqual(findAllowedRoles(roundPointsRouter, 'post', '/:roundPointId/readings'), ['admin', 'topografo']);
+  assert.deepEqual(
+    findAllowedRoles(roundPointsRouter, 'post', '/:roundPointId/readings/:readingId/attachments'),
+    ['admin', 'topografo']
+  );
 });
 
 test('personal journey route excludes visitor', () => {

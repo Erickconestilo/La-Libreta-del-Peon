@@ -96,7 +96,7 @@ La fuente y la release móvil local están preparadas con `versionCode=4`; la
 firma y el APK universal fueron verificados. La release se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, única obra
-`Campus Nord`, rondas, punto, histórico y evidencia visibles; la UI muestra
+la obra QA autorizada, rondas, punto, histórico y evidencia visibles; la UI muestra
 consulta sin escritura. La siguiente puerta es validar con la cuenta operador
 el recorrido de preparación, captura offline, parte parcial, cierre,
 reconexión sin duplicados y exportación manual.

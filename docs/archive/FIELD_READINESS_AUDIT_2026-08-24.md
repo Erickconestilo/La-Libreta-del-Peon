@@ -1,6 +1,7 @@
 <!-- doc-status
-estado: vivo
-verificado: 2026-08-24
+estado: archivado
+congelado: 2026-09-12
+superado-por: docs/field/TOPOFIELD_OPERATIONAL_REACTIVATION_2026-09-12.md
 -->
 
 # Auditoría de preparación de TopoField para campo
@@ -241,4 +242,3 @@ primer bloque debe ser la corrección de la selección de obra y una prueba
 vertical de una obra asignada. No recomiendo empezar por el croquis ni por
 nuevos instrumentos antes de comprobar ese flujo completo. El croquis es una
 mejora válida, pero no debe ocultar el bloqueo de alta que ya se ha observado.
-
