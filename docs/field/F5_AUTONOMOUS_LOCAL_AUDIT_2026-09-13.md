@@ -31,6 +31,10 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
    referencia cuyo prisma pertenezca a otra obra; se mantiene visible un
    prisma legacy sin `project_id` cuando no contradice la obra de su estación.
    La regresión vive en `apps/backend/src/models/prisms.model.test.ts`.
+7. Las consultas de visitas de montaje exigen además que la obra de la visita
+   coincida con la obra de su estación, incluso antes de aplicar la migración
+   027. El contrato backend de exportación quedó alineado con los instrumentos
+   y lados definidos en `shared/types.ts`, incluyendo los protocolos F7.
 
 ## Evidencia local
 
@@ -38,8 +42,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 91
-ℹ pass 91
+ℹ tests 92
+ℹ pass 92
 ℹ fail 0
 
 check-docs: 38 documentos revisados en raíz y docs/.

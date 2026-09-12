@@ -8,7 +8,10 @@ import {
   mapInstrumentReadingContextRow,
   toIsoTimestamp
 } from './monitoring.model.js';
-import { buildMountingVisitStationScope } from './mounting-visits.model.js';
+import {
+  buildMountingVisitStationScope,
+  buildMountingVisitTenantCondition
+} from './mounting-visits.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -86,4 +89,8 @@ test('mounting visits use the station project as their tenant scope', () => {
       params: [['bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']]
     }
   );
+});
+
+test('mounting visit queries require the visit and station to share the same project', () => {
+  assert.equal(buildMountingVisitTenantCondition(), 's.project_id = v.project_id');
 });

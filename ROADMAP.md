@@ -71,9 +71,10 @@ F5 sigue abierta y está en **estabilización de campo**. La auditoría y el pla
 La auditoría local vigente de 13-09-2026 está en
 `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
-de incidencias y prismas con referencias cruzadas. También deja el catálogo de
-ejemplo y sus fixtures sin nomenclatura de cliente. Backend local: `90/90`
-tests. La migración 027 preparada también conserva claves foráneas compuestas
+de incidencias, prismas y visitas de montaje con referencias cruzadas. También
+deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
+local: `92/92` tests. El contrato backend de exportación está alineado con
+`shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
 para integridad de tenant, con regresión local; sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render continúa
 sirviendo `6a1b19f` hasta una publicación remota autorizada. El Galaxy, la

@@ -17,8 +17,20 @@ export interface RoundExportRow {
   zone: string | null;
   tramo: string | null;
   seccion: string | null;
-  side: 'left' | 'right' | 'center' | null;
-  instrumentType: 'digital_level' | 'piezometer' | 'distometer' | 'linometer' | 'inclinometer' | 'cant_rule';
+  side: 'left' | 'right' | 'axis' | 'crown' | 'invert' | 'other' | null;
+  instrumentType:
+    | 'total_station'
+    | 'digital_level'
+    | 'piezometer'
+    | 'distometer'
+    | 'linometer'
+    | 'inclinometer'
+    | 'cant_rule'
+    | 'fissure_witness'
+    | 'fissure_gauge'
+    | 'potentiometer'
+    | 'clinometer'
+    | 'convergence_tape';
   pointStatus: 'pending' | 'taken' | 'skipped';
   measuredAt: string | null;
   valueNumeric: number | null;

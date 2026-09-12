@@ -51,7 +51,7 @@ const rows: RoundExportRow[] = [
     roundName: 'Ronda de validacion',
     roundStatus: 'active',
     seccion: null,
-    side: 'center',
+    side: 'axis',
     thresholdStatus: 'unknown',
     tramo: null,
     unit: null,

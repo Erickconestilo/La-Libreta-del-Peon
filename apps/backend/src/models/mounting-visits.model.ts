@@ -11,6 +11,10 @@ type Scope = {
   params: unknown[];
 };
 
+const MOUNTING_VISIT_TENANT_CONDITION = 's.project_id = v.project_id';
+
+export const buildMountingVisitTenantCondition = () => MOUNTING_VISIT_TENANT_CONDITION;
+
 type MountingEvidenceKind = 'general' | 'prism' | 'reference' | 'access' | 'other';
 type MountingVisitStatus = 'draft' | 'completed' | 'blocked';
 
@@ -132,7 +136,7 @@ const visitSelect = `
       '[]'::json
     ) AS evidence
   FROM station_mounting_visits v
-  INNER JOIN stations s ON s.id = v.station_id
+  INNER JOIN stations s ON s.id = v.station_id AND ${MOUNTING_VISIT_TENANT_CONDITION}
   LEFT JOIN mounting_visit_evidence e ON e.visit_id = v.id
 `;
 
@@ -253,6 +257,7 @@ export const updateMountingVisit = async (
       WHERE v.id = $1
         AND v.station_id = $2
         AND s.id = v.station_id
+        AND ${MOUNTING_VISIT_TENANT_CONDITION}
         ${scope.clause}
       RETURNING v.id
     `,
@@ -277,6 +282,7 @@ export const createMountingEvidence = async (
       INNER JOIN stations s ON s.id = v.station_id
       WHERE v.id = $1
         AND v.station_id = $2
+        AND ${MOUNTING_VISIT_TENANT_CONDITION}
         ${scope.clause}
     `,
     [visitId, routeStationId, ...scope.params]
