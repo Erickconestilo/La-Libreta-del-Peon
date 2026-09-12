@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { shouldUsePublicDto, toPublicStationPhoto } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
@@ -83,6 +83,11 @@ export const createStationPhotoController = async (request: Request, response: R
 
     const input = validateCreateStationPhotoInput(request.body);
     const projectScope = getActorProjectScope(request.user);
+    const scopedStation = await getStationById(stationId, projectScope);
+    if (!scopedStation) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, scopedStation.projectId);
 
     if (!isValidStationPhotoPath(stationId, input.storagePath)) {
       throw new AppError('Invalid station photo path', 400, 'INVALID_STATION_PHOTO_PATH');
@@ -139,6 +144,11 @@ export const deleteStationPhotoController = async (request: Request, response: R
     }
 
     const projectScope = getActorProjectScope(request.user);
+    const scopedStation = await getStationById(stationId, projectScope);
+    if (!scopedStation) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, scopedStation.projectId);
     const deleted = await deleteStationPhoto(stationId, stationPhotoId, request.user.id, projectScope);
 
     if (!deleted) {

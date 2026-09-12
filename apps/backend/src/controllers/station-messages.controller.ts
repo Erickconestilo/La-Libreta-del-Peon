@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createStationMessage, listRecentStationMessages, listStationMessages } from '../models/station-messages.model.js';
+import { getStationById } from '../models/stations.model.js';
 import { validateCreateStationMessageInput } from '../utils/station-messages-validation.js';
 
 export const listRecentStationMessagesController = async (request: Request, response: Response) => {
@@ -61,6 +62,9 @@ export const createStationMessageController = async (request: Request, response:
 
     const input = validateCreateStationMessageInput(request.body);
     const projectScope = getActorProjectScope(request.user);
+    const station = await getStationById(stationId, projectScope);
+    if (!station) throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    assertProjectWriteAccess(request.user, station.projectId);
     const message = await createStationMessage(
       stationId,
       input.body,

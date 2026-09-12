@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import {
@@ -159,6 +159,9 @@ export const updatePrismPhotoController = async (request: Request, response: Res
 
     const input = validateAttachPrismPhotoInput(request.body);
     const projectScope = getActorProjectScope(request.user);
+    const scopedPrism = await getPrismById(prismId, projectScope);
+    if (!scopedPrism) throw new AppError('Prism not found', 404, 'PRISM_NOT_FOUND');
+    assertProjectWriteAccess(request.user, scopedPrism.projectId as string | null);
 
     if (input.storagePath && !isValidPrismPhotoPath(prismId, input.storagePath)) {
       throw new AppError('Invalid prism photo path', 400, 'INVALID_PRISM_PHOTO_PATH');

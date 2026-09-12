@@ -9,7 +9,12 @@ const instrumentTypeSchema = z.enum([
   'distometer',
   'linometer',
   'inclinometer',
-  'cant_rule'
+  'cant_rule',
+  'fissure_witness',
+  'fissure_gauge',
+  'potentiometer',
+  'clinometer',
+  'convergence_tape'
 ]);
 
 export const createRoundPointSchema = z.object({
@@ -62,6 +67,7 @@ const environmentSchema = z.enum(['surface', 'tunnel', 'other']);
 const sideSchema = z.enum(['left', 'right', 'axis', 'crown', 'invert', 'other']);
 const roundStatusSchema = z.enum(['draft', 'active', 'closed', 'cancelled']);
 const fieldConditionsSchema = z.enum(['good', 'regular', 'adverse']);
+const workCompletionStatusSchema = z.enum(['partial', 'completed', 'blocked']);
 
 export const createMonitoringRoundSchema = z.object({
   fieldConditions: fieldConditionsSchema.nullable().optional(),
@@ -168,6 +174,16 @@ export const createControlPointThresholdSchema = z
   });
 
 export type ValidatedCreateControlPointThresholdInput = z.infer<typeof createControlPointThresholdSchema>;
+
+export const createWorkCompletionReportSchema = z.object({
+  clientRequestId: z.string().uuid(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+  pendingReasons: z.array(z.string().trim().min(1).max(300)).max(20).default([]),
+  status: workCompletionStatusSchema,
+  zoneLabel: z.string().trim().min(1).max(120)
+});
+
+export type ValidatedCreateWorkCompletionReportInput = z.infer<typeof createWorkCompletionReportSchema>;
 
 export const readingHistoryQuerySchema = z.object({
   instrumentType: instrumentTypeSchema.optional(),
@@ -323,6 +339,23 @@ export const validateCreateControlPointThresholdInput = (
 
   if (!parsedInput.success) {
     throw new AppError('Invalid threshold payload', 400, 'INVALID_THRESHOLD_PAYLOAD', parsedInput.error.flatten());
+  }
+
+  return parsedInput.data;
+};
+
+export const validateCreateWorkCompletionReportInput = (
+  input: unknown
+): ValidatedCreateWorkCompletionReportInput => {
+  const parsedInput = createWorkCompletionReportSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError(
+      'Invalid work completion report payload',
+      400,
+      'INVALID_WORK_COMPLETION_REPORT_PAYLOAD',
+      parsedInput.error.flatten()
+    );
   }
 
   return parsedInput.data;

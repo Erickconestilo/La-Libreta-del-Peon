@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
 import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import { sendSuccess } from '../lib/api-response.js';
@@ -88,6 +88,8 @@ export const updateProjectPhotoController = async (request: Request, response: R
     if (!projectId) {
       throw new AppError('Project id is required', 400, 'PROJECT_ID_REQUIRED');
     }
+
+    assertProjectWriteAccess(request.user, projectId);
 
     const input = validateAttachProjectPhotoInput(request.body);
 

@@ -1,6 +1,27 @@
-import type { UserRole } from '@shared/types';
+import type { AuthSessionUser, UserRole } from '@shared/types';
 
 export const canCreateStationWithoutProject = (role: UserRole | null | undefined) => role === 'admin';
+
+export const canWriteProject = (user: AuthSessionUser | null | undefined, projectId: string | null | undefined) => {
+  if (!user || !projectId) {
+    return false;
+  }
+
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  if (user.role !== 'topografo') {
+    return false;
+  }
+
+  // Legacy sessions have no access map yet; the backend remains the final guard.
+  if (user.projectAccess === undefined) {
+    return true;
+  }
+
+  return user.projectAccess?.[projectId] === 'write';
+};
 
 export const resolveStationProjectId = ({
   availableProjectIds,

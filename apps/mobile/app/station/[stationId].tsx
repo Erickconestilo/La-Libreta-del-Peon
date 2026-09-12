@@ -27,6 +27,7 @@ import {
 } from '@/lib/pending-station-visual-photo';
 import { pickAndCompressPhoto, recoverPendingImagePickerPhoto } from '@/lib/photo-upload';
 import { getStationDisplayName } from '@/lib/station-display';
+import { canWriteProject } from '@/lib/field-access';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 const PHOTO_KINDS: Array<{ label: string; value: StationPhotoKind }> = [
@@ -48,8 +49,11 @@ export default function StationDetailScreen() {
   const { currentUser } = useCurrentSession();
   const params = useLocalSearchParams<{ stationId: string }>();
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
-  const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const { data, errorMessage, isLoading } = useStationDetail(stationId ?? null);
+  const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEditStation = canWriteProject(currentUser, data?.projectId);
+  const canEditPhotos = canEditStation;
+  const canUseTeamTools = canViewTechnical;
   const {
     errorMessage: notesErrorMessage,
     isUpdating: isUpdatingNotes,
@@ -97,7 +101,7 @@ export default function StationDetailScreen() {
     createMessage,
     errorMessage: createMessageErrorMessage,
     isCreating: isCreatingMessage
-  } = useCreateStationMessage(canUseTeamTools ? stationId ?? null : null);
+  } = useCreateStationMessage(canEditStation ? stationId ?? null : null);
   const {
     data: stationIncidents,
     errorMessage: stationIncidentsErrorMessage,
@@ -107,7 +111,7 @@ export default function StationDetailScreen() {
     createIncident,
     errorMessage: createIncidentErrorMessage,
     isCreating: isCreatingIncident
-  } = useCreateIncident(canUseTeamTools ? stationId ?? null : null);
+  } = useCreateIncident(canEditStation ? stationId ?? null : null);
   const {
     errorMessage: prismPhotoErrorMessage,
     isMutating: isPrismPhotoMutating,
@@ -137,9 +141,6 @@ export default function StationDetailScreen() {
   const provisionalStationIncidents = useMemo(() => {
     return (stationIncidents ?? []).filter((incident) => incident.suggestion?.kind === 'new_station');
   }, [stationIncidents]);
-  const canEditPhotos = canUseTeamTools;
-  const canEditStation = canUseTeamTools;
-  const canViewTechnical = canUseTeamTools;
   const [showTechnicalData, setShowTechnicalData] = useState(false);
   const isRecoveringPendingVisualPhotoRef = useRef(false);
 

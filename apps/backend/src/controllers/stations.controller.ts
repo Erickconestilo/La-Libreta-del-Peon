@@ -6,7 +6,7 @@ import { shouldUsePublicDto, toPublicStation } from '../lib/public-dto.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { requireScopedResourceBeforeExternalCheck } from '../lib/scoped-resource-access.js';
 import { createStation, getStationById, listStations, updateStationNotes, updateStationPhoto } from '../models/stations.model.js';
-import { assertProjectAccess, getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectAccess, assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { isValidStationPhotoPath, validateAttachStationPhotoInput } from '../utils/photo-validation.js';
 import { validateCreateStationInput, validateUpdateStationNotesInput } from '../utils/station-validation.js';
 
@@ -76,7 +76,7 @@ export const createStationController = async (request: Request, response: Respon
     const input = validateCreateStationInput(request.body);
     const projectScope = getActorProjectScope(request.user);
     if (input.projectId) {
-      assertProjectAccess(request.user, input.projectId);
+      assertProjectWriteAccess(request.user, input.projectId);
     } else if (projectScope !== null) {
       assertProjectAccess(request.user, null);
     }
@@ -129,6 +129,11 @@ export const updateStationPhotoController = async (request: Request, response: R
     }
 
     const projectScope = getActorProjectScope(request.user);
+    const scopedStation = await getStationById(stationId, projectScope);
+    if (!scopedStation) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, scopedStation.projectId);
     await requireScopedResourceBeforeExternalCheck({
       code: 'STATION_NOT_FOUND',
       loadResource: () => getStationById(stationId, projectScope),
@@ -183,6 +188,11 @@ export const updateStationNotesController = async (request: Request, response: R
 
     const input = validateUpdateStationNotesInput(request.body);
     const projectScope = getActorProjectScope(request.user);
+    const scopedStation = await getStationById(stationId, projectScope);
+    if (!scopedStation) {
+      throw new AppError('Station not found', 404, 'STATION_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, scopedStation.projectId);
     const station = await updateStationNotes(stationId, input.notes, request.user.id, projectScope);
 
     if (!station) {

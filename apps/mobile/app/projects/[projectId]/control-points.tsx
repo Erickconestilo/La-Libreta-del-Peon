@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChoiceChip, RowChevron, StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useControlPoints } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 export default function ControlPointsScreen() {
@@ -17,7 +18,7 @@ export default function ControlPointsScreen() {
   const { currentUser } = useCurrentSession();
   const [active, setActive] = useState<boolean | undefined>(true);
   const { data, errorMessage, isLoading, isRefetching, refetch } = useControlPoints(projectId ?? null, active);
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
 
   return (
     <>

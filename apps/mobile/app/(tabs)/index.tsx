@@ -9,6 +9,7 @@ import { formatShortDate, RoundStatusPill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useMyJourney } from '@/hooks/use-monitoring';
 import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
+import { canWriteProject } from '@/lib/field-access';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function ProjectsScreen() {
@@ -28,7 +29,6 @@ export default function ProjectsScreen() {
   const projects = data ?? [];
   const autoOpenedJourneyRef = useRef(false);
   const canCreateProject = currentUser?.role === 'admin';
-  const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
 
   useEffect(() => {
     if (autoOpenedJourneyRef.current || isSessionLoading || isJourneyLoading || !journey?.length) {
@@ -178,7 +178,7 @@ export default function ProjectsScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         renderItem={({ item }) => (
           <ProjectCard
-            canEditImage={canEditProjectImage}
+            canEditImage={canWriteProject(currentUser, item.id)}
             isEditingImage={isPhotoMutating}
             onEditImage={() => handleEditProjectImage(item)}
             project={item}

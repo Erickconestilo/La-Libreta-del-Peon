@@ -9,6 +9,8 @@ import {
   getMonitoringRoundDetailController,
   getReadingHistoryController,
   listControlPointThresholdsController,
+  listWorkCompletionReportsController,
+  createWorkCompletionReportController,
   updateControlPointController,
   updateMonitoringRoundController
 } from '../controllers/monitoring.controller.js';
@@ -41,6 +43,22 @@ roundsRouter.patch(
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundId'),
   updateMonitoringRoundController
+);
+
+roundsRouter.get(
+  '/:roundId/completion-reports',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundId'),
+  listWorkCompletionReportsController
+);
+
+roundsRouter.post(
+  '/:roundId/completion-reports',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundId'),
+  createWorkCompletionReportController
 );
 
 roundsRouter.post(

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { AppError } from './app-error.js';
 import {
   assertProjectAccess,
+  assertProjectWriteAccess,
   assertTopografoHasScopedResource,
   canActorAccessProject,
   getActorProjectScope
@@ -83,6 +84,19 @@ test('assertProjectAccess rejects topografo outside assigned scope', () => {
 
 test('assertProjectAccess allows topografo inside assigned scope', () => {
   assert.doesNotThrow(() => assertProjectAccess(surveyorUser, 'project-a'));
+});
+
+test('read-only project membership can consult but cannot write', () => {
+  const supervisorMembership = {
+    ...surveyorA,
+    projectAccess: { [projectA]: 'read' as const }
+  };
+
+  assert.doesNotThrow(() => assertProjectAccess(supervisorMembership, projectA));
+  assert.throws(
+    () => assertProjectWriteAccess(supervisorMembership, projectA),
+    (error: unknown) => error instanceof AppError && error.code === 'READ_ONLY_PROJECT_MEMBERSHIP'
+  );
 });
 
 test('canActorAccessProject mirrors access semantics for each role', () => {

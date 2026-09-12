@@ -1,9 +1,11 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { assertTopografoHasScopedResource, getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, assertTopografoHasScopedResource, getActorProjectScope } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { createIncident, listIncidents } from '../models/incidents.model.js';
+import { getPrismById } from '../models/prisms.model.js';
+import { getStationById } from '../models/stations.model.js';
 import { validateCreateIncidentInput } from '../utils/incidents-validation.js';
 
 const parseIncidentStatus = (value: unknown) => {
@@ -43,6 +45,15 @@ export const createIncidentController = async (request: Request, response: Respo
     const input = validateCreateIncidentInput(request.body);
     const projectScope = getActorProjectScope(request.user);
     assertTopografoHasScopedResource(request.user, Boolean(input.stationId || input.prismId));
+    const scopedResource = input.stationId
+      ? await getStationById(input.stationId, projectScope)
+      : input.prismId
+        ? await getPrismById(input.prismId, projectScope)
+        : null;
+    if ((input.stationId || input.prismId) && !scopedResource) {
+      throw new AppError('Referenced resource not found', 404, 'INCIDENT_RESOURCE_NOT_FOUND');
+    }
+    assertProjectWriteAccess(request.user, scopedResource?.projectId ?? null);
     const incident = await createIncident(input, request.user.id, projectScope);
 
     sendSuccess(response, incident, 201);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { canCreateStationWithoutProject, resolveStationProjectId } from '../field-access';
+import { canCreateStationWithoutProject, canWriteProject, resolveStationProjectId } from '../field-access';
 
 describe('field access', () => {
   it('solo permite estaciones sin obra a admin', () => {
@@ -53,5 +53,21 @@ describe('field access', () => {
         role: 'admin'
       })
     ).toBeNull();
+  });
+
+  it('aplica el permiso efectivo de la membresía por obra', () => {
+    const user = {
+      authProvider: 'supabase' as const,
+      email: 'supervisor@example.test',
+      fullName: 'Supervisor',
+      id: 'user-1',
+      isActive: true,
+      projectAccess: { 'obra-a': 'read' as const, 'obra-b': 'write' as const },
+      role: 'topografo' as const
+    };
+
+    expect(canWriteProject(user, 'obra-a')).toBe(false);
+    expect(canWriteProject(user, 'obra-b')).toBe(true);
+    expect(canWriteProject({ ...user, role: 'admin', projectAccess: null }, 'obra-a')).toBe(true);
   });
 });

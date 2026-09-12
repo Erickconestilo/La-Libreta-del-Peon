@@ -164,6 +164,12 @@ function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boo
                 }}
               />
               <Stack.Screen
+                name="rounds/[roundId]/completion"
+                options={{
+                  title: 'Parte de zona'
+                }}
+              />
+              <Stack.Screen
                 name="history"
                 options={{
                   title: 'Historial'
