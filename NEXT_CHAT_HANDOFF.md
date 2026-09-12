@@ -48,7 +48,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 
 1. Conectar el Galaxy y repetir lectura + foto offline, reinicio, reconexión,
    deduplicación, parte parcial y cierre.
-2. Validar CSV/XLSX de la misma ronda y el bloqueo de exportación para `read`.
+2. Validar CSV/XLSX de la misma ronda real y el bloqueo de exportación para
+   `read`; la paridad local ya está cubierta por
+   `round-export-parity.test.ts`.
 3. Registrar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos.
 4. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 5. Validar visualmente desde la UI la semilla genérica al crear una obra, sin

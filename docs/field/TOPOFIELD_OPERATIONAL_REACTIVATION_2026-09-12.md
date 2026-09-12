@@ -126,7 +126,8 @@ están verificadas; queda la validación de escritura/offline con el operador.
 ## Evidencia técnica de este bloque
 
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
-backend `74/74` tests, móvil `52/52` tests y `npm run docs:check` sin errores.
+backend `78/78` tests, móvil `54/54` tests, paridad CSV/XLSX comprobada con
+filas tomadas y pendientes, y `npm run docs:check` sin errores.
 La fuente y la release Android quedan en `versionCode=4`; el AAB y el APK
 universal están firmados y verificados con `CN=TopoField Android Release`.
 Estos resultados se complementan con la validación física supervisora en

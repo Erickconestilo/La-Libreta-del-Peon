@@ -26,7 +26,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor, release v4 y corrección de adjuntos ya validados/publicados** | PLAN Fase 4 (nunca ejecutada) |
-| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato y generación local implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
+| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación y paridad local CSV/XLSX implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local inicial:** testigo fotográfico, fisurómetro digital, potenciómetro y parte de zona; pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
