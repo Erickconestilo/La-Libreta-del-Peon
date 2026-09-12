@@ -16,9 +16,10 @@ export const canWriteProject = (user: AuthSessionUser | null | undefined, projec
     return false;
   }
 
-  // Legacy sessions have no access map yet; the backend remains the final guard.
+  // A technical session without a server-provided access map cannot prove
+  // write permission for this project. Fail closed until /auth/me refreshes it.
   if (user.projectAccess === undefined) {
-    return true;
+    return false;
   }
 
   return user.projectAccess?.[projectId] === 'write';

@@ -92,6 +92,19 @@ describe('field access', () => {
     expect(canWriteProject(user, 'obra-b')).toBe(false);
   });
 
+  it('bloquea la escritura hasta recibir el mapa de permisos del servidor', () => {
+    const legacySession = {
+      authProvider: 'supabase' as const,
+      email: 'topografo@example.test',
+      fullName: 'Topógrafo',
+      id: 'operator-1',
+      isActive: true,
+      role: 'topografo' as const
+    };
+
+    expect(canWriteProject(legacySession, 'obra-a')).toBe(false);
+  });
+
   it('no abre una pantalla de escritura para cuentas sin permiso efectivo', () => {
     const supervisor = {
       authProvider: 'supabase' as const,
