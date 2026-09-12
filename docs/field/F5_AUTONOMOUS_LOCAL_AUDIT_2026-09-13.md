@@ -113,6 +113,19 @@ se ha desplegado desde esta sesión.
     `docs/field/INSTRUMENT_COVERAGE_MATRIX.md` y la regresión en
     `apps/mobile/lib/__tests__/monitoring-reading-form.test.ts`.
 
+19. La auditoría de límites entre proyectos encontró una sustitución fija en
+    `apps/mobile/lib/station-display.ts`: una combinación concreta de
+    `externalId` y nombre devolvía una etiqueta de una obra específica para
+    cualquier usuario. No era una importación de TopoTask ni una fuga de datos
+    desde la API, pero sí un acoplamiento de datos reales dentro de una ruta
+    activa de presentación. Se eliminó la sustitución; ahora se conserva el
+    nombre entregado por el servidor y solo se usa `externalId` como fallback
+    cuando el nombre está vacío. La regresión en
+    `apps/mobile/lib/__tests__/station-display.test.ts` confirma ambas reglas.
+    Los scripts `apps/backend/src/scripts/legacy/`, el fixture
+    `data/legacy/` y `import-mapest-stations.ts` siguen siendo herramientas o
+    artefactos históricos explícitos, no imports del runtime móvil/backend.
+
 ## Evidencia local
 
 ```text
@@ -123,10 +136,10 @@ se ha desplegado desde esta sesión.
 ℹ pass 96
 ℹ fail 0
 
-Test Suites: 18 passed, 18 total
-Tests:       81 passed, 81 total
+Test Suites: 19 passed, 19 total
+Tests:       85 passed, 85 total
 
-check-docs: 38 documentos revisados en raíz y docs/.
+check-docs: 39 documentos revisados en raíz y docs/.
 
 Sin errores ni avisos.
 

@@ -21,6 +21,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   topógrafo.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
+- Última corrección local: `c709fab` elimina una sustitución de nombre
+  específica de una obra en la presentación de estaciones; `e3d24e5` deja la
+  regresión con datos neutros. El escaneo de fuentes activas no encuentra
+  nombres de obras ni referencias TopoTask/ARGOS fuera de scripts y datos
+  legacy explícitos.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
@@ -181,9 +186,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `96/96` tests; móvil TypeScript sale sin errores y Jest tiene `18` suites y
-  `81` tests. La captura de `fissure_witness` marca la foto como obligatoria y
-  no envía una unidad ficticia. `docs:check` revisa 38 documentos sin avisos y
+  `96/96` tests; móvil TypeScript sale sin errores y Jest tiene `19` suites y
+  `85` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 
 ## Comandos de verificación

@@ -79,6 +79,11 @@ para integridad de tenant, con regresión local; sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
 observado el 13-09-2026 sirviendo `eb88db9`, que es anterior a los hardenings
 locales posteriores y debe volver a verificarse tras una publicación remota.
+La auditoría de límites de proyecto también revisó el código ejecutable del
+móvil y backend: no quedan nombres de obras ni referencias TopoTask/ARGOS en
+las fuentes activas. Los restos localizados están confinados a scripts de
+importación manual y artefactos `data/legacy` declarados como históricos; la
+presentación móvil ya no contiene un override específico de una estación.
 El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.
