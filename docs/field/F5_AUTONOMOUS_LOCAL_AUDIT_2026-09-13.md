@@ -77,6 +77,13 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     estuvieran bien encoladas. `syncMountingEvidence` ahora reenvía el UUID
     original y la regresión comprueba el cuerpo del POST.
 
+15. Una visita de montaje creada sin conexión podía quedarse siempre en
+    `draft`: los controles de “realizada” y “no realizable” llamaban al
+    `PATCH` con el id local, sin caché ni operación de outbox. Ahora el cambio
+    se conserva por sesión y el sincronizador recrea primero la visita con su
+    `clientRequestId` y después aplica el `PATCH`. La creación online también
+    se guarda en caché para que un corte inmediato de red no pierda el contexto.
+
 ## Evidencia local
 
 ```text

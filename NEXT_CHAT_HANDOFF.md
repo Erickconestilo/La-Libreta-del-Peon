@@ -154,6 +154,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - El reintento offline de evidencias de montaje conserva ahora el
   `clientRequestId` exigido por el backend; la regresión está en
   `apps/mobile/lib/offline/__tests__/sync-handlers.test.ts`.
+- Los cambios de estado de visitas de montaje también son offline-first:
+  actualizan la caché y encolan un `mounting_visit_update`; al sincronizar se
+  resuelve primero la visita local y después se aplica el `PATCH`.
 - La regresión móvil de `field-access` cubre el estado de carga y el bloqueo
   explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
   posterior dejó `18` suites y `78` tests móviles en verde. El mismo contrato
