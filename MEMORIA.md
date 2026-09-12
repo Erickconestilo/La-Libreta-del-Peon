@@ -403,7 +403,8 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 - **2026-09-12 — Publicación de auditoría F5 (Codex):** la rama `codex/f5-field-stability` se publicó sin `--force`; la PR #12 quedó fusionada por GitHub con merge `a0c152020cb4455072c1d38f8c85d69d651fe8bc`. Render continúa sirviendo el commit funcional `6a1b19f`, porque este bloque solo añadió regresiones y documentación. No se modificaron Supabase, Auth, RLS, EAS ni Play Store.
 
-- **2026-09-12 — Paridad local de exportación F6 (Codex):** se añadió `round-export-parity.test.ts`, que genera CSV y XLSX desde el mismo contrato, vuelve a leer el XLSX con `ExcelJS` y compara las filas normalizadas. Verifica dos filas, incluido un punto pendiente sin lectura, BOM UTF-8, fechas, filtro `A1:X1` y cabecera congelada. Backend build limpio y suite `78/78` verde.
+- **2026-09-12 — Paridad local de exportación F6 (Codex):** se añadió `round-export-parity.test.ts`, que genera CSV y XLSX desde el mismo contrato, vuelve a leer el XLSX con `ExcelJS` y compara las filas normalizadas. Verifica dos filas, incluido un punto pendiente sin lectura, BOM UTF-8, fechas, filtro `A1:X1` y cabecera congelada. Backend build limpio y suite `78/78` verde. La PR #14 se fusionó en GitHub con `eb88db9`.
+- **2026-09-12 — Publicación del hardening móvil (Codex):** el aislamiento por sesión de la caché de rondas y snapshots, con migración local SQLite 005 y regresiones, quedó publicado mediante PR #15. GitHub `main` quedó en `5e5f51cfe4702fc81eb67dfc264b6401d9002d94`; no se cambiaron Supabase, Render ni Play Store.
 
 Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corrección aplicada, hallazgo importante— se añade aquí en el momento, con una frase corta que dé idea y contexto. No sustituye las secciones detalladas de arriba; es el resumen rápido para no tener que leer todo el archivo.
 
