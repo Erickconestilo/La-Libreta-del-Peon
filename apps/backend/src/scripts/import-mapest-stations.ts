@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { pool } from '../db/pool.js';
 import { getMaxReadingSpreadMeters } from '../utils/geo.js';
+import { requireMapEstProjectCode, requireUniqueProjectId } from './mapest-project-mapping.js';
 import { assertWriteAllowed } from './safety.js';
 
 const SYSTEM_IMPORT_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -54,39 +55,6 @@ const stationsImportSchema = z.object({
   schemaVersion: z.number(),
   stations: z.array(stationImportSchema)
 });
-
-const getProjectCodeFromStationName = (stationName: string) => {
-  const normalizedName = stationName
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase();
-
-  if (normalizedName.includes('campus nord')) {
-    return 'campus-nord';
-  }
-
-  if (normalizedName.includes('sarria')) {
-    return 'sarria';
-  }
-
-  if (normalizedName.includes('sant gervasi de casoles')) {
-    return 'sant-gervasi-de-casoles';
-  }
-
-  if (normalizedName.includes('putxe')) {
-    return 'putxe';
-  }
-
-  if (normalizedName.includes('sanllehy')) {
-    return 'sanllehy';
-  }
-
-  if (normalizedName.includes('maragall')) {
-    return 'maragall';
-  }
-
-  return null;
-};
 
 const getReadingExternalKey = (
   stationExternalId: string,
@@ -183,11 +151,9 @@ const importStations = async () => {
     await client.query('BEGIN');
 
     for (const station of stations) {
-      const projectCode = getProjectCodeFromStationName(station.name);
-      const projectResult = projectCode
-        ? await client.query('SELECT id FROM public.projects WHERE code = $1', [projectCode])
-        : { rows: [] as Array<{ id: string }> };
-      const projectId = projectResult.rows[0]?.id ?? null;
+      const projectCode = requireMapEstProjectCode(station.name);
+      const projectResult = await client.query('SELECT id FROM public.projects WHERE code = $1', [projectCode]);
+      const projectId = requireUniqueProjectId(projectCode, projectResult.rows);
 
       const stationUpsertQuery = `
         INSERT INTO public.stations (
