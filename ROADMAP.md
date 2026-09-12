@@ -68,6 +68,12 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=4` se recompiló; `bundletool validate` y `jarsigner -verify` devuelven código 0, pero no se instaló en el Galaxy. Eso no sustituye el E2E físico.
 
+La auditoría local vigente de 13-09-2026 está en
+`docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
+automatizada sobre todos los routers de negocio y corrige la lectura defensiva
+de incidencias con referencias cruzadas. El Galaxy, la exportación con datos
+autorizados y la validación observada siguen siendo compuertas externas.
+
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.

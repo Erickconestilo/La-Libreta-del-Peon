@@ -92,6 +92,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   pasan con él.
 - La auditoría actual está archivada en
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
+- La auditoría local vigente está en
+  `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`; documenta la revisión
+  de rutas, la corrección defensiva de incidencias y la evidencia de la release
+  sin confundirla con el E2E físico.
 - La caché local de rondas y snapshots quedó separada por sesión en la
   migración SQLite 005; la caché anterior se invalida al actualizar para
   evitar contaminación entre cuentas.
