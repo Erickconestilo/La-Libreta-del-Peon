@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-12
 -->
 
 # F5 — Runbook de piloto con dos móviles
@@ -22,6 +22,18 @@ Supabase por sí solo.
 4. Se prepara una ronda con puntos y umbrales desde el móvil con red.
 5. Cada participante inicia sesión con su propia cuenta y verifica en Perfil
    el correo visible antes de entrar en la obra.
+
+## Cuenta supervisora de consulta
+
+La cuenta `supervisor-piloto@topofield.local` se usa únicamente para validar
+consulta autenticada en la obra autorizada. Debe tener rol global `supervisor`
+y una membresía activa `read`; no se reutiliza el token público de visitante.
+En la release `versionCode=4`, Perfil debe mostrar `Supervisor` y la cuenta
+solo debe poder abrir obras, estaciones, prismas, mensajes/incidencias,
+rondas, históricos, evidencias y partes recibidos. No deben aparecer acciones
+de crear, editar, capturar, preparar offline, cerrar, reintentar outbox ni
+exportar. La contraseña temporal se entrega solo durante la prueba y no se
+guarda en el repositorio ni en este documento.
 
 ## Escenarios mínimos
 
