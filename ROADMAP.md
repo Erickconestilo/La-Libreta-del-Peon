@@ -86,6 +86,9 @@ importación manual y artefactos `data/legacy` declarados como históricos; la
 presentación móvil ya no contiene un override específico de una estación.
 El importador manual MapEst también falla cerrado ante estaciones sin mapeo o
 sin una obra única; no forma parte del runtime del servicio.
+El diagnóstico local del outbox también distingue ahora errores reintentables
+de conflictos que requieren revisión manual; el Perfil no reenvía conflictos
+automáticamente ni muestra sus payloads.
 El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.

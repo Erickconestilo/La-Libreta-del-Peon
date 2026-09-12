@@ -142,6 +142,12 @@ se ha desplegado desde esta sesión.
     confirma que una base de producción probable se bloquea sin
     `TOPOFIELD_ALLOW_PRODUCTION_WRITE` y solo se permite con coincidencia
     explícita. No se ejecutó ninguna de las dos migraciones.
+22. El Perfil solo mostraba elementos del outbox en `error`, aunque SQLite y
+    el sincronizador también conservan conflictos `409`. Ahora el diagnóstico
+    local lista ambos estados por sesión. Los errores mantienen `Reintentar`;
+    los conflictos muestran `Revisión necesaria` sin reenvío automático y sin
+    exponer `conflictData`, cuerpos HTTP, tokens ni payloads. La regresión está
+    en `apps/mobile/lib/offline/__tests__/outbox-diagnostics.test.ts`.
 
 ## Evidencia local
 
@@ -153,8 +159,8 @@ se ha desplegado desde esta sesión.
 ℹ pass 99
 ℹ fail 0
 
-Test Suites: 19 passed, 19 total
-Tests:       85 passed, 85 total
+Test Suites: 20 passed, 20 total
+Tests:       88 passed, 88 total
 
 check-docs: 39 documentos revisados en raíz y docs/.
 
