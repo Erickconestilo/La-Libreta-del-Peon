@@ -5,9 +5,12 @@
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import * as Network from 'expo-network';
+import { apiFetch } from '@/lib/api';
+import { deletePreparedPhoto, uploadPreparedPhotoToSignedUrl } from '@/lib/photo-upload';
 import { getDatabase, closeDatabase, applyMigrations } from '../database';
 import * as outbox from '../outbox';
 import { flushOutbox, hasConnectivity, stopSyncEngine } from '../sync-engine';
+import { syncOutboxItem } from '../sync-handlers';
 import type { OutboxItem } from '../outbox';
 
 // Mock de expo-network
@@ -15,9 +18,21 @@ jest.mock('expo-network', () => ({
   getNetworkStateAsync: jest.fn(),
 }));
 
+jest.mock('@/lib/api', () => ({
+  apiFetch: jest.fn()
+}));
+
+jest.mock('@/lib/photo-upload', () => ({
+  deletePreparedPhoto: jest.fn(),
+  uploadPreparedPhotoToSignedUrl: jest.fn()
+}));
+
 const mockGetNetworkStateAsync = Network.getNetworkStateAsync as jest.MockedFunction<
   typeof Network.getNetworkStateAsync
 >;
+const mockApiFetch = apiFetch as jest.MockedFunction<typeof apiFetch>;
+const mockDeletePreparedPhoto = deletePreparedPhoto as jest.MockedFunction<typeof deletePreparedPhoto>;
+const mockUploadPreparedPhotoToSignedUrl = uploadPreparedPhotoToSignedUrl as jest.MockedFunction<typeof uploadPreparedPhotoToSignedUrl>;
 
 describe('Sync Engine', () => {
   beforeEach(async () => {
@@ -31,6 +46,10 @@ describe('Sync Engine', () => {
       isConnected: true,
       isInternetReachable: true,
     });
+    mockApiFetch.mockReset();
+    mockDeletePreparedPhoto.mockReset();
+    mockUploadPreparedPhotoToSignedUrl.mockReset();
+    mockUploadPreparedPhotoToSignedUrl.mockResolvedValue({ status: 200 } as never);
   });
 
   afterEach(() => {
@@ -231,6 +250,109 @@ describe('Sync Engine', () => {
       expect(syncedItems).toHaveLength(2);
       expect((syncedItems[0].payload as any).order).toBe(1);
       expect((syncedItems[1].payload as any).order).toBe(2);
+    });
+
+    it('reproduce una visita, su estado y su evidencia en orden idempotente', async () => {
+      mockApiFetch
+        .mockResolvedValueOnce({ data: { id: 'server-visit-id' }, error: null } as never)
+        .mockResolvedValueOnce({ data: { id: 'server-visit-id' }, error: null } as never)
+        .mockResolvedValueOnce({ data: { id: 'server-visit-id', status: 'completed' }, error: null } as never)
+        .mockResolvedValueOnce({
+          data: { id: 'server-visit-id' },
+          error: null
+        } as never)
+        .mockResolvedValueOnce({
+          data: { path: 'mounting-visits/server-visit-id/evidence/photo.jpg', signedUrl: 'https://storage.example/upload' },
+          error: null
+        } as never)
+        .mockResolvedValueOnce({ data: { id: 'server-evidence-id' }, error: null } as never);
+
+      outbox.enqueue({
+        id: 'mounting-create',
+        clientRequestId: '11111111-1111-4111-8111-111111111111',
+        entityType: 'medicion',
+        operation: 'insert',
+        sessionId: 'session:test',
+        payload: {
+          kind: 'mounting_visit',
+          stationId: 'station-id',
+          visitInput: {
+            changeSummary: 'Cambio',
+            notes: null,
+            status: 'draft',
+            visitedAt: '2026-09-13T09:00:00.000Z'
+          }
+        }
+      });
+      outbox.enqueue({
+        id: 'mounting-update',
+        clientRequestId: '22222222-2222-4222-8222-222222222222',
+        entityType: 'medicion',
+        operation: 'update',
+        sessionId: 'session:test',
+        payload: {
+          kind: 'mounting_visit_update',
+          stationId: 'station-id',
+          updateInput: { status: 'completed' },
+          visitClientRequestId: '11111111-1111-4111-8111-111111111111',
+          visitId: 'local-visit-id',
+          visitInput: {
+            changeSummary: 'Cambio',
+            notes: null,
+            status: 'draft',
+            visitedAt: '2026-09-13T09:00:00.000Z'
+          }
+        }
+      });
+      outbox.enqueue({
+        id: 'mounting-evidence',
+        clientRequestId: '33333333-3333-4333-8333-333333333333',
+        entityType: 'medicion',
+        operation: 'update',
+        sessionId: 'session:test',
+        payload: {
+          evidenceInput: {
+            kind: 'prism',
+            notes: null,
+            positionX: null,
+            positionY: null,
+            prismId: null,
+            title: 'PR-01'
+          },
+          kind: 'mounting_evidence',
+          photo: {
+            contentType: 'image/jpeg',
+            fileSizeBytes: 1024,
+            height: 800,
+            localUri: 'file:///documents/topofield-offline-photos/mounting.jpg',
+            width: 1200
+          },
+          stationId: 'station-id',
+          visitClientRequestId: '11111111-1111-4111-8111-111111111111',
+          visitId: 'local-visit-id',
+          visitInput: {
+            changeSummary: 'Cambio',
+            notes: null,
+            status: 'completed',
+            visitedAt: '2026-09-13T09:00:00.000Z'
+          }
+        }
+      });
+
+      const synced = await flushOutbox(syncOutboxItem, 'session:test');
+
+      expect(synced).toBe(3);
+      expect(outbox.getPending('session:test')).toHaveLength(0);
+      expect(mockApiFetch).toHaveBeenNthCalledWith(1, '/stations/station-id/mounting-visits', expect.objectContaining({ method: 'POST' }));
+      expect(mockApiFetch).toHaveBeenNthCalledWith(2, '/stations/station-id/mounting-visits', expect.objectContaining({ method: 'POST' }));
+      expect(mockApiFetch).toHaveBeenNthCalledWith(3, '/stations/station-id/mounting-visits/server-visit-id', {
+        body: JSON.stringify({ status: 'completed' }),
+        method: 'PATCH'
+      });
+      expect(mockApiFetch).toHaveBeenNthCalledWith(4, '/stations/station-id/mounting-visits', expect.objectContaining({ method: 'POST' }));
+      expect(JSON.parse(String(mockApiFetch.mock.calls[3][1]?.body))).toMatchObject({ status: 'draft' });
+      expect(mockApiFetch).toHaveBeenNthCalledWith(6, '/stations/station-id/mounting-visits/server-visit-id/evidence', expect.objectContaining({ method: 'POST' }));
+      expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
     });
 
     it('solo sincroniza los items de la sesión solicitante', async () => {
