@@ -64,6 +64,29 @@ describe('Outbox API', () => {
         });
       }).toThrow();
     });
+
+    it('debe encolar lectura y adjunto de forma atómica', () => {
+      expect(() => {
+        outbox.enqueueMany([
+          {
+            id: 'reading-id',
+            clientRequestId: 'reading-request-id',
+            entityType: 'medicion',
+            operation: 'insert',
+            payload: { valueNumeric: 2.4 }
+          },
+          {
+            id: 'attachment-id',
+            clientRequestId: 'reading-request-id',
+            entityType: 'medicion',
+            operation: 'update',
+            payload: { kind: 'reading_attachment' }
+          }
+        ]);
+      }).toThrow();
+
+      expect(outbox.getPending()).toHaveLength(0);
+    });
   });
 
   describe('getPending', () => {
@@ -140,6 +163,28 @@ describe('Outbox API', () => {
 
       expect(item?.status).toBe('syncing');
       expect(item?.retry_count).toBe(1);
+    });
+  });
+
+  describe('recoverInterruptedItems', () => {
+    it('debe devolver a pending lo que quedó syncing tras cerrar la app', () => {
+      outbox.enqueue({
+        id: 'interrupted-id',
+        clientRequestId: 'interrupted-req',
+        entityType: 'medicion',
+        operation: 'update',
+        payload: { kind: 'reading_attachment' },
+      });
+
+      outbox.markSyncing('interrupted-id');
+
+      expect(outbox.recoverInterruptedItems()).toBe(1);
+
+      const pending = outbox.getPending();
+      expect(pending).toHaveLength(1);
+      expect(pending[0].id).toBe('interrupted-id');
+      expect(pending[0].status).toBe('pending');
+      expect(pending[0].lastSyncAttemptAt).toBeNull();
     });
   });
 

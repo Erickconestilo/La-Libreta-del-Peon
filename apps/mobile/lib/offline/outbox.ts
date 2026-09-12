@@ -36,6 +36,14 @@ interface OutboxRow {
   conflict_data: string | null; // JSON string
 }
 
+export interface EnqueueParams {
+  id: string;
+  clientRequestId: string;
+  entityType: OfflineQueueEntityType;
+  operation: 'insert' | 'update' | 'delete';
+  payload: Record<string, unknown>;
+}
+
 function rowToItem(row: OutboxRow): OutboxItem {
   return {
     id: row.id,
@@ -56,20 +64,42 @@ function rowToItem(row: OutboxRow): OutboxItem {
 /**
  * Enqueue a new item for sync
  */
-export function enqueue(params: {
-  id: string;
-  clientRequestId: string;
-  entityType: OfflineQueueEntityType;
-  operation: 'insert' | 'update' | 'delete';
-  payload: Record<string, unknown>;
-}): void {
+export function enqueue(params: EnqueueParams): void {
+  enqueueMany([params]);
+}
+
+/**
+ * Enqueue related operations as one SQLite transaction.
+ * A reading and its photo must be all-or-nothing so a process interruption
+ * cannot leave a server reading without its local attachment operation.
+ */
+export function enqueueMany(items: EnqueueParams[]): void {
+  if (items.length === 0) {
+    return;
+  }
+
   const db = getDatabase();
 
-  db.runSync(
-    `INSERT INTO outbox (id, client_request_id, entity_type, operation, payload)
-     VALUES (?, ?, ?, ?, ?)`,
-    [params.id, params.clientRequestId, params.entityType, params.operation, JSON.stringify(params.payload)]
-  );
+  db.execSync('BEGIN');
+
+  try {
+    for (const item of items) {
+      db.runSync(
+        `INSERT INTO outbox (id, client_request_id, entity_type, operation, payload)
+         VALUES (?, ?, ?, ?, ?)`,
+        [item.id, item.clientRequestId, item.entityType, item.operation, JSON.stringify(item.payload)]
+      );
+    }
+
+    db.execSync('COMMIT');
+  } catch (error) {
+    try {
+      db.execSync('ROLLBACK');
+    } catch {
+      // Preserve the original insert error if rollback itself is unavailable.
+    }
+    throw error;
+  }
 }
 
 /**
@@ -145,6 +175,26 @@ export function markSyncing(id: string): void {
      WHERE id = ?`,
     [id]
   );
+}
+
+/**
+ * Recover items left in `syncing` when the previous app process stopped.
+ * Retrying is safe because server mutations use clientRequestId idempotency.
+ */
+export function recoverInterruptedItems(): number {
+  const db = getDatabase();
+  const result = db.runSync(
+    `UPDATE outbox
+     SET status = 'pending', last_sync_attempt_at = NULL, error_message = NULL, conflict_data = NULL
+     WHERE status = 'syncing'`
+  );
+  const recovered = typeof result.changes === 'number' ? result.changes : 0;
+
+  if (recovered > 0) {
+    console.log(`[Outbox] Recovered ${recovered} interrupted syncing item(s)`);
+  }
+
+  return recovered;
 }
 
 /**

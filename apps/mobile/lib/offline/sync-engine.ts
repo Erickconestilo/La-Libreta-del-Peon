@@ -10,7 +10,7 @@
  */
 
 import * as Network from 'expo-network';
-import { getPending, markSyncing, markSynced, markError, markConflict, retryItem } from './outbox';
+import { getPending, markSyncing, markSynced, markError, markConflict, recoverInterruptedItems, retryItem } from './outbox';
 import type { OutboxItem } from './outbox';
 
 // Configuración de retry
@@ -36,6 +36,8 @@ let lastConnectivityState: boolean | null = null;
  */
 export function initSyncEngine(syncCallback: (item: OutboxItem) => Promise<void>): void {
   console.log('[SyncEngine] Initializing...');
+
+  recoverInterruptedItems();
 
   // Iniciar monitoreo de conectividad
   startConnectivityMonitoring(syncCallback);

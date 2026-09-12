@@ -193,6 +193,12 @@ La imagen se copia antes a `documentDirectory/topofield-offline-photos/`, no
 queda en caché, y se borra solo tras confirmar el adjunto. Esto evita perderla
 si Android mata la app entre el modo avión, la reconexión y el reinicio.
 
+La inserción de ambas operaciones se realiza dentro de una única transacción
+SQLite. Al arrancar el sync engine, cualquier elemento que quedara en `syncing`
+por una interrupción del proceso vuelve a `pending`; los endpoints reutilizan
+`clientRequestId`, por lo que repetir una petición parcialmente completada no
+crea duplicados.
+
 ---
 
 ## Criterio de Salida de Fase 2
