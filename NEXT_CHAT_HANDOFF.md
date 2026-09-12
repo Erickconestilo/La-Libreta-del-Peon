@@ -18,7 +18,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   firmar fotos de lecturas.
 - Últimos commits locales: `7136cfd` (auditoría de dependencias y handoff) y
   `53a8a05` (auditoría de scope y documentación activa).
-- GitHub `main` verificado por API: `78d980bc50c0d4c2cbcc9a363f8a65bf7a81321f`.
+- GitHub `main` verificado por API tras fusionar la PR #12: `a0c152020cb4455072c1d38f8c85d69d651fe8bc`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
 
