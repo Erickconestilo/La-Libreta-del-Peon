@@ -14,9 +14,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Hardening local más reciente: `a23c415`, protege las relaciones internas de
-  ronda, punto de control, lectura y adjuntos, y prepara la migración 028 para
-  deduplicación concurrente de adjuntos.
+- Hardening local más reciente: `4562d89` y `ce8bc40`, protegen las relaciones
+  internas de ronda, punto de control, lectura y adjuntos, preparan la
+  migración 028 para deduplicación concurrente y bloquean los deep links de
+  escritura para cuentas sin permiso efectivo.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Últimos commits locales de la rama: `aa5e523` (integridad SQL de visitas de
@@ -134,18 +135,24 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   nativo de `expo-sqlite` está declarado en `apps/mobile/app.json`. El diff
   previo de scripts `android/ios` de `apps/mobile/package.json` permanece sin
   commit.
-- La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
+ - La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
   append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
   montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.
   La captura offline local usa SQLite 007, caché por sesión/estación y el
   outbox existente. La posición relativa opcional usa una cuadrícula 3x3 y
   las consultas muestran el título como etiqueta sobre la miniatura, sin
-  afirmar precisión métrica. No se ha aplicado la migración PostgreSQL ni se
-  ha desplegado el endpoint; la validación física y la comprobación de Storage
-  quedan pendientes.
+   afirmar precisión métrica. No se ha aplicado la migración PostgreSQL ni se
+   ha desplegado el endpoint; la validación física y la comprobación de Storage
+   quedan pendientes.
+- La migración local `028_reading_attachment_idempotency.sql` está preparada,
+  con comprobación de duplicados históricos e índice único para carreras de
+  adjuntos; no se ha aplicado remotamente.
+- La regresión móvil de `field-access` cubre el estado de carga y el bloqueo
+  explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
+  posterior dejó `17` suites y `74` tests móviles en verde.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `94/94` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
-  `73` tests. `docs:check` revisa 38 documentos sin avisos y `npx expo install
+  `74` tests. `docs:check` revisa 38 documentos sin avisos y `npx expo install
   --check` devuelve `Dependencies are up to date`.
 
 ## Comandos de verificación

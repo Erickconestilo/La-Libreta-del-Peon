@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo — F4 completa, D1 aplicada, D2 decidida. F5 queda sin ningún bloqueo técnico ni de despliegue.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. F5 no tiene un bloqueo técnico local abierto, pero permanece abierta por la validación física y observada de campo; los cambios locales posteriores todavía no están desplegados.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -83,7 +83,7 @@ compuertas externas.
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
 
-El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina.
+El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. La auditoría local posterior reforzó la integridad ronda-punto-lectura-adjunto y dejó preparada `028_reading_attachment_idempotency.sql`, aún sin aplicar.
 
 ### Reactivación operativa — implementación local 12-09-2026
 
