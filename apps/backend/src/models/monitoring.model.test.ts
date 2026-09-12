@@ -4,7 +4,9 @@ import test from 'node:test';
 import { AppError } from '../lib/app-error.js';
 import {
   assertMonitoringRoundStatusTransition,
+  buildMonitoringPointTenantCondition,
   buildProjectScopeCondition,
+  buildReadingPointTenantCondition,
   mapInstrumentReadingContextRow,
   toIsoTimestamp
 } from './monitoring.model.js';
@@ -93,4 +95,9 @@ test('mounting visits use the station project as their tenant scope', () => {
 
 test('mounting visit queries require the visit and station to share the same project', () => {
   assert.equal(buildMountingVisitTenantCondition(), 's.project_id = v.project_id');
+});
+
+test('monitoring reads require the round point and control point to share a tenant', () => {
+  assert.equal(buildMonitoringPointTenantCondition(), 'cp.project_id = mr.project_id');
+  assert.equal(buildReadingPointTenantCondition(), 'ir.control_point_id = mrp.control_point_id');
 });

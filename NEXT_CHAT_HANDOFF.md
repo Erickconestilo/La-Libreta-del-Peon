@@ -14,6 +14,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
+- Hardening local más reciente: `a23c415`, protege las relaciones internas de
+  ronda, punto de control, lectura y adjuntos, y prepara la migración 028 para
+  deduplicación concurrente de adjuntos.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Últimos commits locales de la rama: `aa5e523` (integridad SQL de visitas de
@@ -99,9 +102,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
 - La auditoría local vigente está en
   `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`; documenta la revisión
-  de rutas, las correcciones defensivas de incidencias, prismas y visitas de
-  montaje, el contrato de exportación F7, el fixture genérico y la evidencia
-  de la release sin confundirlas con el E2E físico.
+  de rutas, las correcciones defensivas de incidencias, prismas, visitas de
+  montaje y relaciones ronda-punto-lectura, el contrato de exportación F7, el
+  fixture genérico y la evidencia de la release sin confundirlas con el E2E
+  físico. La migración local 028 prepara unicidad para adjuntos concurrentes y
+  aún no se ha aplicado remotamente.
 - La rama local añade `a868867` después del despliegue verificado de Render
   (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
   remotamente.
@@ -139,7 +144,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   ha desplegado el endpoint; la validación física y la comprobación de Storage
   quedan pendientes.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `92/92` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
+  `94/94` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
   `73` tests. `docs:check` revisa 38 documentos sin avisos y `npx expo install
   --check` devuelve `Dependencies are up to date`.
 

@@ -24,6 +24,12 @@ import type {
 import type { RoundExportRow } from '../contracts/round-export.js';
 type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
 
+const MONITORING_POINT_TENANT_CONDITION = 'cp.project_id = mr.project_id';
+const READING_POINT_TENANT_CONDITION = 'ir.control_point_id = mrp.control_point_id';
+
+export const buildMonitoringPointTenantCondition = () => MONITORING_POINT_TENANT_CONDITION;
+export const buildReadingPointTenantCondition = () => READING_POINT_TENANT_CONDITION;
+
 type WorkCompletionReport = {
   clientRequestId: string;
   completedPointCount: number;
@@ -317,6 +323,7 @@ const getRoundPointContext = async (
         mr.project_id
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE mrp.id = $1
       ${scope.clause}
       LIMIT 1
@@ -346,6 +353,7 @@ export const getRoundPointProjectId = async (
       SELECT mr.project_id
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE mrp.id = $1
       ${scope.clause}
       LIMIT 1
@@ -506,7 +514,8 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
         cp.code AS control_point_code,
         cp.name AS control_point_name
       FROM monitoring_round_points mrp
-      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE mrp.round_id = $1
       ORDER BY mrp.sort_order ASC, mrp.created_at ASC
     `,
@@ -976,7 +985,7 @@ export const getReadingHistory = async (
 
   if (query.instrumentType) {
     params.push(query.instrumentType);
-    filters.push(`AND instrument_type = $${params.length}`);
+    filters.push(`AND ir.instrument_type = $${params.length}`);
   }
 
   params.push(query.limit);
@@ -1010,6 +1019,14 @@ export const getReadingHistory = async (
           '[]'::json
         ) AS attachments
       FROM instrument_readings ir
+      INNER JOIN monitoring_round_points mrp
+        ON mrp.id = ir.round_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND cp.id = $1
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.control_point_id = $1
       ${filters.join('\n')}
       ORDER BY ir.measured_at DESC, ir.created_at DESC
@@ -1143,7 +1160,8 @@ export const listWorkCompletionReports = async (
       FROM work_completion_reports wcr
       INNER JOIN monitoring_rounds mr ON mr.id = wcr.round_id
       WHERE wcr.round_id = $1
-      ${scope.clause.replaceAll('mr.', 'wcr.')}
+        AND mr.project_id = wcr.project_id
+      ${scope.clause}
       ORDER BY wcr.reported_at DESC, wcr.id DESC
     `,
     [roundId, ...scope.params]
@@ -1381,6 +1399,10 @@ export const getInstrumentReadingById = async (readingId: string, projectScope: 
       FROM instrument_readings ir
       INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.id = $1
       ${scope.clause}
       LIMIT 1
@@ -1399,6 +1421,10 @@ export const getInstrumentReadingContext = async (readingId: string, projectScop
       FROM instrument_readings ir
       INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.id = $1
       ${scope.clause}
       LIMIT 1
@@ -1470,8 +1496,11 @@ export const getMonitoringRoundExportRows = async (
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       INNER JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
-      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
-      LEFT JOIN instrument_readings ir ON ir.round_point_id = mrp.id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
+      LEFT JOIN instrument_readings ir
+        ON ir.round_point_id = mrp.id
+       AND ir.control_point_id = cp.id
+       AND ir.instrument_type = mrp.expected_instrument_type
       LEFT JOIN users measured_user ON measured_user.id = ir.measured_by
       LEFT JOIN users operator_user ON operator_user.id = mr.operator_id
       LEFT JOIN LATERAL (
@@ -1607,6 +1636,7 @@ export const createReadingAttachment = async (
           uploaded_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (reading_id, storage_path) DO NOTHING
         RETURNING *
       `,
       [

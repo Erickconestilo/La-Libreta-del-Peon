@@ -35,6 +35,18 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
    coincida con la obra de su estación, incluso antes de aplicar la migración
    027. El contrato backend de exportación quedó alineado con los instrumentos
    y lados definidos en `shared/types.ts`, incluyendo los protocolos F7.
+8. La revisión defensiva detectó que los enlaces internos de monitoring no
+   expresaban siempre la relación `ronda -> punto de control -> lectura`. Detalle,
+   histórico, contexto de adjunto y exportación ahora exigen que esas relaciones
+   compartan obra; los partes también comprueban que su `project_id` coincide
+   con el de la ronda. Esto evita exponer o mezclar datos si una escritura
+   directa deja una referencia cruzada en PostgreSQL.
+9. La deduplicación de adjuntos de lectura tenía una ventana de carrera entre
+   su consulta previa y el `INSERT`. La migración local preparada
+   `028_reading_attachment_idempotency.sql` añade un índice único por
+   `reading_id, storage_path` y falla deliberadamente si existen duplicados
+   históricos; la API usa `ON CONFLICT DO NOTHING`. No se ha aplicado a
+   Supabase ni se han borrado filas.
 
 ## Evidencia local
 
@@ -42,8 +54,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 92
-ℹ pass 92
+ℹ tests 94
+ℹ pass 94
 ℹ fail 0
 
 check-docs: 38 documentos revisados en raíz y docs/.
@@ -67,6 +79,8 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 - E2E en Galaxy: lectura, foto, reinicio, reconexion, outbox y duplicados.
 - Prueba real de parte parcial, cierre y exportacion con datos autorizados.
 - Aplicar la migracion 027 y desplegar las visitas de montaje, si se autoriza.
+- Revisar y aplicar la migracion 028 solo despues de comprobar en Supabase que
+  no existen duplicados historicos de adjuntos; no se ha ejecutado remotamente.
 - Piloto con segundo usuario/dispositivo.
 - Dos jornadas observadas y cinco a ocho entrevistas.
 - Revisar las dos vulnerabilidades moderadas transitivas de `uuid` sin usar
