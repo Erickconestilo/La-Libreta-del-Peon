@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { sendError } from '../lib/api-response.js';
 import { supabaseAdmin } from '../lib/supabase.js';
-import { getUserProjectIds } from '../models/project-memberships.model.js';
+import { getUserProjectAccess } from '../models/project-memberships.model.js';
 import { getUserProfileById } from '../models/users.model.js';
 
 const extractBearerToken = (request: Request) => {
@@ -31,7 +31,8 @@ export const authenticateRequest = async (request: Request, _response: Response,
         email: null,
         id: 'guest',
         role: 'visitante',
-        projectIds: null
+        projectIds: null,
+        projectAccess: null
       };
 
       next();
@@ -50,12 +51,15 @@ export const authenticateRequest = async (request: Request, _response: Response,
       throw new AppError('User is inactive or not registered', 403, 'USER_INACTIVE_OR_UNKNOWN');
     }
 
+    const projectAccess = userProfile.role === 'admin' ? null : await getUserProjectAccess(userProfile.id);
+
     request.user = {
       authProvider: 'supabase',
       email: userProfile.email ?? data.user.email ?? null,
       id: data.user.id,
       role: userProfile.role,
-      projectIds: userProfile.role === 'admin' ? null : await getUserProjectIds(userProfile.id)
+      projectIds: projectAccess ? Object.keys(projectAccess) : null,
+      projectAccess
     };
 
     next();

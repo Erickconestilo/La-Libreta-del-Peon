@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChoiceChip, formatShortDate, StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useControlPoints, useReadingHistory, useUpdateControlPoint } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 export default function ControlPointDetailScreen() {
@@ -19,7 +20,7 @@ export default function ControlPointDetailScreen() {
   const [instrumentType, setInstrumentType] = useState<MonitoringInstrumentType | undefined>(undefined);
   const { data, errorMessage, isLoading, isRefetching, refetch } = useReadingHistory(controlPointId ?? null, instrumentType);
   const { errorMessage: updateError, isUpdating, updateControlPoint } = useUpdateControlPoint(projectId ?? null, controlPointId ?? null);
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
   const pointCode = point?.code ?? (Array.isArray(params.code) ? params.code[0] : params.code) ?? 'Punto';
   const pointName = point?.name ?? (Array.isArray(params.name) ? params.name[0] : params.name);
 
@@ -45,7 +46,7 @@ export default function ControlPointDetailScreen() {
           data={data ?? []}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
-          renderItem={({ item }) => <View style={styles.readingCard}><View style={styles.readingTop}><StatePill label={item.readingStatus === 'confirmed' ? 'Confirmada' : item.readingStatus === 'reviewed' ? 'Revisada' : item.readingStatus === 'rejected' ? 'Rechazada' : 'Pendiente'} tone={item.readingStatus === 'confirmed' || item.readingStatus === 'reviewed' ? 'success' : item.readingStatus === 'rejected' ? 'danger' : 'warning'} /><Text style={styles.date}>{formatShortDate(item.measuredAt)}</Text></View><Text style={styles.value}>{item.valueNumeric ?? item.valueText ?? 'Sin valor'}{item.unit ? ` ${item.unit}` : ''}</Text><Text style={styles.instrument}>{MONITORING_INSTRUMENTS.find((option) => option.value === item.instrumentType)?.label ?? item.instrumentType}</Text>{item.notes ? <Text style={styles.body}>{item.notes}</Text> : null}</View>}
+          renderItem={({ item }) => <View style={styles.readingCard}><View style={styles.readingTop}><StatePill label={item.readingStatus === 'confirmed' ? 'Confirmada' : item.readingStatus === 'reviewed' ? 'Revisada' : item.readingStatus === 'rejected' ? 'Rechazada' : 'Pendiente'} tone={item.readingStatus === 'confirmed' || item.readingStatus === 'reviewed' ? 'success' : item.readingStatus === 'rejected' ? 'danger' : 'warning'} /><Text style={styles.date}>{formatShortDate(item.measuredAt)}</Text></View><Text style={styles.value}>{item.valueNumeric ?? item.valueText ?? 'Sin valor'}{item.unit ? ` ${item.unit}` : ''}</Text><Text style={styles.instrument}>{MONITORING_INSTRUMENTS.find((option) => option.value === item.instrumentType)?.label ?? item.instrumentType}</Text>{item.notes ? <Text style={styles.body}>{item.notes}</Text> : null}{item.attachments?.length ? <View style={styles.attachments}><Text style={styles.attachmentLabel}>Evidencias ({item.attachments.length})</Text><View style={styles.attachmentRow}>{item.attachments.map((attachment) => <Image key={attachment.id} accessibilityLabel={attachment.title ?? 'Foto de la lectura'} source={{ uri: attachment.publicUrl }} style={styles.attachmentImage} />)}</View></View> : null}</View>}
           ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyTitle}>{isLoading ? 'Cargando histórico...' : 'Sin lecturas registradas'}</Text><Text style={styles.body}>Las lecturas confirmadas aparecerán aquí cuando se sincronicen.</Text></View>}
         />
       </View>
@@ -63,6 +64,10 @@ const styles = StyleSheet.create({
   emptyTitle: { color: colors.textPrimary, fontSize: typography.fontSizeBody, fontWeight: '800' },
   error: { backgroundColor: colors.card, borderLeftColor: colors.red, borderLeftWidth: 3, marginHorizontal: spacing[3], padding: spacing[3] },
   errorTitle: { color: colors.red, fontSize: typography.fontSizeBody, fontWeight: '800' },
+  attachmentImage: { backgroundColor: '#111827', borderRadius: 6, height: 72, width: 72 },
+  attachmentLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
+  attachmentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
+  attachments: { gap: spacing[1] },
   header: { gap: spacing[1], padding: spacing[3] },
   instrument: { color: colors.accentGreen, fontSize: 13, fontWeight: '800' },
   list: { gap: spacing[2], padding: spacing[3] },
@@ -70,6 +75,7 @@ const styles = StyleSheet.create({
   readingTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   secondaryButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  readOnlyLabel: { color: '#7dd3fc', fontSize: 12, fontWeight: '800' },
   sectionTitle: { color: colors.textPrimary, fontSize: typography.fontSizeTitle, fontWeight: '900', marginTop: spacing[1] },
   title: { color: colors.textPrimary, fontSize: 28, fontWeight: '900' },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },

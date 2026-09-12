@@ -7,8 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ProjectSummary } from '@shared/types';
 import { formatShortDate, RoundStatusPill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useMyJourney } from '@/hooks/use-monitoring';
+import { useMyJourney, usePrepareMonitoringRound } from '@/hooks/use-monitoring';
 import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
+import { canWriteProject } from '@/lib/field-access';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function ProjectsScreen() {
@@ -28,7 +29,18 @@ export default function ProjectsScreen() {
   const projects = data ?? [];
   const autoOpenedJourneyRef = useRef(false);
   const canCreateProject = currentUser?.role === 'admin';
-  const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const firstJourneyId = journey?.[0]?.id ?? null;
+  const { errorMessage: prepareJourneyError, isPreparing: isPreparingJourney, prepareRound } = usePrepareMonitoringRound(firstJourneyId);
+  const [journeyActionMessage, setJourneyActionMessage] = useState<string | null>(null);
+
+  const handlePrepareJourney = async () => {
+    try {
+      await prepareRound();
+      setJourneyActionMessage('Jornada preparada en este dispositivo.');
+    } catch {
+      setJourneyActionMessage(null);
+    }
+  };
 
   useEffect(() => {
     if (autoOpenedJourneyRef.current || isSessionLoading || isJourneyLoading || !journey?.length) {
@@ -128,16 +140,25 @@ export default function ProjectsScreen() {
                   <MaterialIcons color={colors.background} name="play-arrow" size={18} />
                   <Text style={styles.journeyPrimaryText}>Continuar</Text>
                 </Pressable>
+                <Pressable disabled={isPreparingJourney} onPress={() => void handlePrepareJourney()} style={[styles.journeySecondaryButton, isPreparingJourney ? styles.disabledButton : null]}>
+                  <MaterialIcons color={colors.textPrimary} name="cloud-download" size={18} />
+                  <Text style={styles.journeySecondaryText}>{isPreparingJourney ? 'Preparando...' : 'Sin conexión'}</Text>
+                </Pressable>
                 <Pressable onPress={() => deferRound(journey[0].id)} style={styles.journeySecondaryButton}>
                   <MaterialIcons color={colors.textPrimary} name="schedule" size={18} />
                   <Text style={styles.journeySecondaryText}>Después</Text>
+                </Pressable>
+                <Pressable onPress={() => router.push(`/rounds/${journey[0].id}/summary` as never)} style={styles.journeySecondaryButton}>
+                  <MaterialIcons color={colors.textPrimary} name="summarize" size={18} />
+                  <Text style={styles.journeySecondaryText}>Resumen</Text>
                 </Pressable>
               </View>
               {journey[1] ? <Text style={styles.journeyNext}>Después: {journey[1].name} · {journey[1].projectName}</Text> : null}
             </>
           ) : null}
           {isJourneyOffline ? <Text style={styles.journeyWarning}>Jornada sin actualizar. Última copia: {journeyCachedAt ?? 'desconocida'}.</Text> : null}
-          {journeyErrorMessage ? <Text style={styles.journeyError}>{journeyErrorMessage}</Text> : null}
+          {journeyActionMessage ? <Text style={styles.journeySuccess}>{journeyActionMessage}</Text> : null}
+          {journeyErrorMessage || prepareJourneyError ? <Text style={styles.journeyError}>{journeyErrorMessage ?? prepareJourneyError}</Text> : null}
         </View>
       ) : null}
 
@@ -178,7 +199,7 @@ export default function ProjectsScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         renderItem={({ item }) => (
           <ProjectCard
-            canEditImage={canEditProjectImage}
+            canEditImage={canWriteProject(currentUser, item.id)}
             isEditingImage={isPhotoMutating}
             onEditImage={() => handleEditProjectImage(item)}
             project={item}
@@ -464,6 +485,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing[4],
   },
   journeyActions: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
     gap: spacing[1],
     marginTop: spacing[1],
@@ -538,6 +560,11 @@ const styles = StyleSheet.create({
   journeySecondaryText: {
     color: colors.textPrimary,
     fontSize: 14,
+    fontWeight: '800',
+  },
+  journeySuccess: {
+    color: colors.accentGreen,
+    fontSize: 13,
     fontWeight: '800',
   },
   journeyTitle: {

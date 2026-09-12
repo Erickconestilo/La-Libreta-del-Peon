@@ -14,7 +14,9 @@ import type {
   MonitoringRoundPoint,
   MonitoringRoundStatus,
   ProjectOperator,
-  ReadingInsertResponse
+  ReadingInsertResponse,
+  WorkCompletionReport,
+  WorkCompletionStatus
 } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
@@ -37,6 +39,7 @@ import {
   type PreparedPhoto
 } from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
+import { shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -108,6 +111,13 @@ export type CreateInstrumentReadingInput = {
   photo?: PreparedPhoto | null;
 };
 
+export type CreateWorkCompletionReportInput = {
+  notes: string | null;
+  pendingReasons: string[];
+  status: WorkCompletionStatus;
+  zoneLabel: string;
+};
+
 type ReadingAttachmentPayload = {
   notes: string | null;
   photo: PreparedPhoto;
@@ -143,7 +153,12 @@ export const MONITORING_INSTRUMENTS: Array<{ label: string; value: MonitoringIns
   { label: 'Distanciómetro', value: 'distometer' },
   { label: 'Linómetro', value: 'linometer' },
   { label: 'Inclinómetro', value: 'inclinometer' },
-  { label: 'Regla de peralte', value: 'cant_rule' }
+  { label: 'Regla de peralte', value: 'cant_rule' },
+  { label: 'Fisurómetro testigo (foto)', value: 'fissure_witness' },
+  { label: 'Fisurómetro digital', value: 'fissure_gauge' },
+  { label: 'Potenciómetro', value: 'potentiometer' },
+  { label: 'Clinómetro', value: 'clinometer' },
+  { label: 'Cinta de convergencia', value: 'convergence_tape' }
 ];
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -337,6 +352,22 @@ const updateControlPointRequest = async ({ controlPointId, input }: { controlPoi
 const createRoundPointRequest = async ({ roundId, input }: { roundId: string; input: CreateRoundPointInput }) => {
   const response = await apiFetch<ApiEnvelope<MonitoringRoundPoint>>(`/rounds/${roundId}/points`, {
     body: JSON.stringify(input),
+    method: 'POST'
+  });
+  return response.data;
+};
+
+const createWorkCompletionReportRequest = async ({
+  input,
+  roundId,
+  clientRequestId
+}: {
+  clientRequestId: string;
+  input: CreateWorkCompletionReportInput;
+  roundId: string;
+}) => {
+  const response = await apiFetch<ApiEnvelope<WorkCompletionReport>>(`/rounds/${roundId}/completion-reports`, {
+    body: JSON.stringify({ ...input, clientRequestId }),
     method: 'POST'
   });
   return response.data;
@@ -555,6 +586,66 @@ export const useMonitoringRound = (roundId: string | null) => {
   };
 };
 
+export const useWorkCompletionReports = (roundId: string | null) => {
+  const query = useQuery({
+    enabled: Boolean(roundId),
+    queryFn: async () => {
+      const response = await apiFetch<ApiEnvelope<WorkCompletionReport[]>>(`/rounds/${roundId}/completion-reports`);
+      return response.data;
+    },
+    queryKey: ['work-completion-reports', roundId],
+    staleTime: 1000 * 15
+  });
+
+  return {
+    ...query,
+    data: query.data ?? [],
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudieron cargar los partes de zona.') : null
+  };
+};
+
+export const useCreateWorkCompletionReport = (roundId: string | null) => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (input: CreateWorkCompletionReportInput) => {
+      if (!roundId) throw new Error('Falta la ronda para crear el parte.');
+      const clientRequestId = createRandomId();
+
+      if (await hasConnectivity()) {
+        try {
+          const report = await createWorkCompletionReportRequest({ clientRequestId, input, roundId });
+          return { clientRequestId, mode: 'synced' as const, report };
+        } catch (error) {
+          if (!shouldQueueReadingAfterError(error)) throw error;
+        }
+      }
+
+      enqueue({
+        clientRequestId,
+        entityType: 'medicion',
+        id: createRandomId(),
+        operation: 'insert',
+        payload: { kind: 'work_completion_report', roundId, ...input }
+      });
+      return { clientRequestId, mode: 'queued' as const, report: null };
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['monitoring-round', roundId] }),
+        queryClient.invalidateQueries({ queryKey: ['work-completion-reports', roundId] }),
+        queryClient.invalidateQueries({ queryKey: ['my-journey'] })
+      ]);
+      if (await hasConnectivity()) void flushOutbox(syncOutboxItem);
+    }
+  });
+
+  return {
+    createReport: mutation.mutateAsync,
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo guardar el parte.') : null,
+    isCreating: mutation.isPending
+  };
+};
+
 export const usePrepareMonitoringRound = (roundId: string | null) => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -573,6 +664,24 @@ export const usePrepareMonitoringRound = (roundId: string | null) => {
     errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar la jornada.') : null,
     isPreparing: mutation.isPending,
     prepareRound: mutation.mutateAsync
+  };
+};
+
+export const useShareMonitoringRound = (roundId: string | null) => {
+  const mutation = useMutation({
+    mutationFn: async (format: RoundExportFormat) => {
+      if (!roundId) {
+        throw new Error('Falta la ronda para preparar la entrega.');
+      }
+
+      return shareRoundExport(roundId, format);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar el archivo.') : null,
+    isSharing: mutation.isPending,
+    shareExport: mutation.mutateAsync
   };
 };
 

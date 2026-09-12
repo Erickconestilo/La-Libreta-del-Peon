@@ -9,9 +9,14 @@ const API_REQUEST_TIMEOUT_MS = Number.parseInt(process.env.EXPO_PUBLIC_API_TIMEO
 let runtimeBearerToken: string | null = null;
 let authFailureHandler: (() => void) | null = null;
 
-type ApiFetchInit = RequestInit & {
+export type ApiFetchInit = RequestInit & {
   requestId?: string;
   skipAuth?: boolean;
+};
+
+export type ApiDownloadResult = {
+  body: ArrayBuffer;
+  contentType: string | null;
 };
 
 export class ApiRequestError extends Error {
@@ -146,6 +151,72 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
   }
 
   return json;
+};
+
+export const apiDownload = async (path: string, init?: ApiFetchInit): Promise<ApiDownloadResult> => {
+  if (!API_BASE_URL) {
+    throw new Error('La URL de API no está configurada para esta versión de la app.');
+  }
+
+  if (process.env.NODE_ENV === 'production' && !API_BASE_URL.startsWith('https://')) {
+    throw new Error('La URL de API debe usar HTTPS en builds de producción.');
+  }
+
+  const { requestId, skipAuth, ...requestInit } = init ?? {};
+  const headers = new Headers(requestInit.headers);
+  headers.set('Content-Type', 'application/json');
+
+  if (requestId) {
+    headers.set('X-Request-ID', requestId);
+  }
+
+  const authToken = runtimeBearerToken ?? GUEST_PUBLIC_TOKEN;
+  if (!skipAuth && authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`);
+  }
+
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
+      ...requestInit,
+      headers,
+      timeoutMessage: 'El servidor tardó demasiado en responder. Reintenta en unos segundos.',
+      timeoutMs: API_REQUEST_TIMEOUT_MS
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('tardó demasiado')) {
+      throw error;
+    }
+
+    throw new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.');
+  }
+
+  if (runtimeBearerToken && response.status === 401) {
+    const errorPayload = await response.clone().json().catch(() => null) as { error?: { code?: string } } | null;
+    if (errorPayload?.error?.code === 'INVALID_TOKEN') {
+      notifyInvalidRuntimeToken();
+    }
+  }
+
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({ error: { message: null } })) as {
+      error?: { code?: string; message?: string } | null;
+    };
+    throw new ApiRequestError(
+      response.status,
+      getFriendlyApiErrorMessage(response.status, errorPayload.error?.message, errorPayload.error?.code),
+      {
+        code: errorPayload.error?.code,
+        rawMessage: errorPayload.error?.message,
+        requestId: response.headers.get('x-request-id') ?? requestId ?? null
+      }
+    );
+  }
+
+  return {
+    body: await response.arrayBuffer(),
+    contentType: response.headers.get('content-type')
+  };
 };
 
 const canRetryPublicReadAsGuest = (path: string) => {

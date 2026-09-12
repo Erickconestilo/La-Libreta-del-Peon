@@ -10,6 +10,7 @@ import type {
   ValidatedCreateControlPointThresholdInput,
   ValidatedCreateInstrumentReadingInput,
   ValidatedCreateReadingAttachmentInput,
+  ValidatedCreateWorkCompletionReportInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
   ValidatedJourneyQuery,
@@ -21,6 +22,22 @@ import type {
   ValidatedUpdateControlPointInput
 } from '../utils/monitoring-validation.js';
 import type { RoundExportRow } from '../contracts/round-export.js';
+type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
+
+type WorkCompletionReport = {
+  clientRequestId: string;
+  completedPointCount: number;
+  id: string;
+  notes: string | null;
+  pendingPointCount: number;
+  pendingReasons: string[];
+  projectId: string;
+  reportedAt: string;
+  reportedBy: string;
+  roundId: string;
+  status: WorkCompletionStatus;
+  zoneLabel: string;
+};
 
 type ProjectScope = {
   clause: string;
@@ -92,6 +109,9 @@ const mapReadingRow = (row: Record<string, unknown>) => ({
   measuredBy: row.measured_by,
   notes: row.notes,
   rawPayload: row.raw_payload,
+  attachments: Array.isArray(row.attachments)
+    ? row.attachments.map((attachment) => mapReadingAttachmentRow(attachment as Record<string, unknown>))
+    : [],
   readingStatus: row.reading_status,
   roundPointId: row.round_point_id,
   unit: row.unit,
@@ -176,6 +196,21 @@ const mapCodeCatalogRow = (row: Record<string, unknown>) => ({
   projectId: row.project_id,
   zone: row.zone,
   zoneColor: row.zone_color
+});
+
+const mapWorkCompletionReportRow = (row: Record<string, unknown>): WorkCompletionReport => ({
+  clientRequestId: row.client_request_id as string,
+  completedPointCount: Number(row.completed_point_count ?? 0),
+  id: row.id as string,
+  notes: (row.notes as string | null) ?? null,
+  pendingPointCount: Number(row.pending_point_count ?? 0),
+  pendingReasons: Array.isArray(row.pending_reasons) ? row.pending_reasons.map(String) : [],
+  projectId: row.project_id as string,
+  reportedAt: toIsoTimestamp(row.reported_at),
+  reportedBy: row.reported_by as string,
+  roundId: row.round_id as string,
+  status: row.status as WorkCompletionStatus,
+  zoneLabel: row.zone_label as string
 });
 
 const getAutoConfirmGreen = async (client: PoolClient, projectId: string) => {
@@ -276,6 +311,7 @@ const getRoundPointContext = async (
     `
       SELECT
         mrp.id,
+        mr.id AS round_id,
         mrp.control_point_id,
         mrp.expected_instrument_type,
         mr.project_id
@@ -295,8 +331,29 @@ const getRoundPointContext = async (
   return {
     controlPointId: result.rows[0].control_point_id as string,
     expectedInstrumentType: result.rows[0].expected_instrument_type as string,
-    projectId: result.rows[0].project_id as string
+    projectId: result.rows[0].project_id as string,
+    roundId: result.rows[0].round_id as string
   };
+};
+
+export const getRoundPointProjectId = async (
+  roundPointId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT mr.project_id
+      FROM monitoring_round_points mrp
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      WHERE mrp.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundPointId, ...scope.params]
+  );
+
+  return result.rowCount === 0 ? null : result.rows[0].project_id as string;
 };
 
 const resolveControlPointContext = async (controlPointId: string, projectScope: string[] | null) => {
@@ -781,6 +838,14 @@ export const listControlPoints = async (
   return result.rows.map(mapControlPointRow);
 };
 
+export const getControlPointProjectId = async (
+  controlPointId: string,
+  projectScope: string[] | null = null
+) => {
+  const context = await resolveControlPointContext(controlPointId, projectScope);
+  return context?.projectId ?? null;
+};
+
 export const updateControlPoint = async (
   controlPointId: string,
   input: ValidatedUpdateControlPointInput,
@@ -921,17 +986,170 @@ export const getReadingHistory = async (
 
   const result = await pool.query(
     `
-      SELECT *
-      FROM instrument_readings
-      WHERE control_point_id = $1
+      SELECT
+        ir.*,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', ra.id,
+                'reading_id', ra.reading_id,
+                'storage_path', ra.storage_path,
+                'public_url', ra.public_url,
+                'attachment_type', ra.attachment_type,
+                'title', ra.title,
+                'notes', ra.notes,
+                'uploaded_by', ra.uploaded_by,
+                'uploaded_at', ra.uploaded_at
+              )
+              ORDER BY ra.uploaded_at DESC
+            )
+            FROM reading_attachments ra
+            WHERE ra.reading_id = ir.id
+          ),
+          '[]'::json
+        ) AS attachments
+      FROM instrument_readings ir
+      WHERE ir.control_point_id = $1
       ${filters.join('\n')}
-      ORDER BY measured_at DESC, created_at DESC
+      ORDER BY ir.measured_at DESC, ir.created_at DESC
       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
     `,
     params
   );
 
   return result.rows.map(mapReadingRow);
+};
+
+export const createWorkCompletionReport = async (
+  roundId: string,
+  input: ValidatedCreateWorkCompletionReportInput,
+  reportedBy: string,
+  projectScope: string[] | null = null
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const scope = buildRoundProjectScopeCondition(projectScope, 2);
+    const roundResult = await client.query(
+      `
+        SELECT mr.project_id
+        FROM monitoring_rounds mr
+        WHERE mr.id = $1
+        ${scope.clause}
+        LIMIT 1
+      `,
+      [roundId, ...scope.params]
+    );
+
+    if (roundResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const projectId = roundResult.rows[0].project_id as string;
+    const countsResult = await client.query(
+      `
+        SELECT
+          COUNT(*) FILTER (WHERE status IN ('taken', 'skipped', 'cancelled'))::int AS completed_point_count,
+          COUNT(*) FILTER (WHERE status = 'pending')::int AS pending_point_count
+        FROM monitoring_round_points
+        WHERE round_id = $1
+      `,
+      [roundId]
+    );
+    const completedPointCount = Number(countsResult.rows[0]?.completed_point_count ?? 0);
+    const pendingPointCount = Number(countsResult.rows[0]?.pending_point_count ?? 0);
+
+    if (input.status === 'completed' && pendingPointCount > 0) {
+      throw new AppError(
+        'A completed report cannot be created while points are pending',
+        409,
+        'WORK_COMPLETION_HAS_PENDING_POINTS',
+        { pendingPointCount }
+      );
+    }
+
+    const insertResult = await client.query(
+      `
+        INSERT INTO work_completion_reports (
+          round_id,
+          project_id,
+          zone_label,
+          status,
+          completed_point_count,
+          pending_point_count,
+          pending_reasons,
+          notes,
+          reported_by,
+          client_request_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)
+        ON CONFLICT (client_request_id) DO NOTHING
+        RETURNING *
+      `,
+      [
+        roundId,
+        projectId,
+        input.zoneLabel,
+        input.status,
+        completedPointCount,
+        pendingPointCount,
+        JSON.stringify(input.pendingReasons),
+        input.notes ?? null,
+        reportedBy,
+        input.clientRequestId
+      ]
+    );
+
+    if ((insertResult.rowCount ?? 0) > 0) {
+      await client.query('COMMIT');
+      return { created: true, report: mapWorkCompletionReportRow(insertResult.rows[0]) };
+    }
+
+    const existingResult = await client.query(
+      `SELECT * FROM work_completion_reports WHERE client_request_id = $1 LIMIT 1`,
+      [input.clientRequestId]
+    );
+
+    if (existingResult.rowCount === 0 || existingResult.rows[0].round_id !== roundId) {
+      throw new AppError(
+        'The client request id is already used by another report',
+        409,
+        'CLIENT_REQUEST_ID_REUSED'
+      );
+    }
+
+    await client.query('COMMIT');
+    return { created: false, report: mapWorkCompletionReportRow(existingResult.rows[0]) };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const listWorkCompletionReports = async (
+  roundId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT wcr.*
+      FROM work_completion_reports wcr
+      INNER JOIN monitoring_rounds mr ON mr.id = wcr.round_id
+      WHERE wcr.round_id = $1
+      ${scope.clause.replaceAll('mr.', 'wcr.')}
+      ORDER BY wcr.reported_at DESC, wcr.id DESC
+    `,
+    [roundId, ...scope.params]
+  );
+
+  return result.rows.map(mapWorkCompletionReportRow);
 };
 
 export const createMonitoringRoundPoint = async (
@@ -1171,6 +1389,30 @@ export const getInstrumentReadingById = async (readingId: string, projectScope: 
   );
 
   return result.rowCount === 0 ? null : mapReadingRow(result.rows[0]);
+};
+
+export const getInstrumentReadingContext = async (readingId: string, projectScope: string[] | null = null) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT ir.id, ir.round_point_id, mr.project_id
+      FROM instrument_readings ir
+      INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      WHERE ir.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [readingId, ...scope.params]
+  );
+
+  return result.rowCount === 0
+    ? null
+    : {
+        id: result.rows[0].id as string,
+        projectId: result.rows[0].project_id as string,
+        roundPointId: result.rows[0].round_point_id as string
+      };
 };
 
 export const getMonitoringRoundExportRows = async (

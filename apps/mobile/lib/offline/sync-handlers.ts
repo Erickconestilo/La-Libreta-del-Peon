@@ -24,6 +24,8 @@ export const syncOutboxItem = async (item: OutboxItem): Promise<void> => {
   if (item.entityType === 'medicion') {
     if (item.operation === 'update' && item.payload.kind === 'reading_attachment') {
       await syncReadingAttachment(item);
+    } else if (item.payload.kind === 'work_completion_report') {
+      await syncWorkCompletionReport(item);
     } else {
       await syncInstrumentReading(item);
     }
@@ -31,6 +33,26 @@ export const syncOutboxItem = async (item: OutboxItem): Promise<void> => {
   }
 
   throw new Error(`Unexpected entity type: ${item.entityType}`);
+};
+
+const syncWorkCompletionReport = async (item: OutboxItem): Promise<void> => {
+  const { kind: _kind, roundId, ...input } = item.payload;
+
+  if (
+    typeof roundId !== 'string' ||
+    typeof input.zoneLabel !== 'string' ||
+    (input.status !== 'partial' && input.status !== 'completed' && input.status !== 'blocked') ||
+    !Array.isArray(input.pendingReasons)
+  ) {
+    throw new Error('Invalid work completion report outbox payload');
+  }
+
+  const response = await apiFetch<ApiEnvelope<unknown>>(`/rounds/${roundId}/completion-reports`, {
+    body: JSON.stringify({ clientRequestId: item.clientRequestId, ...input }),
+    method: 'POST'
+  });
+
+  if (!response.data) throw new Error('Server returned no work completion report');
 };
 
 const syncStationMessage = async (item: OutboxItem): Promise<void> => {

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { assertProjectAccess, getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectAccess, assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import { AppError } from '../lib/app-error.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { assertPhotoObjectExists } from '../lib/photo-storage.js';
@@ -14,6 +14,9 @@ import {
   createMonitoringRound,
   createMonitoringRoundPoint,
   getInstrumentReadingById,
+  getInstrumentReadingContext,
+  getControlPointProjectId,
+  getRoundPointProjectId,
   getMonitoringRoundExportRows,
   getMonitoringRoundDetail,
   getReadingHistory,
@@ -24,6 +27,8 @@ import {
   listMyJourney,
   listProjectOperators,
   listProjectCodeCatalog,
+  listWorkCompletionReports,
+  createWorkCompletionReport,
   updateControlPoint,
   updateMonitoringRound,
   updateMonitoringRoundStatus
@@ -35,6 +40,7 @@ import {
   validateCreateControlPointThresholdInput,
   validateCreateInstrumentReadingInput,
   validateCreateReadingAttachmentInput,
+  validateCreateWorkCompletionReportInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateListControlPointsQuery,
@@ -84,8 +90,12 @@ const sendControllerError = (response: Response, error: unknown, fallbackCode: s
 
 export const createRoundPointController = async (request: Request, response: Response) => {
   try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     const roundId = Array.isArray(request.params.roundId) ? request.params.roundId[0] : request.params.roundId;
     const input = validateCreateRoundPointInput(request.body);
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+    if (!round) throw new AppError('Round or control point not found', 404, 'ROUND_POINT_TARGET_NOT_FOUND');
+    assertProjectWriteAccess(request.user, round.projectId);
     const roundPoint = await createMonitoringRoundPoint(roundId, input, getActorProjectScope(request.user));
 
     if (!roundPoint) {
@@ -108,6 +118,9 @@ export const createInstrumentReadingController = async (request: Request, respon
       ? request.params.roundPointId[0]
       : request.params.roundPointId;
     const input = validateCreateInstrumentReadingInput(request.body);
+    const projectId = await getRoundPointProjectId(roundPointId, getActorProjectScope(request.user));
+    if (!projectId) throw new AppError('Round point not found', 404, 'ROUND_POINT_NOT_FOUND');
+    assertProjectWriteAccess(request.user, projectId);
     const result = await createInstrumentReading(
       roundPointId,
       input,
@@ -149,6 +162,10 @@ export const createReadingAttachmentController = async (request: Request, respon
     }
 
     const projectScope = getActorProjectScope(request.user);
+    const readingContext = await getInstrumentReadingContext(readingId, projectScope);
+    if (readingContext) {
+      assertProjectWriteAccess(request.user, readingContext.projectId);
+    }
     await requireScopedResourceBeforeExternalCheck({
       code: 'READING_NOT_FOUND',
       loadResource: () => getInstrumentReadingById(readingId, projectScope),
@@ -240,7 +257,7 @@ export const createMonitoringRoundController = async (request: Request, response
     }
 
     const projectId = routeParam(request, 'projectId');
-    assertProjectAccess(request.user, projectId);
+    assertProjectWriteAccess(request.user, projectId);
 
     const input = validateCreateMonitoringRoundInput(request.body);
     if (request.user.role === 'topografo') {
@@ -298,6 +315,13 @@ export const exportMonitoringRoundController = async (request: Request, response
   try {
     const roundId = routeParam(request, 'roundId');
     const { format } = validateRoundExportQuery(request.query);
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+
+    if (!round) {
+      throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    }
+
+    assertProjectWriteAccess(request.user, round.projectId);
     const rows = await getMonitoringRoundExportRows(roundId, getActorProjectScope(request.user));
 
     if (!rows) {
@@ -322,8 +346,12 @@ export const exportMonitoringRoundController = async (request: Request, response
 
 export const updateMonitoringRoundStatusController = async (request: Request, response: Response) => {
   try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     const roundId = routeParam(request, 'roundId');
     const input = validateUpdateMonitoringRoundStatusInput(request.body);
+    const currentRound = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+    if (!currentRound) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    assertProjectWriteAccess(request.user, currentRound.projectId);
     const round = await updateMonitoringRoundStatus(roundId, input, getActorProjectScope(request.user));
 
     if (!round) {
@@ -345,6 +373,10 @@ export const updateMonitoringRoundController = async (request: Request, response
     if (!canEditMonitoringAssignment(request.user.role, input)) {
       throw new AppError('Only an admin can assign or order rounds', 403, 'ADMIN_ASSIGNMENT_REQUIRED');
     }
+
+    const currentRound = await getMonitoringRoundDetail(routeParam(request, 'roundId'), getActorProjectScope(request.user));
+    if (!currentRound) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    assertProjectWriteAccess(request.user, currentRound.projectId);
 
     const round = await updateMonitoringRound(roundId, input, getActorProjectScope(request.user));
     if (!round) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
@@ -383,7 +415,7 @@ export const createControlPointController = async (request: Request, response: R
     }
 
     const projectId = routeParam(request, 'projectId');
-    assertProjectAccess(request.user, projectId);
+    assertProjectWriteAccess(request.user, projectId);
 
     const input = validateCreateControlPointInput(request.body);
     const controlPoint = await createControlPoint(projectId, input, getActorProjectScope(request.user));
@@ -418,8 +450,12 @@ export const listControlPointsController = async (request: Request, response: Re
 
 export const updateControlPointController = async (request: Request, response: Response) => {
   try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     const controlPointId = routeParam(request, 'controlPointId');
     const input = validateUpdateControlPointInput(request.body);
+    const projectId = await getControlPointProjectId(controlPointId, getActorProjectScope(request.user));
+    if (!projectId) throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    assertProjectWriteAccess(request.user, projectId);
     const controlPoint = await updateControlPoint(controlPointId, input, getActorProjectScope(request.user));
 
     if (!controlPoint) {
@@ -440,6 +476,9 @@ export const createControlPointThresholdController = async (request: Request, re
 
     const controlPointId = routeParam(request, 'controlPointId');
     const input = validateCreateControlPointThresholdInput(request.body);
+    const projectId = await getControlPointProjectId(controlPointId, getActorProjectScope(request.user));
+    if (!projectId) throw new AppError('Control point not found', 404, 'CONTROL_POINT_NOT_FOUND');
+    assertProjectWriteAccess(request.user, projectId);
     const threshold = await createControlPointThreshold(
       controlPointId,
       input,
@@ -485,5 +524,34 @@ export const getReadingHistoryController = async (request: Request, response: Re
     sendSuccess(response, history);
   } catch (error) {
     sendControllerError(response, error, 'READING_HISTORY_FAILED', 'Unable to load reading history');
+  }
+};
+
+export const listWorkCompletionReportsController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const roundId = routeParam(request, 'roundId');
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+    if (!round) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    const reports = await listWorkCompletionReports(roundId, getActorProjectScope(request.user));
+    sendSuccess(response, reports);
+  } catch (error) {
+    sendControllerError(response, error, 'WORK_COMPLETION_REPORTS_LIST_FAILED', 'Unable to load completion reports');
+  }
+};
+
+export const createWorkCompletionReportController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const roundId = routeParam(request, 'roundId');
+    const round = await getMonitoringRoundDetail(roundId, getActorProjectScope(request.user));
+    if (!round) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    assertProjectWriteAccess(request.user, round.projectId);
+    const input = validateCreateWorkCompletionReportInput(request.body);
+    const result = await createWorkCompletionReport(roundId, input, request.user.id, getActorProjectScope(request.user));
+    if (!result) throw new AppError('Round not found', 404, 'ROUND_NOT_FOUND');
+    sendSuccess(response, result.report, result.created ? 201 : 200);
+  } catch (error) {
+    sendControllerError(response, error, 'WORK_COMPLETION_REPORT_CREATE_FAILED', 'Unable to create completion report');
   }
 };

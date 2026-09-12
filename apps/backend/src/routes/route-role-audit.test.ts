@@ -28,6 +28,8 @@ const auscultacionRoutesFromRoundsRouter: RouteExpectation[] = [
   { method: 'get', path: '/:roundId/export', mustExcludeVisitante: true },
   { method: 'get', path: '/:roundId', mustExcludeVisitante: true },
   { method: 'patch', path: '/:roundId', mustExcludeVisitante: true }
+  ,{ method: 'get', path: '/:roundId/completion-reports', mustExcludeVisitante: true }
+  ,{ method: 'post', path: '/:roundId/completion-reports', mustExcludeVisitante: true }
 ];
 
 const auscultacionRoutesFromControlPointsRouter: RouteExpectation[] = [

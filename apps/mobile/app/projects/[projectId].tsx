@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
 import { useStations } from '@/hooks/use-stations';
+import { canWriteProject } from '@/lib/field-access';
 import { StationCard } from '@/src/components/StationCard';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
@@ -30,7 +31,8 @@ export default function ProjectDetailScreen() {
     removeProjectPhoto,
     uploadProjectPhoto
   } = useProjectPhotoMutations(projectId ?? null);
-  const canEditProjectImage = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEditProject = canWriteProject(currentUser, projectId);
+  const isReadOnlyProject = currentUser?.role === 'topografo' && currentUser.projectAccess?.[projectId ?? ''] === 'read';
   const project = useMemo(
     () => (projects ?? []).find((item) => item.id === projectId),
     [projectId, projects]
@@ -111,7 +113,7 @@ export default function ProjectDetailScreen() {
               )}
             </View>
 
-            {canEditProjectImage ? (
+            {canEditProject ? (
               <View style={styles.card}>
                 <Text style={styles.sectionTitle}>Imagen de obra</Text>
                 <Text style={styles.body}>Usa una foto tipo portada para reconocer la obra antes de entrar a sus estacionamientos.</Text>
@@ -134,6 +136,13 @@ export default function ProjectDetailScreen() {
               <Text style={styles.mapButtonText}>Rondas de auscultación</Text>
             </Pressable>
 
+            {isReadOnlyProject ? (
+              <View style={styles.readOnlyNotice}>
+                <MaterialIcons color={colors.amber} name="visibility" size={18} />
+                <Text style={styles.body}>Consulta supervisora: solo ves información recibida por el servidor. Las acciones de escritura están desactivadas.</Text>
+              </View>
+            ) : null}
+
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Estacionamientos</Text>
@@ -141,7 +150,7 @@ export default function ProjectDetailScreen() {
                   {(stations ?? []).length} estacionamiento{(stations ?? []).length === 1 ? '' : 's'} en esta obra.
                 </Text>
               </View>
-              {canEditProjectImage ? (
+              {canEditProject ? (
                 <Pressable
                   onPress={() =>
                     router.push({
@@ -373,6 +382,16 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: 14,
     fontWeight: '900',
+  },
+  readOnlyNotice: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[1],
+    padding: spacing[2],
   },
   secondaryButton: {
     alignItems: 'center',

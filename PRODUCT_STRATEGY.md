@@ -22,7 +22,10 @@ Definir qué producto estamos construyendo realmente, para quién y con qué lí
 
 **Usuarios secundarios**
 - `admin`: organiza, corrige, aprueba, mantiene contenido y estructura.
-- `visitante`: consulta pública o controlada de contenidos visibles.
+- **Supervisor identificado:** cuenta de usuario con membresía `read` en las
+  obras habilitadas; consulta avance recibido por servidor, fotos, incidencias,
+  lecturas y partes, sin escribir ni asignar trabajo.
+- `visitante`: consulta pública limitada; no accede a auscultación.
 
 ## Problemas prioritarios
 TopoField debe resolver mejor que WhatsApp, notas o memoria informal estos tres trabajos:
@@ -108,6 +111,19 @@ TopoField empieza desde estaciones, prismas y memoria visual, pero el rumbo de p
 
 Esta evolución no cambia el stack ni convierte TopoField en una suite tipo GeoMoS, Trimble 4D Control o Topcon Delta Watch. El foco sigue siendo campo móvil: ver qué toca medir, capturar lectura, adjuntar evidencia, guardar y seguir.
 
+## Flujo operativo objetivo
+
+La unidad de valor es el encargo de campo, no una pantalla aislada:
+
+1. el supervisor o administrador prepara una ronda por zona, fecha, orden y responsable;
+2. el operador reconoce la referencia mediante código, foto y notas anteriores;
+3. registra lo observado con el formulario adecuado, incluso sin cobertura;
+4. marca qué terminó, qué quedó pendiente y por qué;
+5. el supervisor consulta únicamente lo recibido por el servidor y su fecha de actualización.
+
+Una foto de prisma acredita una evidencia visual, no una medición. Una lectura
+guardada localmente no se muestra al supervisor como recibida hasta sincronizar.
+
 ## Qué sí entra en el MVP
 - Obras y acceso rápido a estaciones.
 - Detalle de estación con foto principal, memoria visual y notas.
@@ -124,6 +140,9 @@ Esta evolución no cambia el stack ni convierte TopoField en una suite tipo GeoM
   - catálogo de códigos por proyecto;
   - delta/estado calculado;
   - umbrales con vigencia.
+- Parte idempotente de finalización de zona y estado de sincronización.
+- Captura inicial específica: testigo fotográfico, fisurómetro digital y
+  potenciómetro con tres pares amarillo-azul, amarillo-marrón y azul-marrón.
 
 ## Qué no entra ahora
 - UTM y observaciones topográficas avanzadas.
@@ -136,6 +155,8 @@ Esta evolución no cambia el stack ni convierte TopoField en una suite tipo GeoM
 - Dashboard avanzado de monitorización.
 - Alarmas multicanal.
 - Export PDF como prioridad inicial.
+- Automatización certificada de alarmas o interpretación de instrumentos.
+- Integración Bluetooth o control remoto de Leica/Trimble/Topcon.
 
 ## Diferenciación inicial
 TopoField debe diferenciarse por:
@@ -184,3 +205,16 @@ Si no supera estas preguntas, no entra en el siguiente bloque.
 - cargar demasiado la navegación;
 - depender de pruebas internas demasiado complacientes;
 - hablar del producto como algo más amplio de lo que hoy entrega.
+
+## Cobertura de equipos y límites
+
+El inventario inicial contempla Leica TM60, Trimble S9/Access Monitoring,
+prismas Topcon y miniprismas Leica, niveles Leica LS10/LS15/DNA03, testigo de
+metacrilato, fisurómetro digital, potenciómetro/multímetro DPF SENSORS IKPM-50-1,
+cinta de convergencia, regla de peralte, piezómetro, inclinómetro, clinómetro,
+regletas, hitos y arquetas. La app conservará contexto, referencia, evidencia y
+resultado observado. No deducirá constantes, no convertirá resistencia en
+desplazamiento, no representará un perfil inclinométrico con un escalar y no
+inventará integración de linómetro o PicoNode. Las mediciones entre pares de
+puntos se implementarán solo después de confirmar el procedimiento y el equipo
+concreto.

@@ -9,6 +9,7 @@ import { ChoiceChip, formatShortDate, RoundStatusPill, RowChevron } from '@/comp
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useMonitoringRounds } from '@/hooks/use-monitoring';
 import { useProjects } from '@/hooks/use-projects';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 const FILTERS: Array<{ label: string; value: MonitoringRoundStatus | null }> = [
@@ -28,7 +29,7 @@ export default function MonitoringRoundsScreen() {
   const [status, setStatus] = useState<MonitoringRoundStatus | null>(null);
   const { cachedAt, data, errorMessage, isLoading, isOfflineCache, isRefetching, refetch } = useMonitoringRounds(projectId ?? null, status ?? undefined);
   const project = useMemo(() => (projects ?? []).find((item) => item.id === projectId), [projectId, projects]);
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
   const rounds = data ?? [];
 
   return (

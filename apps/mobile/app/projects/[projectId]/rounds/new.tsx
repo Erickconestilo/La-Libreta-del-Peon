@@ -7,6 +7,7 @@ import type { FieldConditions, MonitoringRoundStatus } from '@shared/types';
 import { ChoiceChip } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useCreateMonitoringRound } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 const FIELD_CONDITIONS: Array<{ label: string; value: FieldConditions | null }> = [
@@ -35,7 +36,7 @@ export default function NewMonitoringRoundScreen() {
   const [instrumentSerial, setInstrumentSerial] = useState('');
   const [fieldConditions, setFieldConditions] = useState<FieldConditions | null>(null);
   const [status, setStatus] = useState<MonitoringRoundStatus>('draft');
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
 
   const handleSubmit = async () => {
     if (!name.trim()) {

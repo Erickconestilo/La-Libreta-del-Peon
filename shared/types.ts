@@ -1,5 +1,6 @@
 export type UserRole = 'admin' | 'topografo' | 'visitante';
 export type AuthProvider = 'guest' | 'supabase';
+export type ProjectAccessLevel = 'read' | 'write';
 
 export type StationStatus = 'active' | 'replaced' | 'incident';
 export type IncidentStatus = 'open' | 'resolved';
@@ -19,7 +20,12 @@ export type InstrumentType =
   | 'distometer'
   | 'linometer'
   | 'inclinometer'
-  | 'cant_rule';
+  | 'cant_rule'
+  | 'fissure_witness'
+  | 'fissure_gauge'
+  | 'potentiometer'
+  | 'clinometer'
+  | 'convergence_tape';
 export type ControlPointEnvironment = 'surface' | 'tunnel' | 'other';
 export type ControlPointSide = 'left' | 'right' | 'axis' | 'crown' | 'invert' | 'other';
 export type MonitoringRoundStatus = 'draft' | 'active' | 'closed' | 'cancelled';
@@ -27,6 +33,20 @@ export type MonitoringRoundPointStatus = 'pending' | 'taken' | 'skipped' | 'canc
 export type InstrumentReadingStatus = 'draft' | 'confirmed' | 'reviewed' | 'rejected';
 export type ReadingAttachmentType = 'photo' | 'note' | 'file';
 export type CalculatedThresholdStatus = 'normal' | 'warning' | 'alarm' | 'unknown';
+export type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
+export type PotentiometerPair = 'yellow-blue' | 'yellow-brown' | 'blue-brown';
+
+export interface PotentiometerMeasurementPayload {
+  kind: 'potentiometer';
+  schemaVersion: 1;
+  components: Array<{
+    pair: PotentiometerPair;
+    unit: string;
+    value: number;
+  }>;
+  position: string | null;
+  scale: string | null;
+}
 export type OfflineQueueEntityType =
   | 'station_message'
   | 'incident'
@@ -83,6 +103,7 @@ export interface AuthSessionUser {
   id: string;
   isActive: boolean | null;
   role: UserRole;
+  projectAccess?: Record<string, ProjectAccessLevel> | null;
 }
 
 export interface Station {
@@ -417,6 +438,21 @@ export interface ProjectOperator {
   role: 'topografo';
 }
 
+export interface WorkCompletionReport {
+  id: string;
+  roundId: string;
+  projectId: string;
+  zoneLabel: string;
+  status: WorkCompletionStatus;
+  completedPointCount: number;
+  pendingPointCount: number;
+  pendingReasons: string[];
+  notes: string | null;
+  reportedBy: string;
+  reportedAt: string;
+  clientRequestId: string;
+}
+
 export interface MonitoringRoundPoint {
   id: string;
   roundId: string;
@@ -443,6 +479,7 @@ export interface InstrumentReading {
   measuredBy: string;
   notes: string | null;
   rawPayload: Record<string, unknown> | null;
+  attachments?: ReadingAttachment[];
   delta?: number | null;
   thresholdStatus?: CalculatedThresholdStatus;
   createdAt: string;

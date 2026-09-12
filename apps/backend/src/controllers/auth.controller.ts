@@ -2,8 +2,11 @@ import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
 import { getUserProfileById } from '../models/users.model.js';
+import { getUserProjectAccess } from '../models/project-memberships.model.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { supabaseAnon } from '../lib/supabase.js';
+
+type ProjectAccessLevel = 'read' | 'write';
 
 type AuthSessionUser = {
   authProvider: 'guest' | 'supabase';
@@ -11,6 +14,7 @@ type AuthSessionUser = {
   fullName: string | null;
   id: string;
   isActive: boolean | null;
+  projectAccess?: Record<string, ProjectAccessLevel> | null;
   role: 'admin' | 'topografo' | 'visitante';
 };
 
@@ -74,6 +78,7 @@ const resolveTechnicalSession = async (email: string, password: string) => {
     fullName: userProfile.fullName,
     id: userProfile.id,
     isActive: userProfile.isActive,
+    projectAccess: userProfile.role === 'admin' ? null : await getUserProjectAccess(userProfile.id),
     role: userProfile.role
   };
 
@@ -149,6 +154,7 @@ export const refreshSessionController = async (request: Request, response: Respo
       fullName: userProfile.fullName,
       id: userProfile.id,
       isActive: userProfile.isActive,
+      projectAccess: userProfile.role === 'admin' ? null : await getUserProjectAccess(userProfile.id),
       role: userProfile.role
     };
 

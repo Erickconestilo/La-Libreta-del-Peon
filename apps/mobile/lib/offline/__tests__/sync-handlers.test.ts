@@ -59,6 +59,28 @@ const instrumentReadingItem: OutboxItem = {
   syncedAt: null,
 };
 
+const workCompletionReportItem: OutboxItem = {
+  clientRequestId: '9a0e6e3b-52f7-4e40-bd20-0af3b0c9e4bc',
+  conflictData: null,
+  createdAt: '2026-09-12 09:00:00',
+  entityType: 'medicion',
+  errorMessage: null,
+  id: '8c0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+  lastSyncAttemptAt: null,
+  operation: 'insert',
+  payload: {
+    kind: 'work_completion_report',
+    notes: 'Acceso bloqueado en el último punto',
+    pendingReasons: ['Acceso bloqueado'],
+    roundId: '78bf1e4d-1f26-4aa0-8c49-3d03bd7c906b',
+    status: 'blocked',
+    zoneLabel: 'Zona Norte'
+  },
+  retryCount: 0,
+  status: 'pending',
+  syncedAt: null,
+};
+
 describe('syncOutboxItem', () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
@@ -132,6 +154,24 @@ describe('syncOutboxItem', () => {
     ).rejects.toThrow('Invalid instrument reading outbox payload');
 
     expect(mockApiFetch).not.toHaveBeenCalled();
+  });
+
+  it('sends a persisted completion report with its original clientRequestId', async () => {
+    await syncOutboxItem(workCompletionReportItem);
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/rounds/78bf1e4d-1f26-4aa0-8c49-3d03bd7c906b/completion-reports',
+      {
+        body: JSON.stringify({
+          clientRequestId: '9a0e6e3b-52f7-4e40-bd20-0af3b0c9e4bc',
+          notes: 'Acceso bloqueado en el último punto',
+          pendingReasons: ['Acceso bloqueado'],
+          status: 'blocked',
+          zoneLabel: 'Zona Norte'
+        }),
+        method: 'POST'
+      }
+    );
   });
 
   it('recreates the reading idempotently before attaching its persisted photo', async () => {

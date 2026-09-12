@@ -8,7 +8,7 @@ import type { CreateStationInput, DeviceType, StationStatus } from '@shared/type
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjects } from '@/hooks/use-projects';
 import { useCreateStation } from '@/hooks/use-stations';
-import { canCreateStationWithoutProject, resolveStationProjectId } from '@/lib/field-access';
+import { canCreateStationWithoutProject, canWriteProject, resolveStationProjectId } from '@/lib/field-access';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 const STATUS_OPTIONS: Array<{ label: string; value: StationStatus }> = [
@@ -67,10 +67,10 @@ export default function NewStationScreen() {
   }, [currentUser?.role, initialProjectId, projectOptions]);
 
   const projectSelectionError =
-    currentUser?.role === 'topografo' && !projectId
+    currentUser?.role === 'topografo' && (!projectId || !canWriteProject(currentUser, projectId))
       ? projectOptions.length === 0 && !isLoadingProjects
-        ? projectsErrorMessage ?? 'No tienes una obra asignada para crear esta estación.'
-        : 'Selecciona una obra asignada antes de crear la estación.'
+        ? projectsErrorMessage ?? 'No tienes una obra con permiso de escritura para crear esta estación.'
+        : 'Selecciona una obra donde tengas permiso de escritura antes de crear la estación.'
       : null;
 
   const handleCaptureGps = async () => {

@@ -7,6 +7,7 @@ import { ChoiceChip, RowChevron } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useControlPoints, useCreateRoundPoint, useMonitoringRound } from '@/hooks/use-monitoring';
 import { colors, spacing, typography } from '@/src/theme';
+import { canWriteProject } from '@/lib/field-access';
 
 export default function AddRoundPointScreen() {
   const params = useLocalSearchParams<{ roundId: string }>();
@@ -19,7 +20,7 @@ export default function AddRoundPointScreen() {
   const { createRoundPoint, errorMessage, isCreating } = useCreateRoundPoint(roundId ?? null);
   const [selectedControlPointId, setSelectedControlPointId] = useState<string | null>(null);
   const [instrumentType, setInstrumentType] = useState<MonitoringInstrumentType>('digital_level');
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, round?.projectId);
   const availablePoints = useMemo(() => {
     const alreadyAdded = new Set((round?.points ?? []).map((item) => item.controlPointId));
     return (controlPoints ?? []).filter((item) => !alreadyAdded.has(item.id));

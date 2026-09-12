@@ -7,6 +7,7 @@ import type { ControlPointEnvironment, ControlPointSide } from '@shared/types';
 import { ChoiceChip } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useCreateControlPoint } from '@/hooks/use-monitoring';
+import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
 const ENVIRONMENTS: Array<{ label: string; value: ControlPointEnvironment }> = [
@@ -41,7 +42,7 @@ export default function NewControlPointScreen() {
   const [seccion, setSeccion] = useState('');
   const [side, setSide] = useState<ControlPointSide | null>(null);
   const [notes, setNotes] = useState('');
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEdit = canWriteProject(currentUser, projectId);
 
   const handleSubmit = async () => {
     if (!code.trim()) {

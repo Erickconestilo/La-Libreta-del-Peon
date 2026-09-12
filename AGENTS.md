@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-09-12
 -->
 
 # AGENTS.md — TopoField
@@ -10,7 +10,7 @@ Consulta y sigue como fuente principal, **en este orden**:
 1. `ROADMAP.md` — **única fuente de verdad sobre en qué fase está el proyecto y qué viene después.** Si otro documento lo contradice en fases, prioridades o siguiente paso, manda `ROADMAP.md`.
 2. `MEMORIA.md` — el porqué de cada decisión, estado verificado por sección y bitácora cronológica.
 3. `C:\Users\guill\Documents\Aplicacion_Movil\AGENTS.md` y `C:\Users\guill\Documents\Aplicacion_Movil\MEMORY.md` — reglas y memoria del espacio de trabajo.
-4. `PRODUCT_STRATEGY.md`, `UX_RESEARCH_PLAN.md`, `LAUNCH_PLAN.md`, `PILOT_READINESS_CHECKLIST.md` — producto, validación y piloto.
+4. `PRODUCT_STRATEGY.md`, `UX_RESEARCH_PLAN.md`, `LAUNCH_PLAN.md`, `PILOT_READINESS_CHECKLIST.md`, `docs/field/TOPOFIELD_OPERATIONAL_REACTIVATION_2026-09-12.md` — producto, validación, piloto y alcance operativo actual.
 
 **Nota sobre numeración de fases (02-08-2026):** hasta esa fecha convivían dos numeraciones distintas y se citaban indistintamente, así que "Fase 3" significaba dos trabajos diferentes según el documento. Se unificó en un solo eje `F0`–`F9` en `ROADMAP.md`, con tabla de equivalencias con los nombres antiguos. `PLAN.md` quedó archivado en `docs/archive/`. **No reintroducir una segunda numeración**: el chequeo `npm run docs:check` falla si aparece un segundo documento declarando `rol: roadmap`.
 
@@ -39,3 +39,11 @@ Erick autorizó a los tres a trabajar en este repo (Codex sumado el 26-07-2026, 
 11. **Ninguna afirmación de "✅ hecho/confirmado/completado" se acepta sin el output literal del comando que lo prueba**, pegado tal cual (no parafraseado, no resumido). En particular: `git status --short` completo (no "N archivos, todos ok"); para tests, el resumen real de la corrida (`X passed, Y failed`), no "tests corriendo"; para instalaciones, el comando que localiza el binario en su ubicación real (en workspaces npm, la raíz, no cada paquete). **Motivo:** tres afirmaciones falsas de "hecho" en la misma sesión de Fase 2 (26-07-2026): un respaldo que no servía para rollback, un test runner marcado instalado sin estarlo, y un "git status limpio" cuando en realidad había 63 archivos modificados y solo 11 en stage. Cowork verificó las tres veces con el comando real antes de aceptar — ver `MEMORIA.md` §11 y §12.
 12. **Antes de cerrar una sesión que haya tocado documentación, ejecutar `npm run docs:check`** y dejarlo en verde. Si falla, arreglar la causa (cabecera `doc-status` ausente, enlace roto, roadmap duplicado, documento vivo rancio) en lugar de ignorarla. **Motivo:** durante semanas convivieron dos numeraciones de fases contradictorias y varios documentos afirmaban estados ya superados, lo que obligó a repetir conversaciones ya cerradas. Ver `docs/DOC_MAINTENANCE.md`.
 13. **Al cerrar una fase, actualizar `ROADMAP.md`** (estado en la tabla + `verificado:` en la cabecera) y añadir la línea correspondiente a `MEMORIA.md` §12. No crear un documento de fase nuevo en la raíz: los informes puntuales se archivan en `docs/archive/` en cuanto se han leído.
+14. **Autonomía local por bloque:** en una rama de trabajo, el agente puede
+    implementar código, pruebas y documentación del alcance ya aprobado sin
+    pedir confirmación repetida. Mantiene autorización explícita de Erick para
+    aplicar migraciones, cambiar Supabase Auth/RLS, publicar en GitHub/Render,
+    usar credenciales reales, generar gastos o ejecutar operaciones
+    destructivas. Si una decisión de producto o un procedimiento de equipo no
+    está confirmado, se documenta como pendiente y se continúa con trabajo
+    local que no lo presuponga.

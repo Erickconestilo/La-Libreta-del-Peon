@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { AppError } from '../lib/app-error.js';
-import { getActorProjectScope } from '../lib/access-control.js';
+import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-control.js';
 import {
   createPrismPhotoStoragePath,
   createProjectPhotoStoragePath,
@@ -44,6 +44,12 @@ export const createSignedPhotoUploadController = async (request: Request, respon
         `${entityLabel.toUpperCase()}_NOT_FOUND`
       );
     }
+
+    const projectId = input.entityType === 'project'
+      ? input.entityId
+      : (entity as { projectId?: string | null }).projectId ?? null;
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    assertProjectWriteAccess(request.user, projectId);
 
     const storagePath = input.entityType === 'station'
       ? createStationPhotoStoragePath(input.entityId, input.contentType)

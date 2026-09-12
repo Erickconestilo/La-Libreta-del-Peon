@@ -6,6 +6,7 @@ import {
   validateCreateControlPointThresholdInput,
   validateCreateInstrumentReadingInput,
   validateCreateReadingAttachmentInput,
+  validateCreateWorkCompletionReportInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateRoundExportQuery,
@@ -113,6 +114,21 @@ test('journey assignments accept explicit order and nullable operator', () => {
   );
   assert.equal(validateJourneyQuery({}).limit, 50);
   assert.throws(() => validateUpdateMonitoringRoundInput({}), /Invalid monitoring round update payload/);
+});
+
+test('work completion reports require an idempotency key and a valid status', () => {
+  const report = validateCreateWorkCompletionReportInput({
+    clientRequestId: '11111111-1111-4111-8111-111111111111',
+    pendingReasons: ['Acceso bloqueado'],
+    status: 'partial',
+    zoneLabel: 'Zona de prueba'
+  });
+
+  assert.deepEqual(report.pendingReasons, ['Acceso bloqueado']);
+  assert.throws(
+    () => validateCreateWorkCompletionReportInput({ status: 'done', zoneLabel: 'Zona' }),
+    /Invalid work completion report payload/
+  );
 });
 
 test('round export only accepts CSV or XLSX and defaults to CSV', () => {
