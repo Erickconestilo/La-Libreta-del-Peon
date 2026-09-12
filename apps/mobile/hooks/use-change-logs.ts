@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ChangeLog, EntityType } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -47,10 +48,12 @@ const fetchChangeLogs = async ({ entityId, entityType, limit = 50 }: UseChangeLo
 };
 
 export const useChangeLogs = (options: UseChangeLogsOptions = {}) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: options.enabled ?? true,
     queryFn: () => fetchChangeLogs(options),
-    queryKey: ['change-logs', options.entityType ?? null, options.entityId ?? null, options.limit ?? 50],
+    queryKey: ['change-logs', sessionCacheKey, options.entityType ?? null, options.entityId ?? null, options.limit ?? 50],
     staleTime: 1000 * 30
   });
 

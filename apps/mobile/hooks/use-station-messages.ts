@@ -7,7 +7,7 @@ import { enqueue, getPendingCount } from '@/lib/offline/outbox';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
 import { createRandomId } from '@/lib/random-id';
-import { useCurrentSession } from '@/hooks/use-auth';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -53,10 +53,12 @@ const createStationMessage = async ({
 };
 
 export const useStationMessages = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(stationId),
     queryFn: () => fetchStationMessages(stationId as string),
-    queryKey: ['station-messages', stationId],
+    queryKey: ['station-messages', sessionCacheKey, stationId],
     staleTime: 1000 * 60
   });
 
@@ -67,10 +69,12 @@ export const useStationMessages = (stationId: string | null) => {
 };
 
 export const useRecentStationMessages = (enabled = true) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled,
     queryFn: fetchRecentStationMessages,
-    queryKey: ['station-messages-feed'],
+    queryKey: ['station-messages-feed', sessionCacheKey],
     staleTime: 1000 * 60
   });
 
@@ -82,6 +86,7 @@ export const useRecentStationMessages = (enabled = true) => {
 
 export const useCreateStationMessage = (stationId: string | null) => {
   const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -137,8 +142,8 @@ export const useCreateStationMessage = (stationId: string | null) => {
       } satisfies StationMessage;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['station-messages', stationId] });
-      await queryClient.invalidateQueries({ queryKey: ['station-messages-feed'] });
+      await queryClient.invalidateQueries({ queryKey: ['station-messages', sessionCacheKey, stationId] });
+      await queryClient.invalidateQueries({ queryKey: ['station-messages-feed', sessionCacheKey] });
       await queryClient.invalidateQueries({ queryKey: ['change-logs'] });
 
       // Intentar flush automático si hay conectividad

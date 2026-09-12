@@ -4,6 +4,7 @@ import type { PhotoContentType, Prism, PrismCoverageGroup, PrismObservation, Sig
 
 import { apiFetch } from '@/lib/api';
 import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -87,10 +88,12 @@ const attachPrismPhoto = async ({
 };
 
 export const useStationPrisms = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(stationId),
     queryFn: () => fetchStationPrisms(stationId as string),
-    queryKey: ['station-prisms', stationId],
+    queryKey: ['station-prisms', sessionCacheKey, stationId],
     staleTime: 1000 * 60,
   });
 
@@ -101,11 +104,13 @@ export const useStationPrisms = (stationId: string | null) => {
 };
 
 export const usePrismPhotoMutations = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
 
   const invalidatePrisms = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['station-prisms', stationId] }),
+      queryClient.invalidateQueries({ queryKey: ['station-prisms', sessionCacheKey, stationId] }),
       queryClient.invalidateQueries({ queryKey: ['change-logs'] })
     ]);
   };
@@ -166,10 +171,12 @@ export const usePrismPhotoMutations = (stationId: string | null) => {
 };
 
 export const usePrismCoverage = (groupCode: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(groupCode),
     queryFn: () => fetchPrismCoverage(groupCode as string),
-    queryKey: ['prism-coverage', groupCode],
+    queryKey: ['prism-coverage', sessionCacheKey, groupCode],
     staleTime: 1000 * 60,
   });
 

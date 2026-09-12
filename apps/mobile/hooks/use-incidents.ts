@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateIncidentInput, Incident } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -44,10 +45,12 @@ const createIncident = async (input: CreateIncidentInput) => {
 };
 
 export const useStationIncidents = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(stationId),
     queryFn: () => fetchStationIncidents(stationId as string),
-    queryKey: ['station-incidents', stationId],
+    queryKey: ['station-incidents', sessionCacheKey, stationId],
     staleTime: 1000 * 60
   });
 
@@ -58,10 +61,12 @@ export const useStationIncidents = (stationId: string | null) => {
 };
 
 export const useRecentIncidents = (enabled = true) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled,
     queryFn: fetchRecentIncidents,
-    queryKey: ['incidents-feed'],
+    queryKey: ['incidents-feed', sessionCacheKey],
     staleTime: 1000 * 60
   });
 
@@ -72,13 +77,15 @@ export const useRecentIncidents = (enabled = true) => {
 };
 
 export const useCreateIncident = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: createIncident,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['station-incidents', stationId] }),
-        queryClient.invalidateQueries({ queryKey: ['incidents-feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['station-incidents', sessionCacheKey, stationId] }),
+        queryClient.invalidateQueries({ queryKey: ['incidents-feed', sessionCacheKey] }),
         queryClient.invalidateQueries({ queryKey: ['change-logs'] })
       ]);
     }

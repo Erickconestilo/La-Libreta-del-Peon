@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateStationInput, Station, StationReading, UpdateStationNotesInput } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type StationListItem = Station & {
   project?: {
@@ -75,9 +76,11 @@ const updateStationNotes = async ({
 };
 
 export const useStations = (projectId?: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     queryFn: () => fetchStations(projectId ?? null),
-    queryKey: ['stations', projectId ?? null],
+    queryKey: ['stations', sessionCacheKey, projectId ?? null],
     staleTime: 1000 * 60
   });
 
@@ -88,10 +91,12 @@ export const useStations = (projectId?: string | null) => {
 };
 
 export const useStationDetail = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(stationId),
     queryFn: () => fetchStationDetail(stationId as string),
-    queryKey: ['station-detail', stationId],
+    queryKey: ['station-detail', sessionCacheKey, stationId],
     staleTime: 1000 * 60
   });
 
@@ -102,12 +107,14 @@ export const useStationDetail = (stationId: string | null) => {
 };
 
 export const useCreateStation = () => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: createStation,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['stations'] }),
+        queryClient.invalidateQueries({ queryKey: ['stations', sessionCacheKey] }),
         queryClient.invalidateQueries({ queryKey: ['change-logs'] })
       ]);
     }
@@ -121,6 +128,8 @@ export const useCreateStation = () => {
 };
 
 export const useUpdateStationNotes = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (input: UpdateStationNotesInput) => {
@@ -132,8 +141,8 @@ export const useUpdateStationNotes = (stationId: string | null) => {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['station-detail', stationId] }),
-        queryClient.invalidateQueries({ queryKey: ['stations'] }),
+        queryClient.invalidateQueries({ queryKey: ['station-detail', sessionCacheKey, stationId] }),
+        queryClient.invalidateQueries({ queryKey: ['stations', sessionCacheKey] }),
         queryClient.invalidateQueries({ queryKey: ['change-logs'] })
       ]);
     }

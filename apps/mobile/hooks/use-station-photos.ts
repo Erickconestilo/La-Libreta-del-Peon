@@ -10,6 +10,7 @@ import {
   type PhotoSource,
   type PreparedPhoto
 } from '@/lib/photo-upload';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -136,10 +137,12 @@ const uploadPreparedStationVisualPhoto = async ({
 };
 
 export const useStationPhotos = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(stationId),
     queryFn: () => fetchStationPhotos(stationId as string),
-    queryKey: ['station-photos', stationId],
+    queryKey: ['station-photos', sessionCacheKey, stationId],
     staleTime: 1000 * 60
   });
 
@@ -150,6 +153,8 @@ export const useStationPhotos = (stationId: string | null) => {
 };
 
 export const useStationPhotoGalleryMutations = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
 
   const updateStationPhotoUrlCaches = (photoUrl: string | null) => {
@@ -158,12 +163,12 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
     }
 
     queryClient.setQueryData<Station & Record<string, unknown>>(
-      ['station-detail', stationId],
+      ['station-detail', sessionCacheKey, stationId],
       (currentStation) => currentStation ? { ...currentStation, photoUrl } : currentStation
     );
 
     queryClient.setQueriesData<Station[]>(
-      { queryKey: ['stations'] },
+      { queryKey: ['stations', sessionCacheKey] },
       (currentStations) => Array.isArray(currentStations)
         ? currentStations.map((currentStation) => currentStation.id === stationId
           ? { ...currentStation, photoUrl }
@@ -174,9 +179,9 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
 
   const invalidateStationPhotos = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['station-photos', stationId] }),
-      queryClient.invalidateQueries({ queryKey: ['station-detail', stationId] }),
-      queryClient.invalidateQueries({ queryKey: ['stations'] }),
+      queryClient.invalidateQueries({ queryKey: ['station-photos', sessionCacheKey, stationId] }),
+      queryClient.invalidateQueries({ queryKey: ['station-detail', sessionCacheKey, stationId] }),
+      queryClient.invalidateQueries({ queryKey: ['stations', sessionCacheKey] }),
       queryClient.invalidateQueries({ queryKey: ['change-logs'] })
     ]);
   };
@@ -229,7 +234,7 @@ export const useStationPhotoGalleryMutations = (stationId: string | null) => {
       });
     },
     onMutate: (stationPhotoId) => {
-      const currentPhotos = queryClient.getQueryData<StationPhoto[]>(['station-photos', stationId]);
+      const currentPhotos = queryClient.getQueryData<StationPhoto[]>(['station-photos', sessionCacheKey, stationId]);
       const deletedPhoto = currentPhotos?.find((photo) => photo.id === stationPhotoId) ?? null;
 
       return { deletedPhoto };

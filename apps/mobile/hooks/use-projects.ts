@@ -5,7 +5,7 @@ import type { CreateProjectInput, PhotoContentType, ProjectSummary, SignedPhotoU
 import { apiFetch, isApiRequestError } from '@/lib/api';
 import { getCachedProjectList, saveProjectList } from '@/lib/offline/project-cache';
 import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
-import { useCurrentSession } from '@/hooks/use-auth';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type StationListItem = Station & {
   project?: {
@@ -150,7 +150,7 @@ const createProjectRequest = async (input: CreateProjectInput) => {
 
 export const useProjects = () => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     queryFn: () => fetchProjects(cacheKey),
     queryKey: ['projects', cacheKey],

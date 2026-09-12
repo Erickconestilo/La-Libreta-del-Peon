@@ -4,6 +4,7 @@ import type { PhotoContentType, SignedPhotoUpload, Station } from '@shared/types
 
 import { apiFetch } from '@/lib/api';
 import { deletePreparedPhoto, pickAndCompressPhoto, uploadPreparedPhotoToSignedUrl, type PhotoSource } from '@/lib/photo-upload';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -63,6 +64,8 @@ const attachStationPhoto = async ({
 };
 
 export const useStationPhotoMutations = (stationId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
 
   const updateStationPhotoCaches = (station: Station | null) => {
@@ -71,12 +74,12 @@ export const useStationPhotoMutations = (stationId: string | null) => {
     }
 
     queryClient.setQueryData<Station & Record<string, unknown>>(
-      ['station-detail', stationId],
+      ['station-detail', sessionCacheKey, stationId],
       (currentStation) => currentStation ? { ...currentStation, ...station } : currentStation
     );
 
     queryClient.setQueriesData<Station[]>(
-      { queryKey: ['stations'] },
+      { queryKey: ['stations', sessionCacheKey] },
       (currentStations) => Array.isArray(currentStations)
         ? currentStations.map((currentStation) => currentStation.id === station.id
           ? { ...currentStation, ...station }
@@ -87,8 +90,8 @@ export const useStationPhotoMutations = (stationId: string | null) => {
 
   const invalidateStation = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['station-detail', stationId] }),
-      queryClient.invalidateQueries({ queryKey: ['stations'] }),
+      queryClient.invalidateQueries({ queryKey: ['station-detail', sessionCacheKey, stationId] }),
+      queryClient.invalidateQueries({ queryKey: ['stations', sessionCacheKey] }),
       queryClient.invalidateQueries({ queryKey: ['change-logs'] })
     ]);
   };

@@ -29,7 +29,7 @@ import {
   type MonitoringRoundSnapshot
 } from '@/lib/offline/monitoring-cache';
 import { deferJourneyRound, getCachedJourney, getDeferredJourneyRoundIds, saveJourney } from '@/lib/offline/journey-cache';
-import { useCurrentSession } from '@/hooks/use-auth';
+import { getSessionCacheKey, useCurrentSession } from '@/hooks/use-auth';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
 import {
@@ -541,10 +541,12 @@ export const useMyJourney = () => {
 };
 
 export const useProjectOperators = (projectId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(projectId),
     queryFn: () => fetchProjectOperators(projectId as string),
-    queryKey: ['project-operators', projectId],
+    queryKey: ['project-operators', sessionCacheKey, projectId],
     staleTime: 1000 * 60
   });
 
@@ -556,14 +558,16 @@ export const useProjectOperators = (projectId: string | null) => {
 };
 
 export const useUpdateMonitoringRoundAssignment = () => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({ input, roundId }: { input: UpdateMonitoringRoundAssignmentInput; roundId: string }) =>
       updateRoundAssignmentRequest(roundId, input),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds'] }),
-        queryClient.invalidateQueries({ queryKey: ['my-journey'] })
+        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds', sessionCacheKey] }),
+        queryClient.invalidateQueries({ queryKey: ['my-journey', sessionCacheKey] })
       ]);
     }
   });
@@ -577,7 +581,7 @@ export const useUpdateMonitoringRoundAssignment = () => {
 
 export const useMonitoringRound = (roundId: string | null) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(roundId),
     queryFn: () => fetchMonitoringRoundWithCache(cacheKey, activeSessionId, roundId as string),
@@ -596,13 +600,15 @@ export const useMonitoringRound = (roundId: string | null) => {
 };
 
 export const useWorkCompletionReports = (roundId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(roundId),
     queryFn: async () => {
       const response = await apiFetch<ApiEnvelope<WorkCompletionReport[]>>(`/rounds/${roundId}/completion-reports`);
       return response.data;
     },
-    queryKey: ['work-completion-reports', roundId],
+    queryKey: ['work-completion-reports', sessionCacheKey, roundId],
     staleTime: 1000 * 15
   });
 
@@ -615,7 +621,7 @@ export const useWorkCompletionReports = (roundId: string | null) => {
 
 export const useCreateWorkCompletionReport = (roundId: string | null) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: CreateWorkCompletionReportInput) => {
@@ -645,8 +651,8 @@ export const useCreateWorkCompletionReport = (roundId: string | null) => {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['monitoring-round', cacheKey, roundId] }),
-        queryClient.invalidateQueries({ queryKey: ['work-completion-reports', roundId] }),
-        queryClient.invalidateQueries({ queryKey: ['my-journey'] })
+        queryClient.invalidateQueries({ queryKey: ['work-completion-reports', cacheKey, roundId] }),
+        queryClient.invalidateQueries({ queryKey: ['my-journey', cacheKey] })
       ]);
       if (activeSessionId && await hasConnectivity()) void flushOutbox(syncOutboxItem, activeSessionId);
     }
@@ -661,7 +667,7 @@ export const useCreateWorkCompletionReport = (roundId: string | null) => {
 
 export const usePrepareMonitoringRound = (roundId: string | null) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () => {
@@ -702,7 +708,7 @@ export const useShareMonitoringRound = (roundId: string | null) => {
 
 export const useUpdateMonitoringRoundStatus = (roundId: string | null) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (status: Exclude<MonitoringRoundStatus, 'draft'>) => {
@@ -719,7 +725,7 @@ export const useUpdateMonitoringRoundStatus = (roundId: string | null) => {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['monitoring-round', cacheKey, roundId] }),
-        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds'] })
+        queryClient.invalidateQueries({ queryKey: ['monitoring-rounds', cacheKey] })
       ]);
     }
   });
@@ -732,10 +738,12 @@ export const useUpdateMonitoringRoundStatus = (roundId: string | null) => {
 };
 
 export const useControlPoints = (projectId: string | null, isActive?: boolean) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(projectId),
     queryFn: () => fetchControlPoints(projectId as string, isActive),
-    queryKey: ['control-points', projectId, isActive ?? 'all'],
+    queryKey: ['control-points', sessionCacheKey, projectId, isActive ?? 'all'],
     staleTime: 1000 * 30
   });
 
@@ -746,10 +754,12 @@ export const useControlPoints = (projectId: string | null, isActive?: boolean) =
 };
 
 export const useReadingHistory = (controlPointId: string | null, instrumentType?: MonitoringInstrumentType) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const query = useQuery({
     enabled: Boolean(controlPointId),
     queryFn: () => fetchReadingHistory(controlPointId as string, instrumentType),
-    queryKey: ['control-point-readings', controlPointId, instrumentType ?? 'all'],
+    queryKey: ['control-point-readings', sessionCacheKey, controlPointId, instrumentType ?? 'all'],
     staleTime: 1000 * 30
   });
 
@@ -760,6 +770,8 @@ export const useReadingHistory = (controlPointId: string | null, instrumentType?
 };
 
 export const useCreateMonitoringRound = (projectId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: CreateMonitoringRoundInput) => {
@@ -769,7 +781,7 @@ export const useCreateMonitoringRound = (projectId: string | null) => {
       return createRoundRequest({ input, projectId });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['monitoring-rounds'] });
+      await queryClient.invalidateQueries({ queryKey: ['monitoring-rounds', sessionCacheKey] });
     }
   });
 
@@ -781,6 +793,8 @@ export const useCreateMonitoringRound = (projectId: string | null) => {
 };
 
 export const useCreateControlPoint = (projectId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: CreateControlPointInput) => {
@@ -790,7 +804,7 @@ export const useCreateControlPoint = (projectId: string | null) => {
       return createControlPointRequest({ input, projectId });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['control-points', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['control-points', sessionCacheKey, projectId] });
     }
   });
 
@@ -802,6 +816,8 @@ export const useCreateControlPoint = (projectId: string | null) => {
 };
 
 export const useUpdateControlPoint = (projectId: string | null, controlPointId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: UpdateControlPointInput) => {
@@ -811,7 +827,7 @@ export const useUpdateControlPoint = (projectId: string | null, controlPointId: 
       return updateControlPointRequest({ controlPointId, input });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['control-points', projectId] });
+      await queryClient.invalidateQueries({ queryKey: ['control-points', sessionCacheKey, projectId] });
     }
   });
 
@@ -824,7 +840,7 @@ export const useUpdateControlPoint = (projectId: string | null, controlPointId: 
 
 export const useCreateRoundPoint = (roundId: string | null) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: CreateRoundPointInput) => {
@@ -855,7 +871,7 @@ export const useCreateInstrumentReading = ({
   roundPointId: string | null;
 }) => {
   const { activeSessionId } = useCurrentSession();
-  const cacheKey = activeSessionId ? `session:${activeSessionId}` : 'guest';
+  const cacheKey = getSessionCacheKey(activeSessionId);
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (input: CreateInstrumentReadingInput): Promise<ReadingSubmitResult> => {
@@ -956,7 +972,7 @@ export const useCreateInstrumentReading = ({
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['monitoring-round', cacheKey, roundId] }),
-        queryClient.invalidateQueries({ queryKey: ['control-point-readings', controlPointId] })
+        queryClient.invalidateQueries({ queryKey: ['control-point-readings', cacheKey, controlPointId] })
       ]);
 
       if (await hasConnectivity()) {
