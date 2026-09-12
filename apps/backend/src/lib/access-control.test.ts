@@ -122,6 +122,16 @@ test('topografo without a server project access map cannot write despite a legac
   assert.equal(canActorWriteProject(legacySession, projectA), false);
 });
 
+test('topografo with an explicit write membership can write its assigned project', () => {
+  const writableSession = {
+    ...surveyorA,
+    projectAccess: { [projectA]: 'write' as const }
+  };
+
+  assert.doesNotThrow(() => assertProjectWriteAccess(writableSession, projectA));
+  assert.equal(canActorWriteProject(writableSession, projectA), true);
+});
+
 test('supervisor is scoped and always read-only even with a write membership', () => {
   assert.deepEqual(getActorProjectScope(supervisorUser), [projectA]);
   assert.doesNotThrow(() => assertProjectAccess(supervisorUser, projectA));
