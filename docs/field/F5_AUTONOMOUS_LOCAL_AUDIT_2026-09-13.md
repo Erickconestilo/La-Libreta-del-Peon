@@ -101,7 +101,7 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 ℹ fail 0
 
 Test Suites: 18 passed, 18 total
-Tests:       78 passed, 78 total
+Tests:       80 passed, 80 total
 
 check-docs: 38 documentos revisados en raíz y docs/.
 

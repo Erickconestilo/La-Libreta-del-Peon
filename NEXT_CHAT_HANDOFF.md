@@ -159,11 +159,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   resuelve primero la visita local y después se aplica el `PATCH`.
 - La regresión móvil de `field-access` cubre el estado de carga y el bloqueo
   explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
-  posterior dejó `18` suites y `78` tests móviles en verde. El mismo contrato
+  posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `96/96` tests; móvil TypeScript sale sin errores y Jest tiene `18` suites y
-  `78` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `80` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 38 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 
