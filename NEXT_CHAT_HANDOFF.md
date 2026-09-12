@@ -25,6 +25,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
   (idempotencia de evidencias), `d8579ed`/`014b8af` (testigo fotográfico),
+  `d63f04d` (cadena completa de outbox),
   seguidos de `aa5e523` (integridad SQL de visitas de
   montaje), `f6623b0` (handoff y auditoría de dependencias), `a868867` (scope de prismas y regresión),
   `cd82af6` (fixture genérico validado), `db088f2` (fixtures neutros y
@@ -172,7 +173,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `96/96` tests; móvil TypeScript sale sin errores y Jest tiene `18` suites y
-  `80` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `81` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 38 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 
