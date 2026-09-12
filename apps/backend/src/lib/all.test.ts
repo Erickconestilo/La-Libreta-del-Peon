@@ -4,6 +4,7 @@ import '../middleware/request-id.test.js';
 import './generic-project-template.test.js';
 import './monitoring-reading-evaluation.test.js';
 import './round-export.test.js';
+import './round-export-parity.test.js';
 import './photo-storage-path.test.js';
 import './project-code-catalog-csv.test.js';
 import './scoped-resource-access.test.js';
