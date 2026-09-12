@@ -17,7 +17,7 @@ Comprobaciones técnicas:
 - [ ] Confirmar que la cuenta tecnica de Erick entra y conserva sesion ante un fallo transitorio de red.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
 - [ ] Verificar login, una estacion, una foto, una lectura offline y su sincronizacion en el dispositivo objetivo con datos reales de una sola obra.
-- [x] **Confirmar que Render publica el commit que se pretende probar** consultando `/api/v1/health`. **Resuelto el 02-08-2026:** Erick autorizó y ejecutó el `push --force-with-lease`; Render redesplegó a `a0ba934`, con F4, D1 y D2 ya incluidas. Sigue siendo un buen hábito comprobarlo antes de cada sesión de campo (dos segundos, `curl` a `/api/v1/health`), no porque quede pendiente sino porque es gratis verificar.
+- [x] **Confirmar que Render publica el commit que se pretende probar** consultando `/api/v1/health`. **Resuelto históricamente el 02-08-2026:** Erick autorizó y ejecutó el `push --force-with-lease`; Render redesplegó a `a0ba934`. La última verificación funcional registrada para F5 es el merge `6a1b19f` (12-09-2026). Sigue siendo un buen hábito comprobarlo antes de cada sesión de campo.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 - [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.

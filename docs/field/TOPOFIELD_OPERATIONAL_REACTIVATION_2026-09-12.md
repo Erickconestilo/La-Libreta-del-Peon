@@ -87,7 +87,7 @@ La release local `versionCode=4` se instaló en el Galaxy `SM-S938B`, serial
 Con la cuenta supervisora se verificó en pantalla:
 
 - Perfil: `Supervisor` y correo `supervisor-piloto@topofield.local`.
-- Obras: solo `Campus Nord`.
+- Obras: solo la obra QA autorizada.
 - Obra: aviso literal de consulta supervisora y acciones de escritura
   desactivadas.
 - Rondas: `E2E-Galaxy-20260731-Atc` abrió correctamente.
@@ -111,7 +111,7 @@ modificaron datos remotos durante esta prueba.
 Las migraciones `022`, `023`, `024` y `026` ya están aplicadas en el proyecto
 Supabase `topofield`. La cuenta `supervisor-piloto@topofield.local` tiene rol
 global `supervisor` y una única membresía activa `read` en `campus-nord`.
-Render sirve el merge commit `2eb6ecb2c23eaf4ccf6042ca47482b9a4793e0a2` y
+Render sirve el merge commit `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0` y
 reconoce el rol supervisor. La instalación física y la consulta supervisora
 están verificadas; queda la validación de escritura/offline con el operador.
 
