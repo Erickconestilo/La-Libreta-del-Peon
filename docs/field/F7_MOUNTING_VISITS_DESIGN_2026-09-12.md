@@ -34,6 +34,13 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
   recupera primero la visita por su `clientRequestId` y luego sube la foto y
   crea la evidencia con su propia clave idempotente.
 
+La pantalla de consulta puede mostrar una posición relativa aproximada sobre
+la miniatura mediante una cuadrícula 3x3. Esa posición solo sirve para
+reencontrar visualmente un elemento dentro de la fotografía: no representa
+coordenadas, orientación ni una medición. Los borradores de lectura se
+guardan aparte en SQLite 008, por sesión y punto de ronda, para recuperar
+campos y notas tras una interrupción sin guardar fotos como base64.
+
 ## Rutas
 
 - `GET /api/v1/stations/:stationId/mounting-visits`
@@ -61,9 +68,10 @@ creación incompleta se presente como trabajo ya realizado.
 ## Estado Y Verificación
 
 Implementado localmente en `codex/f5-field-stability` mediante `d270da3`,
-`a83beeb` y `8150c68`; la migración PostgreSQL no está aplicada a Supabase
-y el endpoint no está desplegado. Las regresiones cubren validación, ruta
-exacta de Storage, roles, scope por `stations.project_id`, caché por sesión y
-sincronización ordenada de evidencia. La aceptación de campo requiere crear
-una visita, cerrar/reabrir la app sin red, añadir una foto real, reconectar y
-comprobar que la segunda visita no altera la primera ni duplica la evidencia.
+`a83beeb`, `8150c68`, `ee80825` y `5f92a66`; la migración PostgreSQL no está
+aplicada a Supabase y el endpoint no está desplegado. Las regresiones cubren
+validación, ruta exacta de Storage, roles, scope por `stations.project_id`,
+caché por sesión, sincronización ordenada de evidencia y aislamiento de
+borradores de lectura. La aceptación de campo requiere crear una visita,
+cerrar/reabrir la app sin red, añadir una foto real, reconectar y comprobar
+que la segunda visita no altera la primera ni duplica la evidencia.

@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-09-12
 -->
 
 # La Libreta del Peón (TopoField)
@@ -21,16 +21,16 @@ Aplicación móvil de campo para equipos pequeños de topografía y auscultació
 | ¿Cómo se mantiene la documentación al día? | [docs/DOC_MAINTENANCE.md](./docs/DOC_MAINTENANCE.md) |
 | Historial congelado (informes E2E, inventarios, auditorías fechadas) | `docs/archive/` |
 
-## Estado actual (02-08-2026)
+## Estado actual (12-09-2026)
 
 Resumen; el detalle por fase está en [ROADMAP.md](./ROADMAP.md).
 
-- Motor offline validado en dispositivo real: outbox SQLite, sincronización al recuperar red, persistencia tras `force-stop` e idempotencia por `client_request_id`.
-- MVP de auscultación completo y validado en dispositivo real: rondas, puntos de control, lecturas, umbrales, histórico y foto adjunta, todo offline-first.
-- Backend desplegado en Render y **al día** (verificado 02-08-2026 vía `/api/v1/health`): incluye las correcciones de aislamiento entre obras y D1.
-- Aislamiento multi-tenant auditado por familia de endpoint, con tres correcciones aplicadas. RLS activo en las 24 tablas del proyecto.
-- Release Android firmable localmente: keystore propio y AAB verificado criptográficamente.
-- **Siguiente bloque: F5, validación de uso real en campo.** Sin bloqueos técnicos ni de despliegue.
+- Motor offline ampliado localmente: outbox SQLite, caché separada por sesión, recuperación tras reinicio, borradores de lectura y sincronización idempotente por `client_request_id`.
+- MVP de auscultación implementado: rondas, puntos de control, lecturas, umbrales, histórico, fotos y exportación CSV/XLSX. El recorrido de operador con foto offline requiere todavía una repetición física válida.
+- Último backend funcional verificado en Render: commit `6a1b19f`; el endpoint público de salud responde y las rutas protegidas responden `401` sin sesión. La rama contiene mejoras locales posteriores que aún no están desplegadas.
+- Aislamiento multi-tenant auditado por familia de endpoint; RLS activo en las 24 tablas del proyecto. El rol `supervisor` consulta por membresía `read` y no escribe.
+- Release Android `versionCode=4` firmada localmente e instalada históricamente en el Galaxy; ADB debe volver a detectar el dispositivo para repetir el E2E.
+- **F5 continúa abierta:** faltan la repetición offline en Galaxy, validación de exportación con datos reales, observación de campo y conversaciones con profesionales.
 
 ## Verificación local
 
@@ -64,4 +64,4 @@ Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.
 - **Distribución:** la APK firmada localmente no puede instalarse encima de una instalación EAS anterior (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Hay que desinstalar la anterior o reutilizar su keystore. El keystore local debe respaldarse fuera del repo antes de distribuir nada.
 - **Cobertura de tests:** unitaria y centrada en control de acceso, scope entre obras, rutas de foto y validación de payloads. No sustituye QA funcional en dispositivo.
 - **Nadie externo ha usado la app todavía.** Es la limitación más importante del proyecto ahora mismo y el motivo de que F5 sea la fase abierta.
-- **Deuda técnica aceptada conscientemente:** las lecturas se guardan en un campo genérico en lugar de una estructura por tipo de instrumento. Se reestructura cuando exista una campaña real que lo exija.
+- **Deuda técnica aceptada conscientemente:** las lecturas escalares se guardan en un campo genérico; los procedimientos por pares, perfiles inclinométricos y protocolos específicos de fabricante esperan confirmación real antes de modelarse.
