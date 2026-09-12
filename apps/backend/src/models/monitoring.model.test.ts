@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AppError } from '../lib/app-error.js';
-import { assertMonitoringRoundStatusTransition, buildProjectScopeCondition, toIsoTimestamp } from './monitoring.model.js';
+import {
+  assertMonitoringRoundStatusTransition,
+  buildProjectScopeCondition,
+  mapInstrumentReadingContextRow,
+  toIsoTimestamp
+} from './monitoring.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -35,6 +40,21 @@ test('normalizes database timestamps before an idempotent reading retry', () => 
   assert.equal(
     toIsoTimestamp('2026-07-31T08:45:25.061Z'),
     '2026-07-31T08:45:25.061Z'
+  );
+});
+
+test('keeps project scope in the reading context used for photo uploads', () => {
+  assert.deepEqual(
+    mapInstrumentReadingContextRow({
+      id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      project_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      round_point_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    }),
+    {
+      id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      projectId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      roundPointId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    }
   );
 });
 

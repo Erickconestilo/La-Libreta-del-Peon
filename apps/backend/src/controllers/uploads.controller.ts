@@ -9,7 +9,7 @@ import {
   createSignedPhotoUpload,
   createStationPhotoStoragePath
 } from '../lib/photo-storage.js';
-import { getInstrumentReadingById } from '../models/monitoring.model.js';
+import { getInstrumentReadingById, getInstrumentReadingContext } from '../models/monitoring.model.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { getPrismById } from '../models/prisms.model.js';
 import { getProjectById } from '../models/projects.model.js';
@@ -27,7 +27,7 @@ export const createSignedPhotoUploadController = async (request: Request, respon
         ? await getProjectById(input.entityId, projectScope)
         : input.entityType === 'prism'
           ? await getPrismById(input.entityId, projectScope)
-          : await getInstrumentReadingById(input.entityId, projectScope);
+          : await getInstrumentReadingContext(input.entityId, projectScope);
 
     if (!entity) {
       const entityLabel = input.entityType === 'station'
