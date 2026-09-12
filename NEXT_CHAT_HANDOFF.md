@@ -90,6 +90,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   actualizaciones optimistas se limitan a la cuenta activa. El contrato
   `getSessionCacheKey` está cubierto por una regresión en `dedf77b`; la
   validación física de respuestas tardías entre cuentas sigue pendiente.
+- Los borradores de lecturas usan la migración SQLite 008 y quedan separados
+  por sesión y punto de ronda. Recuperan campos, notas y componentes del
+  potenciómetro tras un reinicio; la foto solo se persiste para sincronización
+  al pulsar Guardar lectura, sin base64 en SQLite.
 - La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
   append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
   montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.

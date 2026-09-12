@@ -82,6 +82,7 @@ La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada r
 - captura inicial de testigo fotográfico, fisurómetro digital, potenciómetro y clinómetro/cinta como tipos explícitos, sin conversiones inventadas;
 - tratamiento de una ronda como encargo ordenado por obra, fecha y responsable, reutilizando el dominio existente;
 - recorrido móvil de consulta para membresías `read`, preparación sin conexión y resumen operativo de ronda;
+- borradores locales de captura de lectura por sesión y punto de control (SQLite 008), para recuperar una toma interrumpida sin mezclar cuentas;
 - histórico de lecturas con sus evidencias asociadas visibles en consulta, manteniendo escritura solo para membresías `write`;
 - entrega manual de ronda en CSV/XLSX desde el resumen móvil mediante la hoja nativa, sin marcar envío o revisión automáticamente;
 - exportación restringida a membresías con escritura; las membresías `read` solo consultan datos recibidos;
