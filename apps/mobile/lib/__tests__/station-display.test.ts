@@ -6,10 +6,10 @@ describe('station display names', () => {
   it('preserves the server-provided station name without client-specific overrides', () => {
     expect(
       getStationDisplayName({
-        externalId: 'trimble-station-002',
-        name: 'Estacionamiento Norte Sarria'
+        externalId: 'station-example-01',
+        name: 'Nombre aportado por servidor'
       })
-    ).toBe('Estacionamiento Norte Sarria');
+    ).toBe('Nombre aportado por servidor');
   });
 
   it('uses the external identifier only when the station has no name', () => {
