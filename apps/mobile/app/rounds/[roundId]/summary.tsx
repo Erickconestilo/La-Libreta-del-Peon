@@ -1,9 +1,11 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatShortDate, RoundStatusPill, StatePill } from '@/components/monitoring-ui';
-import { useMonitoringRound, useWorkCompletionReports } from '@/hooks/use-monitoring';
+import { useMonitoringRound, useShareMonitoringRound, useWorkCompletionReports } from '@/hooks/use-monitoring';
 import { colors, spacing, typography } from '@/src/theme';
 
 export default function MonitoringRoundSummaryScreen() {
@@ -13,10 +15,22 @@ export default function MonitoringRoundSummaryScreen() {
   const insets = useSafeAreaInsets();
   const { cachedAt, data: round, errorMessage, isOfflineCache, isLoading } = useMonitoringRound(roundId ?? null);
   const { data: reports, errorMessage: reportsError } = useWorkCompletionReports(roundId ?? null);
+  const { errorMessage: shareErrorMessage, isSharing, shareExport } = useShareMonitoringRound(roundId ?? null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const points = round?.points ?? [];
   const taken = points.filter((point) => point.status === 'taken').length;
   const pending = points.filter((point) => point.status === 'pending').length;
   const skipped = points.filter((point) => point.status === 'skipped' || point.status === 'cancelled').length;
+
+  const handleShare = async (format: 'csv' | 'xlsx') => {
+    setShareMessage(null);
+    try {
+      await shareExport(format);
+      setShareMessage('Archivo preparado. Elige WhatsApp, correo u otro canal en la ventana de compartir.');
+    } catch {
+      // El hook expone el motivo debajo del bloque de entrega.
+    }
+  };
 
   return (
     <>
@@ -46,6 +60,17 @@ export default function MonitoringRoundSummaryScreen() {
             {!reportsError && reports.length === 0 ? <Text style={styles.body}>Todavía no hay partes recibidos.</Text> : null}
             {reports.map((report) => <View key={report.id} style={styles.reportRow}><View style={styles.pointCopy}><Text style={styles.pointCode}>{report.zoneLabel}</Text><Text style={styles.body}>{report.completedPointCount} realizados · {report.pendingPointCount} pendientes</Text><Text style={styles.body}>{new Date(report.reportedAt).toLocaleString('es-ES')}</Text></View><StatePill label={report.status === 'completed' ? 'Completado' : report.status === 'blocked' ? 'Bloqueado' : 'Parcial'} tone={report.status === 'completed' ? 'success' : report.status === 'blocked' ? 'danger' : 'warning'} /></View>)}
           </View>
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Entrega manual</Text>
+            <Text style={styles.body}>Prepara el mismo contenido de la ronda en CSV o Excel. La app no lo envía automáticamente ni lo marca como revisado.</Text>
+            <View style={styles.shareActions}>
+              <Pressable disabled={isSharing} onPress={() => void handleShare('csv')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
+              <Pressable disabled={isSharing} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
+            </View>
+            {isSharing ? <Text style={styles.body}>Preparando archivo...</Text> : null}
+            {shareMessage ? <Text style={styles.success}>{shareMessage}</Text> : null}
+            {shareErrorMessage ? <Text style={styles.errorText}>{shareErrorMessage}</Text> : null}
+          </View>
           <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable>
         </> : null}
       </ScrollView>
@@ -62,6 +87,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[3] },
   container: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing[2], padding: spacing[3] },
+  disabled: { opacity: 0.55 },
   error: { backgroundColor: colors.card, borderLeftColor: colors.red, borderLeftWidth: 3, gap: spacing[1], padding: spacing[3] },
   errorText: { color: colors.red, fontSize: 13, fontWeight: '700', lineHeight: 20 },
   errorTitle: { color: colors.red, fontSize: typography.fontSizeBody, fontWeight: '900' },
@@ -75,9 +101,13 @@ const styles = StyleSheet.create({
   pointCopy: { flex: 1, gap: 1 },
   pointRow: { alignItems: 'center', borderBottomColor: '#2a2f3a', borderBottomWidth: 1, flexDirection: 'row', gap: spacing[2], paddingBottom: spacing[2] },
   reportRow: { alignItems: 'flex-start', borderBottomColor: '#2a2f3a', borderBottomWidth: 1, flexDirection: 'row', gap: spacing[2], paddingBottom: spacing[2] },
+  shareActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
+  shareButton: { alignItems: 'center', borderColor: '#475569', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[2] },
+  shareButtonText: { color: colors.textPrimary, fontSize: 13, fontWeight: '800' },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingVertical: spacing[2] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '900' },
+  success: { color: colors.accentGreen, fontSize: 13, fontWeight: '800', lineHeight: 20 },
   title: { color: colors.textPrimary, fontSize: 26, fontWeight: '900' },
   titleBlock: { flex: 1, gap: 2 },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },

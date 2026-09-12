@@ -39,6 +39,7 @@ import {
   type PreparedPhoto
 } from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
+import { shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -663,6 +664,24 @@ export const usePrepareMonitoringRound = (roundId: string | null) => {
     errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar la jornada.') : null,
     isPreparing: mutation.isPending,
     prepareRound: mutation.mutateAsync
+  };
+};
+
+export const useShareMonitoringRound = (roundId: string | null) => {
+  const mutation = useMutation({
+    mutationFn: async (format: RoundExportFormat) => {
+      if (!roundId) {
+        throw new Error('Falta la ronda para preparar la entrega.');
+      }
+
+      return shareRoundExport(roundId, format);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar el archivo.') : null,
+    isSharing: mutation.isPending,
+    shareExport: mutation.mutateAsync
   };
 };
 

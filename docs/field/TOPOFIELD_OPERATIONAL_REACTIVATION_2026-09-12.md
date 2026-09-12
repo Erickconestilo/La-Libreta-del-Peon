@@ -36,6 +36,9 @@ observada y entrevistas con profesionales.
 - La consulta supervisora en móvil puede abrir una ronda, revisar sus puntos,
   leer el histórico recibido con sus evidencias fotográficas y consultar el
   resumen, pero no muestra controles de escritura para una membresía `read`.
+- El resumen puede preparar una entrega autenticada en `CSV` o `XLSX` y abrir
+  la hoja nativa de compartir. La aplicación no envía el archivo por su cuenta
+  ni lo marca como entregado o revisado: esa confirmación sigue siendo manual.
 - Formularios iniciales para testigo fotográfico, fisurómetro digital,
   potenciómetro con pares amarillo-azul, amarillo-marrón y azul-marrón, y
   tipos explícitos para clinómetro/cinta sin afirmar que el protocolo esté
