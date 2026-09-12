@@ -84,16 +84,18 @@ certificada de seguridad.
 1. Instalar en el Galaxy la release local `versionCode=4` ya generada y verificada.
 2. Validar online/offline: montaje, referencia, captura, incidencia, parte
    parcial, cierre, reinicio, reconexión e idempotencia.
-3. Aplicar la migración `026_supervisor_role.sql`, migrar la cuenta sintética
-   existente a `supervisor` conservando su membresía `read` en `campus-nord`,
-   y probar lectura contra escritura.
+3. Desplegar la rama que contiene el rol `supervisor`, generar la release
+   local `versionCode=4`, instalarla en Galaxy y probar lectura contra
+   escritura con la cuenta sintética.
 4. Confirmar con datos autorizados el formato de exportación y el canal de
    entrega; no enviar automáticamente por WhatsApp o correo.
 
-Las migraciones `022`, `023` y `024` ya están aplicadas en el proyecto
-Supabase `topofield`. Render sirve el commit `1ca0a84...` y sus rutas F5
-responden `401` sin bearer en vez de `404`. La instalación física no se ha
-podido completar en esta sesión porque `adb devices` no detecta el Galaxy.
+Las migraciones `022`, `023`, `024` y `026` ya están aplicadas en el proyecto
+Supabase `topofield`. La cuenta `supervisor-piloto@topofield.local` tiene rol
+global `supervisor` y una única membresía activa `read` en `campus-nord`.
+Render sirve el commit F5 anterior; todavía falta desplegar el commit que
+contiene el rol supervisor. La instalación física no se ha podido completar
+en esta sesión porque `adb devices` no detecta el Galaxy.
 
 ## Próximas decisiones que no se deben adivinar
 
