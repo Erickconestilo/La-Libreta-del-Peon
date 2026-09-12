@@ -73,7 +73,7 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias, prismas y visitas de montaje con referencias cruzadas. También
 deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
-  local: `96/96` tests. El contrato backend de exportación está alineado con
+  local: `98/98` tests. El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
 para integridad de tenant, con regresión local; sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
@@ -84,6 +84,8 @@ móvil y backend: no quedan nombres de obras ni referencias TopoTask/ARGOS en
 las fuentes activas. Los restos localizados están confinados a scripts de
 importación manual y artefactos `data/legacy` declarados como históricos; la
 presentación móvil ya no contiene un override específico de una estación.
+El importador manual MapEst también falla cerrado ante estaciones sin mapeo o
+sin una obra única; no forma parte del runtime del servicio.
 El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.

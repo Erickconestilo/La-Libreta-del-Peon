@@ -126,6 +126,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   fixture genérico y la evidencia de la release sin confundirlas con el E2E
   físico. La migración local 028 prepara unicidad para adjuntos concurrentes y
   aún no se ha aplicado remotamente.
+- El importador manual MapEst ahora falla cerrado si una estación no mapea a
+  una obra única; la regresión está en
+  `apps/backend/src/scripts/mapest-project-mapping.test.ts`.
 - La rama local añade `a868867` después del despliegue verificado de Render
   (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
   remotamente.
@@ -186,7 +189,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `96/96` tests; móvil TypeScript sale sin errores y Jest tiene `19` suites y
+  `98/98` tests; móvil TypeScript sale sin errores y Jest tiene `19` suites y
   `85` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.

@@ -126,14 +126,22 @@ se ha desplegado desde esta sesión.
     `data/legacy/` y `import-mapest-stations.ts` siguen siendo herramientas o
     artefactos históricos explícitos, no imports del runtime móvil/backend.
 
+20. El importador manual de MapEst podía dejar `project_id` en `NULL` si el
+    nombre no coincidía con su mapa o si el código resolvía cero o varias
+    obras. Ahora el importador aborta antes del `UPSERT` de esa estación en
+    cualquiera de esos casos. La lógica está aislada en
+    `apps/backend/src/scripts/mapest-project-mapping.ts` y sus regresiones
+    cubren ambos rechazos; el importador sigue protegido por
+    `assertWriteAllowed` y no se ejecutó contra ninguna base remota.
+
 ## Evidencia local
 
 ```text
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 96
-ℹ pass 96
+ℹ tests 98
+ℹ pass 98
 ℹ fail 0
 
 Test Suites: 19 passed, 19 total
