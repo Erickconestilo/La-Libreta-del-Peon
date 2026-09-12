@@ -137,7 +137,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   ha desplegado el endpoint; la validación física y la comprobación de Storage
   quedan pendientes.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `90/90` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
+  `91/91` tests; móvil TypeScript sale sin errores y Jest tiene `17` suites y
   `73` tests. `docs:check` revisa 38 documentos sin avisos y `npx expo install
   --check` devuelve `Dependencies are up to date`.
 

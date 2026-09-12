@@ -17,12 +17,15 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 ## Contrato local
 
 - Una visita pertenece a una estación y el servidor deriva su `project_id` de
-  esa estación.
+  esa estación. La migración preparada añade una clave foránea compuesta para
+  que la base también rechace una pareja estación/obra incoherente.
 - Una visita tiene `visitedAt`, `status` (`draft`, `completed`, `blocked`),
   notas, resumen de cambios, autor y `clientRequestId` único.
 - Una evidencia pertenece a una visita y a la misma estación. Puede tener
   `kind` (`general`, `prism`, `reference`, `access`, `other`), `prismId`
   opcional, título, notas, foto y posición relativa `0..1`.
+- Otra clave foránea compuesta impide que una evidencia se guarde con una
+  estación diferente a la de su visita.
 - La foto se sube mediante URL firmada y usa una ruta exacta
   `mounting-visits/<visitId>/<uploadId>.<ext>`.
 - Los reintentos de creación usan `clientRequestId`; una repetición devuelve

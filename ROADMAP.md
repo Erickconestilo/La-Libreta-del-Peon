@@ -73,7 +73,9 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias y prismas con referencias cruzadas. También deja el catálogo de
 ejemplo y sus fixtures sin nomenclatura de cliente. Backend local: `90/90`
-tests. Estos últimos cambios siguen solo en la rama local; Render continúa
+tests. La migración 027 preparada también conserva claves foráneas compuestas
+para integridad de tenant, con regresión local; sigue sin aplicarse en
+Supabase. Estos últimos cambios siguen solo en la rama local; Render continúa
 sirviendo `6a1b19f` hasta una publicación remota autorizada. El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.

@@ -38,8 +38,8 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 90
-ℹ pass 90
+ℹ tests 91
+ℹ pass 91
 ℹ fail 0
 
 check-docs: 38 documentos revisados en raíz y docs/.
