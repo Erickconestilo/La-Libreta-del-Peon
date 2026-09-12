@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjects } from '@/hooks/use-projects';
-import { getErrors, type OutboxItem } from '@/lib/offline/outbox';
+import { getConflicts, getErrors, type OutboxItem } from '@/lib/offline/outbox';
+import { buildOutboxDiagnostic } from '@/lib/offline/outbox-diagnostics';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, forceRetry } from '@/lib/offline/sync-engine';
 import { colors } from '@/src/theme';
@@ -39,17 +40,22 @@ export default function ProfileScreen() {
   const [technicalPassword, setTechnicalPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [outboxErrors, setOutboxErrors] = useState<OutboxItem[]>([]);
+  const [outboxConflicts, setOutboxConflicts] = useState<OutboxItem[]>([]);
   const [isRetryingOutbox, setIsRetryingOutbox] = useState<string | null>(null);
   const isCredentialsMode = authMode === 'credentials';
 
   const refreshOutboxErrors = () => {
     try {
       setOutboxErrors(activeSessionId ? getErrors(activeSessionId) : []);
+      setOutboxConflicts(activeSessionId ? getConflicts(activeSessionId) : []);
     } catch (error) {
       console.warn('[Profile] Unable to load outbox diagnostics:', error);
       setOutboxErrors([]);
+      setOutboxConflicts([]);
     }
   };
+
+  const outboxDiagnostics = [...outboxErrors, ...outboxConflicts].map(buildOutboxDiagnostic);
 
   useEffect(() => {
     setTokenInput('');
@@ -331,28 +337,37 @@ export default function ProfileScreen() {
 
       {savedSessions.length > 0 && currentUser?.role !== 'supervisor' ? (
         <View style={styles.card}>
-          <Text style={styles.title}>Operaciones pendientes</Text>
+          <Text style={styles.title}>Diagnóstico de sincronización</Text>
           <Text style={styles.body}>
-            {outboxErrors.length > 0
-              ? 'Estas operaciones no se pudieron enviar. Puedes reintentarlas cuando tengas conexión.'
+            {outboxDiagnostics.length > 0
+              ? 'Revisa los elementos bloqueados antes de continuar con otra jornada.'
               : 'No hay operaciones bloqueadas en este dispositivo.'}
           </Text>
-          {outboxErrors.map((item) => (
-            <View key={item.id} style={styles.outboxItem}>
+          {outboxDiagnostics.map((diagnostic) => (
+            <View
+              key={diagnostic.item.id}
+              style={[styles.outboxItem, diagnostic.status === 'conflict' ? styles.outboxConflict : null]}
+            >
               <View style={styles.outboxCopy}>
-                <Text style={styles.outboxTitle}>{getOutboxLabel(item)}</Text>
-                <Text style={styles.caption}>{item.errorMessage ?? 'Error sin detalle disponible.'}</Text>
-                <Text style={styles.caption}>Intentos: {item.retryCount}</Text>
-              </View>
-              <Pressable
-                disabled={isRetryingOutbox !== null}
-                onPress={() => void handleRetryOutboxItem(item.id)}
-                style={[styles.secondaryButton, isRetryingOutbox !== null ? styles.disabledButton : null]}
-              >
-                <Text style={styles.secondaryButtonText}>
-                  {isRetryingOutbox === item.id ? 'Reintentando...' : 'Reintentar'}
+                <Text style={[styles.outboxTitle, diagnostic.status === 'conflict' ? styles.conflictTitle : null]}>
+                  {diagnostic.statusLabel} · {getOutboxLabel(diagnostic.item)}
                 </Text>
-              </Pressable>
+                <Text style={styles.caption}>{diagnostic.message}</Text>
+                <Text style={styles.caption}>Intentos: {diagnostic.item.retryCount}</Text>
+              </View>
+              {diagnostic.canRetry ? (
+                <Pressable
+                  disabled={isRetryingOutbox !== null}
+                  onPress={() => void handleRetryOutboxItem(diagnostic.item.id)}
+                  style={[styles.secondaryButton, isRetryingOutbox !== null ? styles.disabledButton : null]}
+                >
+                  <Text style={styles.secondaryButtonText}>
+                    {isRetryingOutbox === diagnostic.item.id ? 'Reintentando...' : 'Reintentar'}
+                  </Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.conflictHint}>No se reintenta automáticamente.</Text>
+              )}
             </View>
           ))}
           <Pressable
@@ -498,10 +513,21 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12
   },
+  outboxConflict: {
+    borderColor: 'rgba(248, 113, 113, 0.6)'
+  },
   outboxTitle: {
     color: colors.amber,
     fontSize: 14,
     fontWeight: '800'
+  },
+  conflictTitle: {
+    color: colors.red
+  },
+  conflictHint: {
+    color: colors.red,
+    fontSize: 12,
+    fontWeight: '700'
   },
   primaryButton: {
     alignItems: 'center',
