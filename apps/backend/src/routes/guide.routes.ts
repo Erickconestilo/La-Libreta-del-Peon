@@ -12,11 +12,11 @@ import { validateUuidParam } from '../middleware/validate-uuid.js';
 
 export const guideRouter = Router();
 
-guideRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'visitante']), listGuideEntriesController);
+guideRouter.get('/', requireAuth, requireRole(['admin', 'topografo', 'supervisor', 'visitante']), listGuideEntriesController);
 guideRouter.get(
   '/:guideEntryId',
   requireAuth,
-  requireRole(['admin', 'topografo', 'visitante']),
+  requireRole(['admin', 'topografo', 'supervisor', 'visitante']),
   validateUuidParam('guideEntryId'),
   getGuideEntryByIdController
 );

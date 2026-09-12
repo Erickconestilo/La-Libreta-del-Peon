@@ -70,4 +70,20 @@ describe('field access', () => {
     expect(canWriteProject(user, 'obra-b')).toBe(true);
     expect(canWriteProject({ ...user, role: 'admin', projectAccess: null }, 'obra-a')).toBe(true);
   });
+
+  it('mantiene al supervisor en consulta aunque su membresía diga write', () => {
+    const user = {
+      authProvider: 'supabase' as const,
+      email: 'supervisor@example.test',
+      fullName: 'Supervisor',
+      id: 'supervisor-1',
+      isActive: true,
+      projectAccess: { 'obra-a': 'write' as const },
+      role: 'supervisor' as const
+    };
+
+    expect(canCreateStationWithoutProject(user.role)).toBe(false);
+    expect(canWriteProject(user, 'obra-a')).toBe(false);
+    expect(canWriteProject(user, 'obra-b')).toBe(false);
+  });
 });

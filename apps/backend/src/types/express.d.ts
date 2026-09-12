@@ -1,5 +1,5 @@
 type AuthProvider = 'guest' | 'supabase';
-type UserRole = 'admin' | 'topografo' | 'visitante';
+type UserRole = 'admin' | 'topografo' | 'supervisor' | 'visitante';
 type ProjectAccessLevel = 'read' | 'write';
 
 export interface AuthenticatedUser {

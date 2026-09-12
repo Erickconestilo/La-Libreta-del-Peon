@@ -90,7 +90,7 @@ const ChangeLogCard = ({ changeLog }: { changeLog: ChangeLog }) => {
 
 export default function HistoryScreen() {
   const { currentUser } = useCurrentSession();
-  const canViewHistory = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canViewHistory = currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor';
   const { data, errorMessage, isFetching, refetch } = useChangeLogs({
     enabled: canViewHistory,
     limit: 50
@@ -101,7 +101,7 @@ export default function HistoryScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.screenTitle}>Historial</Text>
-        <Text style={styles.screenSubtitle}>Solo admin y topógrafo pueden revisar cambios operativos.</Text>
+        <Text style={styles.screenSubtitle}>Solo las cuentas técnicas autorizadas pueden revisar cambios operativos.</Text>
       </View>
     );
   }

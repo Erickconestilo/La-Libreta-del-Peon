@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-12
 -->
 
 # F5 — Contrato de Mi jornada
@@ -36,12 +36,17 @@ tabla de tareas.
   de una copia sin actualizar.
 - Si la planificación cambia mientras hay lecturas locales pendientes, la app
   conserva los datos y muestra un conflicto de asignación en la ronda.
+- El rol global `supervisor` no usa `Mi jornada`: consulta únicamente las obras
+  permitidas por su membresía activa `read`, sin asignar, preparar ni cerrar
+  rondas.
 
 ## Límites de despliegue
 
-El contrato queda verificado localmente con TypeScript y tests, aplicado en
-Supabase y presente en la release instalada en el Galaxy. Render todavía no
-publica el backend compatible: `/api/v1/health` sigue en `b5de27f` y
-`GET /api/v1/me/journey` responde 404. Hasta activar ese despliegue, la tarjeta
-de Mi jornada muestra el aviso de función pendiente y no debe usarse como
-flujo operativo de campo.
+El contrato de `Mi jornada` queda verificado localmente con TypeScript y tests,
+y sus migraciones de asignación ya están aplicadas en Supabase. El soporte de
+rol `supervisor` se implementa como consulta separada y no consume este
+endpoint. La migración `026_supervisor_role.sql` ya está aplicada y la cuenta
+QA ya está migrada con membresía `read` en `campus-nord`; siguen pendientes el
+despliegue de la rama de rol, la release `versionCode=4` y la validación en
+Galaxy. Este documento no se presenta como evidencia de instalación o
+validación física.

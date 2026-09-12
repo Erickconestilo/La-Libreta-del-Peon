@@ -89,10 +89,10 @@ export const requireAuth = async (request: Request, response: Response, next: Ne
 };
 
 export type RequireRoleMiddleware = ((request: Request, response: Response, next: NextFunction) => Promise<void>) & {
-  allowedRoles: Array<'admin' | 'topografo' | 'visitante'>;
+  allowedRoles: Array<'admin' | 'topografo' | 'supervisor' | 'visitante'>;
 };
 
-export const requireRole = (roles: Array<'admin' | 'topografo' | 'visitante'>): RequireRoleMiddleware => {
+export const requireRole = (roles: Array<'admin' | 'topografo' | 'supervisor' | 'visitante'>): RequireRoleMiddleware => {
   const middleware = async (request: Request, response: Response, next: NextFunction) => {
     try {
       if (!request.user) {

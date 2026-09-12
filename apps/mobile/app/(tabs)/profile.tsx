@@ -56,7 +56,7 @@ export default function ProfileScreen() {
   }, [storedToken]);
 
   useEffect(() => {
-    if (currentUser?.role === 'admin' || currentUser?.role === 'topografo') {
+    if (currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor') {
       setTechnicalEmail((currentUser.email ?? '').trim());
     }
   }, [currentUser]);
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>Acceso técnico</Text>
         <Text style={styles.body}>
-          Solo para admin o topógrafo. Entra con tu cuenta técnica (recomendado) o usa un token como respaldo.
+          Entra con una cuenta técnica autorizada (recomendado) o usa un token como respaldo.
         </Text>
 
         {sessionWarning ? (
@@ -294,15 +294,17 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
-      {currentUser?.role === 'admin' || currentUser?.role === 'topografo' ? (
+      {currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor' ? (
         <View style={styles.card}>
           <Text style={styles.title}>Operación</Text>
           <Text style={styles.body}>
             {currentUser.role === 'admin'
               ? 'Alcance global por rol admin.'
-              : `Obras activas para esta cuenta: ${(projectsQuery.data ?? []).length || 0}.`}
+              : currentUser.role === 'supervisor'
+                ? 'Consulta de solo lectura en las obras asignadas.'
+                : `Obras activas para esta cuenta: ${(projectsQuery.data ?? []).length || 0}.`}
           </Text>
-          {currentUser.role === 'topografo' ? (
+          {currentUser.role === 'topografo' || currentUser.role === 'supervisor' ? (
             <View style={styles.projectList}>
               {projectsQuery.isLoading ? <Text style={styles.caption}>Cargando obras asignadas...</Text> : null}
               {(projectsQuery.data ?? []).map((project) => (
@@ -313,16 +315,20 @@ export default function ProfileScreen() {
               {projectsQuery.errorMessage ? <Text style={styles.error}>{projectsQuery.errorMessage}</Text> : null}
             </View>
           ) : null}
-          <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Abrir parte diario</Text>
-          </Pressable>
+          {currentUser.role !== 'supervisor' ? (
+            <Pressable onPress={() => router.push('/daily-report' as never)} style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>Abrir parte diario</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.caption}>El supervisor consulta los partes recibidos desde cada obra, sin editarlos.</Text>
+          )}
           <Pressable onPress={() => router.push('/history' as never)} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Ver historial de cambios</Text>
           </Pressable>
         </View>
       ) : null}
 
-      {savedSessions.length > 0 ? (
+      {savedSessions.length > 0 && currentUser?.role !== 'supervisor' ? (
         <View style={styles.card}>
           <Text style={styles.title}>Operaciones pendientes</Text>
           <Text style={styles.body}>
@@ -384,6 +390,8 @@ const getRoleTitle = (role: string | undefined) => {
       return 'Administrador';
     case 'topografo':
       return 'Topógrafo';
+    case 'supervisor':
+      return 'Supervisor';
     case 'visitante':
       return 'Modo visitante';
     default:
@@ -397,10 +405,12 @@ const getRoleDescription = (role: string | undefined) => {
       return 'Puedes gestionar guía, revisar historial y editar contenido de campo.';
     case 'topografo':
       return 'Puedes registrar estaciones, fotos y memoria visual de campo.';
+    case 'supervisor':
+      return 'Puedes consultar información recibida de las obras autorizadas sin modificarla.';
     case 'visitante':
       return 'Puedes consultar obras, estacionamientos, mapas y guías sin modificar datos.';
     default:
-      return 'Conecta una cuenta técnica solo si necesitas editar datos.';
+      return 'Conecta una cuenta técnica solo si necesitas acceder a datos protegidos.';
   }
 };
 

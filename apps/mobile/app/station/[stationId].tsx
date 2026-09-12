@@ -50,7 +50,7 @@ export default function StationDetailScreen() {
   const params = useLocalSearchParams<{ stationId: string }>();
   const stationId = Array.isArray(params.stationId) ? params.stationId[0] : params.stationId;
   const { data, errorMessage, isLoading } = useStationDetail(stationId ?? null);
-  const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canViewTechnical = currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor';
   const canEditStation = canWriteProject(currentUser, data?.projectId);
   const canEditPhotos = canEditStation;
   const canUseTeamTools = canViewTechnical;
@@ -701,7 +701,7 @@ export default function StationDetailScreen() {
                   </Pressable>
                 </View>
               ) : (
-                <Text style={styles.caption}>Mensajes internos solo visibles con token de topógrafo/admin.</Text>
+                <Text style={styles.caption}>Los mensajes internos solo están disponibles para cuentas técnicas autorizadas.</Text>
               )}
             </View>
 

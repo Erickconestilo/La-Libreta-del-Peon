@@ -1,4 +1,4 @@
-export type MonitoringAssignmentRole = 'admin' | 'topografo' | 'visitante';
+export type MonitoringAssignmentRole = 'admin' | 'topografo' | 'supervisor' | 'visitante';
 
 export const hasMonitoringAssignmentFields = (input: {
   executionOrder?: number;

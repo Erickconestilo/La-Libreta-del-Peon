@@ -11,6 +11,7 @@ export const canWriteProject = (user: AuthSessionUser | null | undefined, projec
     return true;
   }
 
+  // Supervisor remains read-only even if a membership is misconfigured as write.
   if (user.role !== 'topografo') {
     return false;
   }

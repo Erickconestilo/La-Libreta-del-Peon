@@ -7,6 +7,7 @@ import {
   assertProjectWriteAccess,
   assertTopografoHasScopedResource,
   canActorAccessProject,
+  canActorWriteProject,
   getActorProjectScope
 } from './access-control.js';
 
@@ -41,6 +42,15 @@ const surveyorA = {
   ...surveyorUser,
   id: 'surveyor-a',
   projectIds: [projectA]
+};
+
+const supervisorUser = {
+  authProvider: 'supabase' as const,
+  email: 'supervisor@topofield.local',
+  id: 'supervisor-user',
+  projectIds: [projectA],
+  projectAccess: { [projectA]: 'read' as const },
+  role: 'supervisor' as const
 };
 
 const surveyorB = {
@@ -97,6 +107,18 @@ test('read-only project membership can consult but cannot write', () => {
     () => assertProjectWriteAccess(supervisorMembership, projectA),
     (error: unknown) => error instanceof AppError && error.code === 'READ_ONLY_PROJECT_MEMBERSHIP'
   );
+});
+
+test('supervisor is scoped and always read-only even with a write membership', () => {
+  assert.deepEqual(getActorProjectScope(supervisorUser), [projectA]);
+  assert.doesNotThrow(() => assertProjectAccess(supervisorUser, projectA));
+  assert.throws(
+    () => assertProjectWriteAccess({ ...supervisorUser, projectAccess: { [projectA]: 'write' as const } }, projectA),
+    (error: unknown) => error instanceof AppError && error.code === 'READ_ONLY_ACCESS'
+  );
+  assert.equal(canActorAccessProject(supervisorUser, projectA), true);
+  assert.equal(canActorAccessProject(supervisorUser, projectB), false);
+  assert.equal(canActorWriteProject(supervisorUser, projectA), false);
 });
 
 test('read-only project membership cannot export operational data', () => {

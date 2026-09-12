@@ -24,8 +24,8 @@ observada y entrevistas con profesionales.
 ## Implementado localmente en este bloque
 
 - Permiso de obra `read/write` derivado de la membresía activa. Se mantienen
-  `admin`, `topografo` y `visitante`; el supervisor es una cuenta identificada
-  con rol operativo existente y membresías de solo lectura.
+  `admin`, `topografo` y `visitante`; `supervisor` es un rol global autenticado
+  de consulta, siempre limitado por membresías activas de solo lectura.
 - El backend y el móvil separan consultar de modificar. El backend valida el
   proyecto real del recurso y no confía en un `projectId` inventado por el
   cliente.
@@ -81,18 +81,21 @@ certificada de seguridad.
 
 ## Pendiente antes de declarar el bloque operativo
 
-1. Instalar en el Galaxy la release local `versionCode=3` ya generada y verificada.
+1. Instalar en el Galaxy la release local `versionCode=4` ya generada y verificada.
 2. Validar online/offline: montaje, referencia, captura, incidencia, parte
    parcial, cierre, reinicio, reconexión e idempotencia.
-3. Crear una cuenta supervisora individual con membresía `read` solo después
-   de autorización de Erick y probar lectura contra escritura.
+3. Desplegar la rama que contiene el rol `supervisor`, generar la release
+   local `versionCode=4`, instalarla en Galaxy y probar lectura contra
+   escritura con la cuenta sintética.
 4. Confirmar con datos autorizados el formato de exportación y el canal de
    entrega; no enviar automáticamente por WhatsApp o correo.
 
-Las migraciones `022`, `023` y `024` ya están aplicadas en el proyecto
-Supabase `topofield`. Render sirve el commit `1ca0a84...` y sus rutas F5
-responden `401` sin bearer en vez de `404`. La instalación física no se ha
-podido completar en esta sesión porque `adb devices` no detecta el Galaxy.
+Las migraciones `022`, `023`, `024` y `026` ya están aplicadas en el proyecto
+Supabase `topofield`. La cuenta `supervisor-piloto@topofield.local` tiene rol
+global `supervisor` y una única membresía activa `read` en `campus-nord`.
+Render sirve el commit F5 anterior; todavía falta desplegar el commit que
+contiene el rol supervisor. La instalación física no se ha podido completar
+en esta sesión porque `adb devices` no detecta el Galaxy.
 
 ## Próximas decisiones que no se deben adivinar
 
@@ -105,9 +108,10 @@ podido completar en esta sesión porque `adb devices` no detecta el Galaxy.
 ## Evidencia técnica de este bloque
 
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
-backend `71/71` tests, móvil `51/51` tests y `npm run docs:check` sin errores.
-Además, Render devuelve el commit F5 esperado y la release Android `versionCode=3`
-está firmada y verificada. Estos resultados no sustituyen la validación física
+backend `74/74` tests, móvil `52/52` tests y `npm run docs:check` sin errores.
+La fuente Android queda en `versionCode=4`; la release Android `versionCode=3`
+anterior está firmada y verificada, mientras la v4 queda pendiente de generar.
+Estos resultados no sustituyen la validación física
 en Galaxy. La entrega privada de fotos sigue pendiente: las
 lecturas exponen el `public_url` heredado del contrato actual y este bloque no
 lo convierte en una URL firmada ni modifica Storage.

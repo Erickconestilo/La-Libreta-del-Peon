@@ -56,6 +56,10 @@ export const assertProjectWriteAccess = (
     return;
   }
 
+  if (user.role === 'supervisor') {
+    throw new AppError(forbiddenMessage, 403, 'READ_ONLY_ACCESS');
+  }
+
   if (typeof projectId === 'string' && user.projectAccess?.[projectId] === 'read') {
     throw new AppError(forbiddenMessage, 403, 'READ_ONLY_PROJECT_MEMBERSHIP');
   }

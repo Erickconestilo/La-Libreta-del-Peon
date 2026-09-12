@@ -11,7 +11,7 @@ import { validateUuidParam } from '../middleware/validate-uuid.js';
 export const prismsRouter = Router();
 
 prismsRouter.post('/reconcile-stations', requireAuth, requireRole(['admin']), reconcilePrismObservationsController);
-prismsRouter.get('/coverage/:groupCode', requireAuth, requireRole(['admin', 'topografo', 'visitante']), getPrismCoverageController);
+prismsRouter.get('/coverage/:groupCode', requireAuth, requireRole(['admin', 'topografo', 'supervisor', 'visitante']), getPrismCoverageController);
 prismsRouter.patch(
   '/:prismId/photo',
   requireAuth,

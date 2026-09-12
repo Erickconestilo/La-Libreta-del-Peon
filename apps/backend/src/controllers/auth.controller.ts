@@ -15,7 +15,7 @@ type AuthSessionUser = {
   id: string;
   isActive: boolean | null;
   projectAccess?: Record<string, ProjectAccessLevel> | null;
-  role: 'admin' | 'topografo' | 'visitante';
+  role: 'admin' | 'topografo' | 'supervisor' | 'visitante';
 };
 
 type ApiAuthResponse = {
@@ -29,7 +29,7 @@ type ApiAuthResponse = {
 
 const ensureTechnicalRole = (user: AuthSessionUser) => {
   if (user.role === 'visitante') {
-    throw new AppError('This endpoint is only available for admin or topógrafo', 403, 'TECHNICAL_ROLE_REQUIRED');
+      throw new AppError('This endpoint is only available for an authenticated technical account', 403, 'TECHNICAL_ROLE_REQUIRED');
   }
 
   return user;

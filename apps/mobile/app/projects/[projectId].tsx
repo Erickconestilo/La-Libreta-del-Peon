@@ -32,7 +32,7 @@ export default function ProjectDetailScreen() {
     uploadProjectPhoto
   } = useProjectPhotoMutations(projectId ?? null);
   const canEditProject = canWriteProject(currentUser, projectId);
-  const isReadOnlyProject = currentUser?.role === 'topografo' && currentUser.projectAccess?.[projectId ?? ''] === 'read';
+  const isReadOnlyProject = currentUser?.role === 'supervisor' || (currentUser?.role === 'topografo' && currentUser.projectAccess?.[projectId ?? ''] === 'read');
   const project = useMemo(
     () => (projects ?? []).find((item) => item.id === projectId),
     [projectId, projects]

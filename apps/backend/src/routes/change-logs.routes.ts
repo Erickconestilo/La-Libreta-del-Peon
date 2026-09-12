@@ -9,7 +9,7 @@ export const changeLogsRouter = Router();
 changeLogsRouter.get(
   '/',
   requireAuth,
-  requireRole(['admin', 'topografo']),
+  requireRole(['admin', 'topografo', 'supervisor']),
   validateOptionalUuidQuery('changedBy'),
   validateOptionalUuidQuery('entityId'),
   listChangeLogsController
