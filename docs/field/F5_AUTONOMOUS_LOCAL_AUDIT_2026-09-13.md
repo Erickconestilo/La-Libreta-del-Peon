@@ -94,6 +94,15 @@ datos ya validados y no expone una ruta de ejecución de UUID v3/v5/v6 con
 buffers controlados por el usuario; se mantiene la dependencia actual hasta
 probar una sustitución compatible de `exceljs`.
 
+La auditoria directa, con y sin dependencias de desarrollo, devuelve el mismo
+resultado: `2 moderate`, `0 high`, `0 critical`; el remedio disponible elimina
+paquetes transitivos de Express durante el dry-run y propone degradar
+`exceljs`, por lo que no se aplico. La vulnerabilidad afectada esta en
+`uuid@8.3.2` anidado bajo `exceljs`; la unica referencia de ExcelJS localizada
+usa `uuid.v4`, no las variantes v3/v5/v6 que reciben un `Buffer` segun el aviso.
+El riesgo no se ignora: queda abierto sustituir o actualizar ExcelJS con una
+ruta compatible y volver a auditar antes del despliegue publico.
+
 ## Criterio de lectura
 
 El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma
