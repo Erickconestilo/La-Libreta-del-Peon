@@ -8,6 +8,7 @@ import { ChoiceChip, ThresholdPill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useCreateInstrumentReading, useMonitoringRound, useReadingHistory } from '@/hooks/use-monitoring';
 import { canWriteProject } from '@/lib/field-access';
+import { getReadingCaptureCopy } from '@/lib/monitoring-reading-form';
 import {
   clearMonitoringReadingDraft,
   getMonitoringReadingDraft,
@@ -33,6 +34,7 @@ export default function ReadingCaptureScreen() {
   }, [params.instrumentType]);
   const instrument = MONITORING_INSTRUMENTS.find((item) => item.value === instrumentType);
   const isPhotoWitness = instrumentType === 'fissure_witness';
+  const captureCopy = getReadingCaptureCopy(instrumentType);
   const canEdit = canWriteProject(currentUser, round?.projectId);
   const { data: history = [], errorMessage: historyError, isLoading: isHistoryLoading } = useReadingHistory(controlPointId ?? null, instrumentType);
   const { errorMessage, isCreating, pendingCount, submitReading } = useCreateInstrumentReading({ controlPointId: controlPointId ?? null, roundId: roundId ?? null, roundPointId: roundPointId ?? null });
@@ -180,7 +182,7 @@ export default function ReadingCaptureScreen() {
         measuredAt: new Date().toISOString(),
         notes: notes.trim() || null,
         rawPayload,
-        unit: instrumentType === 'potentiometer' ? potUnit.trim() : unit.trim() || null,
+        unit: isPhotoWitness ? null : instrumentType === 'potentiometer' ? potUnit.trim() : unit.trim() || null,
         valueNumeric: instrumentType === 'potentiometer' ? null : valueNumeric,
         valueText: isPhotoWitness ? 'Evidencia fotográfica' : instrumentType === 'potentiometer' ? 'Componentes de potenciómetro' : valueText,
         photo
@@ -235,12 +237,11 @@ export default function ReadingCaptureScreen() {
             <TextInput onChangeText={setPotPosition} placeholder="Posición o referencia" placeholderTextColor="#64748b" style={styles.input} value={potPosition} />
             <Text style={styles.protocolNote}>Se guardan los tres pares tal como se observan. No se convierte a desplazamiento.</Text>
           </View> : null}
-          <Text style={styles.label}>Unidad</Text>
-          {instrumentType !== 'potentiometer' ? <TextInput autoCapitalize="none" onChangeText={setUnit} placeholder="mm, m, bar..." placeholderTextColor="#64748b" style={styles.input} value={unit} /> : <Text style={styles.body}>{potUnit || 'Sin unidad'}</Text>}
+          {captureCopy.showsUnit ? <><Text style={styles.label}>Unidad</Text>{instrumentType !== 'potentiometer' ? <TextInput autoCapitalize="none" onChangeText={setUnit} placeholder="mm, m, bar..." placeholderTextColor="#64748b" style={styles.input} value={unit} /> : <Text style={styles.body}>{potUnit || 'Sin unidad'}</Text>}</> : null}
           <Text style={styles.label}>Notas</Text>
           <TextInput multiline onChangeText={setNotes} placeholder="Condición, incidencia o referencia de medida" placeholderTextColor="#64748b" style={[styles.input, styles.notes]} value={notes} />
-          <Text style={styles.label}>Foto opcional</Text>
-          <Text style={styles.caption}>El borrador conserva los campos de texto. La foto se conserva de forma segura al pulsar Guardar lectura.</Text>
+          <Text style={styles.label}>{captureCopy.photoLabel}</Text>
+          <Text style={styles.caption}>{captureCopy.photoCaption}</Text>
           {photo ? <View style={styles.photoReady}><View><Text style={styles.photoReadyTitle}>Foto preparada</Text><Text style={styles.body}>Se conservará y se sincronizará junto a la lectura.</Text></View><Pressable accessibilityLabel="Quitar foto" onPress={() => void handleRemovePhoto()} style={styles.photoRemove}><Text style={styles.photoRemoveText}>Quitar</Text></Pressable></View> : <View style={styles.photoActions}><Pressable accessibilityLabel="Hacer foto" onPress={() => void handlePickPhoto('camera')} style={styles.photoAction}><Text style={styles.photoActionText}>Cámara</Text></Pressable><Pressable accessibilityLabel="Elegir foto de galería" onPress={() => void handlePickPhoto('library')} style={styles.photoAction}><Text style={styles.photoActionText}>Galería</Text></Pressable></View>}
         </View> : null}
         {canEdit ? <View style={styles.offlineCard}><Text style={styles.offlineTitle}>Guardado seguro en campo</Text><Text style={styles.body}>Si no hay red, la lectura queda encolada y se enviará con el mismo identificador al recuperar conexión.</Text>{pendingCount > 0 ? <Text style={styles.pendingText}>{pendingCount} cambio{pendingCount === 1 ? '' : 's'} pendiente{pendingCount === 1 ? '' : 's'} de sincronizar</Text> : null}</View> : null}
