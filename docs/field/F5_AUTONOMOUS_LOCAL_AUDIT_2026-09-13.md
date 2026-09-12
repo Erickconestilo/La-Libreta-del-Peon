@@ -71,6 +71,12 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     La regresión está en
     `apps/mobile/lib/__tests__/monitoring-reading-form.test.ts`.
 
+14. El sincronizador offline de evidencias de montaje omitía el
+    `clientRequestId` que exige `mountingEvidenceSchema`. Después de recuperar
+    red, esa evidencia podía quedar en `error` aunque la foto y la visita
+    estuvieran bien encoladas. `syncMountingEvidence` ahora reenvía el UUID
+    original y la regresión comprueba el cuerpo del POST.
+
 ## Evidencia local
 
 ```text

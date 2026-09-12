@@ -151,6 +151,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - La migración local `028_reading_attachment_idempotency.sql` está preparada,
   con comprobación de duplicados históricos e índice único para carreras de
   adjuntos; no se ha aplicado remotamente.
+- El reintento offline de evidencias de montaje conserva ahora el
+  `clientRequestId` exigido por el backend; la regresión está en
+  `apps/mobile/lib/offline/__tests__/sync-handlers.test.ts`.
 - La regresión móvil de `field-access` cubre el estado de carga y el bloqueo
   explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
   posterior dejó `18` suites y `78` tests móviles en verde. El mismo contrato
