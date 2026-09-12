@@ -29,6 +29,14 @@ export const createReadingPhotoStoragePath = (
   return `readings/${readingId}/${uploadId}.${getPhotoExtension(contentType)}`;
 };
 
+export const createMountingVisitPhotoStoragePath = (
+  visitId: string,
+  uploadId: string,
+  contentType: PhotoContentType
+) => {
+  return `mounting-visits/${visitId}/${uploadId}.${getPhotoExtension(contentType)}`;
+};
+
 export const createSignedPhotoUpload = async (storagePath: string) => {
   const { data, error } = await supabaseAdmin.storage
     .from(PHOTO_BUCKET)

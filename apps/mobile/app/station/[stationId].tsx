@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -497,6 +498,14 @@ export default function StationDetailScreen() {
                 <Text style={styles.caption}>Solo admin y topógrafo pueden cambiar fotos.</Text>
               )}
             </View>
+
+            <Pressable
+              onPress={() => router.push(`/station/${stationId}/mounting` as never)}
+              style={styles.linkButton}
+            >
+              <MaterialIcons color={colors.background} name="photo-library" size={20} />
+              <Text style={styles.linkButtonText}>Visitas de montaje</Text>
+            </Pressable>
 
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Memoria visual del estacionamiento</Text>

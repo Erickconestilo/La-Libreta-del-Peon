@@ -13,5 +13,6 @@ import '../models/monitoring.model.test.js';
 import '../routes/route-role-audit.test.js';
 import '../scripts/password-generator.test.js';
 import '../utils/monitoring-validation.test.js';
+import '../utils/mounting-validation.test.js';
 import '../utils/photo-validation.test.js';
 import '../utils/station-messages-validation.test.js';

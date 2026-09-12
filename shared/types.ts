@@ -11,6 +11,8 @@ export type DeviceType = 'leica' | 'trimble';
 export type ReadingSource = 'gps_offline' | 'mobile_network';
 export type StationMapStatus = 'approximate' | 'verified' | 'resolved';
 export type StationPhotoKind = 'general' | 'point' | 'reference' | 'access' | 'obstacle' | 'other';
+export type MountingVisitStatus = 'draft' | 'completed' | 'blocked';
+export type MountingEvidenceKind = 'general' | 'prism' | 'reference' | 'access' | 'other';
 export type PrismStatus = 'active' | 'missing' | 'replaced' | 'inactive';
 export type PrismObservationSourceFormat = 'trimble_csv' | 'trimble_rpd' | 'leica_txt';
 export type InstrumentType =
@@ -229,6 +231,57 @@ export interface StationPhoto {
   isPrimary: boolean;
 }
 
+export interface MountingEvidence {
+  id: string;
+  visitId: string;
+  stationId: string;
+  prismId: string | null;
+  kind: MountingEvidenceKind;
+  storagePath: string;
+  publicUrl: string;
+  title: string | null;
+  notes: string | null;
+  positionX: number | null;
+  positionY: number | null;
+  clientRequestId: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+export interface MountingVisit {
+  id: string;
+  stationId: string;
+  projectId: string;
+  visitedAt: string;
+  status: MountingVisitStatus;
+  notes: string | null;
+  changeSummary: string | null;
+  recordedBy: string;
+  clientRequestId: string;
+  createdAt: string;
+  updatedAt: string;
+  evidence: MountingEvidence[];
+}
+
+export interface CreateMountingVisitInput {
+  visitedAt?: string;
+  status?: MountingVisitStatus;
+  notes?: string | null;
+  changeSummary?: string | null;
+  clientRequestId: string;
+}
+
+export interface CreateMountingEvidenceInput {
+  prismId?: string | null;
+  kind: MountingEvidenceKind;
+  storagePath: string;
+  title?: string | null;
+  notes?: string | null;
+  positionX?: number | null;
+  positionY?: number | null;
+  clientRequestId: string;
+}
+
 export interface Prism {
   id: string;
   stationId: string | null;
@@ -302,7 +355,7 @@ export interface ChangeLog {
   changedAt: string;
 }
 
-export type PhotoUploadEntityType = 'station' | 'project' | 'prism';
+export type PhotoUploadEntityType = 'station' | 'project' | 'prism' | 'reading' | 'mounting_visit';
 export type PhotoContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 export interface SignedPhotoUpload {

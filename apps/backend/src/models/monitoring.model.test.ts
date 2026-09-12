@@ -8,6 +8,7 @@ import {
   mapInstrumentReadingContextRow,
   toIsoTimestamp
 } from './monitoring.model.js';
+import { buildMountingVisitStationScope } from './mounting-visits.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -74,5 +75,15 @@ test('terminal rounds cannot be changed', () => {
   assert.throws(
     () => assertMonitoringRoundStatusTransition('closed', 'cancelled', false),
     (error: unknown) => error instanceof AppError && error.code === 'ROUND_TERMINAL'
+  );
+});
+
+test('mounting visits use the station project as their tenant scope', () => {
+  assert.deepEqual(
+    buildMountingVisitStationScope(['bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'], 2),
+    {
+      clause: 'AND s.project_id = ANY($2::uuid[])',
+      params: [['bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']]
+    }
   );
 });

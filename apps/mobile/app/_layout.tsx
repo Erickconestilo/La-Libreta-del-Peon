@@ -140,6 +140,12 @@ function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boo
                 }}
               />
               <Stack.Screen
+                name="station/[stationId]/mounting"
+                options={{
+                  title: 'Visitas de montaje'
+                }}
+              />
+              <Stack.Screen
                 name="guide/[manualId]"
                 options={{
                   title: 'Guías'

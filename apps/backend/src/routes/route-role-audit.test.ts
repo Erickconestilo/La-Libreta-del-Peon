@@ -6,6 +6,7 @@ import type { Router } from 'express';
 import { controlPointsRouter, roundPointsRouter, roundsRouter } from './monitoring.routes.js';
 import { journeyRouter } from './journey.routes.js';
 import { projectsRouter } from './projects.routes.js';
+import { stationsRouter } from './stations.routes.js';
 import type { RequireRoleMiddleware } from '../middleware/auth.js';
 
 /**
@@ -111,4 +112,20 @@ test('read-only monitoring routes allow supervisor while write routes do not', (
 test('personal journey route excludes visitor', () => {
   const allowedRoles = findAllowedRoles(journeyRouter, 'get', '/');
   assert.deepEqual(allowedRoles, ['admin', 'topografo']);
+});
+
+test('mounting visit routes separate consultation from evidence writes', () => {
+  assert.deepEqual(findAllowedRoles(stationsRouter, 'get', '/:stationId/mounting-visits'), [
+    'admin',
+    'topografo',
+    'supervisor'
+  ]);
+  assert.deepEqual(findAllowedRoles(stationsRouter, 'post', '/:stationId/mounting-visits'), [
+    'admin',
+    'topografo'
+  ]);
+  assert.deepEqual(findAllowedRoles(stationsRouter, 'post', '/:stationId/mounting-visits/:visitId/evidence'), [
+    'admin',
+    'topografo'
+  ]);
 });
