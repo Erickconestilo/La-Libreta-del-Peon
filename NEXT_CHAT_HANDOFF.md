@@ -20,8 +20,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   CSV/XLSX y regresión de exportación).
 - Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
   regresión de migración SQLite 005).
-- GitHub `main` verificado por API tras fusionar la PR #15:
-  `5e5f51cfe4702fc81eb67dfc264b6401d9002d94`.
+- GitHub `main` verificado por API tras fusionar la PR #16:
+  `bae03f2968993deacc363793860302a7107deda8`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
 
