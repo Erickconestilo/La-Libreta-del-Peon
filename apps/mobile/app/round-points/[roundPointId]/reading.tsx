@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,6 +8,11 @@ import { ChoiceChip, ThresholdPill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { MONITORING_INSTRUMENTS, type MonitoringInstrumentType, useCreateInstrumentReading, useMonitoringRound, useReadingHistory } from '@/hooks/use-monitoring';
 import { canWriteProject } from '@/lib/field-access';
+import {
+  clearMonitoringReadingDraft,
+  getMonitoringReadingDraft,
+  saveMonitoringReadingDraft
+} from '@/lib/offline/monitoring-reading-drafts';
 import { deletePreparedPhoto, pickAndCompressPhoto, type PhotoSource, type PreparedPhoto } from '@/lib/photo-upload';
 import { colors, spacing, typography } from '@/src/theme';
 
@@ -20,7 +25,7 @@ export default function ReadingCaptureScreen() {
   const roundId = Array.isArray(params.roundId) ? params.roundId[0] : params.roundId;
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { currentUser } = useCurrentSession();
+  const { activeSessionId, currentUser } = useCurrentSession();
   const { data: round, isLoading: isRoundLoading } = useMonitoringRound(roundId ?? null);
   const instrumentType = useMemo<MonitoringInstrumentType>(() => {
     const candidate = Array.isArray(params.instrumentType) ? params.instrumentType[0] : params.instrumentType;
@@ -46,6 +51,70 @@ export default function ReadingCaptureScreen() {
   const [potPosition, setPotPosition] = useState('');
   const [photo, setPhoto] = useState<PreparedPhoto | null>(null);
   const [feedback, setFeedback] = useState<{ autoConfirmed: boolean; delta: number | null; photoPending: boolean; status: CalculatedThresholdStatus; type: 'synced' | 'queued' } | null>(null);
+  const [isDraftReady, setIsDraftReady] = useState(false);
+  const [draftPersistenceEnabled, setDraftPersistenceEnabled] = useState(true);
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'restored' | 'saved'>('idle');
+  const draftSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setIsDraftReady(false);
+    setDraftPersistenceEnabled(true);
+    setDraftStatus('idle');
+
+    if (!activeSessionId || !roundPointId) {
+      setIsDraftReady(true);
+      return;
+    }
+
+    const storedDraft = getMonitoringReadingDraft(activeSessionId, roundPointId);
+
+    if (storedDraft) {
+      setMode(storedDraft.draft.mode);
+      setNumericValue(storedDraft.draft.numericValue);
+      setTextValue(storedDraft.draft.textValue);
+      setUnit(storedDraft.draft.unit);
+      setNotes(storedDraft.draft.notes);
+      setPotValues(storedDraft.draft.potValues);
+      setPotUnit(storedDraft.draft.potUnit);
+      setPotScale(storedDraft.draft.potScale);
+      setPotPosition(storedDraft.draft.potPosition);
+      setDraftStatus('restored');
+    }
+
+    setIsDraftReady(true);
+  }, [activeSessionId, roundPointId]);
+
+  useEffect(() => {
+    if (!isDraftReady || !draftPersistenceEnabled || !activeSessionId || !roundPointId) {
+      return;
+    }
+
+    if (draftSaveTimer.current) {
+      clearTimeout(draftSaveTimer.current);
+    }
+
+    draftSaveTimer.current = setTimeout(() => {
+      saveMonitoringReadingDraft(activeSessionId, roundPointId, {
+        mode,
+        notes,
+        numericValue,
+        potPosition,
+        potScale,
+        potUnit,
+        potValues,
+        textValue,
+        unit
+      });
+      setDraftStatus('saved');
+    }, 250);
+
+    return () => {
+      if (draftSaveTimer.current) {
+        clearTimeout(draftSaveTimer.current);
+        draftSaveTimer.current = null;
+      }
+    };
+  }, [activeSessionId, draftPersistenceEnabled, isDraftReady, mode, notes, numericValue, potPosition, potScale, potUnit, potValues, roundPointId, textValue, unit]);
 
   const handlePickPhoto = async (source: PhotoSource) => {
     try {
@@ -118,12 +187,22 @@ export default function ReadingCaptureScreen() {
       });
 
       if (result.mode === 'queued') {
+        if (activeSessionId && roundPointId) {
+          clearMonitoringReadingDraft(activeSessionId, roundPointId);
+        }
+        setDraftPersistenceEnabled(false);
         setPhoto(null);
+        setDraftStatus('idle');
         setFeedback({ autoConfirmed: false, delta: null, photoPending: result.photoPending, status: 'unknown', type: 'queued' });
         return;
       }
 
+      if (activeSessionId && roundPointId) {
+        clearMonitoringReadingDraft(activeSessionId, roundPointId);
+      }
+      setDraftPersistenceEnabled(false);
       setPhoto(null);
+      setDraftStatus('idle');
       setFeedback({
         autoConfirmed: result.response.autoConfirmed,
         delta: result.response.delta,
@@ -141,6 +220,7 @@ export default function ReadingCaptureScreen() {
       <Stack.Screen options={{ title: 'Registrar lectura' }} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 32 + insets.bottom }]} keyboardShouldPersistTaps="handled" style={styles.container}>
         <View style={styles.hero}><Text style={styles.eyebrow}>{instrument?.label ?? 'Instrumento'}</Text><Text style={styles.title}>{Array.isArray(params.code) ? params.code[0] : params.code}</Text><Text style={styles.body}>{Array.isArray(params.name) ? params.name[0] : params.name || 'Punto de control'}</Text></View>
+        {isDraftReady && draftStatus === 'restored' ? <View style={styles.draftNotice}><Text style={styles.draftNoticeText}>Borrador recuperado de este punto. Revisa los datos antes de guardar.</Text></View> : null}
         {!isRoundLoading && !canEdit ? <View style={styles.readOnlyCard}><Text style={styles.readOnlyTitle}>Consulta supervisora</Text><Text style={styles.body}>Esta membresía permite consultar la lectura recibida por el servidor, pero no modificarla ni crear otra.</Text></View> : null}
         {!isRoundLoading && canEdit ? <View style={styles.card}>
           {isPhotoWitness ? <Text style={styles.protocolNote}>Registro fotográfico del testigo. La imagen y la fecha son la evidencia; no se inventa una medida.</Text> : <><Text style={styles.label}>Tipo de valor</Text><View style={styles.chips}><ChoiceChip label="Número" onPress={() => setMode('numeric')} selected={mode === 'numeric'} /><ChoiceChip label="Texto" onPress={() => setMode('text')} selected={mode === 'text'} /></View>{mode === 'numeric' ? <><Text style={styles.label}>Lectura</Text><TextInput keyboardType="decimal-pad" onChangeText={setNumericValue} placeholder="Ej. 2,40" placeholderTextColor="#64748b" style={styles.input} value={numericValue} /></> : <><Text style={styles.label}>Lectura</Text><TextInput onChangeText={setTextValue} placeholder="Ej. estable, seco, sin acceso" placeholderTextColor="#64748b" style={styles.input} value={textValue} /></>}</>}
@@ -160,6 +240,7 @@ export default function ReadingCaptureScreen() {
           <Text style={styles.label}>Notas</Text>
           <TextInput multiline onChangeText={setNotes} placeholder="Condición, incidencia o referencia de medida" placeholderTextColor="#64748b" style={[styles.input, styles.notes]} value={notes} />
           <Text style={styles.label}>Foto opcional</Text>
+          <Text style={styles.caption}>El borrador conserva los campos de texto. La foto se conserva de forma segura al pulsar Guardar lectura.</Text>
           {photo ? <View style={styles.photoReady}><View><Text style={styles.photoReadyTitle}>Foto preparada</Text><Text style={styles.body}>Se conservará y se sincronizará junto a la lectura.</Text></View><Pressable accessibilityLabel="Quitar foto" onPress={() => void handleRemovePhoto()} style={styles.photoRemove}><Text style={styles.photoRemoveText}>Quitar</Text></Pressable></View> : <View style={styles.photoActions}><Pressable accessibilityLabel="Hacer foto" onPress={() => void handlePickPhoto('camera')} style={styles.photoAction}><Text style={styles.photoActionText}>Cámara</Text></Pressable><Pressable accessibilityLabel="Elegir foto de galería" onPress={() => void handlePickPhoto('library')} style={styles.photoAction}><Text style={styles.photoActionText}>Galería</Text></Pressable></View>}
         </View> : null}
         {canEdit ? <View style={styles.offlineCard}><Text style={styles.offlineTitle}>Guardado seguro en campo</Text><Text style={styles.body}>Si no hay red, la lectura queda encolada y se enviará con el mismo identificador al recuperar conexión.</Text>{pendingCount > 0 ? <Text style={styles.pendingText}>{pendingCount} cambio{pendingCount === 1 ? '' : 's'} pendiente{pendingCount === 1 ? '' : 's'} de sincronizar</Text> : null}</View> : null}
@@ -176,6 +257,7 @@ export default function ReadingCaptureScreen() {
 
 const styles = StyleSheet.create({
   body: { color: colors.textSecondary, fontSize: typography.fontSizeBody - 1, lineHeight: 21 },
+  caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[3] },
   attachmentImage: { backgroundColor: '#111827', borderRadius: 6, height: 72, width: 72 },
   attachmentLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
@@ -185,6 +267,8 @@ const styles = StyleSheet.create({
   container: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing[2], padding: spacing[3] },
   disabled: { opacity: 0.55 },
+  draftNotice: { backgroundColor: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.45)', borderRadius: 8, borderWidth: 1, padding: spacing[2] },
+  draftNoticeText: { color: '#7dd3fc', fontSize: 13, fontWeight: '800', lineHeight: 19 },
   error: { backgroundColor: colors.card, borderLeftColor: colors.red, borderLeftWidth: 3, padding: spacing[3] },
   errorTitle: { color: colors.red, fontSize: typography.fontSizeBody, fontWeight: '800' },
   errorText: { color: colors.red, fontSize: 13, fontWeight: '700', lineHeight: 20 },

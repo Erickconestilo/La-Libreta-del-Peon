@@ -48,6 +48,7 @@ export async function applyMigrations(): Promise<void> {
     { version: 5 },
     { version: 6 },
     { version: 7 },
+    { version: 8 },
   ];
 
   // Apply pending migrations
@@ -83,6 +84,10 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 7) {
           executeMigration007(db);
+        }
+
+        if (migration.version === 8) {
+          executeMigration008(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -271,6 +276,25 @@ function executeMigration007(db: SQLiteDatabase): void {
     );
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (7);
+  `);
+}
+
+/**
+ * Borradores de captura separados por cuenta y punto de control.
+ * Solo contienen campos de formulario; las fotos siguen el flujo persistente
+ * del outbox y nunca se guardan como base64 en SQLite.
+ */
+function executeMigration008(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS monitoring_reading_drafts (
+      session_id TEXT NOT NULL,
+      round_point_id TEXT NOT NULL,
+      draft_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (session_id, round_point_id)
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (8);
   `);
 }
 
