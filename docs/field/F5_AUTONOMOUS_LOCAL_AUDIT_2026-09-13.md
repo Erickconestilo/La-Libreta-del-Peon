@@ -84,6 +84,12 @@ la prueba fisica, la jornada observada ni las entrevistas profesionales.
     `clientRequestId` y después aplica el `PATCH`. La creación online también
     se guarda en caché para que un corte inmediato de red no pierda el contexto.
 
+16. Si una visita creada offline se marcaba como realizada antes de añadir una
+    foto, el replay de la evidencia podía reutilizar `status: completed` en el
+    POST de creación. El backend solo acepta `draft` al crear; ahora ese replay
+    fuerza `draft` y deja el estado terminal al PATCH encolado. La regresión
+    comprueba el cuerpo enviado y evita un error 422 en ese orden de trabajo.
+
 ## Evidencia local
 
 ```text

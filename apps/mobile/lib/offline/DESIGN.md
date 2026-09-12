@@ -1,7 +1,7 @@
 # Diseño del Motor Offline — TopoField Fase 2
 
 **Fecha:** 2026-07-26
-**Última verificación:** 2026-09-12
+**Última verificación:** 2026-09-13
 **Estado:** IMPLEMENTADO; FASE 2 VALIDADA EN GALAXY, AISLAMIENTO DE CACHÉ Y OUTBOX POR SESIÓN VERIFICADOS LOCALMENTE
 **Referencia:** MEMORIA.md §8, Plan Maestro Fase 2
 
@@ -224,6 +224,21 @@ SQLite. Al arrancar el sync engine, cualquier elemento que quedara en `syncing`
 por una interrupción del proceso vuelve a `pending`; los endpoints reutilizan
 `clientRequestId`, por lo que repetir una petición parcialmente completada no
 crea duplicados.
+
+### Visitas de montaje y cambios de estado
+
+Una visita de montaje creada sin conexión puede recibir después un cambio de
+estado o una evidencia antes de recuperar red. La cola conserva la identidad
+de la visita mediante su `clientRequestId`; al sincronizar, primero recrea la
+visita idempotentemente como `draft` y después aplica el estado final mediante
+`PATCH`. Esto respeta el contrato del backend, que no permite crear una visita
+directamente como `completed` o `blocked`, y evita que una evidencia posterior
+falle al intentar revalidar una creación con estado terminal.
+
+Los cambios locales se guardan en la caché por sesión y estación. La foto
+permanece en el directorio persistente de pendientes hasta que el adjunto
+queda confirmado; repetir el POST por una interrupción no debe duplicar la
+visita ni la evidencia.
 
 ---
 
