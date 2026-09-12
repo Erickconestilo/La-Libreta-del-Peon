@@ -61,8 +61,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 4. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 5. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-6. Diseñar después de F5 visitas de montaje, croquis fotográfico e instrumentos
-   cuyos procedimientos estén confirmados.
+6. Validar en campo la pantalla local de visitas de montaje; la migración
+   `027_station_mounting_visits.sql` y sus rutas están preparadas, pero no
+   aplicadas ni desplegadas. Después decidir el croquis fotográfico según
+   evidencia y no según una demo.
 7. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
 
 ## Cambios locales que no se deben mezclar
@@ -84,6 +86,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   actualizaciones optimistas se limitan a la cuenta activa. El contrato
   `getSessionCacheKey` está cubierto por una regresión en `dedf77b`; la
   validación física de respuestas tardías entre cuentas sigue pendiente.
+- La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
+  append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
+  montaje`. No se ha aplicado la migración ni se ha desplegado el endpoint;
+  la validación física y la comprobación de almacenamiento quedan pendientes.
 
 ## Comandos de verificación
 

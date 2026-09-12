@@ -27,7 +27,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor, release v4 y corrección de adjuntos ya validados/publicados** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación y paridad local CSV/XLSX implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
-| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local inicial:** testigo fotográfico, fisurómetro digital, potenciómetro y parte de zona; pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
+| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; migración 027 preparada, no aplicada, y pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
 
@@ -130,6 +130,29 @@ protegidas y las actualizaciones optimistas. Así, una respuesta que llegue
 después de cambiar de cuenta no puede repoblar la misma clave con datos de otra
 obra. La regresión móvil queda en `14` suites y `64` tests; falta observarlo
 con tráfico real en el Galaxy. El código quedó en `dedf77b`.
+
+### F7 — memoria visual de montaje preparada localmente (12-09-2026)
+
+La rama incorpora una primera separación entre la galería histórica de una
+estación y las visitas de montaje. Una visita conserva fecha, estado, notas y
+el resumen de cambios; sus evidencias tienen `clientRequestId`, tipo, foto,
+notas y posición relativa opcional. Esto permite registrar una foto general o
+de prisma sin sobrescribir visitas anteriores y deja el contrato listo para
+un croquis fotográfico posterior.
+
+La migración `027_station_mounting_visits.sql` está preparada con RLS de
+denegación directa, índices y claves de idempotencia, pero no está aplicada
+en Supabase. La API exige que la estación pertenezca a una obra accesible,
+que el actor tenga permiso `write`, que una evidencia use la ruta exacta de
+su visita y que un prisma opcional pertenezca a la misma obra. El supervisor
+puede consultar visitas a través de la ruta protegida, pero no crear visitas
+ni evidencias. La pantalla móvil `Visitas de montaje` ya permite abrir una
+visita, añadir fotos desde cámara/galería y consultar el historial.
+
+Este bloque es implementación local, no validación de campo: siguen
+pendientes aplicar la migración con autorización, desplegar el contrato y
+observar si los códigos manuales y la posición relativa resuelven una tarea
+repetida antes de ampliar el croquis.
 
 ## Decisiones tomadas el 02-08-2026 (criterio de ingeniería)
 
