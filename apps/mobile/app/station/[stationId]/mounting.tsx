@@ -8,6 +8,12 @@ import { useCurrentSession } from '@/hooks/use-auth';
 import { useMountingVisitMutations, useMountingVisits, MOUNTING_EVIDENCE_KINDS } from '@/hooks/use-mounting-visits';
 import { useStationDetail } from '@/hooks/use-stations';
 import { canWriteProject } from '@/lib/field-access';
+import {
+  getMountingPhotoMarkerPosition,
+  MOUNTING_PHOTO_ANCHORS,
+  MOUNTING_PHOTO_SIZE,
+  type MountingPhotoAnchorKey
+} from '@/lib/mounting-visual';
 import type { MountingEvidenceKind, MountingVisitStatus } from '@shared/types';
 import { colors, spacing, typography } from '@/src/theme';
 
@@ -30,8 +36,10 @@ export default function MountingVisitsScreen() {
   const [title, setTitle] = useState('');
   const [evidenceNotes, setEvidenceNotes] = useState('');
   const [kind, setKind] = useState<MountingEvidenceKind>('general');
+  const [photoAnchorKey, setPhotoAnchorKey] = useState<MountingPhotoAnchorKey | null>(null);
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const canEdit = canWriteProject(currentUser, station?.projectId);
+  const selectedPhotoAnchor = MOUNTING_PHOTO_ANCHORS.find((anchor) => anchor.key === photoAnchorKey) ?? null;
 
   const handleCreateVisit = async () => {
     const visit = await createVisit({
@@ -54,12 +62,15 @@ export default function MountingVisitsScreen() {
     await uploadEvidence({
       kind,
       notes: evidenceNotes.trim() || null,
+      positionX: selectedPhotoAnchor?.x ?? null,
+      positionY: selectedPhotoAnchor?.y ?? null,
       source,
       title: title.trim() || null,
       visitId: activeVisitId
     });
     setTitle('');
     setEvidenceNotes('');
+    setPhotoAnchorKey(null);
   };
 
   const handleUpdateStatus = async (visitId: string, status: MountingVisitStatus) => {
@@ -148,6 +159,27 @@ export default function MountingVisitsScreen() {
               style={[styles.input, styles.multiline]}
               value={evidenceNotes}
             />
+            <Text style={styles.label}>Posición relativa en la foto (opcional)</Text>
+            <Text style={styles.caption}>Marca aproximadamente dónde está el código o elemento. No representa coordenadas.</Text>
+            <View accessibilityLabel="Selector de posición relativa en la foto" style={styles.anchorGrid}>
+              {MOUNTING_PHOTO_ANCHORS.map((anchor) => {
+                const selected = anchor.key === photoAnchorKey;
+
+                return (
+                  <Pressable
+                    accessibilityLabel={`Marcar ${anchor.label}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    key={anchor.key}
+                    onPress={() => setPhotoAnchorKey(anchor.key)}
+                    style={[styles.anchorButton, selected ? styles.anchorButtonSelected : null]}
+                  >
+                    <MaterialIcons color={selected ? colors.background : colors.textSecondary} name={selected ? 'radio-button-checked' : 'radio-button-unchecked'} size={20} />
+                  </Pressable>
+                );
+              })}
+            </View>
+            {selectedPhotoAnchor ? <Text style={styles.caption}>Marcador: {selectedPhotoAnchor.label}</Text> : null}
             <View style={styles.actionRow}>
               <Pressable disabled={isMutating} onPress={() => void handleUpload('camera').catch(() => undefined)} style={[styles.primaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
                 <MaterialIcons color={colors.background} name="photo-camera" size={18} />
@@ -186,7 +218,20 @@ export default function MountingVisitsScreen() {
             {visit.notes ? <Text style={styles.body}>{visit.notes}</Text> : null}
             {visit.evidence.map((evidence) => (
               <View key={evidence.id} style={styles.evidence}>
-                <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
+                <View style={styles.evidenceImageFrame}>
+                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
+                  {evidence.positionX !== null && evidence.positionY !== null ? (
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        styles.evidenceMarker,
+                        getMountingPhotoMarkerPosition(evidence.positionX, evidence.positionY, MOUNTING_PHOTO_SIZE)
+                      ]}
+                    >
+                      <Text numberOfLines={1} style={styles.evidenceMarkerText}>{evidence.title ?? 'Punto'}</Text>
+                    </View>
+                  ) : null}
+                </View>
                 <View style={styles.evidenceBody}>
                   <Text style={styles.evidenceTitle}>{evidence.title ?? 'Evidencia sin título'}</Text>
                   <Text style={styles.caption}>{evidence.kind === 'prism' ? 'Prisma' : evidence.kind === 'reference' ? 'Referencia' : evidence.kind === 'access' ? 'Acceso' : 'General'}</Text>
@@ -216,6 +261,9 @@ export default function MountingVisitsScreen() {
 const styles = StyleSheet.create({
   actionButton: { flex: 1 },
   actionRow: { flexDirection: 'row', gap: spacing[2] },
+  anchorButton: { alignItems: 'center', backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, height: 42, justifyContent: 'center', width: '31%' },
+  anchorButtonSelected: { backgroundColor: colors.accentGreen, borderColor: colors.accentGreen },
+  anchorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1], justifyContent: 'space-between' },
   body: { color: colors.textSecondary, fontSize: 14, lineHeight: 21 },
   bold: { color: colors.textPrimary, fontWeight: '800' },
   caption: { color: colors.textSecondary, fontSize: 12 },
@@ -233,10 +281,14 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.accentGreen, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
   evidence: { borderColor: '#2a2f3a', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing[2], overflow: 'hidden' },
   evidenceBody: { flex: 1, gap: 4, paddingVertical: spacing[2], paddingRight: spacing[2] },
+  evidenceImageFrame: { height: MOUNTING_PHOTO_SIZE, overflow: 'hidden', position: 'relative', width: MOUNTING_PHOTO_SIZE },
   evidenceImage: { backgroundColor: '#0f1117', height: 104, width: 104 },
+  evidenceMarker: { alignItems: 'center', backgroundColor: '#FACC15', borderColor: '#111827', borderRadius: 6, borderWidth: 1, height: 24, justifyContent: 'center', maxWidth: 72, minWidth: 24, paddingHorizontal: 4, position: 'absolute' },
+  evidenceMarkerText: { color: '#111827', fontSize: 10, fontWeight: '900' },
   evidenceTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   hero: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 18, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
   input: { backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, color: colors.textPrimary, padding: 12 },
+  label: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   multiline: { minHeight: 76, textAlignVertical: 'top' },
   offlineNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 10, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
