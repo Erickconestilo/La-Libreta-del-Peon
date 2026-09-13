@@ -298,6 +298,26 @@ describe('Outbox API', () => {
       expect(errors[0].status).toBe('error');
       expect(errors[0].errorMessage).toBe('Network timeout');
     });
+
+    it('no persiste tokens ni mensajes de autorización completos', () => {
+      outbox.enqueue({
+        id: 'test-id',
+        clientRequestId: 'req-1',
+        entityType: 'station_message',
+        operation: 'insert',
+        payload: {},
+      });
+
+      outbox.markError(
+        'test-id',
+        'Authorization: Bearer secret-token token=eyJhbGciOiJ9.abc.def'
+      );
+
+      const error = outbox.getErrors()[0].errorMessage ?? '';
+      expect(error).toContain('[oculto]');
+      expect(error).not.toContain('secret-token');
+      expect(error).not.toContain('eyJhbGciOiJ9');
+    });
   });
 
   describe('markConflict', () => {

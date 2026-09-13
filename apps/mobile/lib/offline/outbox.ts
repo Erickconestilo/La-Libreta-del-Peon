@@ -4,6 +4,13 @@
  */
 
 import { getDatabase } from './database';
+
+const MAX_PERSISTED_ERROR_LENGTH = 240;
+const redactPersistedError = (value: string) => value
+  .replace(/Bearer\s+\S+/gi, 'Bearer [oculto]')
+  .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[token oculto]')
+  .replace(/(password|contraseña|token|authorization)\s*[:=]\s*\S+/gi, '$1=[oculto]')
+  .slice(0, MAX_PERSISTED_ERROR_LENGTH);
 import { normalizeOutboxSessionId, UNASSIGNED_OUTBOX_SESSION_ID } from './session-scope';
 import type { OfflineQueueEntityType, OfflineQueueStatus } from '@shared/types';
 
@@ -269,12 +276,13 @@ export function markError(id: string, errorMessage: string, sessionId?: string):
   if (!scopedSessionId) return;
 
   const db = getDatabase();
+  const safeErrorMessage = redactPersistedError(errorMessage);
 
   db.runSync(
     `UPDATE outbox
      SET status = 'error', error_message = ?
      WHERE id = ? AND session_id = ?`,
-    [errorMessage, id, scopedSessionId]
+    [safeErrorMessage, id, scopedSessionId]
   );
 }
 
