@@ -72,6 +72,12 @@ La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
 confunde una acción pendiente del outbox con recepción del servidor.
 
+El verificador autenticado acepta `TOPOFIELD_ROUND_POINT_ID` para comprobar
+ese endpoint cuando 029 esté desplegada: `npm run verify:remote:auth` solo
+imprime códigos y estados, nunca tokens ni cuerpos. En esta sesión se intentó
+reactivar ADB, pero `adb devices -l` devolvió únicamente `List of devices
+attached`; no se instaló ninguna build ni se modificó el Galaxy.
+
 ## Estado verificado más reciente (13-09-2026)
 
 - El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.

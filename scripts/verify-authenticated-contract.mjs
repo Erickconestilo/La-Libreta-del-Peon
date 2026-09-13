@@ -44,6 +44,7 @@ export const verifyAuthenticatedContract = async ({
   token,
   projectId,
   roundId,
+  roundPointId,
   fetchImpl = globalThis.fetch,
 } = {}) => {
   if (typeof fetchImpl !== "function") {
@@ -77,6 +78,16 @@ export const verifyAuthenticatedContract = async ({
     result.round = round;
   }
 
+  if (roundPointId) {
+    const executionEvents = await requestJson(
+      fetchImpl,
+      `${root}/round-points/${encodeURIComponent(roundPointId)}/execution-events`,
+      token,
+    );
+    assertAllowedStatus("work execution events", executionEvents, [200, 403]);
+    result.executionEvents = executionEvents;
+  }
+
   return result;
 };
 
@@ -93,6 +104,7 @@ if (isMainModule) {
       baseUrl,
       projectId: process.env.TOPOFIELD_PROJECT_ID,
       roundId: process.env.TOPOFIELD_ROUND_ID,
+      roundPointId: process.env.TOPOFIELD_ROUND_POINT_ID,
       token: process.env.TOPOFIELD_AUTH_TOKEN,
     });
 
@@ -109,6 +121,10 @@ if (isMainModule) {
     if (result.round) {
       console.log(`AUTH_ROUND_STATUS=${result.round.status}`);
       console.log(`AUTH_ROUND_ERROR_CODE=${result.round.summary.errorCode ?? "none"}`);
+    }
+    if (result.executionEvents) {
+      console.log(`AUTH_EXECUTION_EVENTS_STATUS=${result.executionEvents.status}`);
+      console.log(`AUTH_EXECUTION_EVENTS_ERROR_CODE=${result.executionEvents.summary.errorCode ?? "none"}`);
     }
     console.log("Authenticated contract verification completed successfully.");
   } catch (error) {

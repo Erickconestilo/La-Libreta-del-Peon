@@ -15,6 +15,7 @@ test("checks the authenticated contract without printing response bodies", async
     baseUrl: "https://example.test/api/v1/",
     projectId: "project-a",
     roundId: "round-a",
+    roundPointId: "round-point-a",
     token,
     fetchImpl: async (url, init) => {
       requests.push({ init, url });
@@ -22,6 +23,7 @@ test("checks the authenticated contract without printing response bodies", async
       if (url.endsWith("/auth/me")) return response(200, { data: { role: "topografo" } });
       if (url.endsWith("/me/journey")) return response(200, { data: [] });
       if (url.includes("/projects/project-a/rounds")) return response(200, { data: [] });
+      if (url.includes("/round-points/round-point-a/execution-events")) return response(200, { data: [] });
       return response(200, { data: { id: "round-a" } });
     },
   });
@@ -29,7 +31,8 @@ test("checks the authenticated contract without printing response bodies", async
   assert.equal(result.authMe.status, 200);
   assert.equal(result.projectRounds.status, 200);
   assert.equal(result.round.status, 200);
-  assert.equal(requests.length, 5);
+  assert.equal(result.executionEvents.status, 200);
+  assert.equal(requests.length, 6);
   assert.equal(requests[0].init.headers.Authorization, undefined);
   assert.ok(requests.slice(1).every(({ init }) => init.headers.Authorization === `Bearer ${token}`));
 });

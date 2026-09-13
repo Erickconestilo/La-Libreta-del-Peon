@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador autenticado al contrato de estados de trabajo sin imprimir secretos | cerrado (`node --check scripts/verify-authenticated-contract.mjs` terminó con código `0`; `node --test scripts/verify-authenticated-contract.test.mjs` devolvió `ℹ tests 3`, `ℹ pass 3`, `ℹ fail 0`; `npm run test:tooling` devolvió `ℹ tests 12`, `ℹ pass 12`, `℩ fail 0`; `adb start-server; adb devices -l` devolvió solo `List of devices attached`, sin Galaxy detectable; no se instaló ni modificó la app.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android local con el flujo de estados del operario | cerrado (`npm run verify:pre-apk:local` terminó literalmente con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se instaló la build ni se tocó Supabase, Render o el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Endurecer integridad tenant de la migración 029 con claves compuestas | cerrado (`npm run build --workspace apps/backend` terminó con código `0`; `npm test --workspace apps/backend -- --test-name-pattern "work execution migration"` devolvió `ℹ tests 113`, `ℹ pass 113`, `ℹ fail 0`; `npm run verify:local` terminó con `verify local completed successfully`, backend `113/113`, móvil `23` suites y `114/114`, tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. La migración 029 incorpora índices únicos y claves foráneas compuestas para mantener ronda-punto-obra; sigue sin aplicarse en Supabase.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff con la separación visual de estados de trabajo | cerrado (`git log -1 --oneline` confirmó `d512c87 fix(mobile): distinguir estados del trabajo`; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. `NEXT_CHAT_HANDOFF.md` ya referencia `d512c87` y la batería móvil `114/114`. No se tocó Supabase, Render ni el Galaxy.)` |
@@ -503,8 +504,10 @@ carece del mapa de membresías, pero la comparación remota verificó que no es
 antecesor de `df224f9`; por tanto esa defensa sigue pendiente de publicación y
 verificación en Render. Se añadió `npm run verify:remote:auth`, que lee el token
 solo desde `TOPOFIELD_AUTH_TOKEN`, comprueba `/auth/me`, `GET /me/journey` y
-UUIDs opcionales de obra/ronda, y solo imprime estados/códigos sin cuerpos ni
-credenciales.
+UUIDs opcionales de obra/ronda y punto de ronda (`TOPOFIELD_ROUND_POINT_ID`), y
+solo imprime estados/códigos sin cuerpos ni credenciales. La comprobación del
+endpoint de estados de trabajo queda preparada para ejecutarse cuando la
+migración 029 y su despliegue estén disponibles.
 
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
@@ -748,6 +751,17 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Verificador autenticado ampliado al resultado declarado del
+  operario (Codex):** `scripts/verify-authenticated-contract.mjs` acepta ahora
+  opcionalmente `TOPOFIELD_ROUND_POINT_ID` y comprueba
+  `GET /round-points/:roundPointId/execution-events` permitiendo solo `200` o
+  `403`; nunca imprime bearer, cuerpos ni códigos internos completos. La
+  regresión terminó con `node --test scripts/verify-authenticated-contract.test.mjs`:
+  `3/3` pasados; `npm run test:tooling` devolvió `12/12`; `git diff --check`
+  terminó sin salida. En la misma sesión `adb start-server; adb devices -l`
+  devolvió solo `List of devices attached`, por lo que no se ejecutó ninguna
+  instalación ni prueba física.
 
 - **2026-09-13 — Resultado explícito del trabajo del operario implementado
   localmente (Codex):** el análisis de `CONTROL DE LECTURA SEMANAL (2).xlsx`
