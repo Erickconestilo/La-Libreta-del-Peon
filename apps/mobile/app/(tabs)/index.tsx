@@ -10,6 +10,7 @@ import { useCurrentSession } from '@/hooks/use-auth';
 import { useMyJourney, usePrepareMonitoringRound } from '@/hooks/use-monitoring';
 import { useProjectPhotoMutations, useProjects } from '@/hooks/use-projects';
 import { canWriteProject } from '@/lib/field-access';
+import { getJourneyAutoOpenDecision } from '@/lib/journey-navigation';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
 
 export default function ProjectsScreen() {
@@ -27,7 +28,7 @@ export default function ProjectsScreen() {
   } = useProjectPhotoMutations(null);
   const [imageActionProject, setImageActionProject] = useState<ProjectSummary | null>(null);
   const projects = data ?? [];
-  const autoOpenedJourneyRef = useRef(false);
+  const autoOpenedJourneyUserIdRef = useRef<string | null>(null);
   const canCreateProject = currentUser?.role === 'admin';
   const firstJourneyId = journey?.[0]?.id ?? null;
   const { errorMessage: prepareJourneyError, isPreparing: isPreparingJourney, prepareRound } = usePrepareMonitoringRound(firstJourneyId);
@@ -43,13 +44,20 @@ export default function ProjectsScreen() {
   };
 
   useEffect(() => {
-    if (autoOpenedJourneyRef.current || isSessionLoading || isJourneyLoading || !journey?.length) {
-      return;
-    }
+    const decision = getJourneyAutoOpenDecision({
+      isJourneyLoading,
+      isSessionLoading,
+      journeyCount: journey?.length ?? 0,
+      lastOpenedUserId: autoOpenedJourneyUserIdRef.current,
+      userId: currentUser?.id ?? null
+    });
 
-    autoOpenedJourneyRef.current = true;
-    router.push(`/rounds/${journey[0].id}` as never);
-  }, [isJourneyLoading, isSessionLoading, journey, router]);
+    autoOpenedJourneyUserIdRef.current = decision.nextOpenedUserId;
+
+    if (decision.shouldNavigate && journey?.[0]) {
+      router.push(`/rounds/${journey[0].id}` as never);
+    }
+  }, [currentUser?.id, isJourneyLoading, isSessionLoading, journey, router]);
 
   useEffect(() => {
     if (!isLoading) {
