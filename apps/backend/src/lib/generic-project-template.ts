@@ -21,7 +21,8 @@ const SAMPLE_CATALOG = [
   ['EJ-N-001', 'Zona Norte', 'blue', 1, 1, 'surface', '0+000'],
   ['EJ-N-002', 'Zona Norte', 'blue', 1, 2, 'surface', '0+050'],
   ['EJ-S-001', 'Zona Sur', 'pink', 2, 1, 'surface', '0+000'],
-  ['EJ-S-002', 'Zona Sur', 'pink', 2, 2, 'surface', '0+050']
+  ['EJ-S-002', 'Zona Sur', 'pink', 2, 2, 'surface', '0+050'],
+  ['EJ-C-001', 'Zona Centro', 'green', 3, 1, 'surface', '0+000']
 ] as const;
 
 const SAMPLE_CONTROL_POINTS: SampleControlPoint[] = [
