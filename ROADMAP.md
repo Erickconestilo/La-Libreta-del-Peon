@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-  verificado: 2026-09-12
+  verificado: 2026-09-13
 -->
 
 # ROADMAP.md — TopoField
@@ -25,7 +25,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor, release v4 y corrección de adjuntos ya validados/publicados** | PLAN Fase 4 (nunca ejecutada) |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E offline y exportación autenticada verificados en Galaxy v7; cierre con umbral, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación y paridad local CSV/XLSX implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local inicial:** testigo fotográfico, fisurómetro digital, potenciómetro y parte de zona; pares de convergencia/peralte aún requieren procedimiento confirmado | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
@@ -64,7 +64,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-### Estado de F5 (revisado 12-09-2026)
+### Estado de F5 (revisado 13-09-2026)
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase.
 
@@ -176,3 +176,8 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 Al cerrar una fase: cambiar su estado en la tabla, actualizar `verificado:` en la cabecera, y añadir una línea a la bitácora de `MEMORIA.md` §12. No crear un documento nuevo de fase — los informes puntuales van a `docs/archive/` una vez leídos.
 
 El chequeo automático (`npm run docs:check`) verifica que no exista un segundo archivo declarando `rol: roadmap`, que la fecha de `verificado:` no se quede rancia y que los enlaces entre documentos no apunten a archivos movidos. Ver `docs/DOC_MAINTENANCE.md`.
+
+
+### Estado operativo verificado el 13-09-2026
+
+La corrección de scope de exportación está publicada en Render como `df224f9`. `/api/v1/health` responde `200`, las rutas protegidas sin token responden `401`, y la exportación autenticada de la ronda QA generó CSV y XLSX desde el Galaxy v7 con respuestas `200`. F5 permanece abierta por la comparación estructurada de archivos, el cierre con umbral autorizado y la observación de jornadas y profesionales.
