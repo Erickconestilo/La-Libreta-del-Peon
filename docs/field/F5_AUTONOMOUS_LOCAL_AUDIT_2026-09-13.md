@@ -308,6 +308,24 @@ usa `uuid.v4`, no las variantes v3/v5/v6 que reciben un `Buffer` segun el aviso.
 El riesgo no se ignora: queda abierto sustituir o actualizar ExcelJS con una
 ruta compatible y volver a auditar antes del despliegue publico.
 
+### Auditoría del árbol completo
+
+La auditoría del monorepo (`npm audit --omit=dev --json`) devuelve
+`23` vulnerabilidades (`7 high`, `16 moderate`, `0 critical`). No debe
+interpretarse como `23` vulnerabilidades del backend en ejecución: el árbol
+raíz incluye Expo, Metro, Xcode y otras herramientas de compilación móvil como
+dependencias del workspace. El backend aislado mantiene el resultado anterior:
+`2 moderate`, `0 high`, `0 critical`, únicamente `exceljs -> uuid@8.3.2`.
+
+La revisión local no encontró importaciones directas de `uuid` en el código de
+backend/móvil ni uso de UUID v3/v5/v6 con buffers controlados por usuario. La
+vulnerabilidad no se corrige con `npm audit fix` sin degradar `exceljs` a
+`3.4.0`, y la corrección propuesta para Expo exigiría una migración mayor que
+debe validarse con una build completa. Decisión para F5: no usar `--force` ni
+hacer un upgrade mayor mezclado con la validación de campo; abrir una tarea de
+mantenimiento específica para actualizar Expo/Metro y volver a auditar el
+árbol completo antes de una publicación pública.
+
 ## Criterio de lectura
 
 El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma
