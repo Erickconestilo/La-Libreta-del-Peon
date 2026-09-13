@@ -18,7 +18,7 @@ Supabase por sí solo.
 2. Erick crea o autoriza una segunda cuenta nominal y la asigna únicamente a
    la obra piloto. No se comparten credenciales.
 3. Se instala la misma build release firmada en ambos móviles y se registra
-   `versionName`, `versionCode` y la fecha de actualización.
+  `versionName`, `versionCode` y la fecha de actualización.
 4. Se prepara una ronda con puntos y umbrales desde el móvil con red.
 5. Cada participante inicia sesión con su propia cuenta y verifica en Perfil
    el correo visible antes de entrar en la obra.
@@ -28,12 +28,17 @@ Supabase por sí solo.
 La cuenta `supervisor-piloto@topofield.local` se usa únicamente para validar
 consulta autenticada en la obra autorizada. Debe tener rol global `supervisor`
 y una membresía activa `read`; no se reutiliza el token público de visitante.
-En la release `versionCode=4`, Perfil debe mostrar `Supervisor` y la cuenta
+En la validación histórica con release `versionCode=4`, Perfil mostró
+`Supervisor` y la cuenta
 solo debe poder abrir obras, estaciones, prismas, mensajes/incidencias,
 rondas, históricos, evidencias y partes recibidos. No deben aparecer acciones
 de crear, editar, capturar, preparar offline, cerrar, reintentar outbox ni
 exportar. La contraseña temporal se entrega solo durante la prueba y no se
 guarda en el repositorio ni en este documento.
+
+La siguiente ejecución del piloto debe usar la APK release `versionCode=5`
+generada localmente y verificar de nuevo el arranque antes de comparar dos
+dispositivos. La v4 no es el objetivo de instalación actual.
 
 ## Escenarios mínimos
 

@@ -43,5 +43,5 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 - [x] **D2 decidida (02-08-2026): no gastar por ahora.** Requiere plan Pro de Supabase (25 USD/mes); Erick decide quedarse en Free. Mitigación: comprobar que el proyecto no esté pausado antes de cada sesión (primer punto de este checklist). Se reabre si F5 muestra pausas frecuentes o al sumar una segunda persona (F8).
 - [ ] Avisar a cualquier colaborador con un clon antes de pedir el `push --force` que publicaria el historial saneado.
 - [ ] Establecer quien revoca cuentas, reasigna membresias y responde ante perdida de un dispositivo.
-- [ ] Dar al supervisor una cuenta individual con membresías `read`; comprobar que consulta obra, fotos, incidencias, lecturas y partes, pero recibe `403` al escribir, adjuntar, exportar o cambiar la planificación.
+- [x] **Validado históricamente en Galaxy con release v4:** el supervisor usa una cuenta individual con membresía `read`, consulta obra, fotos, incidencias, lecturas y partes, y no dispone de escritura, adjuntos, exportación ni planificación. Repetir solo si una nueva release cambia este flujo.
 - [ ] Repetir la jornada desde dos cuentas sin compartir credenciales y verificar que ningún dato local pendiente se muestra como recibido al supervisor.

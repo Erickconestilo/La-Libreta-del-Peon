@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # La Libreta del Peón (TopoField)
@@ -30,7 +30,7 @@ Resumen; el detalle por fase está en [ROADMAP.md](./ROADMAP.md).
 - Último backend funcional verificado en Render: commit `6a1b19f`; el endpoint público de salud responde y las rutas protegidas responden `401` sin sesión. La rama contiene mejoras locales posteriores que aún no están desplegadas.
 - Aislamiento multi-tenant auditado por familia de endpoint; RLS activo en las 24 tablas del proyecto. El rol `supervisor` consulta por membresía `read` y no escribe.
 - La autorización de escritura falla cerrada en móvil y backend: una sesión `topografo` necesita `projectAccess[projectId] = "write"`; el mapa ausente no habilita controles ni mutaciones.
-- Release Android `versionCode=4` firmada localmente e instalada históricamente en el Galaxy; ADB debe volver a detectar el dispositivo para repetir el E2E.
+- Release Android `versionCode=5` preparada localmente como AAB y APK firmadas con `CN=TopoField Android Release`; la v4 es la última instalada históricamente en el Galaxy y ADB debe volver a detectar el dispositivo para instalar v5 y repetir el E2E.
 - **F5 continúa abierta:** faltan la repetición offline en Galaxy, validación de exportación con datos reales, observación de campo y conversaciones con profesionales.
 
 ## Verificación local

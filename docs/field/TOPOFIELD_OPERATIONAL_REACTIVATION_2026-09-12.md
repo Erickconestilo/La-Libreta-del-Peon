@@ -128,8 +128,10 @@ están verificadas; queda la validación de escritura/offline con el operador.
 En el estado local de esta sesión: backend `tsc` limpio, móvil `tsc` limpio,
 backend `78/78` tests, móvil `54/54` tests, paridad CSV/XLSX comprobada con
 filas tomadas y pendientes, y `npm run docs:check` sin errores.
-La fuente y la release Android quedan en `versionCode=4`; el AAB y el APK
-universal están firmados y verificados con `CN=TopoField Android Release`.
+En la evidencia de este bloque histórico, la fuente y la release Android
+quedaban en `versionCode=4`; el AAB y el APK universal estaban firmados y
+verificados con `CN=TopoField Android Release`. La release vigente posterior
+es `versionCode=5`, preparada localmente y pendiente de instalación física.
 Estos resultados se complementan con la validación física supervisora en
 Galaxy descrita arriba. La entrega privada de fotos sigue pendiente: las
 lecturas exponen el `public_url` heredado del contrato actual y este bloque no
