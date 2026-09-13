@@ -45,8 +45,8 @@ son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 
 La captura móvil usa el outbox existente y `clientRequestId`, actualiza la
 caché local y conserva separado el resultado declarado de la lectura
-metrológica y del cierre de ronda. Backend pasa `113/113` tests y móvil
-`115/115`; TypeScript móvil y documentación están en verde. El núcleo quedó en
+metrológica y del cierre de ronda. Backend pasa `114/114` tests y móvil
+`116/116`; TypeScript móvil y documentación están en verde. El núcleo quedó en
 `6ed9a84`, la entrega de oficina en `8aff703`, el historial móvil en
 `3b5ed4b` y su refresco tras sincronización en `2399de6`. La mejora de
 fluidez de ronda quedó en `2d182a0`: la cabecera resume hechos, en curso,
@@ -62,6 +62,11 @@ caso normal. `Más opciones` abre el formulario de `Empezar`, `No realizado`,
 `Repetir` y `Bloqueado` con motivo. El atajo usa la misma mutación, outbox e
 idempotencia; queda pendiente validarlo en el Galaxy cuando ADB detecte el
 dispositivo y la migración 029 esté desplegada.
+
+En visitas de montaje, `No realizable` exige ahora un motivo escrito tanto en
+la pantalla como en la validación backend; las notas previas se conservan y
+se añade una línea de relevo explícita. Este cambio está en `750153a` y aún no
+está desplegado porque la migración 027 sigue pendiente.
 
 La migración local 029 fue endurecida con índices únicos auxiliares y claves
 foráneas compuestas: un evento no puede enlazar una ronda, un punto y una obra
@@ -160,13 +165,13 @@ attached`; no se instaló ninguna build ni se modificó el Galaxy.
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último slice funcional local: `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), precedido por `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`), `d512c87` (`fix(mobile): distinguir estados del trabajo`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `113/113` backend y `115/115` móvil; tooling mantiene `13/13` y `docs:check` revisa `44` documentos sin avisos. La build v7 del Galaxy no contiene estos últimos slices; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último slice funcional local: `750153a` (`feat: exigir motivo en visitas no realizables`), precedido por `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `114/114` backend y `116/116` móvil; tooling mantiene `13/13` y `docs:check` revisa `44` documentos sin avisos. La build v7 del Galaxy no contiene estos últimos slices; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
-  forma parte de la batería backend actual `113/113`. La
+  forma parte de la batería backend actual `114/114`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS

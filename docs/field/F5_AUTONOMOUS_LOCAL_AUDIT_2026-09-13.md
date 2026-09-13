@@ -28,17 +28,22 @@ acceso `Continuar con <código>`, que abre el primer punto accionable sin
 alterar el orden configurado. La selección excluye puntos bloqueados y no
 modifica el estado metrológico ni el cierre de la ronda. La regresión cubre el
 conteo por estado y la selección ordenada; la batería actual queda en
-`115/115` tests móviles.
+`116/116` tests móviles.
 
 El slice posterior también expone esos cuatro contadores en `Mi jornada` a
 partir del último evento recibido por punto. La consulta mantiene la relación
-ronda-punto-obra y la batería backend local queda en `113/113` tests. La ruta
+ronda-punto-obra y la batería backend local queda en `114/114` tests. La ruta
 requiere la migración local 029; todavía no se ha aplicado ni desplegado.
 
 La misma migración fue endurecida con claves foráneas compuestas para que
 PostgreSQL mantenga esa relación ronda-punto-obra incluso fuera de las rutas
 de la aplicación. La prueba se limita a inspección estática del SQL y no se
 presenta como verificación de Supabase hasta que la migración se aplique allí.
+
+El bloque local de visitas de montaje exige un motivo cuando el operario marca
+una visita como `No realizable`; la validación backend rechaza notas vacías y
+la UI conserva el contexto anterior. La regresión forma parte de la batería
+backend `114/114` y móvil `116/116`.
 
 ## Addendum fisico del 13-09-2026
 
