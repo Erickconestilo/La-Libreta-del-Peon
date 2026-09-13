@@ -16,7 +16,7 @@ validación en campo:
 - [x] Móvil pasa TypeScript, `22` suites y `102/102` tests.
 - [x] Tooling local pasa `9/9` tests; `verify:local` termina con
   `verify local completed successfully`.
-- [x] `docs:check` revisa `40 documentos revisados en raíz y docs/` sin errores
+- [x] `docs:check` revisa `41 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v6 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
@@ -41,17 +41,26 @@ Comprobaciones técnicas:
 - [ ] Para un `topografo`, el alta de estación exige una obra asignada y no
   ofrece enviar `Sin obra`; probarlo en el dispositivo antes de una jornada.
 - [ ] **Confirmar que Supabase "topofield" está activo, no pausado**, antes de salir a campo. El free tier lo pausa solo tras varios días de inactividad (pasó el 02-08-2026); si está pausado, login y toda la app fallan sin que haya ningún bug en el código. Reactivar es gratis y no destructivo, pero tarda 1-2 minutos en levantar.
-- [ ] Confirmar que la cuenta tecnica de Erick entra y conserva sesion ante un fallo transitorio de red.
+- [x] Confirmar que la cuenta tecnica de Erick entra y que la sesión se
+  conserva durante el recorrido offline y tras la reconexión; una revalidación
+  explícita posterior también devolvió la vista operativa del topógrafo.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
-- [ ] Verificar login, una estacion, una foto, una lectura offline y su sincronizacion en el dispositivo objetivo con datos reales de una sola obra.
-- [x] **Confirmar que Render publica el commit que se pretende probar** consultando `/api/v1/health`. **Resuelto históricamente el 02-08-2026:** Erick autorizó y ejecutó el `push --force-with-lease`; Render redesplegó a `a0ba934`. La última verificación funcional registrada para F5 es el merge `6a1b19f` (12-09-2026). Sigue siendo un buen hábito comprobarlo antes de cada sesión de campo.
+- [x] Verificar login, una obra autorizada, una foto, una lectura offline y su
+  sincronización en el dispositivo objetivo; la consulta remota confirmó una
+  lectura y un adjunto únicos.
+- [ ] **Confirmar que Render publica el commit que se pretende probar**.
+  Históricamente se verificó el 02-08-2026 tras el `push --force-with-lease` de
+  Erick; la observación actual del 13-09-2026 devuelve `eb88db9`, anterior a
+  los hardenings locales de esta rama, por lo que esta casilla no se marca.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 - [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.
 - [ ] Registrar una captura como testigo fotográfico, una lectura digital y los tres pares del potenciómetro sin cobertura; distinguir guardado local de recibido por servidor.
 - [ ] **Política de fotos:** hasta resolver el bucket público de la migración 007, usar únicamente imágenes autorizadas para el piloto y no compartir URLs de Storage fuera de las cuentas permitidas; decidir bucket privado/URLs firmadas antes de incluir fotos sensibles de terceros.
 - [ ] Antes de usar otro instrumento, consultar [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md): una captura provisional no sustituye el procedimiento del equipo ni representa automáticamente pares, perfiles o referencias de carril.
-- [ ] Crear un parte parcial de zona y comprobar que no presenta el trabajo como 100 % completado si quedan puntos pendientes.
+- [x] Crear un parte parcial de zona y comprobar que no presenta el trabajo
+  como 100 % completado si quedan puntos pendientes; el servidor registró
+  `status=partial`, `completed_point_count=0` y `pending_point_count=1`.
 
 Observación de uso (esto es lo que cierra F5, no lo anterior):
 
