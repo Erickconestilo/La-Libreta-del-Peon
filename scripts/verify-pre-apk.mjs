@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 import { rmSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
+import { buildWindowsCommandLine } from "./windows-command.mjs";
+
 const rootDir = process.cwd();
 const localOnly = process.argv.includes("--local-only");
 const exportDir = path.join(
@@ -33,20 +35,12 @@ if (!localOnly) {
   });
 }
 
-const quoteWindowsCommandArg = (value) => {
-  if (!/[\s&|<>^()"]/.test(value)) {
-    return value;
-  }
-
-  return `"${value.replace(/(\\*)"/g, "$1$1\\\"").replace(/(\\*)$/g, "$1$1")}"`;
-};
-
 const run = ({ name, cmd, args, cwd }) => {
   console.log(`\n> ${name}`);
   const isWindows = process.platform === "win32";
   const command = isWindows ? "cmd.exe" : cmd;
   const commandArgs = isWindows
-    ? ["/d", "/s", "/c", [cmd, ...args].map(quoteWindowsCommandArg).join(" ")]
+    ? ["/d", "/s", "/c", buildWindowsCommandLine(cmd, args)]
     : args;
   const result = spawnSync(command, commandArgs, {
     cwd,

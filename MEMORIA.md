@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Aislar y probar la citación Windows usada por el preflight Android | cerrado (`scripts/windows-command.test.mjs` devolvió `ℹ tests 3`, `ℹ pass 3`, `ℹ fail 0`; `node --check scripts/verify-pre-apk.mjs` terminó con código `0`; `npm run verify:pre-apk:local` terminó con `PRE_APK_EXIT=0`, creó `metadata.json` de `6101` bytes y `PRE_APK_RELATED_PROCESSES=0`. No se tocó ningún servicio remoto ni el Galaxy.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar el wrapper corregido de `verify:pre-apk:local` y reconciliar su evidencia | cerrado (`node --check scripts/verify-pre-apk.mjs` terminó con código `0`; `npm run verify:pre-apk:local` devolvió `exit_code=0` y `verify pre-apk local-only completed successfully`; la carpeta contiene `metadata.json` de `6101` bytes y assets Android; no quedaron procesos Expo/Metro retenidos. `git diff --check` sin salida. No se tocó ningún servicio remoto ni el Galaxy.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir el wrapper local `verify:pre-apk` para que Expo export termine sin dejar procesos huérfanos | cerrado (`scripts/verify-pre-apk.mjs` usa una línea de comandos Windows citada correctamente, timeout de seguridad y detección de señales; `node --check` terminó con código `0`; `npm run verify:pre-apk:local` terminó con código `0`, exportó `metadata.json` y no dejó procesos Expo/Metro. Se conserva el diff previo de `apps/mobile/package.json` y no se tocó ningún servicio remoto.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir la documentación tras comprobar que el preflight Android no terminó de forma verificable | cerrado (`docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md` ya distingue el wrapper iniciado del resultado comprobable: la carpeta temporal existía pero quedó sin archivos después de detener cuatro procesos Expo/Metro iniciados por esta comprobación. No se cambió código ni ningún servicio remoto.) |
@@ -527,6 +528,15 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Regresión del preflight Android aislada (Codex):** se extrajo
+  la citación de comandos Windows a `scripts/windows-command.mjs` y se cubrió
+  con `scripts/windows-command.test.mjs`. La suite devolvió `ℹ tests 3`,
+  `ℹ pass 3`, `ℹ fail 0`; `node --check scripts/verify-pre-apk.mjs` terminó
+  con código `0`; `npm run verify:pre-apk:local` terminó con `PRE_APK_EXIT=0`,
+  creó `metadata.json` de `6101` bytes y dejó
+  `PRE_APK_RELATED_PROCESSES=0`. No se tocó ningún servicio remoto ni el
+  Galaxy.
 
 - **2026-09-13 — Contrato público de Render verificado en solo lectura (Codex):**
   `/api/v1/health` devolvió literalmente `HTTP/1.1 200 OK` y
