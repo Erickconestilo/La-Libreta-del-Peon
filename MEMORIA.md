@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar referencias históricas de release y estado actual de la herramienta Android | cerrado (`rg` separó las referencias históricas de v4-v7 de la v8 preparada; `npm run docs:check` devolvió `44 documentos revisados`, `Sin errores ni avisos`; `git diff --check` sin salida.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Preparar release local versionCode 8 para diferenciar los cambios de trabajo operativo | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 49s`; AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`; `versionCode=8`; firma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`. La limpieza inicial de Ninja falló y el script reintentó sin `clean`; `adb devices -l` siguió sin dispositivos, por lo que no se instaló.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android con motivos rápidos de visitas | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`; `metadata.json=6101 bytes`, `files=95`; el bundle Android incorpora los motivos rápidos y no se generó APK ni se instaló nada.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir motivos rápidos para visitas de montaje no realizables | cerrado (`npm run verify:local` terminó con backend `114/114`, móvil `23` suites y `117/117`, tooling `13/13`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. Se añadieron cuatro motivos neutros seleccionables y se mantuvo el texto libre; no se tocaron Supabase, Render ni el Galaxy.)` |
@@ -540,7 +541,7 @@ migración 029 y su despliegue estén disponibles.
 
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
-falla. Esto permite producir la AAB v5 sin borrar manualmente artefactos
+falla. Esto permite producir la AAB v8 sin borrar manualmente artefactos
 generados; no cambia el criterio de instalación ni sustituye la validación
   física en el Galaxy.
 
