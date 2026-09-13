@@ -1608,6 +1608,14 @@ export const createReadingAttachment = async (
       return null;
     }
 
+    // La migración 028 añade la restricción permanente. Este bloqueo de
+    // transacción mantiene el endpoint idempotente también durante un
+    // despliegue gradual en el que el índice aún no exista.
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext($1::text || ':' || $2::text))`,
+      [readingId, input.storagePath]
+    );
+
     const existingResult = await client.query(
       `
         SELECT *
@@ -1636,7 +1644,7 @@ export const createReadingAttachment = async (
           uploaded_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (reading_id, storage_path) DO NOTHING
+        ON CONFLICT DO NOTHING
         RETURNING *
       `,
       [
@@ -1649,6 +1657,30 @@ export const createReadingAttachment = async (
         uploadedBy
       ]
     );
+
+    if (result.rowCount === 0) {
+      const concurrentResult = await client.query(
+        `
+          SELECT *
+          FROM reading_attachments
+          WHERE reading_id = $1
+            AND storage_path = $2
+          LIMIT 1
+        `,
+        [readingId, input.storagePath]
+      );
+
+      if (concurrentResult.rows.length > 0) {
+        await client.query('COMMIT');
+        return mapReadingAttachmentRow(concurrentResult.rows[0]);
+      }
+
+      throw new AppError(
+        'Reading attachment insert produced no row',
+        500,
+        'READING_ATTACHMENT_INSERT_INCONSISTENT'
+      );
+    }
 
     await client.query('COMMIT');
     return mapReadingAttachmentRow(result.rows[0]);

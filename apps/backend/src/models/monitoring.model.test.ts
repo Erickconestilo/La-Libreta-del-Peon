@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { AppError } from '../lib/app-error.js';
@@ -100,4 +103,15 @@ test('mounting visit queries require the visit and station to share the same pro
 test('monitoring reads require the round point and control point to share a tenant', () => {
   assert.equal(buildMonitoringPointTenantCondition(), 'cp.project_id = mr.project_id');
   assert.equal(buildReadingPointTenantCondition(), 'ir.control_point_id = mrp.control_point_id');
+});
+
+test('reading attachment idempotency remains compatible before migration 028', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+
+  assert.match(modelSource, /pg_advisory_xact_lock\(hashtext\(\$1::text \|\| ':' \|\| \$2::text\)\)/);
+  assert.match(modelSource, /ON CONFLICT DO NOTHING\s+RETURNING \*/);
+  assert.match(modelSource, /READING_ATTACHMENT_INSERT_INCONSISTENT/);
 });
