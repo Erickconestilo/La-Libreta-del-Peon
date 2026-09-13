@@ -28,8 +28,9 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit local: `f3ad2aa` (`fix(db): serialize migration runner`). La
-  secuencia inmediata anterior incluye `0a36d5e`, `bddf7f9`, `689d356`
+- Último commit local: `a7481fa` (`docs: record serialized migration audit`). La
+  secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
+  `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
