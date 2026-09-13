@@ -76,6 +76,34 @@ El estado `draft` es correcto en esta prueba: `control_point_thresholds` no
 tenia umbral vigente. El punto siguio `pending` y el cierre permanecio
 bloqueado; no se marco como completado de forma artificial.
 
+## Parte parcial y exportacion
+
+Desde la misma ronda se creo un parte parcial con zona `Zona-piloto-E2E`. La
+UI mostro literalmente:
+
+```text
+Parte recibido por el servidor. El supervisor podrá consultarlo.
+```
+
+La consulta de solo lectura devolvio una unica fila:
+
+```json
+[{"id":"62135c22-003f-4e62-88a6-7d5a4a02a1db","round_id":"db3a59e3-3756-4d95-9890-f026379f33db","zone_label":"Zona-piloto-E2E","status":"partial","completed_point_count":0,"pending_point_count":1,"client_request_id":"b13aacdb-fd6b-4c67-b72d-e8e29cbc8a84"}]
+```
+
+Al probar `Compartir CSV` y `Compartir Excel` en el resumen de la ronda, la
+app no abrio la hoja de compartir y mostro en ambos casos:
+
+```text
+No se pudo completar la operación. Reintenta en unos segundos.
+```
+
+No se obtuvo un codigo HTTP visible en la UI ni en el logcat filtrado. Por eso
+el resultado se clasifica como exportacion no validada, no como un bug de
+formato demostrado. La observacion publica de Render sigue en `eb88db9`,
+anterior a los cambios locales de exportacion; hay que repetir la prueba tras
+un despliegue autorizado y comparar CSV/XLSX estructuralmente.
+
 ## Arranque en frio sin red
 
 Antes de cortar la red se cargo la lista de rondas en linea para poblar el

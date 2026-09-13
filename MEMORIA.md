@@ -479,6 +479,12 @@ bloqueado. Tras preparar la caché en línea, el arranque en frío sin red mostr
 `E2E-Galaxy-20260731-Atc`. Evidencia visual no versionada:
 `topofield-v6-airplane-hard-offline.png`,
 `topofield-v6-rounds-online-cache-seed.png` y las capturas `topofield-v5-*`.
+Desde la misma ronda se creó un parte `partial` con `pending_point_count=1`;
+la UI mostró `Parte recibido por el servidor. El supervisor podrá consultarlo.`
+CSV y Excel se probaron desde el resumen, pero ambos mostraron literalmente
+`No se pudo completar la operación. Reintenta en unos segundos.` sin abrir la
+hoja de compartir. No se atribuye la causa a formato sin un HTTP visible; la
+exportación queda pendiente de repetir contra un Render actualizado.
 
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
