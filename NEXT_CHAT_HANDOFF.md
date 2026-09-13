@@ -151,10 +151,12 @@ repositorio bare.
 - La release local v5 se recompiló el 13-09-2026 después de alinear Expo y
   corregir bugs reales del outbox:
   `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`,
-  `40,134,659` bytes, firmada como `CN=TopoField Android Release`. El
+  `40,135,153` bytes, firmada como `CN=TopoField Android Release`. El
   manifiesto confirma `versionCode=5` y `com.ciudadanoinusual.topofield`;
-  `jarsigner -verify` devuelve código 0. Bundletool no se usó porque el
-  transporte de la contraseña quedó bloqueado por la política de terminal.
+  `jarsigner -verify` y `bundletool validate` devuelven código 0. No se
+  generó un APK universal con Bundletool porque el transporte de la
+  contraseña de la clave quedó bloqueado por la política de terminal; la
+  APK arm64 generada por Gradle sí quedó verificada con `apksigner`.
   Gradle generó también
   `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`,
   `53,403,910` bytes; `apksigner` confirmó `verified=true`, esquema V2 y
