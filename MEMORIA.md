@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Acotar la exposición efectiva del aviso uuid transitivo sin aplicar un downgrade rompiente | cerrado (`npm ls uuid --workspace apps/backend --all` confirmó `exceljs@4.4.0 -> uuid@8.3.2`; la búsqueda no encontró importaciones directas ni uso de UUID v3/v5/v6 con buffers controlados por usuario; `git diff --check` terminó sin salida y `docs:check` revisó `44` documentos sin avisos. No se aplicó `npm audit fix --force`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reauditar vulnerabilidades de producción del backend sin aplicar cambios rompientes | cerrado (`npm audit --workspace apps/backend --omit=dev` devolvió `2 moderate`, `0 high`, `0 critical`, por `uuid` transitivo de `exceljs`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se usó `--force`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar la cifra activa de tooling tras añadir el verificador público de estados | cerrado (`npm run verify:local` terminó con backend `113/113`, móvil `23` suites y `114/114`, tooling `13/13`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. Se conservaron las cifras históricas.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Documentar en README la verificación opcional del endpoint de estados de trabajo | cerrado (`npm run docs:check` devolvió `check-docs: 44 documentos revisados en raíz y docs/` y `Sin errores ni avisos`; `git diff --check` sin salida. No se modificaron servicios remotos ni el Galaxy.)` |
@@ -756,6 +757,14 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Alcance efectivo del aviso `uuid` acotado (Codex):**
+  `npm ls uuid --workspace apps/backend --all` confirma únicamente la cadena
+  `exceljs@4.4.0 -> uuid@8.3.2` en la ruta de producción. No hay importaciones
+  directas de `uuid` en backend, móvil o shared; la referencia localizada de
+  ExcelJS utiliza `uuid.v4`, no las variantes v3/v5/v6 con `Buffer` que cubre
+  el aviso. El riesgo transitivo sigue abierto y requiere actualizar o
+  sustituir ExcelJS en una tarea separada; no se aplicó `--force`.
 
 - **2026-09-13 — Reauditoría de dependencias de producción (Codex):**
   `npm audit --workspace apps/backend --omit=dev` mantiene `2 moderate`, `0`
