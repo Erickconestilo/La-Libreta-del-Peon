@@ -14,7 +14,7 @@ validación en campo:
 
 - [x] Backend compila y pasa `103/103` tests con `npm run verify:local`.
 - [x] Móvil pasa TypeScript, `22` suites y `97/97` tests.
-- [x] Tooling local pasa `6/6` tests; `verify:local` termina con
+- [x] Tooling local pasa `9/9` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `40 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.

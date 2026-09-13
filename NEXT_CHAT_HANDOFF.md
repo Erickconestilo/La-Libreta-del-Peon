@@ -92,7 +92,7 @@ repositorio bare.
   Expo: `metadata.json` debe existir, ser no vacío y acompañarse de archivos
   de assets. La última ejecución real devolvió `metadata.json=6101 bytes`,
   `files=95`, `PRE_APK_COMMAND_EXIT=0` y `PRE_APK_RELATED_PROCESSES=0`.
-- `673fc15` versiona el validador de salida Expo y sus seis pruebas de tooling;
+- `673fc15` versiona el validador de salida Expo y sus pruebas de tooling;
   el commit no incluye `apps/mobile/package.json` ni las capturas locales del
   Galaxy.
 - `verify:local` encadena la verificación local completa y
