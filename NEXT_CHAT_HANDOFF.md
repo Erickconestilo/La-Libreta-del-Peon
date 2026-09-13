@@ -43,6 +43,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   para diagnóstico; no descarta ni reinterpreta sus datos como válidos.
 - La observabilidad móvil usa `formatSafeErrorForLog`: no imprime mensajes de
   error ni cuerpos HTTP, solo metadatos operativos validados.
+- `12410aa` prepara la release local v5 y normaliza los dos últimos logs de
+  error crudo detectados en Perfil y SQLite; no incluye el cambio previo de
+  `apps/mobile/package.json`.
 - El reintento manual del outbox reinicia el ciclo completo, incluido el límite
   de intentos y el backoff. Los fallos automáticos usan una operación separada
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
