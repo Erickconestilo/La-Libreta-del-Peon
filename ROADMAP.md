@@ -81,11 +81,11 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias, prismas, estaciones y visitas de montaje con referencias cruzadas. También
 deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
-  local: `104/104` tests. El contrato backend de exportación está alineado con
+  local: `105/105` tests. El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
   para integridad de tenant, con regresión local. La reconciliación de prismas
   también exige ahora la igualdad de `project_id` entre observación, prisma y
-  estación; la regresión local está incluida en los `104/104` tests. La migración
+  estación; la regresión local está incluida en los `105/105` tests. La migración
   027 sigue sin aplicarse en Supabase. Los hardenings de exportación se
 publicaron mediante PR #19/#20; Render quedó verificado el 13-09-2026 en
 `df224f9`. La memoria visual y la migración 027 continúan solo en la rama local
@@ -273,7 +273,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y validar exportación con datos autorizados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad ya está comprobado en el Galaxy con release `versionCode=6`; supervisor y release v4 quedan como evidencia histórica.
+- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar la comparación estructurada de los archivos exportados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad ya está comprobado en el Galaxy; la release actualmente instalada es `versionCode=7`. El supervisor y las releases v4/v6 quedan como evidencia histórica.
 - **Abierto — decisión de seguridad antes de datos sensibles:** `007_storage_photo_bucket.sql` deja `topofield-photos` público y los DTO conservan `publicUrl`. La API limita quién descubre las filas, pero no puede revocar un enlace directo ya conocido. Antes de incorporar fotos sensibles de terceros hay que aceptar explícitamente ese riesgo o migrar a bucket privado con URLs de lectura firmadas; no se cambia de forma unilateral porque afecta migraciones, API y móvil.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 

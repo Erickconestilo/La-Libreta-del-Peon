@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Continuar cierre autónomo F5 con Galaxy conectado: validar v7, auditar pendientes locales y consolidar evidencia sin tocar Supabase ni Render | cerrado (ADB devolvió `R5CY21X6FLE device`; `dumpsys package` confirmó `versionCode=7`, `versionName=1.0.0`, `lastUpdateTime=2026-09-13 07:39:25`; la jornada preparada y el modo avión real se observaron en el Galaxy. La exportación CSV/XLSX autenticada ya había quedado en `200` tras el despliegue `df224f9`; no se añadieron datos remotos nuevos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Generar release v7 tras corregir la pérdida de diagnóstico en exportación y validarla con ADB | cerrado (la compilación Gradle generó la APK firmada `CN=TopoField Android Release`; `adb install -r` devolvió `Success`; `dumpsys package` confirmó `versionCode=7` y `lastUpdateTime=2026-09-13 07:39:25`. La UI mostró el diagnóstico HTTP y el código de soporte sin exponer secretos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Exponer diagnóstico seguro cuando falla la exportación móvil reproducida en Galaxy | cerrado (se añadió `getRoundExportErrorMessage`, que muestra solo `HTTP`, código funcional y un UUID de soporte válido; se excluyen mensajes internos y valores no UUID. El test dirigido pasó `4` tests y TypeScript móvil terminó con código `0`. La causa remota quedó aislada en el backend: faltaba interpolar el scope en la segunda consulta.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir la consulta de exportación que enviaba scope sin filtro SQL | cerrado localmente (se añadió `${scope.clause}` al SELECT de filas de exportación y una regresión que exige el filtro en el guard y en la consulta de datos. Build y batería local quedan en verde; falta publicar mediante PR y volver a probar con Render.) |
@@ -444,17 +445,19 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `104/104`
-tests; móvil pasa `22` suites y `101/101` tests antes de la corrección de caché
-de rondas, y la comprobación enfocada posterior pasa `102/102`; `docs:check`
-revisa `40` documentos sin avisos. La release Android `versionCode=6` está
-instalada en el Galaxy y firmada con `CN=TopoField Android Release`. El E2E
-físico ya demostró lectura y foto offline, reinicio, reconexión automática y
-unicidad en Supabase; también se validó la lista de rondas desde caché tras
-arranque en frío sin red. Siguen abiertos el cierre definitivo con umbrales
-autorizados, la validación de CSV/XLSX, la jornada observada y las entrevistas.
-Render sigue vivo, pero la última observación pública fue el commit `eb88db9`,
-anterior a los hardenings locales posteriores. La auditoría de procedencia del
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `105/105`
+tests; móvil pasa `22` suites y `104/104` tests; tooling pasa `9/9` y
+`docs:check` revisa `41` documentos sin avisos. La release Android
+`versionCode=7` está instalada en el Galaxy y firmada con
+`CN=TopoField Android Release`. El E2E físico ya demostró lectura y foto
+offline, reinicio, reconexión automática y unicidad en Supabase; también se
+validó la lista de rondas desde caché tras arranque en frío sin red. La v7
+verificó además que CSV y XLSX se generan y abren el selector nativo, con
+respuestas autenticadas `200` registradas por Render. Siguen abiertos el
+cierre definitivo con umbrales autorizados, la comparación estructurada de
+los archivos exportados, la jornada observada y las entrevistas. Render está
+vivo en el commit `df224f9`, equivalente limpio del arreglo de scope de
+exportación. La auditoría de procedencia del
 13-09-2026 detectó además que la historia alcanzable conserva objetos de la
 etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
 distintos; el runtime actual está neutralizado y la purga completa sigue sin
@@ -466,11 +469,11 @@ falla. Esto permite producir la AAB v5 sin borrar manualmente artefactos
 generados; no cambia el criterio de instalación ni sustituye la validación
   física en el Galaxy.
 
-**Evidencia física más reciente (13-09-2026, v6):** `adb devices -l` devolvió
+**Evidencia física más reciente (13-09-2026, v7):** `adb devices -l` devolvió
 `R5CY21X6FLE device product:pa3qxee model:SM_S938B device`. La APK release
 arm64 se instaló con `adb install -r` y devolvió `Success`; `dumpsys package`
-confirmó `versionCode=6`, `versionName=1.0.0`, `firstInstallTime=2026-08-07
-10:49:51` y `lastUpdateTime=2026-09-13 06:58:15`. Con red aislada mediante el
+confirmó `versionCode=7`, `versionName=1.0.0`, `firstInstallTime=2026-08-07
+10:49:51` y `lastUpdateTime=2026-09-13 07:39:25`. Con red aislada mediante el
 modo avión visible del sistema, la UI mostró `2 cambios pendientes de
 sincronizar`, `Lectura guardada sin conexión` y `La foto también queda
 pendiente de sincronizar`. Logcat registró la lectura y el adjunto encolados;
@@ -484,7 +487,8 @@ bloqueado. Tras preparar la caché en línea, el arranque en frío sin red mostr
 `Rondas sin actualizar. Última copia: 2026-09-13T05:00:36.436Z.` y la ronda
 `E2E-Galaxy-20260731-Atc`. Evidencia visual no versionada:
 `topofield-v6-airplane-hard-offline.png`,
-`topofield-v6-rounds-online-cache-seed.png` y las capturas `topofield-v5-*`.
+`topofield-v6-rounds-online-cache-seed.png`, `topofield-autonomous-prepared.png`
+y las capturas `topofield-v5-*`.
 Desde la misma ronda se creó un parte `partial` con `pending_point_count=1`;
 la UI mostró `Parte recibido por el servidor. El supervisor podrá consultarlo.`
 CSV y Excel se probaron desde el resumen, pero ambos mostraron literalmente
@@ -492,7 +496,7 @@ CSV y Excel se probaron desde el resumen, pero ambos mostraron literalmente
 hoja de compartir. No se atribuye la causa a formato sin un HTTP visible; la
 exportación queda pendiente de repetir contra un Render actualizado.
 
-**Comprobación adicional con el Galaxy conectado (13-09-2026):**
+**Comprobación adicional histórica previa a la v7 (13-09-2026):**
 `adb devices -l` volvió a mostrar `R5CY21X6FLE device`; `dumpsys package`
 confirmó que la aplicación sigue en `versionCode=6` y `versionName=1.0.0`.
 Se reintentó `Compartir CSV` con la sesión y la ronda abiertas: la UI repitió
@@ -502,6 +506,8 @@ sí resolvió destinos `SEND` para `text/csv` y para el MIME de XLSX, por lo que
 no se identifica falta de hoja de compartir como causa demostrada. La ronda
 consultada sigue `active`, su punto sigue `pending` y la consulta de solo
 lectura a Supabase sigue sin umbral vigente; no se modificaron datos remotos.
+Esta observación queda sustituida por la evidencia v7 de arriba, que ya incluye
+Render actualizado y exportaciones HTTP `200`.
 
 La comprobación pública posterior de
 `GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv`
@@ -510,7 +516,7 @@ devolvió literalmente `HTTP/1.1 401 Unauthorized` con
 Render seguía en `eb88db922a03b1e01a47f90dba8346542df3f212`. Esto verifica la
 existencia de la ruta protegida, no el resultado autenticado.
 
-**Corrección de diagnóstico de exportación (13-09-2026):**
+**Corrección de diagnóstico de exportación (13-09-2026, histórica previa al despliegue):**
 La prueba física volvió a producir el error genérico sin exponer respuesta HTTP
 ni causa útil. Como corrección local y acotada, la app conserva ahora la
 mensajería genérica para errores de red y añade únicamente a los fallos API los
@@ -518,11 +524,19 @@ metadatos seguros `HTTP`, código funcional y `Código de soporte` cuando el
 identificador tiene formato UUID. Nunca se muestra `rawMessage`, cuerpo,
 token, contraseña ni cabecera `Authorization`. El test dirigido de exportación
 terminó con `Test Suites: 1 passed, 1 total` y `Tests: 4 passed, 4 total`; el
-TypeScript móvil terminó con código `0`. Todavía hace falta instalar una nueva
-release para observar el diagnóstico en el Galaxy y repetir la exportación con
-Render actualizado; no se tocaron servicios remotos.
+TypeScript móvil terminó con código `0`. La nueva release v7 y el despliegue
+posterior sustituyeron esta compuerta: la exportación autenticada CSV/XLSX
+generó archivos, abrió el selector nativo y Render registró ambos `200`; la
+comparación estructurada del contenido sigue pendiente. No se tocaron servicios
+remotos en esta corrección local.
 
-**Ahora (bloquea piloto real o es fricción activa):**
+**Ahora (bloquea piloto real o es fricción activa; reconciliado 13-09-2026):**
+La prueba de lectura/foto offline, reinicio, reconexión y unicidad ya está
+cerrada con la release v7. Los elementos que siguen aquí como pendientes son el
+cierre definitivo con umbral autorizado, la comparación estructurada de
+CSV/XLSX, la observación de campo y las entrevistas; las menciones a v5/v6,
+Render anterior y al primer fallo de adjuntos son evidencia histórica, no el
+estado actual.
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
   destructiva encontró coincidencias exactas en commits antiguos alcanzables
   desde la rama de trabajo, una referencia `origin/main` anterior y objetos

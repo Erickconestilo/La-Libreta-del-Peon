@@ -12,7 +12,7 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `104/104` tests con `npm run verify:local`.
+- [x] Backend compila y pasa `105/105` tests con `npm run verify:local`.
 - [x] Móvil pasa TypeScript, `22` suites y `104/104` tests.
 - [x] Tooling local pasa `9/9` tests; `verify:local` termina con
   `verify local completed successfully`.
@@ -54,10 +54,10 @@ Comprobaciones técnicas:
 - [x] Verificar login, una obra autorizada, una foto, una lectura offline y su
   sincronización en el dispositivo objetivo; la consulta remota confirmó una
   lectura y un adjunto únicos.
-- [ ] **Confirmar que Render publica el commit que se pretende probar**.
-  Históricamente se verificó el 02-08-2026 tras el `push --force-with-lease` de
-  Erick; la observación actual del 13-09-2026 devuelve `eb88db9`, anterior a
-  los hardenings locales de esta rama, por lo que esta casilla no se marca.
+- [x] **Confirmar que Render publica el commit que se pretende probar**.
+  Render está en `df224f9`; `/health` devolvió `200`, las rutas protegidas sin
+  token devolvieron `401` y la exportación autenticada CSV/XLSX desde el
+  Galaxy devolvió `200`.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 - [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.

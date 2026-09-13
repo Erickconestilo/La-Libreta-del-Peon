@@ -8,15 +8,40 @@ rol: field-evidence
 
 ## Alcance
 
-Esta nota registra la evidencia fisica disponible de la release local v6. No
-declara F5 cerrada: aun faltan una jornada observada, entrevistas, validacion
-de exportacion con oficina y un cierre definitivo con umbral autorizado.
+Esta nota conserva la evidencia inicial de la release local v6 y su
+actualizacion posterior con v7. No declara F5 cerrada: aun faltan una jornada
+observada, entrevistas, comparacion estructurada de exportacion con oficina y
+un cierre definitivo con umbral autorizado.
+
+## Actualizacion v7 (13-09-2026)
+
+La release actualmente instalada en el mismo Galaxy es `versionCode=7`,
+`versionName=1.0.0`, firmada como `CN=TopoField Android Release`. Render está
+en `df224f9b7226c8aa5899a5e889898663b4642016`. Con la ronda preparada, la UI
+mostró `Jornada preparada en este dispositivo. Ya puedes trabajar sin
+conexión.` y el modo avión se activó y desactivó desde Ajustes del sistema.
+La prueba no añadió otra lectura ni otro adjunto porque la unicidad del E2E
+offline ya está verificada y el punto QA sigue sin umbral autorizado.
+
+Después del despliegue de la corrección de scope, `Compartir CSV` y
+`Compartir Excel` generaron archivos y abrieron el selector nativo de Android.
+Render registró ambas peticiones autenticadas con `200`:
+
+```text
+75f841da-81dd-49f0-820b-895397b2015b GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv 200
+247d163c-d381-4ded-af68-dc27627418b9 GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=xlsx 200
+```
+
+Los archivos se generaron, pero todavía no se pudo extraer su contenido desde
+la APK release no depurable para comparar filas estructuradas. La exportación
+está validada a nivel de HTTP, generación y selector, no todavía a nivel de
+paridad de contenido real.
 
 ## Entorno
 
 - Dispositivo: Samsung Galaxy `SM-S938B`, serial ADB `R5CY21X6FLE`.
 - Paquete: `com.ciudadanoinusual.topofield`.
-- Release instalada: `versionCode=6`, `versionName=1.0.0`.
+- Release instalada durante el recorrido histórico: `versionCode=6`, `versionName=1.0.0`.
 - Firma: `CN=TopoField Android Release`.
 - Red: LTE restaurada despues de la prueba; Wi-Fi apagado durante el corte.
 - Ronda: `E2E-Galaxy-20260731-Atc`.
@@ -100,9 +125,10 @@ No se pudo completar la operación. Reintenta en unos segundos.
 
 No se obtuvo un codigo HTTP visible en la UI ni en el logcat filtrado. Por eso
 el resultado se clasifica como exportacion no validada, no como un bug de
-formato demostrado. La observacion publica de Render sigue en `eb88db9`,
-anterior a los cambios locales de exportacion; hay que repetir la prueba tras
-un despliegue autorizado y comparar CSV/XLSX estructuralmente.
+formato demostrado. La observacion publica de Render de este recorrido era
+`eb88db9`, anterior a los cambios locales de exportacion. Queda sustituida por
+la actualización v7 de esta misma nota, con Render `df224f9` y respuestas
+autenticadas `200`; sigue pendiente comparar CSV/XLSX estructuralmente.
 
 ## Arranque en frio sin red
 

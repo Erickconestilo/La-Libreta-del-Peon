@@ -13,15 +13,16 @@ migraciones y sin modificar Supabase, Render, EAS o Play Store. El addendum
 fisico de esta misma fecha incorpora la evidencia posterior del Galaxy, pero
 no sustituye la jornada observada ni las entrevistas profesionales.
 
-La comprobación pública del 13-09-2026 observó Render vivo: `/api/v1/health`
-respondió `200` con commit `eb88db922a03b1e01a47f90dba8346542df3f212`, y las
-rutas protegidas de rondas y `GET /api/v1/me/journey` respondieron `401` sin
-bearer. Ese hash remoto es anterior a los hardenings locales posteriores; no
-se ha desplegado desde esta sesión.
+La comprobación pública final del 13-09-2026 observó Render vivo:
+`/api/v1/health` respondió `200` con commit
+`df224f9b7226c8aa5899a5e889898663b4642016`, y las rutas protegidas de rondas
+y `GET /api/v1/me/journey` respondieron `401` sin bearer. La corrección de
+scope de exportación está publicada y fue ejercitada desde el Galaxy con
+respuestas autenticadas `200` para CSV y XLSX.
 
 ## Addendum fisico del 13-09-2026
 
-La prueba posterior uso la release `versionCode=6` instalada en el Galaxy
+La prueba posterior uso la release `versionCode=7` instalada en el Galaxy
 `SM-S938B`/ADB `R5CY21X6FLE`. La lectura `825 mm` y una foto se guardaron sin
 red, sobrevivieron al reinicio y el sincronizador registro dos elementos
 completados tras restaurar LTE. La consulta de solo lectura en Supabase
@@ -34,7 +35,7 @@ La misma release cargo la lista de rondas en linea antes del corte. Tras
 activar modo avion desde la interfaz del sistema y reabrir la app, la ruta
 `Obras -> Campus Nord -> Rondas de auscultacion` mostro `Rondas sin actualizar`
 y la ronda `E2E-Galaxy-20260731-Atc`. Esto confirma la correccion de cache por
-proyecto incorporada en v6. El punto sigue `pending` porque no hay umbral
+proyecto incorporada en v6 y conservada en v7. El punto sigue `pending` porque no hay umbral
 vigente y la lectura permanece `draft`; el cierre bloqueado es correcto.
 
 ## Hallazgos y acciones
@@ -50,7 +51,9 @@ vigente y la lectura permanece `draft`; el cierre bloqueado es correcto.
 4. El catalogo semilla de obras nuevas usa solo datos neutros `EJ-*`, zonas
    genericas y umbrales ilustrativos. No contiene nombres ni codigos reales.
 5. La release local v5 se recompilo despues de alinear Expo 56 y corregir
-   fallos reproducibles del outbox. El manifiesto confirma `versionCode=5` y
+   fallos reproducibles del outbox. Esa evidencia es historica: la release
+   vigente verificada en el Galaxy es la v7 y el manifiesto de aquella
+   compilacion confirma `versionCode=5` y
    el paquete de TopoField. La AAB esta firmada como `CN=TopoField Android
    Release`; `bundletool validate` termino con codigo 0. No se genero un APK
    universal con Bundletool porque no pudo recibir la contraseña del keystore
@@ -271,7 +274,7 @@ vigente y la lectura permanece `draft`; el cierre bloqueado es correcto.
     install --check` devuelve `Dependencies are up to date` y código `0`.
 
 36. La comprobación remota de solo lectura del 13-09-2026 confirma que Render
-    sigue sirviendo `eb88db922a03b1e01a47f90dba8346542df3f212`: `/api/v1/health`
+    sirve `df224f9b7226c8aa5899a5e889898663b4642016`: `/api/v1/health`
     devuelve `HTTP/1.1 200 OK`; las rutas de rondas y `GET /api/v1/me/journey`
     sin bearer devuelven `HTTP/1.1 401 Unauthorized` con `UNAUTHORIZED`. La
     petición de `adb devices -l` sigue mostrando solo `List of devices
@@ -358,7 +361,7 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 ## Pendientes que no se pueden cerrar localmente
 
 - E2E en Galaxy: lectura, foto, reinicio, reconexion y unicidad ya estan
-  verificados una vez con la APK arm64 release `versionCode=6`. Siguen
+  verificados una vez con la APK arm64 release `versionCode=7`. Siguen
   pendientes la repeticion con umbral autorizado, el cierre definitivo, la
   exportacion real y la observacion de jornada. La variante universal queda
   opcional para ampliar compatibilidad: el intento local fallo en

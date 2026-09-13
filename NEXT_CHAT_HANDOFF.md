@@ -74,7 +74,7 @@ repositorio bare.
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
-  forma parte de la batería backend `104/104`. La
+  forma parte de la batería backend `105/105`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS
@@ -109,7 +109,7 @@ repositorio bare.
 - `35fc885` corrige otra relación defensiva de memoria de montaje: las
   evidencias se agregan solo si coinciden simultáneamente `visit_id` y
   `station_id`. La regresión está en `monitoring.model.test.ts`; el backend
-  local queda en `104/104` tests.
+  local queda en `105/105` tests.
 - `a475976` corrige una lectura defensiva adicional: `getStationById` confirma
   primero el scope de la estación y solo después consulta sus lecturas
   asociadas. La regresión evita volver a ejecutar la carga de historial antes
