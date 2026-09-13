@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Preparar release local versionCode 8 para diferenciar los cambios de trabajo operativo | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 49s`; AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`; `versionCode=8`; firma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`. La limpieza inicial de Ninja falló y el script reintentó sin `clean`; `adb devices -l` siguió sin dispositivos, por lo que no se instaló.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android con motivos rápidos de visitas | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`; `metadata.json=6101 bytes`, `files=95`; el bundle Android incorpora los motivos rápidos y no se generó APK ni se instaló nada.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir motivos rápidos para visitas de montaje no realizables | cerrado (`npm run verify:local` terminó con backend `114/114`, móvil `23` suites y `117/117`, tooling `13/13`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. Se añadieron cuatro motivos neutros seleccionables y se mantuvo el texto libre; no se tocaron Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android local tras exigir motivo en visitas no realizables | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`; `metadata.json=6101 bytes`, `files=95`; el backend compiló correctamente y no se generó APK ni se instaló nada.)` |
@@ -498,8 +499,8 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `113/113`
-tests; móvil pasa `23` suites y `115/115` tests; tooling mantiene `13/13` y
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `114/114`
+tests; móvil pasa `23` suites y `117/117` tests; tooling mantiene `13/13` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7`, firmada con `CN=TopoField Android Release`, fue instalada y
 validada históricamente en el Galaxy. Esa evidencia demostró lectura y foto
@@ -519,10 +520,13 @@ etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
  distintos; el runtime actual está neutralizado y la purga completa sigue sin
  presentarse como cerrada.
 
-La comprobación ADB más reciente de esta sesión devolvió literalmente
+La release local `versionCode=8` también quedó preparada con Gradle y firmada
+como `CN=TopoField Android Release`; la AAB está en
+`C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`.
+No se instaló porque la comprobación ADB más reciente de esta sesión devolvió literalmente
 `error: no devices/emulators found` y `List of devices attached` sin filas.
-Por tanto, la v7 no se considera disponible para repetir ahora la prueba hasta
-que Windows vuelva a detectar el Galaxy.
+La v7 sigue siendo la última versión físicamente validada; la v8 no se debe
+presentar como instalada hasta que Windows vuelva a detectar el Galaxy.
 
 El hardening local `f90c995` añade fallo cerrado cuando una sesión de topógrafo
 carece del mapa de membresías, pero la comparación remota verificó que no es
@@ -782,6 +786,18 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Release local v8 preparada, no instalada (Codex):**
+  `npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 49s`
+  tras el reintento incremental del script porque la limpieza de Ninja de
+  `react-native-reanimated` falló con `manifest 'build.ninja' still dirty
+  after 100 tries`. La AAB quedó en
+  `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`,
+  con `versionCode=8`, firmada como `CN=TopoField Android Release` y huella
+  SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
+  La comprobación literal posterior devolvió `List of devices attached` sin
+  filas y `adb.exe: no devices/emulators found`; no se instaló ni se modificó
+  el Galaxy.
 
 - **2026-09-13 — Bundle Android del formulario de resultado verificado
   (Codex):** `npm run verify:pre-apk:local` terminó con

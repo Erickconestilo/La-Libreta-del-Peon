@@ -94,6 +94,20 @@ La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
+## Estado local actual tras preparar v8
+
+La release local `versionCode=8` se generó con
+`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 8m
+49s` después del reintento incremental del script. La AAB quedó en
+`C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
+la firma es `CN=TopoField Android Release` con SHA-256
+`95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
+Esta v8 incorpora los cambios locales de resultado operativo y motivos de
+visitas no realizables, pero no está instalada: la comprobación literal más
+reciente devolvió `List of devices attached` sin filas y
+`adb.exe: no devices/emulators found`. La v7 sigue siendo la última release
+físicamente validada.
+
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
 confunde una acción pendiente del outbox con recepción del servidor.
@@ -105,7 +119,7 @@ rol. Ambos solo imprimen códigos y estados, nunca tokens ni cuerpos. En esta se
 reactivar ADB, pero `adb devices -l` devolvió únicamente `List of devices
 attached`; no se instaló ninguna build ni se modificó el Galaxy.
 
-## Estado verificado más reciente (13-09-2026)
+## Evidencia histórica verificada en Galaxy (13-09-2026, v7)
 
 - El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.
 - La release arm64 `versionCode=7` de

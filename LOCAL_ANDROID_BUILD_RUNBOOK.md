@@ -436,6 +436,20 @@ Cubierto por `.gitignore` (`.env`), igual que el keystore de firma — nunca se 
   `%USERPROFILE%\.topofield\android\topofield-release.properties`; el keystore
   y las contraseñas no se versionan
 
+## 21a. Preparación local v8 (13-09-2026)
+
+La release local `versionCode=8` incorpora el resultado operativo por punto y
+los motivos rápidos de visitas de montaje. `npm run mobile:build-local-android`
+terminó con `BUILD SUCCESSFUL in 8m 49s` después de que el script reintentara
+`bundleRelease` sin `clean` por el fallo de Ninja
+`manifest 'build.ninja' still dirty after 100 tries`.
+
+- AAB: `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`
+- Firma: `CN=TopoField Android Release`
+- SHA-256: `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`
+- Instalación: pendiente; `adb devices -l` devolvió `List of devices attached`
+  sin dispositivos y `adb.exe: no devices/emulators found`.
+
 ## 22. Proximos pasos posibles
 
 ### Opcion A - actualizar la APK local en el Galaxy
