@@ -500,6 +500,33 @@ en v9. `npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in
   `LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...` y las
   pestañas principales. No se hizo login ni se registraron datos.
 
+## 21d. Preparación local e instalación v11 (13-09-2026)
+
+La release local `versionCode=11` incorpora las acciones `Continuar ronda` y
+`Parte de zona` al bloque `Mi trabajo asignado` del `Parte diario`. El build
+principal terminó con `BUILD SUCCESSFUL in 8m 20s`; la APK arm64 se ensambló
+con `BUILD SUCCESSFUL in 1m`. La limpieza completa volvió a quedar fuera del
+camino por el problema conocido de Ninja; el reintento incremental no borra el
+árbol generado.
+
+- AAB: `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab` (`40,152,373` bytes)
+- APK arm64: `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk` (`53,446,114` bytes)
+- Paquete: `com.ciudadanoinusual.topofield`
+- `versionCode`: `11`; `versionName`: `1.0.0`
+- Firma: `CN=TopoField Android Release`
+- SHA-256: `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`
+- `apksigner verify --verbose`: `Verifies`, V2 `true`, un firmante.
+- Instalación: `adb install -r` devolvió literalmente `Success`.
+- Dispositivo: `R5CY21X6FLE device`, modelo `SM_S938B`.
+- `dumpsys package`: `versionCode=11`, `versionName=1.0.0`,
+  `firstInstallTime=2026-08-07 10:49:51`,
+  `lastUpdateTime=2026-09-13 12:12:48`.
+- Smoke test: `adb shell monkey` dejó `topResumedActivity` en
+  `com.ciudadanoinusual.topofield/.MainActivity`; `uiautomator dump` mostró
+  `LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...`, `Reintentar`
+  y las pestañas principales. El logcat filtrado no mostró `FATAL EXCEPTION` ni
+  `ReactNativeJS`. No se hizo login ni se registraron datos remotos.
+
 ## 22. Proximos pasos posibles
 
 ### Opcion A - actualizar la APK local en el Galaxy

@@ -94,25 +94,29 @@ La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
-## Estado local actual tras preparar v10
+## Estado local actual tras instalar v11
 
-La release local `versionCode=10` se generó con
-`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 6m
-59s` después del reintento incremental del script. La AAB quedó en
+La release local `versionCode=11` se generó con
+`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 8m
+20s` después del reintento incremental del script. La AAB quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
 la APK arm64 quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`;
 la firma es `CN=TopoField Android Release` con SHA-256
 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
 La APK pasó `apksigner verify --verbose` con `Verifies`, firma V2 válida, y
-`apkanalyzer` confirmó `com.ciudadanoinusual.topofield`, `versionCode=10` y
-`versionName=1.0.0`. Esta v10 incorpora los cambios locales de resultado
-operativo, motivos de visitas no realizables y resumen de trabajo asignado en
-el parte diario. `adb install -r` devolvió `Success` y `dumpsys package`
-confirmó `versionCode=10` y `lastUpdateTime=2026-09-13 11:52:50`. El smoke
-test de arranque mostró `LA LIBRETA DEL PEÓN`, `Seleccionar obra`,
-`Cargando obras...` y las pestañas principales, sin pantalla blanca. El
-recorrido autenticado de campo sigue pendiente.
+`aapt2 dump badging` identifica el mismo paquete y `versionCode=11`,
+`versionName=1.0.0`. Esta v11 incorpora las acciones `Continuar ronda` y
+`Parte de zona` en el resumen de trabajo asignado del parte diario, sin mezclar
+el estado operativo con la lectura metrológica. La AAB mide `40,152,373` bytes
+y la APK `53,446,114` bytes. `adb install -r` devolvió `Success` y
+`dumpsys package` confirmó `versionCode=11`, `firstInstallTime=2026-08-07
+10:49:51` y `lastUpdateTime=2026-09-13 12:12:48`, conservando la instalación
+existente. El smoke test dejó `topResumedActivity` en
+`com.ciudadanoinusual.topofield/.MainActivity`; `uiautomator dump` mostró
+`LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...`, `Reintentar` y
+las pestañas principales. El logcat filtrado no mostró `FATAL EXCEPTION` ni
+`ReactNativeJS`. El recorrido autenticado de campo sigue pendiente.
 
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
