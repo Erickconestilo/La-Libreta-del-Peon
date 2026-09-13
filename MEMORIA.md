@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar la cifra activa de tooling tras añadir el verificador público de estados | cerrado (`npm run verify:local` terminó con backend `113/113`, móvil `23` suites y `114/114`, tooling `13/13`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. Se conservaron las cifras históricas.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Documentar en README la verificación opcional del endpoint de estados de trabajo | cerrado (`npm run docs:check` devolvió `check-docs: 44 documentos revisados en raíz y docs/` y `Sin errores ni avisos`; `git diff --check` sin salida. No se modificaron servicios remotos ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador público al endpoint de estados de trabajo sin credenciales | cerrado (`node --check scripts/verify-public-contract.mjs` terminó con código `0`; `node --test scripts/verify-public-contract.test.mjs` devolvió `ℹ tests 4`, `ℹ pass 4`, `ℹ fail 0`; `npm run verify:remote:public` mantuvo `PUBLIC_HEALTH_STATUS=200`, `PUBLIC_ROUNDS_STATUS=401` y `PUBLIC_JOURNEY_STATUS=401`; `git diff --check` sin salida. El chequeo nuevo es opcional mediante `TOPOFIELD_ROUND_POINT_ID`; no se modificó Render ni Supabase.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconfirmar migraciones y advisors de Supabase en solo lectura antes del cierre operativo | cerrado (`supabase_list_migrations` devolvió aplicadas hasta `026_supervisor_role`, sin `027`, `028` ni `029`; advisor de seguridad: solo `auth_leaked_password_protection` en `WARN`; advisor de rendimiento: `13` claves foráneas sin índice y `40` índices sin uso; no se aplicó SQL ni se modificaron datos.)` |
@@ -482,7 +483,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `113/113`
-tests; móvil pasa `23` suites y `114/114` tests; tooling mantiene `12/12` y
+tests; móvil pasa `23` suites y `114/114` tests; tooling mantiene `13/13` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7` está instalada en el Galaxy y firmada con
 `CN=TopoField Android Release`. El E2E físico ya demostró lectura y foto
