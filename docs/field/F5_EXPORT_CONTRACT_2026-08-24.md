@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-13
 -->
 
 # F5: contrato de exportacion de rondas
@@ -38,7 +38,12 @@ obra_codigo, obra_nombre, ronda_nombre, ronda_fecha, ronda_estado,
 codigo_punto, nombre_punto, pk, zona, tramo, seccion, lado, instrumento,
 estado_punto, fecha_lectura, valor_numerico, valor_texto, unidad, notas,
 operador, estado_lectura, delta, estado_umbral, adjuntos
+trabajo_estado, trabajo_motivo, trabajo_notas, trabajo_fecha, trabajo_operador
 ```
+
+El contrato vigente tiene 29 columnas. Las cinco últimas describen el último
+resultado de trabajo recibido del operario por punto; no sustituyen la lectura
+metrológica ni convierten un punto pendiente en una medición válida.
 
 `delta` y `estado_umbral` se recalculan con la misma regla de umbrales del
 backend; no se persisten como columnas nuevas. Cuando no hay lectura previa,
@@ -69,5 +74,5 @@ npm run build --workspace apps/backend
 npm test --workspace apps/backend
 ```
 
-La prueba unitaria verifica el orden de 24 columnas, escape CSV y que XLSX
+La prueba unitaria verifica el orden de 29 columnas, escape CSV y que XLSX
 se genera como un archivo ZIP valido.
