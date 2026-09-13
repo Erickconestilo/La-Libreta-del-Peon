@@ -21,10 +21,10 @@ validación en campo:
 - [x] La release Android v7 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
   validate` y `apksigner`.
-- [x] La release Android v9 quedó preparada localmente con Gradle, firmada
-  como `CN=TopoField Android Release` y con `versionCode=9`; `apksigner`
-  confirmó el esquema V2 y todavía no está instalada porque `adb devices -l`
-  no muestra el Galaxy.
+- [x] La release Android v10 quedó preparada e instalada localmente con Gradle,
+  firmada como `CN=TopoField Android Release` y con `versionCode=10`;
+  `apksigner` confirmó el esquema V2, `adb install -r` devolvió `Success` y
+  `dumpsys package` confirmó `lastUpdateTime=2026-09-13 11:52:50`.
 - [x] La APK arm64 v7 está instalada en el Galaxy; `adb install -r` devolvió
   `Success` y `dumpsys package` confirmó `versionCode=7` y
   `lastUpdateTime=2026-09-13 07:39:25`.

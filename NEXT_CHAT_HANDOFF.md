@@ -94,23 +94,25 @@ La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
-## Estado local actual tras preparar v9
+## Estado local actual tras preparar v10
 
-La release local `versionCode=9` se generó con
-`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 8m
-25s` después del reintento incremental del script. La AAB quedó en
+La release local `versionCode=10` se generó con
+`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 6m
+59s` después del reintento incremental del script. La AAB quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
 la APK arm64 quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`;
 la firma es `CN=TopoField Android Release` con SHA-256
 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
 La APK pasó `apksigner verify --verbose` con `Verifies`, firma V2 válida, y
-`apkanalyzer` confirmó `com.ciudadanoinusual.topofield`, `versionCode=9` y
-`versionName=1.0.0`. Esta v9 incorpora los cambios locales de resultado
-operativo y motivos de visitas no realizables, pero no está instalada: la comprobación literal más
-reciente devolvió `List of devices attached` sin filas y
-`adb.exe: no devices/emulators found`. La v7 sigue siendo la última release
-físicamente validada.
+`apkanalyzer` confirmó `com.ciudadanoinusual.topofield`, `versionCode=10` y
+`versionName=1.0.0`. Esta v10 incorpora los cambios locales de resultado
+operativo, motivos de visitas no realizables y resumen de trabajo asignado en
+el parte diario. `adb install -r` devolvió `Success` y `dumpsys package`
+confirmó `versionCode=10` y `lastUpdateTime=2026-09-13 11:52:50`. El smoke
+test de arranque mostró `LA LIBRETA DEL PEÓN`, `Seleccionar obra`,
+`Cargando obras...` y las pestañas principales, sin pantalla blanca. El
+recorrido autenticado de campo sigue pendiente.
 
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
