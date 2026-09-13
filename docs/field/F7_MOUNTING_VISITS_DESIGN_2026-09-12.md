@@ -39,6 +39,9 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 - En la pantalla móvil, una evidencia de tipo `prism` puede vincularse
   opcionalmente a un prisma cargado para esa estación; si no hay catálogo
   disponible, se conserva el código en el título sin forzar una relación.
+- Marcar una visita como `blocked`/`No realizable` exige un motivo escrito. La
+  aplicación conserva las notas anteriores y añade `Motivo de no realización:`;
+  el backend rechaza la transición si el motivo llega vacío.
 
 La pantalla de consulta puede mostrar una posición relativa aproximada sobre
 la miniatura mediante una cuadrícula 3x3. Esa posición solo sirve para

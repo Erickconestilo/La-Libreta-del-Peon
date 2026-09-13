@@ -61,3 +61,14 @@ test('mounting visit updates require an explicit field', () => {
     /Invalid mounting visit update payload/
   );
 });
+
+test('blocked mounting visits require a reason', () => {
+  assert.throws(
+    () => validateUpdateMountingVisitInput({ status: 'blocked' }),
+    /Invalid mounting visit update payload/
+  );
+  assert.deepEqual(
+    validateUpdateMountingVisitInput({ status: 'blocked', notes: 'Acceso cerrado por seguridad.' }),
+    { status: 'blocked', notes: 'Acceso cerrado por seguridad.' }
+  );
+});

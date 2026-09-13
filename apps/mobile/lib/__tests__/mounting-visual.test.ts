@@ -4,6 +4,7 @@ import type { MountingVisit } from '@shared/types';
 import {
   filterMountingVisitsForVisual,
   filterMountingVisitsForStatus,
+  buildMountingBlockedNotes,
   getMountingVisitStatusPresentation,
   getMountingEvidenceUri,
   MOUNTING_STATUS_FILTERS,
@@ -71,5 +72,12 @@ describe('mounting photo visual contract', () => {
     expect(getMountingVisitStatusPresentation('draft')).toEqual({ label: 'En curso', tone: 'warning' });
     expect(getMountingVisitStatusPresentation('completed')).toEqual({ label: 'Realizada', tone: 'success' });
     expect(getMountingVisitStatusPresentation('blocked')).toEqual({ label: 'No realizable', tone: 'danger' });
+  });
+
+  it('preserves existing notes and appends a clear blocked reason', () => {
+    expect(buildMountingBlockedNotes('Acceso lateral anotado.', '  Valla cerrada.  ')).toBe(
+      'Acceso lateral anotado.\nMotivo de no realización: Valla cerrada.'
+    );
+    expect(buildMountingBlockedNotes(null, 'Sin visibilidad')).toBe('Motivo de no realización: Sin visibilidad');
   });
 });

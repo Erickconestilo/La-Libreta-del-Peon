@@ -37,6 +37,13 @@ export const getMountingVisitStatusPresentation = (status: MountingVisitStatus):
   return { label: 'En curso', tone: 'warning' };
 };
 
+export const buildMountingBlockedNotes = (existingNotes: string | null, reason: string) => {
+  const trimmedReason = reason.trim();
+  const reasonLine = `Motivo de no realización: ${trimmedReason}`;
+
+  return [existingNotes?.trim(), reasonLine].filter(Boolean).join('\n');
+};
+
 export const filterMountingVisitsForVisual = <T extends MountingVisit>(
   visits: T[],
   filter: MountingVisualFilter

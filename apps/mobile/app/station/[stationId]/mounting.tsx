@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
@@ -17,6 +17,7 @@ import {
   filterMountingVisitsForVisual,
   getMountingEvidenceUri,
   filterMountingVisitsForStatus,
+  buildMountingBlockedNotes,
   getMountingVisitStatusPresentation,
   MOUNTING_STATUS_FILTERS,
   type MountingVisualEvidence,
@@ -47,6 +48,8 @@ export default function MountingVisitsScreen() {
   const [previewEvidence, setPreviewEvidence] = useState<MountingVisualEvidence | null>(null);
   const [visualFilter, setVisualFilter] = useState<MountingVisualFilter>('all');
   const [statusFilter, setStatusFilter] = useState<MountingVisitStatusFilter>('all');
+  const [blockedVisitId, setBlockedVisitId] = useState<string | null>(null);
+  const [blockedReason, setBlockedReason] = useState('');
   const canEdit = canWriteProject(currentUser, station?.projectId);
   const selectedPhotoAnchor = MOUNTING_PHOTO_ANCHORS.find((anchor) => anchor.key === photoAnchorKey) ?? null;
   const visibleVisits = useMemo(() => {
@@ -88,11 +91,21 @@ export default function MountingVisitsScreen() {
     setSelectedPrismId(null);
   };
 
-  const handleUpdateStatus = async (visitId: string, status: MountingVisitStatus) => {
-    await updateVisit({
-      input: { status },
-      visitId
-    });
+  const handleUpdateStatus = async (visitId: string, status: MountingVisitStatus, visitNotes: string | null = null) => {
+    const input = status === 'blocked'
+      ? { notes: buildMountingBlockedNotes(visitNotes, blockedReason), status }
+      : { status };
+
+    if (status === 'blocked' && !blockedReason.trim()) {
+      Alert.alert('Falta el motivo', 'Indica por qué no se pudo realizar esta visita antes de guardarla.');
+      return;
+    }
+
+    await updateVisit({ input, visitId });
+    if (status === 'blocked') {
+      setBlockedVisitId(null);
+      setBlockedReason('');
+    }
   };
 
   return (
@@ -320,10 +333,33 @@ export default function MountingVisitsScreen() {
                     <MaterialIcons color={colors.background} name="done" size={18} />
                     <Text style={styles.primaryButtonText}>Marcar realizada</Text>
                   </Pressable>
-                  <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'blocked').catch(() => undefined)} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                  <Pressable disabled={isMutating} onPress={() => { setBlockedVisitId(visit.id); setBlockedReason(''); }} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
                     <MaterialIcons color={colors.textPrimary} name="block" size={18} />
                     <Text style={styles.secondaryButtonText}>No realizable</Text>
                   </Pressable>
+                </View>
+              ) : null}
+              {canEdit && visit.status === 'draft' && blockedVisitId === visit.id ? (
+                <View style={styles.blockedReasonBox}>
+                  <Text style={styles.label}>Motivo obligatorio</Text>
+                  <TextInput
+                    multiline
+                    onChangeText={setBlockedReason}
+                    placeholder="Sin acceso, sin visibilidad, equipo dañado..."
+                    placeholderTextColor="#64748b"
+                    style={[styles.input, styles.multiline]}
+                    value={blockedReason}
+                  />
+                  <View style={styles.actionRow}>
+                    <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'blocked', visit.notes).catch(() => undefined)} style={[styles.primaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                      <MaterialIcons color={colors.background} name="save" size={18} />
+                      <Text style={styles.primaryButtonText}>Guardar motivo</Text>
+                    </Pressable>
+                    <Pressable disabled={isMutating} onPress={() => { setBlockedVisitId(null); setBlockedReason(''); }} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                      <MaterialIcons color={colors.textPrimary} name="close" size={18} />
+                      <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                    </Pressable>
+                  </View>
                 </View>
               ) : null}
             </View>
@@ -356,6 +392,7 @@ const styles = StyleSheet.create({
   anchorButtonSelected: { backgroundColor: colors.accentGreen, borderColor: colors.accentGreen },
   anchorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1], justifyContent: 'space-between' },
   body: { color: colors.textSecondary, fontSize: 14, lineHeight: 21 },
+  blockedReasonBox: { backgroundColor: '#151922', borderColor: 'rgba(248, 113, 113, 0.35)', borderRadius: 10, borderWidth: 1, gap: spacing[1], padding: spacing[2] },
   bold: { color: colors.textPrimary, fontWeight: '800' },
   caption: { color: colors.textSecondary, fontSize: 12 },
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 16, borderWidth: 1, gap: spacing[2], padding: spacing[3] },

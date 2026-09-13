@@ -30,6 +30,11 @@ const updateMountingVisitSchema = z.object({
   changeSummary: z.string().trim().max(2000).nullable().optional()
 }).refine((input) => Object.keys(input).length > 0, {
   message: 'At least one mounting visit field is required'
+}).refine((input) => (
+  input.status !== 'blocked' || Boolean(input.notes?.trim())
+), {
+  message: 'A blocked mounting visit requires a reason in notes',
+  path: ['notes']
 });
 
 export type ValidatedCreateMountingVisitInput = z.infer<typeof mountingVisitSchema>;
