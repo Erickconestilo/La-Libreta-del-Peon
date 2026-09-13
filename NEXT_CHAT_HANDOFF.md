@@ -82,6 +82,10 @@ repositorio bare.
   están en `docs/field/F6_EXPORT_SAVE_TO_ANDROID.md`. La nueva ruta todavía no
   está instalada en el Galaxy v7, así que la comparación de archivos reales
   queda pendiente de la siguiente instalación autorizada.
+- El preflight local posterior terminó con `verify pre-apk local-only
+  completed successfully`; Expo exportó `metadata.json=6101 bytes`, `files=95`
+  y el bundle Android, sin procesos Expo/Metro retenidos. Esto verifica
+  bundling, no instalación ni comportamiento nativo del selector en el Galaxy.
 - La comprobación adicional en el Galaxy v7 generó literalmente los archivos
   `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y
   `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281343797.xlsx`.
