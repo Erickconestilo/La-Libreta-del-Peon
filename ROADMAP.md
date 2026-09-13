@@ -92,6 +92,8 @@ automáticamente ni muestra sus payloads.
 El reintento manual reinicia el ciclo de backoff y límite de intentos, mientras
 que los fallos automáticos conservan esos metadatos para que el sincronizador
 no pierda su control de reintentos (`423649d`).
+Los mensajes de error del outbox también se redactan antes de persistirse en
+SQLite y quedan limitados a texto operativo acotado.
 El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.

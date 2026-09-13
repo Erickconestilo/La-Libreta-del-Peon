@@ -32,6 +32,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `423649d` separa el reintento manual del automático: el botón reinicia el
   ciclo completo, mientras que un fallo transitorio conserva contador y fecha
   para respetar el backoff.
+- `markError` sanea antes de persistir los errores del outbox: elimina bearer,
+  JWT y valores de autorización, y limita el texto local a 240 caracteres.
 - La especificación offline está alineada con esa capacidad: la resolución
   `Usar mío`/`Usar servidor`/`Descartar` queda explícitamente fuera del MVP
   hasta tener contrato, permisos y prueba de concurrencia.
@@ -213,7 +215,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `21` suites y
-  `92` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `93` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 

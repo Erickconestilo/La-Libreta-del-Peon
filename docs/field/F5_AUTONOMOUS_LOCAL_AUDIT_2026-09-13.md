@@ -179,6 +179,11 @@ se ha desplegado desde esta sesión.
     automáticos usan `markPendingForRetry` y conservan el estado necesario para
     backoff. La regresión simula un item agotado y verifica `retryCount = 0`,
     fechas nulas y ausencia de estado de sincronización anterior.
+28. `markError` persistía en SQLite el texto recibido de una excepción sin una
+    barrera en el punto de escritura. Aunque la interfaz ya lo redactaba, una
+    extracción local del outbox podía conservar bearer tokens o JWT. Ahora el
+    guardado elimina esos patrones y limita el texto a `240` caracteres; la
+    regresión comprueba que los secretos simulados no se almacenan.
 
 ## Evidencia local
 
@@ -191,7 +196,7 @@ se ha desplegado desde esta sesión.
 ℹ fail 0
 
 Test Suites: 21 passed, 21 total
-Tests:       92 passed, 92 total
+Tests:       93 passed, 93 total
 
 check-docs: 39 documentos revisados en raíz y docs/.
 
