@@ -124,6 +124,22 @@ test('reading attachment idempotency remains compatible before migration 028', (
   assert.match(modelSource, /READING_ATTACHMENT_INSERT_INCONSISTENT/);
 });
 
+test('round export applies the actor project scope to its data query', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const exportSource = modelSource.slice(
+    modelSource.indexOf('export const getMonitoringRoundExportRows'),
+    modelSource.indexOf('export const createReadingAttachment')
+  );
+
+  assert.equal(
+    (exportSource.match(/WHERE mr\.id = \$1\s+\$\{scope\.clause\}/g) ?? []).length,
+    2
+  );
+});
+
 test('station details validate tenant scope before loading associated readings', () => {
   const modelSource = readFileSync(
     resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/stations.model.ts'),

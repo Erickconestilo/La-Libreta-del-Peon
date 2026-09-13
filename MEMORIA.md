@@ -206,6 +206,9 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Generar release v7 tras corregir la pérdida de diagnóstico en exportación y validarla con ADB | cerrado (la compilación Gradle generó la APK firmada `CN=TopoField Android Release`; `adb install -r` devolvió `Success`; `dumpsys package` confirmó `versionCode=7` y `lastUpdateTime=2026-09-13 07:39:25`. La UI mostró el diagnóstico HTTP y el código de soporte sin exponer secretos.) |
+| 2026-09-13 | Codex | codex/f5-field-stability | Exponer diagnóstico seguro cuando falla la exportación móvil reproducida en Galaxy | cerrado (se añadió `getRoundExportErrorMessage`, que muestra solo `HTTP`, código funcional y un UUID de soporte válido; se excluyen mensajes internos y valores no UUID. El test dirigido pasó `4` tests y TypeScript móvil terminó con código `0`. La causa remota quedó aislada en el backend: faltaba interpolar el scope en la segunda consulta.) |
+| 2026-09-13 | Codex | codex/f5-field-stability | Corregir la consulta de exportación que enviaba scope sin filtro SQL | cerrado localmente (se añadió `${scope.clause}` al SELECT de filas de exportación y una regresión que exige el filtro en el guard y en la consulta de datos. Build y batería local quedan en verde; falta publicar mediante PR y volver a probar con Render.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir a la bitácora la comprobación pública de exportación tras recuperar conectividad del Galaxy | cerrado (la entrada de §12 registra el `401 Unauthorized` literal, mantiene el commit remoto observado y deja pendiente la comprobación autenticada.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Registrar la verificación pública de la ruta de exportación después del reintento en el Galaxy | cerrado (la ruta pública respondió `401 Unauthorized` con `UNAUTHORIZED`, el health remoto continuó en `eb88db9` y no se modificó ningún servicio remoto.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Continuar con el Galaxy conectado la validación física F5: exportación, cierre operativo y comprobaciones finales sin cambiar servicios remotos | cerrado parcialmente (ADB detectó el Galaxy como `device`, la release v6 sigue instalada y la ronda mantiene el punto pendiente sin umbral; la exportación CSV se reintentó y volvió a mostrar el error genérico, sin evidencia HTTP ni falta de destinos Android. No se tocaron servicios remotos.) |
@@ -507,6 +510,18 @@ devolvió literalmente `HTTP/1.1 401 Unauthorized` con
 Render seguía en `eb88db922a03b1e01a47f90dba8346542df3f212`. Esto verifica la
 existencia de la ruta protegida, no el resultado autenticado.
 
+**Corrección de diagnóstico de exportación (13-09-2026):**
+La prueba física volvió a producir el error genérico sin exponer respuesta HTTP
+ni causa útil. Como corrección local y acotada, la app conserva ahora la
+mensajería genérica para errores de red y añade únicamente a los fallos API los
+metadatos seguros `HTTP`, código funcional y `Código de soporte` cuando el
+identificador tiene formato UUID. Nunca se muestra `rawMessage`, cuerpo,
+token, contraseña ni cabecera `Authorization`. El test dirigido de exportación
+terminó con `Test Suites: 1 passed, 1 total` y `Tests: 4 passed, 4 total`; el
+TypeScript móvil terminó con código `0`. Todavía hace falta instalar una nueva
+release para observar el diagnóstico en el Galaxy y repetir la exportación con
+Render actualizado; no se tocaron servicios remotos.
+
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
   destructiva encontró coincidencias exactas en commits antiguos alcanzables
@@ -648,14 +663,38 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   pero falta comprobarla con sesión autenticada; no se modificó Render ni
   Supabase.
 
+- **2026-09-13 — Diagnóstico seguro de exportación móvil (Codex):** la
+  exportación reproducida en el Galaxy terminaba en el mensaje genérico y
+  descartaba el `status`, `code` y `requestId` que ya conservaba `ApiRequestError`.
+  Se añadió `getRoundExportErrorMessage`: mantiene errores de red genéricos y,
+  para respuestas API, muestra solo `HTTP`, código funcional y `Código de
+  soporte` si el identificador es un UUID. La regresión dirigida pasó `4/4`
+  tests y TypeScript móvil terminó con código `0`. La causa remota se observó
+  después en Render y quedó aislada en la consulta de exportación: se enviaba
+  el parámetro de scope sin interpolar su filtro SQL; la v7 ya permite
+  identificarla con su código de soporte.
+
 - **2026-09-13 — Reintento de exportación con Galaxy conectado (Codex):**
   `adb devices -l` devolvió el Galaxy como `device` y `dumpsys package` confirmó
   `versionCode=6`/`versionName=1.0.0`. Desde el resumen de la ronda se reintentó
-  `Compartir CSV`; la UI volvió a mostrar `No se pudo completar la operación.
-  Reintenta en unos segundos.`. Logcat no expuso request, respuesta HTTP ni
-  stack trace. Android resolvió destinos `SEND` para CSV y XLSX, así que no se
-  demostró un problema del sistema de compartir. La ronda sigue `active`, el
-  punto `pending` y sin umbral vigente; no se tocaron servicios remotos.
+  `Compartir CSV`; la UI volvió a mostrar el mensaje genérico sin diagnóstico.
+  Logcat no expuso request, respuesta HTTP ni stack trace. Android resolvió
+  destinos `SEND` para CSV y XLSX, así que no se demostró un problema del
+  sistema de compartir. La ronda sigue `active`, el punto `pending` y sin
+  umbral vigente; no se tocaron servicios remotos.
+
+- **2026-09-13 — 500 de exportación aislado y corregido (Codex):** la release
+  `versionCode=7` quedó instalada con `adb install -r` y, al pulsar
+  `Compartir CSV`, mostró literalmente `No se pudo completar la operación.
+  Reintenta en unos segundos. (HTTP 500 · ROUND_EXPORT_FAILED · Código de
+  soporte: cd695cdf-da73-4b94-86eb-dc5bb187a0f2)`. Render registró la misma
+  petición como `GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv 500`.
+  La consulta de datos de exportación enviaba el parámetro de scope del
+  topógrafo pero no interpolaba `${scope.clause}` en el segundo SELECT; eso
+  provoca el error de parámetros de PostgreSQL y el 500. Se añadió el filtro
+  y una regresión estática que exige el scope en los dos SELECT. Falta ejecutar
+  la batería final y publicar este arreglo mediante PR antes de repetir la
+  exportación autenticada.
 
 - **2026-09-13 — Filtro de estado en memoria visual (Codex):** la pantalla de
   visitas de montaje añade filtros operativos para distinguir trabajo en curso,

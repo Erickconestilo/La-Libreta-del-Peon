@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.ciudadanoinusual.topofield",
-      "versionCode": 6,
+      "versionCode": 7,
       "allowBackup": false,
       "blockedPermissions": [
         "android.permission.POST_NOTIFICATIONS",

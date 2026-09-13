@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
-import { shareRoundExport, type RoundExportDependencies } from '../round-export';
+import { ApiRequestError } from '../api';
+import { getRoundExportErrorMessage, shareRoundExport, type RoundExportDependencies } from '../round-export';
 
 const mockDownload = jest.fn<RoundExportDependencies['download']>();
 const mockWriteBase64 = jest.fn<RoundExportDependencies['writeBase64']>();
@@ -47,5 +48,27 @@ describe('round export sharing', () => {
 
     await expect(shareRoundExport('round-1', 'xlsx', dependencies)).rejects.toThrow('no permite compartir');
     expect(mockWriteBase64).not.toHaveBeenCalled();
+  });
+
+  it('shows safe HTTP diagnostics for an API failure', () => {
+    const message = getRoundExportErrorMessage(new ApiRequestError(500, 'No se pudo completar la operación.', {
+      code: 'ROUND_EXPORT_FAILED',
+      rawMessage: 'database details must not be displayed',
+      requestId: '6ca7dc0b-6681-4d5c-b5a3-87ee3c6a6812'
+    }));
+
+    expect(message).toBe(
+      'No se pudo completar la operación. (HTTP 500 · ROUND_EXPORT_FAILED · Código de soporte: 6ca7dc0b-6681-4d5c-b5a3-87ee3c6a6812)'
+    );
+    expect(message).not.toContain('database details');
+  });
+
+  it('does not display an untrusted support id', () => {
+    const message = getRoundExportErrorMessage(new ApiRequestError(403, 'No tienes permiso.', {
+      code: 'READ_ONLY_PROJECT_MEMBERSHIP',
+      requestId: 'token-or-body'
+    }));
+
+    expect(message).toBe('No tienes permiso. (HTTP 403 · READ_ONLY_PROJECT_MEMBERSHIP)');
   });
 });

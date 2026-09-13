@@ -412,6 +412,26 @@ hacer un upgrade mayor mezclado con la validación de campo; abrir una tarea de
 mantenimiento específica para actualizar Expo/Metro y volver a auditar el
 árbol completo antes de una publicación pública.
 
+## Addendum de exportación autenticada
+
+La release arm64 `versionCode=7` se instaló en el Galaxy con `adb install -r`
+(`Success`). Al pulsar `Compartir CSV`, la UI mostró literalmente:
+
+`No se pudo completar la operación. Reintenta en unos segundos. (HTTP 500 · ROUND_EXPORT_FAILED · Código de soporte: cd695cdf-da73-4b94-86eb-dc5bb187a0f2)`
+
+Render registró el mismo intento como:
+
+`cd695cdf-da73-4b94-86eb-dc5bb187a0f2 GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv 500`
+
+La revisión del código y la consulta equivalente de solo lectura en Supabase
+aislaron la causa: `getMonitoringRoundExportRows` enviaba el parámetro de
+scope del actor a su segundo `SELECT`, pero no interpolaba `${scope.clause}`.
+Para un topógrafo con membresía el backend recibía más parámetros que los
+placeholders SQL y devolvía `500`. La corrección local añade el filtro al
+segundo `SELECT`; una regresión exige el scope tanto en la consulta de
+existencia como en la de datos. El arreglo aún no está desplegado, por lo que
+la exportación autenticada queda pendiente de repetir tras la publicación.
+
 ## Criterio de lectura
 
 El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma

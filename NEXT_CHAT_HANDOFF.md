@@ -32,9 +32,10 @@ repositorio bare.
 ## Estado verificado más reciente (13-09-2026)
 
 - El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.
-- La release arm64 `versionCode=6` de
+- La release arm64 `versionCode=7` de
   `com.ciudadanoinusual.topofield` está instalada; `adb install -r` devolvió
-  `Success`. La APK está firmada como `CN=TopoField Android Release`.
+  `Success` y `dumpsys package` confirmó `lastUpdateTime=2026-09-13 07:39:25`.
+  La APK está firmada como `CN=TopoField Android Release`.
 - El E2E físico del operador pasó la parte crítica: lectura `825 mm` y foto
   se guardaron sin conexión, sobrevivieron al reinicio y sincronizaron dos
   elementos automáticamente al volver LTE. Supabase verificó exactamente una
@@ -51,18 +52,18 @@ repositorio bare.
   la UI mostró `Parte recibido por el servidor. El supervisor podrá
   consultarlo.` y la consulta de solo lectura verificó una única fila con
   `client_request_id` propio.
-- `Compartir CSV` y `Compartir Excel` se probaron desde el resumen de la ronda.
-  Ambos mostraron `No se pudo completar la operación. Reintenta en unos
-  segundos.` y no abrieron la hoja de compartir. No hubo código HTTP visible,
-  así que la exportación queda sin validar hasta repetirla contra un Render
-  actualizado.
-- Con el Galaxy conectado de nuevo, el reintento de `Compartir CSV` reprodujo
-  el mismo mensaje. Logcat no mostró request, respuesta HTTP ni stack trace;
-  Android sí resolvió destinos `SEND` para CSV y XLSX. La causa sigue sin estar
-  demostrada y no se modificó código para ocultarla.
+- La release v7 conserva ahora el diagnóstico seguro del fallo de exportación.
+  Al pulsar `Compartir CSV`, la UI mostró literalmente `No se pudo completar
+  la operación. Reintenta en unos segundos. (HTTP 500 · ROUND_EXPORT_FAILED ·
+  Código de soporte: cd695cdf-da73-4b94-86eb-dc5bb187a0f2)`.
+- Render registró esa misma petición como `GET
+  /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv 500`.
+  La causa quedó aislada en el backend local: la segunda consulta de
+  exportación pasaba el parámetro de scope sin interpolar `${scope.clause}`.
+  Se corrigió con regresión; aún falta publicar el arreglo y repetir CSV/XLSX.
 - La conectividad se restauró y `ping` a Render devolvió `0% packet loss`.
-- Render público sigue observado en `eb88db9`; no se hizo deploy, migración,
-  fetch, pull ni push en esta validación.
+- Render público sigue observado en `eb88db9`; el arreglo de exportación aún no
+  está desplegado. En esta validación no se hizo migración ni cambio de datos.
 - Último commit funcional local: `a86fa4e` (`fix(backend): seed complete generic project catalog`). Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
@@ -255,15 +256,16 @@ repositorio bare.
 
 - Release histórica instalada: `versionCode=4`, firmada como `CN=TopoField Android Release`.
 - La consulta supervisora fue validada anteriormente en el Galaxy.
-- La release arm64 `versionCode=6` se instaló el 13-09-2026 con `adb install -r`
+- La release arm64 `versionCode=7` se instaló el 13-09-2026 con `adb install -r`
   y `Success`; `dumpsys package` confirmó `lastUpdateTime=2026-09-13
-  06:58:15`.
+  07:39:25`.
 - El recorrido de operador con lectura y foto offline quedó verificado una vez:
   reinicio sin pérdida, sincronización automática `2/2` y exactamente una
   lectura más un adjunto en Supabase. El arranque en frío offline recuperó
   además la lista de rondas desde caché con aviso de antigüedad.
-- La v6 se generó porque se reprodujo un fallo móvil real de caché de rondas;
-  no generar otra release salvo que aparezca un nuevo bug móvil reproducible.
+- La v7 se generó porque la UI descartaba metadatos accionables de un error API
+  de exportación; el test móvil evita mostrar cuerpos o secretos. No generar
+  otra release salvo que aparezca un nuevo bug móvil reproducible.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión
@@ -272,8 +274,7 @@ repositorio bare.
 
 ## Trabajo pendiente prioritario
 
-1. Conectar el Galaxy y repetir lectura + foto offline, reinicio, reconexión,
-   deduplicación, parte parcial y cierre.
+1. Publicar el arreglo de scope de exportación mediante PR y verificar Render.
 2. Validar CSV/XLSX de la misma ronda real y el bloqueo de exportación para
    `read`; la paridad local ya está cubierta por
    `round-export-parity.test.ts`.

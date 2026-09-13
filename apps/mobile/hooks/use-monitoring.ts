@@ -41,7 +41,7 @@ import {
   type PreparedPhoto
 } from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
-import { shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
+import { getRoundExportErrorMessage, shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -704,7 +704,7 @@ export const useShareMonitoringRound = (roundId: string | null) => {
   });
 
   return {
-    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo preparar el archivo.') : null,
+    errorMessage: mutation.error ? getRoundExportErrorMessage(mutation.error) : null,
     isSharing: mutation.isPending,
     shareExport: mutation.mutateAsync
   };

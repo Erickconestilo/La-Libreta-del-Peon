@@ -18,12 +18,12 @@ validación en campo:
   `verify local completed successfully`.
 - [x] `docs:check` revisa `41 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
-- [x] La release Android v6 está generada localmente, firmada como
+- [x] La release Android v7 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
   validate` y `apksigner`.
-- [x] La APK arm64 v6 está instalada en el Galaxy; `adb install -r` devolvió
-  `Success` y `dumpsys package` confirmó `versionCode=6` y
-  `lastUpdateTime=2026-09-13 06:58:15`.
+- [x] La APK arm64 v7 está instalada en el Galaxy; `adb install -r` devolvió
+  `Success` y `dumpsys package` confirmó `versionCode=7` y
+  `lastUpdateTime=2026-09-13 07:39:25`.
 - [x] La auditoría local cubre autenticación, roles, scope entre obras,
   adjuntos, idempotencia, caché por sesión, outbox y exportación.
 - [ ] Publicar los hardenings locales posteriores al último commit observado
@@ -33,6 +33,9 @@ validación en campo:
   un adjunto para el mismo `client_request_id`.
 - [ ] Validar con datos autorizados el parte, cierre definitivo y paridad
   CSV/XLSX.
+- [x] El Galaxy muestra diagnóstico seguro cuando la exportación API falla:
+  `HTTP 500`, `ROUND_EXPORT_FAILED` y un código de soporte UUID. La causa del
+  500 quedó corregida localmente, pero la corrección aún debe desplegarse.
 
 ## Paso 1 - Erick usando datos reales en campo
 
