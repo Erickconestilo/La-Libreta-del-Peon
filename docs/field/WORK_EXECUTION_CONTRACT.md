@@ -13,6 +13,13 @@ contrato para copiar. El archivo analizado tiene pestañas semanales, filas de
 trabajo, marcas por día y un contador `HECHO`, pero no distingue planificación,
 trabajo iniciado, resultado real, evidencia o recepción por el servidor.
 
+La revisión del libro aportado confirma un patrón repetido de 59 pestañas:
+matriz diaria de lunes a viernes, bloques separados para nivelación y trabajos
+manuales, objetivos semanales o mensuales y un contador agregado. Sirve para
+ver lo previsto, pero sus casillas no explican si una visita se completó, se
+repitió, quedó bloqueada o si el dato y la foto llegaron al servidor. TopoField
+incorpora esa necesidad sin copiar nombres ni filas del libro.
+
 TopoField reutiliza `monitoring_rounds` y `monitoring_round_points` como el
 trabajo asignado. No se crea un segundo gestor de tareas. Cada punto puede
 recibir eventos operativos append-only, separados de la lectura metrológica.
@@ -33,6 +40,14 @@ La nota de relevo es opcional. La acción se guarda localmente cuando no hay
 red y se encola con `clientRequestId`; al reconectar se sincroniza mediante el
 mismo outbox probado para lecturas y partes. La interfaz dice `Guardado
 localmente` hasta que el servidor recibe el evento.
+
+Para el caso normal, la lista de puntos ofrece ahora `Marcar hecho` en la
+misma tarjeta. Es un atajo explícito de una pulsación que crea el mismo evento
+`completed`, respeta el alcance de la obra y usa el outbox si no hay conexión.
+`Más opciones` conserva el formulario completo para `Empezar`, `No realizado`,
+`Repetir` y `Bloqueado`, donde el motivo aporta información necesaria al relevo.
+Cuando el evento ya está recibido, la tarjeta muestra `Hecho registrado` y no
+invita a duplicarlo.
 
 Después de guardar o encolar una acción, el formulario limpia la selección,
 el motivo y la nota. Así el operario no puede reenviar accidentalmente la
@@ -105,6 +120,15 @@ tienen lectura, porque declarar que el trabajo no se pudo realizar no equivale
 a inventar una medición. El exportador conserva una fila por lectura; si el
 punto está pendiente y no tiene lecturas, conserva una fila pendiente con el
 resultado operativo que haya llegado al servidor.
+
+## Siguiente ampliación
+
+Este contrato todavía representa una ronda y sus eventos, no una recurrencia
+semanal completa con una fila distinta por cada día. Por eso el atajo no
+convierte una ronda en cinco tareas ficticias ni calcula un cumplimiento
+semanal que el backend no pueda demostrar. La siguiente ampliación, si el uso
+real lo confirma, será modelar ocurrencias planificadas por fecha y frecuencia
+manteniendo separado el resultado operativo de la lectura metrológica.
 
 ## Reglas de diseño para futuras tareas
 

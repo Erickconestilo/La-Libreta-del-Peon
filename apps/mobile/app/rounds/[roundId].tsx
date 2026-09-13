@@ -4,10 +4,12 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'rea
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { WorkExecutionStateStatus } from '@shared/types';
 import { formatShortDate, RoundStatusPill, RowChevron, StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import {
   MONITORING_INSTRUMENTS,
+  useCreateWorkExecutionEvent,
   useMonitoringRound,
   useWorkCompletionReports,
   usePrepareMonitoringRound,
@@ -133,10 +135,13 @@ export default function MonitoringRoundDetailScreen() {
                   {item.executionState?.lastEvent?.reason ? <Text numberOfLines={2} style={styles.reason}>Motivo: {item.executionState.lastEvent.reason}</Text> : null}
                   {item.notes ? <Text numberOfLines={2} style={styles.body}>{item.notes}</Text> : null}
                 </Pressable>
-                {canEdit ? <Pressable onPress={() => router.push({ pathname: '/round-points/[roundPointId]/work-status', params: { code: item.controlPointCode, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)} style={styles.resultButton}>
-                  <MaterialIcons color={colors.textPrimary} name="assignment-turned-in" size={18} />
-                  <Text style={styles.resultButtonText}>Indicar resultado</Text>
-                </Pressable> : null}
+                {canEdit ? <View style={styles.actionRow}>
+                  <QuickCompleteButton currentStatus={item.executionState?.status ?? 'pending'} roundId={round?.id ?? ''} roundPointId={item.id} />
+                  <Pressable onPress={() => router.push({ pathname: '/round-points/[roundPointId]/work-status', params: { code: item.controlPointCode, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)} style={[styles.resultButton, styles.moreButton]}>
+                    <MaterialIcons color={colors.textPrimary} name="more-horiz" size={18} />
+                    <Text style={styles.resultButtonText}>Más opciones</Text>
+                  </Pressable>
+                </View> : null}
               </View>
             );
           }}
@@ -151,7 +156,42 @@ function SummaryItem({ label, value }: { label: string; value: number }) {
   return <View style={styles.summaryItem}><Text style={styles.summaryValue}>{value}</Text><Text style={styles.summaryLabel}>{label}</Text></View>;
 }
 
+function QuickCompleteButton({
+  currentStatus,
+  roundId,
+  roundPointId
+}: {
+  currentStatus: WorkExecutionStateStatus;
+  roundId: string;
+  roundPointId: string;
+}) {
+  const { errorMessage, isCreating, recordResult } = useCreateWorkExecutionEvent({ roundId, roundPointId });
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  if (currentStatus === 'completed') {
+    return <View style={styles.quickDone}><MaterialIcons color={colors.accentGreen} name="check-circle" size={18} /><Text style={styles.quickDoneText}>Hecho registrado</Text></View>;
+  }
+
+  const handlePress = async () => {
+    try {
+      const result = await recordResult({ eventType: 'completed', notes: null, reason: null });
+      setFeedback(result.mode === 'queued' ? 'Guardado localmente' : 'Hecho recibido');
+    } catch {
+      // El hook expone el diagnóstico debajo del botón.
+    }
+  };
+
+  return <View style={styles.quickActionGroup}>
+    <Pressable disabled={isCreating} onPress={() => void handlePress()} style={[styles.quickButton, isCreating ? styles.disabled : null]}>
+      <MaterialIcons color={colors.background} name="check" size={18} />
+      <Text style={styles.quickButtonText}>{isCreating ? 'Guardando...' : feedback ?? 'Marcar hecho'}</Text>
+    </Pressable>
+    {errorMessage ? <Text numberOfLines={2} style={styles.quickError}>{errorMessage}</Text> : null}
+  </View>;
+}
+
 const styles = StyleSheet.create({
+  actionRow: { flexDirection: 'row', gap: spacing[1] },
   actionGroup: { gap: spacing[1] },
   body: { color: colors.textSecondary, fontSize: typography.fontSizeBody - 1, lineHeight: 20 },
   cardTop: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
@@ -191,4 +231,11 @@ const styles = StyleSheet.create({
   workSummary: { backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[2] },
   workSummaryTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900' },
   warningText: { color: colors.amber, fontSize: 13, fontWeight: '700', lineHeight: 20 },
+  moreButton: { flex: 1 },
+  quickActionGroup: { flex: 1, gap: spacing[1] },
+  quickButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 8, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', minHeight: 44, paddingHorizontal: spacing[1] },
+  quickButtonText: { color: colors.background, fontSize: 13, fontWeight: '900' },
+  quickDone: { alignItems: 'center', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.4)', borderRadius: 8, borderWidth: 1, flex: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', minHeight: 44, paddingHorizontal: spacing[1] },
+  quickDoneText: { color: colors.accentGreen, fontSize: 13, fontWeight: '900' },
+  quickError: { color: colors.red, fontSize: 11, lineHeight: 15 },
 });
