@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-13
 -->
 
 # F5 — Plan de validación de mercado de TopoField
@@ -149,3 +149,71 @@ No abrir una nueva fase técnica hasta tener:
 - una métrica de mejora;
 - una razón clara para que el encargado permita probarla.
 
+## Benchmark actualizado — 13-09-2026
+
+La documentación pública actual de las herramientas de referencia confirma
+patrones de uso que sí son relevantes para TopoField:
+
+- [ArcGIS Field Maps](https://doc.arcgis.com/en/field-maps/android/use-maps/fill-out-forms.htm)
+  combina formularios con campos obligatorios, fotos, valores recientes y
+  códigos QR/barcodes; su preparación offline incluye datos y adjuntos y puede
+  coordinar tareas desde el mapa
+  ([guía general](https://doc.arcgis.com/en/field-maps/get-started/get-started.htm)).
+- [Fulcrum](https://www.fulcrumapp.com/apps/mobile-data-collection-app/)
+  basa la captura en formularios configurables, listas controladas, lógica
+  condicional, fotos, ubicación, permisos, exportaciones y operación sin
+  conexión. Su propia documentación de [uso offline](https://help.fulcrumapp.com/en/articles/76979-can-i-still-collect-data-without-a-connection)
+  presupone sincronizar al recuperar red.
+- [Mergin Maps](https://merginmaps.com/use-case/data-collection) ofrece
+  formularios configurables, fotos, QR, permisos de solo lectura y captura
+  offline con sincronización en Android/iOS. Su
+  [flujo offline](https://merginmaps.com/docs/field/offline-use/) deja claro
+  que la preparación debe hacerse antes de perder cobertura y que el cambio
+  de cuenta o la descarga de proyectos no funcionan offline.
+- [Fieldwire](https://www.fieldwire.com/building-inspection-app/) organiza
+  incidencias por ubicación, fotos, anotaciones y comentarios; su enfoque de
+  [parte diario](https://www.fieldwire.com/blog/construction-daily-report/)
+  refuerza el valor de registrar durante la jornada, no reconstruirla al final.
+- Las [limitaciones conocidas de Trimble Connect Mobile](https://help.trimble.com/doc/trimble-connect/trimble-connect/connect-for-mobile/known-issues-and-limitations)
+  recuerdan riesgos que debemos probar: lentitud al sincronizar proyectos,
+  miniaturas aún no procesadas y fotos de cámara/galería con orientación
+  incorrecta después de sincronizar.
+
+Estas fuentes describen capacidades de producto, no prueban que los
+profesionales de auscultación quieran TopoField. También hay señales
+anecdóticas en comunidades: usuarios de GIS mencionan tiempos de envío cuando
+capturan cientos de puntos y la tensión entre usar el controlador del
+instrumento y una app móvil; se usarán como preguntas de entrevista, no como
+validación estadística ([r/gis sobre Field Maps](https://www.reddit.com/r/gis/comments/1enf2ow/fieldmaps_anyway_around_this_takes_2-4_seconds_to_collect_a_single_point/),
+[r/Surveying sobre calidad de fotos](https://www.reddit.com/r/Surveying/comments/1cu8vcq/trimble_tdc650_photo_quality/)).
+
+### Decisiones de producto derivadas
+
+**Implementar y medir ahora:**
+
+- siguiente punto pendiente y progreso de ronda;
+- formularios cortos con campos obligatorios y listas de valores;
+- reutilización de valores recientes donde no altere la trazabilidad;
+- foto vinculada al punto o visita, con orientación y estado de sincronización
+  visibles;
+- preparación offline explícita, outbox auditable y reintento seguro;
+- parte de zona con estado realizado, pendiente o no realizable y motivo;
+- exportación desde el mismo contrato que se ve en móvil.
+
+**Probar después de observar una jornada:**
+
+- QR/barcode para identificar prismas o puntos;
+- filtros y paquetes de mapa offline más completos;
+- plantillas configurables por instrumento;
+- anotación sobre fotografía y comparación entre visitas.
+
+**No adoptar por imitación:**
+
+- GIS generalista, CAD, control Bluetooth del instrumento, GPS continuo,
+  analítica automática o sustitución de Leica/Trimble/Topcon.
+
+La ventaja defendible de TopoField no sería tener más controles que estas
+plataformas, sino unir en un recorrido corto el encargo del supervisor, la
+referencia visual, la captura técnica, la evidencia y el parte de zona para un
+equipo pequeño. Esa hipótesis sigue necesitando dos jornadas observadas y
+cinco conversaciones antes de abrir el siguiente bloque grande.
