@@ -81,7 +81,10 @@ detalle de ronda, `Mi jornada` y exportación degradan sin consultar la tabla
 ausente. `57ef8fb` cambia el health gate local de Render a `/api/v1/readiness`,
 de modo que `/health` queda como liveness y no puede sustituir la comprobación
 de esquema. `99c212c` amplía el verificador público para exigir readiness `200`
-y fallar cerrado ante `migration_missing`.
+y fallar cerrado ante `migration_missing`. La verificación formal posterior
+detectó que ese verificador esperaba por error `workExecution` en la raíz,
+mientras el backend responde `capabilities.workExecution`; `c71b680` alinea
+ambos contratos y añade una regresión que rechaza la forma obsoleta.
 
 El mismo backend endurece la idempotencia: repetir el mismo
 `client_request_id` con el mismo contenido devuelve el evento existente;
@@ -131,7 +134,7 @@ build nueva en ese intento. El próximo agente debe reanudar exactamente en
 **backup + estado real de migraciones**, sin volver a cambiar Work Execution 029.
 
 La batería integrada de cierre local pasó con backend `120/120`, móvil `23`
-suites y `130/130`, TypeScript móvil sin errores, tooling `14/14`,
+suites y `130/130`, TypeScript móvil sin errores, tooling `15/15`,
 `docs:check` sobre `44` documentos y `git diff --check` limpio. El árbol sigue
 conservando fuera de esta misión el cambio previo de `apps/mobile/package.json`
 y las capturas/XML no versionadas; no limpiarlos ni incluirlos en commits.
