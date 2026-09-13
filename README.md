@@ -41,6 +41,8 @@ npm run test  --workspace apps/backend
 npx tsc --noEmit --project apps/mobile/tsconfig.json
 npm run test  --workspace apps/mobile -- --runInBand
 npm run test:tooling
+npm run verify:local
+npm run verify:local:pre-apk  # incluye export Android y valida artefactos
 npx expo export --platform android
 npm run docs:check      # coherencia de la documentación
 ```
@@ -51,6 +53,9 @@ chequeo remoto autenticado de membresías; si no hay una contraseña QA en el
 entorno, debe fallar cerrado y no sustituirse por una contraseña inventada.
 `npm run test:tooling` cubre la citación de comandos Windows usada por ese
 preflight, incluidas rutas con espacios y metacaracteres.
+`npm run verify:local` encadena la batería local completa sin Galaxy ni
+credenciales remotas; `npm run verify:local:pre-apk` añade el preflight de
+Expo y exige una salida con `metadata.json` y assets.
 
 Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 
