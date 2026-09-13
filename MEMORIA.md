@@ -206,7 +206,8 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
-| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff activo con la semilla genérica completa | abierto |
+| 2026-09-13 | Codex | codex/f5-field-stability | Hacer resiliente el script de build Android ante fallo de limpieza nativa | cerrado (`npm run mobile:build-local-android` ejecutó `expo prebuild --clean`; la limpieza Gradle falló literalmente en `react-native-reanimated:externalNativeBuildCleanRelease` con `ninja: error: manifest 'build.ninja' still dirty after 100 tries`, y el reintento `app:bundleRelease` sin `clean` terminó con `BUILD SUCCESSFUL in 7m 15s`. AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, `40,135,874` bytes; `keytool -printcert -jarfile` confirma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `git diff --check` sin salida. El Galaxy no se tocó y no hubo cambios remotos.)` |
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff activo con la semilla genérica completa | cerrado (`NEXT_CHAT_HANDOFF.md` identifica `a86fa4e` como último commit funcional local y documenta la semilla genérica de tres zonas, incluida `Zona Centro`/`EJ-C-001`, alineada con el CSV. `npm run docs:check` terminó con `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.` No se tocaron servicios remotos ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Alinear la semilla de obra nueva con el catálogo genérico de tres zonas | cerrado (`SAMPLE_CATALOG` ahora incluye `Zona Centro` con el código neutral `EJ-C-001`, alineando la creación de obras con `data/generic-project-code-catalog.csv`. La regresión `generic-project-template.test.ts` confirma `5` entradas de catálogo, `2` puntos de control y `2` umbrales; `npm run verify:local` terminó con backend `ℹ tests 104`, `ℹ pass 104`, móvil `Test Suites: 22 passed, 22 total`, `Tests: 101 passed, 101 total`, tooling `ℹ tests 9`, `ℹ pass 9`, `check-docs: 40 documentos revisados en raíz y docs/.`, `Sin errores ni avisos` y `verify local completed successfully`. No se añadieron datos reales ni se tocó Supabase, Render, EAS, Play Store o el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir la compuerta de instalación Android para preservar datos locales | cerrado (`LOCAL_ANDROID_BUILD_RUNBOOK.md` ahora ordena probar primero `adb install -r` con la APK v5 firmada como `CN=TopoField Android Release`; solo permite `adb uninstall` tras un `INSTALL_FAILED_UPDATE_INCOMPATIBLE` y confirmación explícita de pérdida de sesión/caché. `npm run docs:check` y `git diff --check` terminaron sin salida de error. No se tocó el Galaxy ni ningún servicio remoto.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir el tono visual de estados en la memoria visual de montaje | cerrado (`getMountingVisitStatusPresentation` centraliza las etiquetas y tonos: `draft`/`warning`, `completed`/`success` y `blocked`/`danger`; la pantalla ya no presenta una visita no realizable como trabajo realizado. La regresión devolvió `Test Suites: 1 passed, 1 total` y `Tests: 6 passed, 6 total`; después `npm run verify:local` terminó con backend `ℹ tests 104`, `ℹ pass 104`, móvil `Test Suites: 22 passed, 22 total`, `Tests: 101 passed, 101 total`, tooling `ℹ tests 9`, `ℹ pass 9`, `check-docs: 40 documentos revisados en raíz y docs/.`, `Sin errores ni avisos` y `verify local completed successfully`. No se tocó backend, Supabase, Render, EAS, Play Store ni el Galaxy.)` |
@@ -448,6 +449,12 @@ anterior de purga, mientras `main` y `origin/main` apuntan a historiales
 distintos; el runtime actual está neutralizado, pero la purga completa no se
 debe presentar como cerrada.
 
+**Herramienta local verificada al 13-09-2026:** el script de release ahora
+reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
+falla. Esto permite producir la AAB v5 sin borrar manualmente artefactos
+generados; no cambia el criterio de instalación ni sustituye la validación
+física en el Galaxy.
+
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
   destructiva encontró coincidencias exactas en commits antiguos alcanzables
@@ -650,6 +657,15 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   reescrituras, borrado de refs, poda de objetos, `fetch`, `pull` ni `push`.
 
 - **2026-09-13 — Auditoría completa de dependencias (Codex):** `npm audit --omit=dev --json` devuelve `23` avisos en el árbol del monorepo (`7 high`, `16 moderate`, `0 critical`), principalmente por Expo/Metro/Xcode y dependencias de build móvil; el workspace backend aislado devuelve `2 moderate`, `0 high`, `0 critical` por `exceljs -> uuid@8.3.2`. No se aplicó un downgrade rompiente ni `--force`: no hay una corrección segura para F5 y se dejó planificado un upgrade mayor de Expo/Metro como tarea separada, con su propia build y auditoría. `npm run docs:check` y `git diff --check` pasan; no se tocó ningún servicio remoto.
+
+- **2026-09-13 — Build Android local resiliente (Codex):** se endureció
+  `scripts/build-local-android.ps1` para que, tras `expo prebuild --clean`,
+  reintente `app:bundleRelease` sin `clean` si Ninja falla al limpiar
+  `react-native-reanimated`. La prueba real reprodujo `ninja: error: manifest
+  'build.ninja' still dirty after 100 tries` y el reintento terminó con
+  `BUILD SUCCESSFUL in 7m 15s`. La AAB v5 queda generada y firmada como
+  `CN=TopoField Android Release`; el Galaxy y los servicios remotos no se
+  tocaron.
 
 - **2026-09-13 — Reconciliación documental autónoma (Codex):** los documentos vivos ya diferencian la v4 históricamente validada en Galaxy de la v5 preparada localmente, y `README.md` distingue el último despliegue funcional conocido de la última observación pública de Render (`eb88db9`). La lista consolidada de pendientes refleja que el E2E físico, datos autorizados y entrevistas siguen abiertos. `npm run docs:check` terminó con `check-docs: 39 documentos revisados en raíz y docs/.` y `Sin errores ni avisos`; `git diff --check` no devolvió salida. No se tocó código, Supabase, Render, EAS, Play Store ni el Galaxy.
 
