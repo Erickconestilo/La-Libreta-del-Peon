@@ -10,6 +10,7 @@ import type {
   ValidatedCreateControlPointThresholdInput,
   ValidatedCreateInstrumentReadingInput,
   ValidatedCreateReadingAttachmentInput,
+  ValidatedCreateWorkExecutionEventInput,
   ValidatedCreateWorkCompletionReportInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
@@ -23,6 +24,20 @@ import type {
 } from '../utils/monitoring-validation.js';
 import type { RoundExportRow } from '../contracts/round-export.js';
 type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
+type WorkExecutionEventType = 'started' | 'completed' | 'not_done' | 'repeat_required' | 'blocked';
+type WorkExecutionEvent = {
+  clientRequestId: string;
+  createdAt: string;
+  eventType: WorkExecutionEventType;
+  id: string;
+  notes: string | null;
+  occurredAt: string;
+  projectId: string;
+  reason: string | null;
+  recordedBy: string;
+  roundId: string;
+  roundPointId: string;
+};
 
 const MONITORING_POINT_TENANT_CONDITION = 'cp.project_id = mr.project_id';
 const READING_POINT_TENANT_CONDITION = 'ir.control_point_id = mrp.control_point_id';
@@ -93,6 +108,50 @@ export const toIsoTimestamp = (value: unknown) => {
   return new Date(String(value)).toISOString();
 };
 
+const mapWorkExecutionEventRow = (row: Record<string, unknown>): WorkExecutionEvent => ({
+  clientRequestId: row.client_request_id as string,
+  createdAt: toIsoTimestamp(row.created_at),
+  eventType: row.event_type as WorkExecutionEventType,
+  id: row.id as string,
+  notes: (row.notes as string | null) ?? null,
+  occurredAt: toIsoTimestamp(row.occurred_at),
+  projectId: row.project_id as string,
+  reason: (row.reason as string | null) ?? null,
+  recordedBy: row.recorded_by as string,
+  roundId: row.round_id as string,
+  roundPointId: row.round_point_id as string
+});
+
+const executionStatusForEvent = (eventType: WorkExecutionEventType) => {
+  if (eventType === 'started') return 'in_progress' as const;
+  if (eventType === 'completed') return 'completed' as const;
+  if (eventType === 'not_done') return 'not_done' as const;
+  if (eventType === 'repeat_required') return 'repeat_required' as const;
+  return 'blocked' as const;
+};
+
+const mapWorkExecutionState = (row: Record<string, unknown>) => {
+  if (typeof row.execution_event_type !== 'string') {
+    return { lastEvent: null, status: 'pending' as const };
+  }
+
+  const event = mapWorkExecutionEventRow({
+    client_request_id: row.execution_client_request_id,
+    created_at: row.execution_created_at,
+    event_type: row.execution_event_type,
+    id: row.execution_event_id,
+    notes: row.execution_notes,
+    occurred_at: row.execution_occurred_at,
+    project_id: row.execution_project_id,
+    reason: row.execution_reason,
+    recorded_by: row.execution_recorded_by,
+    round_id: row.execution_round_id,
+    round_point_id: row.execution_round_point_id
+  });
+
+  return { lastEvent: event, status: executionStatusForEvent(event.eventType) };
+};
+
 const mapRoundPointRow = (row: Record<string, unknown>) => ({
   controlPointId: row.control_point_id,
   createdAt: row.created_at,
@@ -102,7 +161,8 @@ const mapRoundPointRow = (row: Record<string, unknown>) => ({
   roundId: row.round_id,
   sortOrder: row.sort_order,
   status: row.status,
-  updatedAt: row.updated_at
+  updatedAt: row.updated_at,
+  executionState: mapWorkExecutionState(row)
 });
 
 const mapReadingRow = (row: Record<string, unknown>) => ({
@@ -516,6 +576,26 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
       INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
+      LEFT JOIN LATERAL (
+        SELECT
+          wee.client_request_id AS execution_client_request_id,
+          wee.created_at AS execution_created_at,
+          wee.event_type AS execution_event_type,
+          wee.id AS execution_event_id,
+          wee.notes AS execution_notes,
+          wee.occurred_at AS execution_occurred_at,
+          wee.project_id AS execution_project_id,
+          wee.reason AS execution_reason,
+          wee.recorded_by AS execution_recorded_by,
+          wee.round_id AS execution_round_id,
+          wee.round_point_id AS execution_round_point_id
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mrp.round_id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) execution ON TRUE
       WHERE mrp.round_id = $1
       ORDER BY mrp.sort_order ASC, mrp.created_at ASC
     `,
@@ -1685,6 +1765,182 @@ export const createReadingAttachment = async (
 
     await client.query('COMMIT');
     return mapReadingAttachmentRow(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const getWorkExecutionContext = async (
+  client: PoolClient,
+  roundPointId: string,
+  projectScope: string[] | null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await client.query(
+    `
+      SELECT
+        mr.id AS round_id,
+        mr.project_id,
+        mrp.id AS round_point_id
+      FROM monitoring_round_points mrp
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = mrp.control_point_id
+       AND cp.project_id = mr.project_id
+      WHERE mrp.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundPointId, ...scope.params]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    projectId: result.rows[0].project_id as string,
+    roundId: result.rows[0].round_id as string,
+    roundPointId: result.rows[0].round_point_id as string
+  };
+};
+
+export const listWorkExecutionEvents = async (
+  roundPointId: string,
+  projectScope: string[] | null = null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT wee.*
+      FROM monitoring_work_execution_events wee
+      INNER JOIN monitoring_round_points mrp
+        ON mrp.id = wee.round_point_id
+       AND mrp.round_id = wee.round_id
+      INNER JOIN monitoring_rounds mr
+        ON mr.id = wee.round_id
+       AND mr.project_id = wee.project_id
+      INNER JOIN control_points cp
+        ON cp.id = mrp.control_point_id
+       AND cp.project_id = mr.project_id
+      WHERE wee.round_point_id = $1
+      ${scope.clause}
+      ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+    `,
+    [roundPointId, ...scope.params]
+  );
+
+  return result.rows.map(mapWorkExecutionEventRow);
+};
+
+export const createWorkExecutionEvent = async (
+  roundPointId: string,
+  input: ValidatedCreateWorkExecutionEventInput,
+  recordedBy: string,
+  projectScope: string[] | null = null
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const context = await getWorkExecutionContext(client, roundPointId, projectScope);
+
+    if (!context) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const existingResult = await client.query(
+      `
+        SELECT *
+        FROM monitoring_work_execution_events
+        WHERE client_request_id = $1
+        LIMIT 1
+      `,
+      [input.clientRequestId]
+    );
+
+    if ((existingResult.rowCount ?? 0) > 0) {
+      const existing = existingResult.rows[0];
+      if (existing.round_point_id !== roundPointId || existing.project_id !== context.projectId) {
+        throw new AppError(
+          'Client request id already used for another work result',
+          409,
+          'CLIENT_REQUEST_ID_CONFLICT'
+        );
+      }
+
+      await client.query('COMMIT');
+      return { created: false, event: mapWorkExecutionEventRow(existing) };
+    }
+
+    const insertResult = await client.query(
+      `
+        INSERT INTO monitoring_work_execution_events (
+          round_id,
+          round_point_id,
+          project_id,
+          event_type,
+          reason,
+          notes,
+          occurred_at,
+          recorded_by,
+          client_request_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, NOW()), $8, $9)
+        ON CONFLICT (client_request_id) DO NOTHING
+        RETURNING *
+      `,
+      [
+        context.roundId,
+        roundPointId,
+        context.projectId,
+        input.eventType,
+        input.reason?.trim() || null,
+        input.notes?.trim() || null,
+        input.occurredAt ?? null,
+        recordedBy,
+        input.clientRequestId
+      ]
+    );
+
+    if (insertResult.rowCount === 0) {
+      const concurrentResult = await client.query(
+        `
+          SELECT *
+          FROM monitoring_work_execution_events
+          WHERE client_request_id = $1
+          LIMIT 1
+        `,
+        [input.clientRequestId]
+      );
+
+      if (concurrentResult.rowCount === 0) {
+        throw new AppError(
+          'Work execution event insert produced no row',
+          500,
+          'WORK_EXECUTION_EVENT_INSERT_INCONSISTENT'
+        );
+      }
+
+      const concurrent = concurrentResult.rows[0];
+      if (concurrent.round_point_id !== roundPointId || concurrent.project_id !== context.projectId) {
+        throw new AppError(
+          'Client request id already used for another work result',
+          409,
+          'CLIENT_REQUEST_ID_CONFLICT'
+        );
+      }
+
+      await client.query('COMMIT');
+      return { created: false, event: mapWorkExecutionEventRow(concurrent) };
+    }
+
+    await client.query('COMMIT');
+    return { created: true, event: mapWorkExecutionEventRow(insertResult.rows[0]) };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

@@ -183,6 +183,12 @@ function RootLayoutNav({ isOfflineDatabaseReady }: { isOfflineDatabaseReady: boo
                 }}
               />
               <Stack.Screen
+                name="round-points/[roundPointId]/work-status"
+                options={{
+                  title: 'Resultado del trabajo'
+                }}
+              />
+              <Stack.Screen
                 name="history"
                 options={{
                   title: 'Historial'

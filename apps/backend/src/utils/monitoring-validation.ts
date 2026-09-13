@@ -68,6 +68,7 @@ const sideSchema = z.enum(['left', 'right', 'axis', 'crown', 'invert', 'other'])
 const roundStatusSchema = z.enum(['draft', 'active', 'closed', 'cancelled']);
 const fieldConditionsSchema = z.enum(['good', 'regular', 'adverse']);
 const workCompletionStatusSchema = z.enum(['partial', 'completed', 'blocked']);
+const workExecutionEventTypeSchema = z.enum(['started', 'completed', 'not_done', 'repeat_required', 'blocked']);
 
 export const createMonitoringRoundSchema = z.object({
   fieldConditions: fieldConditionsSchema.nullable().optional(),
@@ -184,6 +185,26 @@ export const createWorkCompletionReportSchema = z.object({
 });
 
 export type ValidatedCreateWorkCompletionReportInput = z.infer<typeof createWorkCompletionReportSchema>;
+
+export const createWorkExecutionEventSchema = z
+  .object({
+    clientRequestId: z.string().uuid(),
+    eventType: workExecutionEventTypeSchema,
+    notes: z.string().trim().max(2000).nullable().optional(),
+    occurredAt: z.string().datetime({ offset: true }).optional(),
+    reason: z.string().trim().max(500).nullable().optional()
+  })
+  .superRefine((input, context) => {
+    if (input.eventType !== 'started' && input.eventType !== 'completed' && !input.reason?.trim()) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A reason is required for this work result',
+        path: ['reason']
+      });
+    }
+  });
+
+export type ValidatedCreateWorkExecutionEventInput = z.infer<typeof createWorkExecutionEventSchema>;
 
 export const readingHistoryQuerySchema = z.object({
   instrumentType: instrumentTypeSchema.optional(),
@@ -354,6 +375,23 @@ export const validateCreateWorkCompletionReportInput = (
       'Invalid work completion report payload',
       400,
       'INVALID_WORK_COMPLETION_REPORT_PAYLOAD',
+      parsedInput.error.flatten()
+    );
+  }
+
+  return parsedInput.data;
+};
+
+export const validateCreateWorkExecutionEventInput = (
+  input: unknown
+): ValidatedCreateWorkExecutionEventInput => {
+  const parsedInput = createWorkExecutionEventSchema.safeParse(input);
+
+  if (!parsedInput.success) {
+    throw new AppError(
+      'Invalid work execution event payload',
+      400,
+      'INVALID_WORK_EXECUTION_EVENT_PAYLOAD',
       parsedInput.error.flatten()
     );
   }

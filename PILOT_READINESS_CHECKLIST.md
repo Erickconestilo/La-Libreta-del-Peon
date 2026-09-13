@@ -12,8 +12,8 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `106/106` tests con `npm run verify:local`.
-- [x] Móvil pasa TypeScript, `22` suites y `106/106` tests.
+- [x] Backend compila y pasa `111/111` tests con la batería local.
+- [x] Móvil pasa TypeScript, `23` suites y `111/111` tests.
 - [x] Tooling local pasa `12/12` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `43 documentos revisados en raíz y docs/` sin errores
@@ -41,6 +41,12 @@ validación en campo:
   500 quedó corregida, desplegada y verificada con CSV/XLSX `200`.
 - [ ] Comparar estructuradamente el CSV y el XLSX descargados de una misma
   ronda y confirmar el formato que consume el flujo de oficina.
+- [x] El operario puede declarar por punto `Empezar`, `Hecho`, `No realizado`,
+  `Repetir` o `Bloqueado`; los resultados no realizados exigen motivo y el
+  guardado offline usa el outbox con idempotencia.
+- [ ] Aplicar la migración local `029_monitoring_work_execution_events.sql`,
+  desplegar el endpoint y validar en el Galaxy que el resultado sincronizado
+  aparece para el supervisor sin presentarlo como lectura ni cierre de ronda.
 
 ## Paso 1 - Erick usando datos reales en campo
 

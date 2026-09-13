@@ -40,6 +40,8 @@ const auscultacionRoutesFromRoundsRouter: RouteExpectation[] = [
 
 const auscultacionRoutesFromRoundPointsRouter: RouteExpectation[] = [
   { method: 'post', path: '/:roundPointId/readings', mustExcludeVisitante: true },
+  { method: 'get', path: '/:roundPointId/execution-events', mustExcludeVisitante: true },
+  { method: 'post', path: '/:roundPointId/execution-events', mustExcludeVisitante: true },
   { method: 'post', path: '/:roundPointId/readings/:readingId/attachments', mustExcludeVisitante: true }
 ];
 
@@ -108,6 +110,12 @@ test('read-only monitoring routes allow supervisor while write routes do not', (
   assert.deepEqual(findAllowedRoles(roundsRouter, 'get', '/:roundId/export'), ['admin', 'topografo']);
   assert.deepEqual(findAllowedRoles(controlPointsRouter, 'get', '/:controlPointId/readings'), ['admin', 'topografo', 'supervisor']);
   assert.deepEqual(findAllowedRoles(roundPointsRouter, 'post', '/:roundPointId/readings'), ['admin', 'topografo']);
+  assert.deepEqual(findAllowedRoles(roundPointsRouter, 'get', '/:roundPointId/execution-events'), [
+    'admin',
+    'topografo',
+    'supervisor'
+  ]);
+  assert.deepEqual(findAllowedRoles(roundPointsRouter, 'post', '/:roundPointId/execution-events'), ['admin', 'topografo']);
   assert.deepEqual(
     findAllowedRoles(roundPointsRouter, 'post', '/:roundPointId/readings/:readingId/attachments'),
     ['admin', 'topografo']

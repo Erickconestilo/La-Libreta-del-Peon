@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Implementar registro explícito del resultado de trabajo por punto de ronda a partir del análisis del control semanal, con soporte offline-first y sin importar datos reales | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `111` tests, `111` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos. La migración `029_monitoring_work_execution_events.sql`, el endpoint protegido, la captura móvil y el outbox quedan implementados solo localmente; no se aplicó la migración, no se desplegó Render y no se instaló una nueva APK en el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar el bundle Android local tras añadir guardado SAF, sin instalarlo | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`; `Export validation: metadata.json=6101 bytes; files=95`. Expo exportó el bundle Android y no dejó procesos retenidos. No se generó APK ni se tocó el Galaxy, Supabase, Render, EAS, Play Store o `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff y checklist con los commits actuales de guardado local de exportaciones | cerrado (`npm run docs:check` devolvió `check-docs: 43 documentos revisados en raíz y docs/` y `Sin errores ni avisos`; `git diff --check` terminó con código `0`. El handoff identifica `979b5b7`, `e3124df` y `9442b08`, y el checklist distingue guardado local de validación física; no se tocó el Galaxy ni ningún servicio remoto.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Evitar descargas simultáneas entre compartir y guardar una exportación | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 106 passed, 106 total`; `git diff --check` terminó con código `0`. Compartir y guardar quedan mutuamente bloqueados mientras una exportación está en curso; no se tocó el Galaxy ni ningún servicio remoto.)` |
@@ -456,9 +457,9 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `106/106`
-tests; móvil pasa `22` suites y `106/106` tests; tooling pasa `12/12` y
-`docs:check` revisa `43` documentos sin avisos. La release Android
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `111/111`
+tests; móvil pasa `23` suites y `111/111` tests; tooling mantiene `12/12` y
+`docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7` está instalada en el Galaxy y firmada con
 `CN=TopoField Android Release`. El E2E físico ya demostró lectura y foto
 offline, reinicio, reconexión automática y unicidad en Supabase; también se
@@ -572,7 +573,11 @@ cerrada con la release v7. Los elementos que siguen aquí como pendientes son el
 cierre definitivo con umbral autorizado, la comparación estructurada de
 CSV/XLSX, la observación de campo y las entrevistas; las menciones a v5/v6,
 Render anterior y al primer fallo de adjuntos son evidencia histórica, no el
-estado actual.
+estado actual. El registro explícito del resultado del operario ya está
+implementado localmente como eventos append-only por punto (`Empezar`, `Hecho`,
+`No realizado`, `Repetir` y `Bloqueado`) con razón obligatoria cuando procede,
+SQLite/outbox e idempotencia. La migración `029` aún no está aplicada en
+Supabase, por lo que este slice no está desplegado ni validado en el Galaxy.
 - **Entrega manual comprobada en Galaxy (13-09-2026):** desde el resumen de la
   ronda v7, `Compartir CSV` generó
   `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y
@@ -723,6 +728,21 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Resultado explícito del trabajo del operario implementado
+  localmente (Codex):** el análisis de `CONTROL DE LECTURA SEMANAL (2).xlsx`
+  se usó solo como referencia de producto y no se importaron datos reales. Se
+  añadió el contrato `WorkExecutionEvent` por punto de ronda, con acciones
+  `started`, `completed`, `not_done`, `repeat_required` y `blocked`; los tres
+  últimos exigen motivo. Backend y móvil validan el alcance de obra, rol,
+  UUID de idempotencia y estados separados de la lectura metrológica y del
+  cierre de ronda. Sin red, el resultado se guarda en SQLite/outbox y la UI
+  muestra `Guardado localmente` hasta la recepción del servidor. La migración
+  `apps/backend/migrations/029_monitoring_work_execution_events.sql` es local
+  y no se ha aplicado en Supabase. Build backend código `0`, `111/111` tests
+  backend, TypeScript móvil código `0`, `23` suites/`111` tests móviles,
+  `docs:check` con `44` documentos sin avisos. El Galaxy quedó sin cambios y
+  Render no se tocó.
 
 - **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
   añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin

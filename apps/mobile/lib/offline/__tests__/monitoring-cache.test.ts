@@ -4,6 +4,7 @@ import { applyMigrations, closeDatabase, getDatabase } from '../database';
 import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
+  applyCachedWorkExecutionEvent,
   saveMonitoringRoundList,
   saveMonitoringRoundsByProject,
   saveMonitoringRoundSnapshot
@@ -63,6 +64,39 @@ describe('monitoring cache', () => {
 
     expect(getMonitoringRoundSnapshot('session:one', 'round-1')).toEqual(snapshot);
     expect(getMonitoringRoundSnapshot('session:two', 'round-1')).toBeNull();
+  });
+
+  it('keeps a locally recorded work result after a cold offline read', () => {
+    const snapshot = {
+      cachedAt: '2026-08-24T10:00:00.000Z',
+      readingsByControlPointId: {},
+      round: {
+        id: 'round-1',
+        points: [{ id: 'round-point-1', status: 'pending' }]
+      },
+      thresholdsByControlPointId: {}
+    } as never;
+    const event = {
+      clientRequestId: '11111111-1111-4111-8111-111111111111',
+      createdAt: '2026-09-13T10:00:00.000Z',
+      eventType: 'blocked',
+      id: 'event-1',
+      notes: null,
+      occurredAt: '2026-09-13T10:00:00.000Z',
+      projectId: 'project-1',
+      reason: 'Sin acceso',
+      recordedBy: 'user-1',
+      roundId: 'round-1',
+      roundPointId: 'round-point-1'
+    } as never;
+
+    saveMonitoringRoundSnapshot('session:one', 'round-1', snapshot);
+    applyCachedWorkExecutionEvent('session:one', 'round-1', 'round-point-1', event);
+
+    expect(getMonitoringRoundSnapshot('session:one', 'round-1')?.round.points[0].executionState).toMatchObject({
+      status: 'blocked',
+      lastEvent: { reason: 'Sin acceso' }
+    });
   });
 
   it('invalidates unscoped legacy cache rows during migration', async () => {

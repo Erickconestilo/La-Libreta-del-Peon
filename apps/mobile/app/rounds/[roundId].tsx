@@ -15,6 +15,7 @@ import {
 } from '@/hooks/use-monitoring';
 import { getRoundOutboxItems } from '@/lib/offline/outbox';
 import { canWriteProject } from '@/lib/field-access';
+import { getWorkExecutionStatePresentation } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
 
 const pointStatus = {
@@ -105,17 +106,26 @@ export default function MonitoringRoundDetailScreen() {
           renderItem={({ item }) => {
             const instrument = MONITORING_INSTRUMENTS.find((option) => option.value === item.expectedInstrumentType);
             const status = pointStatus[item.status];
+            const execution = getWorkExecutionStatePresentation(item.executionState);
             return (
-              <Pressable
-                onPress={() => router.push({ pathname: '/round-points/[roundPointId]/reading', params: { controlPointId: item.controlPointId, code: item.controlPointCode, instrumentType: item.expectedInstrumentType, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)}
-                style={[styles.pointCard, !canEdit ? styles.disabled : null]}
-              >
-                <View style={styles.cardTop}><StatePill label={status.label} tone={status.tone} />{canEdit ? <RowChevron /> : <Text style={styles.readOnlyLabel}>Consulta</Text>}</View>
-                <Text style={styles.pointCode}>{item.controlPointCode}</Text>
-                <Text numberOfLines={1} style={styles.pointName}>{item.controlPointName ?? 'Sin nombre'}</Text>
-                <Text style={styles.meta}>{instrument?.label ?? item.expectedInstrumentType}</Text>
-                {item.notes ? <Text numberOfLines={2} style={styles.body}>{item.notes}</Text> : null}
-              </Pressable>
+              <View style={[styles.pointCard, !canEdit ? styles.disabled : null]}>
+                <Pressable
+                  onPress={() => router.push({ pathname: '/round-points/[roundPointId]/reading', params: { controlPointId: item.controlPointId, code: item.controlPointCode, instrumentType: item.expectedInstrumentType, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)}
+                  style={styles.pointMain}
+                >
+                  <View style={styles.cardTop}><StatePill label={status.label} tone={status.tone} />{canEdit ? <RowChevron /> : <Text style={styles.readOnlyLabel}>Consulta</Text>}</View>
+                  <Text style={styles.pointCode}>{item.controlPointCode}</Text>
+                  <Text numberOfLines={1} style={styles.pointName}>{item.controlPointName ?? 'Sin nombre'}</Text>
+                  <Text style={styles.meta}>{instrument?.label ?? item.expectedInstrumentType}</Text>
+                  <View style={styles.executionRow}><Text style={styles.executionLabel}>Trabajo</Text><StatePill label={execution.label} tone={execution.tone} /></View>
+                  {item.executionState?.lastEvent?.reason ? <Text numberOfLines={2} style={styles.reason}>Motivo: {item.executionState.lastEvent.reason}</Text> : null}
+                  {item.notes ? <Text numberOfLines={2} style={styles.body}>{item.notes}</Text> : null}
+                </Pressable>
+                {canEdit ? <Pressable onPress={() => router.push({ pathname: '/round-points/[roundPointId]/work-status', params: { code: item.controlPointCode, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)} style={styles.resultButton}>
+                  <MaterialIcons color={colors.textPrimary} name="assignment-turned-in" size={18} />
+                  <Text style={styles.resultButtonText}>Indicar resultado</Text>
+                </Pressable> : null}
+              </View>
             );
           }}
           ListEmptyComponent={<View style={styles.empty}><MaterialIcons color={colors.textSecondary} name="playlist-add" size={30} /><Text style={styles.emptyTitle}>{isLoading ? 'Cargando puntos...' : 'Esta ronda no tiene puntos'}</Text><Text style={styles.body}>{canEdit ? 'Añade los puntos de control que vas a medir.' : 'No hay puntos para consultar.'}</Text></View>}
@@ -140,15 +150,21 @@ const styles = StyleSheet.create({
   error: { backgroundColor: colors.card, borderLeftColor: colors.red, borderLeftWidth: 3, marginHorizontal: spacing[3], padding: spacing[3] },
   errorText: { color: colors.red, fontSize: 13, fontWeight: '700', lineHeight: 20 },
   errorTitle: { color: colors.red, fontSize: typography.fontSizeBody, fontWeight: '800' },
+  executionLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
+  executionRow: { alignItems: 'center', flexDirection: 'row', gap: spacing[1] },
   header: { gap: spacing[2], padding: spacing[3] },
   list: { gap: spacing[2], padding: spacing[3] },
   meta: { color: colors.accentGreen, fontSize: 13, fontWeight: '800' },
   pointCard: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
+  pointMain: { gap: spacing[1] },
   pointCode: { color: colors.textPrimary, fontSize: typography.fontSizeTitle, fontWeight: '900' },
   pointName: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
   primaryButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.accentGreen, borderRadius: 8, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
   readOnlyLabel: { color: '#7dd3fc', fontSize: 12, fontWeight: '800' },
+  reason: { color: colors.amber, fontSize: 12, lineHeight: 18 },
+  resultButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: spacing[2] },
+  resultButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   secondaryButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   successText: { color: colors.accentGreen, fontSize: 13, fontWeight: '800', lineHeight: 20 },

@@ -20,6 +20,7 @@ import {
   getMonitoringRoundExportRows,
   getMonitoringRoundDetail,
   getReadingHistory,
+  listWorkExecutionEvents,
   importProjectCodeCatalog,
   listControlPoints,
   listControlPointThresholds,
@@ -29,6 +30,7 @@ import {
   listProjectCodeCatalog,
   listWorkCompletionReports,
   createWorkCompletionReport,
+  createWorkExecutionEvent,
   updateControlPoint,
   updateMonitoringRound,
   updateMonitoringRoundStatus
@@ -41,6 +43,7 @@ import {
   validateCreateInstrumentReadingInput,
   validateCreateReadingAttachmentInput,
   validateCreateWorkCompletionReportInput,
+  validateCreateWorkExecutionEventInput,
   validateCreateMonitoringRoundInput,
   validateCreateRoundPointInput,
   validateListControlPointsQuery,
@@ -553,5 +556,42 @@ export const createWorkCompletionReportController = async (request: Request, res
     sendSuccess(response, result.report, result.created ? 201 : 200);
   } catch (error) {
     sendControllerError(response, error, 'WORK_COMPLETION_REPORT_CREATE_FAILED', 'Unable to create completion report');
+  }
+};
+
+export const listWorkExecutionEventsController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const roundPointId = routeParam(request, 'roundPointId');
+    const projectId = await getRoundPointProjectId(roundPointId, getActorProjectScope(request.user));
+    if (!projectId) throw new AppError('Round point not found', 404, 'ROUND_POINT_NOT_FOUND');
+
+    const events = await listWorkExecutionEvents(roundPointId, getActorProjectScope(request.user));
+    sendSuccess(response, events);
+  } catch (error) {
+    sendControllerError(response, error, 'WORK_EXECUTION_EVENTS_LIST_FAILED', 'Unable to load work execution events');
+  }
+};
+
+export const createWorkExecutionEventController = async (request: Request, response: Response) => {
+  try {
+    if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+    const roundPointId = routeParam(request, 'roundPointId');
+    const projectId = await getRoundPointProjectId(roundPointId, getActorProjectScope(request.user));
+    if (!projectId) throw new AppError('Round point not found', 404, 'ROUND_POINT_NOT_FOUND');
+    assertProjectWriteAccess(request.user, projectId);
+
+    const input = validateCreateWorkExecutionEventInput(request.body);
+    const result = await createWorkExecutionEvent(
+      roundPointId,
+      input,
+      request.user.id,
+      getActorProjectScope(request.user)
+    );
+
+    if (!result) throw new AppError('Round point not found', 404, 'ROUND_POINT_NOT_FOUND');
+    sendSuccess(response, result.event, result.created ? 201 : 200);
+  } catch (error) {
+    sendControllerError(response, error, 'WORK_EXECUTION_EVENT_CREATE_FAILED', 'Unable to record work execution result');
   }
 };

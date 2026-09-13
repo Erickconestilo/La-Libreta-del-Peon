@@ -15,6 +15,8 @@ import type {
   MonitoringRoundStatus,
   ProjectOperator,
   ReadingInsertResponse,
+  WorkExecutionEvent,
+  WorkExecutionEventType,
   WorkCompletionReport,
   WorkCompletionStatus
 } from '@shared/types';
@@ -25,6 +27,7 @@ import { enqueue, enqueueMany, getPendingCount, getRoundOutboxItems, type Enqueu
 import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
+  applyCachedWorkExecutionEvent,
   saveMonitoringRoundList,
   saveMonitoringRoundsByProject,
   saveMonitoringRoundSnapshot,
@@ -42,6 +45,7 @@ import {
 } from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
 import { getRoundExportErrorMessage, saveRoundExport, shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
+import { getWorkExecutionState, requiresWorkExecutionReason } from '@/lib/work-execution';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -118,6 +122,13 @@ export type CreateWorkCompletionReportInput = {
   pendingReasons: string[];
   status: WorkCompletionStatus;
   zoneLabel: string;
+};
+
+export type CreateWorkExecutionEventInput = {
+  eventType: WorkExecutionEventType;
+  notes: string | null;
+  occurredAt?: string;
+  reason: string | null;
 };
 
 type ReadingAttachmentPayload = {
@@ -377,6 +388,26 @@ const createWorkCompletionReportRequest = async ({
   return response.data;
 };
 
+const createWorkExecutionEventRequest = async ({
+  clientRequestId,
+  input,
+  roundPointId
+}: {
+  clientRequestId: string;
+  input: CreateWorkExecutionEventInput;
+  roundPointId: string;
+}) => {
+  const response = await apiFetch<ApiEnvelope<WorkExecutionEvent>>(`/round-points/${roundPointId}/execution-events`, {
+    body: JSON.stringify({
+      ...input,
+      clientRequestId,
+      occurredAt: input.occurredAt ?? new Date().toISOString()
+    }),
+    method: 'POST'
+  });
+  return response.data;
+};
+
 const createInstrumentReadingRequest = async ({
   clientRequestId,
   input,
@@ -600,6 +631,137 @@ export const useMonitoringRound = (roundId: string | null) => {
     data: query.data?.round,
     errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar la ronda.') : null,
     isOfflineCache: query.data?.isOfflineCache ?? false
+  };
+};
+
+const buildLocalWorkExecutionEvent = ({
+  clientRequestId,
+  currentUserId,
+  input,
+  roundId,
+  roundPointId,
+  projectId
+}: {
+  clientRequestId: string;
+  currentUserId: string;
+  input: CreateWorkExecutionEventInput;
+  projectId: string;
+  roundId: string;
+  roundPointId: string;
+}): WorkExecutionEvent => {
+  const now = input.occurredAt ?? new Date().toISOString();
+  return {
+    clientRequestId,
+    createdAt: now,
+    eventType: input.eventType,
+    id: clientRequestId,
+    notes: input.notes,
+    occurredAt: now,
+    projectId,
+    reason: input.reason,
+    recordedBy: currentUserId,
+    roundId,
+    roundPointId
+  };
+};
+
+export const useCreateWorkExecutionEvent = ({
+  roundId,
+  roundPointId
+}: {
+  roundId: string | null;
+  roundPointId: string | null;
+}) => {
+  const { activeSessionId, currentUser } = useCurrentSession();
+  const cacheKey = getSessionCacheKey(activeSessionId);
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (input: CreateWorkExecutionEventInput) => {
+      if (!roundId || !roundPointId) throw new Error('Falta el punto de la ronda para guardar el resultado.');
+      if (!activeSessionId || !currentUser?.id) throw new Error('Necesitas una sesión técnica para indicar el resultado.');
+      if (requiresWorkExecutionReason(input.eventType) && !input.reason?.trim()) {
+        throw new Error('Indica el motivo para este resultado.');
+      }
+
+      const clientRequestId = createRandomId();
+      const round = queryClient.getQueryData<{ round?: MonitoringRoundDetail }>([
+        'monitoring-round',
+        cacheKey,
+        roundId
+      ])?.round;
+      const projectId = round?.projectId;
+      if (!projectId) throw new Error('No se conoce la obra del punto. Recarga la ronda e inténtalo de nuevo.');
+
+      if (await hasConnectivity()) {
+        try {
+          const event = await createWorkExecutionEventRequest({ clientRequestId, input, roundPointId });
+          return { event, mode: 'synced' as const };
+        } catch (error) {
+          if (!shouldQueueReadingAfterError(error)) throw error;
+        }
+      }
+
+      const event = buildLocalWorkExecutionEvent({
+        clientRequestId,
+        currentUserId: currentUser.id,
+        input,
+        projectId,
+        roundId,
+        roundPointId
+      });
+      enqueue({
+        clientRequestId,
+        entityType: 'medicion',
+        id: createRandomId(),
+        operation: 'insert',
+        sessionId: activeSessionId,
+        payload: {
+          kind: 'work_execution_event',
+          notes: input.notes,
+          occurredAt: event.occurredAt,
+          eventType: input.eventType,
+          reason: input.reason,
+          roundId,
+          roundPointId
+        }
+      });
+      return { event, mode: 'queued' as const };
+    },
+    onSuccess: async (result) => {
+      if (!roundId || !roundPointId || !activeSessionId) return;
+      applyCachedWorkExecutionEvent(cacheKey, roundId, roundPointId, result.event);
+      queryClient.setQueryData<{ round?: MonitoringRoundDetail }>([
+        'monitoring-round',
+        cacheKey,
+        roundId
+      ], (current) => {
+        if (!current?.round) return current;
+        return {
+          ...current,
+          round: {
+            ...current.round,
+            points: current.round.points.map((point) => point.id === roundPointId
+              ? { ...point, executionState: getWorkExecutionState(result.event) }
+              : point)
+          }
+        };
+      });
+      if (result.mode === 'synced') {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['monitoring-round', cacheKey, roundId] }),
+          queryClient.invalidateQueries({ queryKey: ['my-journey', cacheKey] })
+        ]);
+      }
+      if (result.mode === 'queued' && await hasConnectivity()) {
+        void flushOutbox(syncOutboxItem, activeSessionId);
+      }
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getErrorMessage(mutation.error, 'No se pudo guardar el resultado.') : null,
+    isCreating: mutation.isPending,
+    recordResult: mutation.mutateAsync
   };
 };
 

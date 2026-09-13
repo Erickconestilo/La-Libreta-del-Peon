@@ -137,20 +137,38 @@ La rama `codex/f5-field-stability` incorpora un slice vertical para la jornada r
 - exportación restringida a membresías con escritura; las membresías `read` solo consultan datos recibidos;
 - documentación de cobertura de equipos, límites y puertas de piloto.
 
+### Registro explícito del trabajo del operario (implementado localmente)
+
+El análisis del control semanal mostró que las casillas por día no distinguen
+planificación, ejecución, bloqueo ni recepción. Para corregir esa ambigüedad,
+la ronda reutiliza sus puntos como trabajo asignado y añade un registro
+append-only de resultados: `Empezar`, `Hecho`, `No realizado`, `Repetir` y
+`Bloqueado`. Los tres últimos exigen motivo. El contrato está en
+[`docs/field/WORK_EXECUTION_CONTRACT.md`](docs/field/WORK_EXECUTION_CONTRACT.md),
+la migración preparada es
+`apps/backend/migrations/029_monitoring_work_execution_events.sql` y la ruta
+queda protegida por obra y rol. La captura móvil usa SQLite/outbox e
+idempotencia; `Hecho` no cambia por sí solo el estado metrológico ni permite
+cerrar una ronda con lecturas pendientes.
+
+La migración 029 no se ha aplicado en Supabase y este bloque no se considera
+desplegado hasta aplicarla, publicar el backend y repetir la comprobación en el
+Galaxy.
+
 Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
-El último despliegue funcional verificado sirve el merge commit
-`6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`, que contiene `b0572a0`.
-La fuente y la release móvil local más reciente están preparadas con
-`versionCode=5`; la AAB está firmada y verificada y Gradle generó una APK
-release verificable con el mismo certificado. `bundletool validate` también
-terminó con código `0`; no se generó un APK universal porque el transporte de
-la contraseña de la clave quedó bloqueado.
+El último despliegue funcional verificado sirve el commit
+`df224f9b7226c8aa5899a5e889898663b4642016`, que contiene la corrección de
+exportación y el scope de adjuntos.
+La fuente y la release móvil instalada más reciente están en
+`versionCode=7`, firmada y verificada con el certificado local de release.
+La AAB/APK arm64 quedó comprobada con Gradle y la instalación física devolvió
+`Success`.
 La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
-consulta supervisora también quedó validada: login real, única obra
-la obra QA autorizada, rondas, punto, histórico y evidencia visibles; la UI muestra
+consulta supervisora también quedó validada: login real, la única obra QA
+autorizada, rondas, punto, histórico y evidencia visibles; la UI muestra
 consulta sin escritura. La siguiente puerta es repetir con datos autorizados
 el cierre positivo, guardar los artefactos CSV/XLSX en una ubicación legible y
 ejecutar el verificador estructurado; la observación de uso permanece aparte.

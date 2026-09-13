@@ -2,10 +2,12 @@ import type {
   ControlPointThreshold,
   InstrumentReading,
   MonitoringRound,
-  MonitoringRoundPoint
+  MonitoringRoundPoint,
+  WorkExecutionEvent
 } from '@shared/types';
 
 import { getDatabase } from './database';
+import { getWorkExecutionState } from '../work-execution';
 
 export type CachedMonitoringRoundPoint = MonitoringRoundPoint & {
   controlPointCode: string;
@@ -111,4 +113,35 @@ export const getMonitoringRoundSnapshot = (cacheKey: string, roundId: string) =>
   }
 
   return JSON.parse(row.snapshot_json) as MonitoringRoundSnapshot;
+};
+
+/** Apply a locally recorded result without pretending that it is server-received. */
+export const applyCachedWorkExecutionEvent = (
+  cacheKey: string,
+  roundId: string,
+  roundPointId: string,
+  event: WorkExecutionEvent
+) => {
+  const snapshot = getMonitoringRoundSnapshot(cacheKey, roundId);
+  if (!snapshot) {
+    return;
+  }
+
+  const point = snapshot.round.points.find((item) => item.id === roundPointId);
+  if (!point) {
+    return;
+  }
+
+  const updatedSnapshot: MonitoringRoundSnapshot = {
+    ...snapshot,
+    cachedAt: new Date().toISOString(),
+    round: {
+      ...snapshot.round,
+      points: snapshot.round.points.map((item) => item.id === roundPointId
+        ? { ...item, executionState: getWorkExecutionState(event) }
+        : item)
+    }
+  };
+
+  saveMonitoringRoundSnapshot(cacheKey, roundId, updatedSnapshot);
 };

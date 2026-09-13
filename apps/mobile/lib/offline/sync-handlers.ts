@@ -30,6 +30,8 @@ export const syncOutboxItem = async (item: OutboxItem): Promise<void> => {
       await syncMountingVisitUpdate(item);
     } else if (item.payload.kind === 'mounting_visit') {
       await syncMountingVisit(item);
+    } else if (item.payload.kind === 'work_execution_event') {
+      await syncWorkExecutionEvent(item);
     } else if (item.payload.kind === 'work_completion_report') {
       await syncWorkCompletionReport(item);
     } else {
@@ -39,6 +41,39 @@ export const syncOutboxItem = async (item: OutboxItem): Promise<void> => {
   }
 
   throw new Error(`Unexpected entity type: ${item.entityType}`);
+};
+
+const syncWorkExecutionEvent = async (item: OutboxItem): Promise<void> => {
+  const roundPointId = item.payload.roundPointId;
+  const eventType = item.payload.eventType;
+  const reason = item.payload.reason;
+  const notes = item.payload.notes;
+  const occurredAt = item.payload.occurredAt;
+
+  if (
+    typeof roundPointId !== 'string' ||
+    (eventType !== 'started' && eventType !== 'completed' && eventType !== 'not_done' && eventType !== 'repeat_required' && eventType !== 'blocked') ||
+    (reason !== null && reason !== undefined && typeof reason !== 'string') ||
+    (notes !== null && notes !== undefined && typeof notes !== 'string') ||
+    (occurredAt !== null && occurredAt !== undefined && typeof occurredAt !== 'string')
+  ) {
+    throw new Error('Invalid work execution event outbox payload');
+  }
+
+  const response = await apiFetch<ApiEnvelope<unknown>>(`/round-points/${roundPointId}/execution-events`, {
+    body: JSON.stringify({
+      clientRequestId: item.clientRequestId,
+      eventType,
+      notes: notes ?? null,
+      occurredAt: occurredAt ?? undefined,
+      reason: reason ?? null
+    }),
+    method: 'POST'
+  });
+
+  if (!response.data) {
+    throw new Error('Server returned no work execution event');
+  }
 };
 
 const syncWorkCompletionReport = async (item: OutboxItem): Promise<void> => {

@@ -19,6 +19,30 @@ const mockApiFetch = apiFetch as jest.MockedFunction<typeof apiFetch>;
 const mockDeletePreparedPhoto = deletePreparedPhoto as jest.MockedFunction<typeof deletePreparedPhoto>;
 const mockUploadPreparedPhotoToSignedUrl = uploadPreparedPhotoToSignedUrl as jest.MockedFunction<typeof uploadPreparedPhotoToSignedUrl>;
 
+const workExecutionEventItem: OutboxItem = {
+  clientRequestId: 'c9698cea-4d64-4382-8182-7a271315e075',
+  conflictData: null,
+  createdAt: '2026-09-13 10:00:00',
+  entityType: 'medicion',
+  errorMessage: null,
+  id: 'c9c530b4-b39c-4547-aa5d-e7b78fbd8ed9',
+  lastSyncAttemptAt: null,
+  operation: 'insert',
+  sessionId: 'session:test',
+  payload: {
+    eventType: 'blocked',
+    kind: 'work_execution_event',
+    notes: null,
+    occurredAt: '2026-09-13T10:00:00.000Z',
+    reason: 'Sin acceso',
+    roundId: '78bf1e4d-1f26-4aa0-8c49-3d03bd7c906b',
+    roundPointId: '88bf1e4d-1f26-4aa0-8c49-3d03bd7c906b'
+  },
+  retryCount: 0,
+  status: 'pending',
+  syncedAt: null,
+};
+
 const stationMessageItem: OutboxItem = {
   clientRequestId: 'a9698cea-4d64-4382-8182-7a271315e075',
   conflictData: null,
@@ -110,6 +134,25 @@ const mountingVisitItem: OutboxItem = {
 };
 
 describe('syncOutboxItem', () => {
+  it('syncs an operational work result with its original idempotency key', async () => {
+    mockApiFetch.mockResolvedValueOnce({ data: { id: 'event-1' }, error: null } as never);
+
+    await syncOutboxItem(workExecutionEventItem);
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/round-points/88bf1e4d-1f26-4aa0-8c49-3d03bd7c906b/execution-events',
+      expect.objectContaining({
+        body: JSON.stringify({
+          clientRequestId: workExecutionEventItem.clientRequestId,
+          eventType: 'blocked',
+          notes: null,
+          occurredAt: '2026-09-13T10:00:00.000Z',
+          reason: 'Sin acceso'
+        }),
+        method: 'POST'
+      })
+    );
+  });
   beforeEach(() => {
     mockApiFetch.mockReset();
     mockDeletePreparedPhoto.mockReset();

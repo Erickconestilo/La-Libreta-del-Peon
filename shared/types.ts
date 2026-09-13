@@ -36,6 +36,8 @@ export type InstrumentReadingStatus = 'draft' | 'confirmed' | 'reviewed' | 'reje
 export type ReadingAttachmentType = 'photo' | 'note' | 'file';
 export type CalculatedThresholdStatus = 'normal' | 'warning' | 'alarm' | 'unknown';
 export type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
+export type WorkExecutionEventType = 'started' | 'completed' | 'not_done' | 'repeat_required' | 'blocked';
+export type WorkExecutionStateStatus = 'pending' | 'in_progress' | 'completed' | 'not_done' | 'repeat_required' | 'blocked';
 export type PotentiometerPair = 'yellow-blue' | 'yellow-brown' | 'blue-brown';
 
 export interface PotentiometerMeasurementPayload {
@@ -522,6 +524,26 @@ export interface MonitoringRoundPoint {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  executionState?: WorkExecutionState;
+}
+
+export interface WorkExecutionEvent {
+  id: string;
+  roundId: string;
+  roundPointId: string;
+  projectId: string;
+  eventType: WorkExecutionEventType;
+  reason: string | null;
+  notes: string | null;
+  occurredAt: string;
+  recordedBy: string;
+  clientRequestId: string;
+  createdAt: string;
+}
+
+export interface WorkExecutionState {
+  status: WorkExecutionStateStatus;
+  lastEvent: WorkExecutionEvent | null;
 }
 
 export interface InstrumentReading {

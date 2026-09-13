@@ -3,11 +3,13 @@ import { Router } from 'express';
 import {
   createControlPointThresholdController,
   createReadingAttachmentController,
+  createWorkExecutionEventController,
   createInstrumentReadingController,
   createRoundPointController,
   exportMonitoringRoundController,
   getMonitoringRoundDetailController,
   getReadingHistoryController,
+  listWorkExecutionEventsController,
   listControlPointThresholdsController,
   listWorkCompletionReportsController,
   createWorkCompletionReportController,
@@ -75,6 +77,22 @@ roundPointsRouter.post(
   requireRole(['admin', 'topografo']),
   validateUuidParam('roundPointId'),
   createInstrumentReadingController
+);
+
+roundPointsRouter.get(
+  '/:roundPointId/execution-events',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'supervisor']),
+  validateUuidParam('roundPointId'),
+  listWorkExecutionEventsController
+);
+
+roundPointsRouter.post(
+  '/:roundPointId/execution-events',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('roundPointId'),
+  createWorkExecutionEventController
 );
 
 roundPointsRouter.post(
