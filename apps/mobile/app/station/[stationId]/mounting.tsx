@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +13,9 @@ import {
   getMountingPhotoMarkerPosition,
   MOUNTING_PHOTO_ANCHORS,
   MOUNTING_PHOTO_SIZE,
+  MOUNTING_VISUAL_FILTERS,
+  filterMountingVisitsForVisual,
+  type MountingVisualFilter,
   type MountingPhotoAnchorKey
 } from '@/lib/mounting-visual';
 import type { MountingEvidenceKind, MountingVisitStatus } from '@shared/types';
@@ -41,8 +44,13 @@ export default function MountingVisitsScreen() {
   const [selectedPrismId, setSelectedPrismId] = useState<string | null>(null);
   const [photoAnchorKey, setPhotoAnchorKey] = useState<MountingPhotoAnchorKey | null>(null);
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
+  const [visualFilter, setVisualFilter] = useState<MountingVisualFilter>('all');
   const canEdit = canWriteProject(currentUser, station?.projectId);
   const selectedPhotoAnchor = MOUNTING_PHOTO_ANCHORS.find((anchor) => anchor.key === photoAnchorKey) ?? null;
+  const visibleVisits = useMemo(
+    () => filterMountingVisitsForVisual(visits ?? [], visualFilter),
+    [visits, visualFilter]
+  );
 
   const handleCreateVisit = async () => {
     const visit = await createVisit({
@@ -215,18 +223,35 @@ export default function MountingVisitsScreen() {
         ) : null}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Historial de visitas</Text>
-          <Text style={styles.caption}>{isLoading ? 'Cargando...' : `${visits?.length ?? 0} visita${visits?.length === 1 ? '' : 's'}`}</Text>
+          <View style={styles.sectionHeaderCopy}>
+            <Text style={styles.sectionTitle}>Croquis fotográfico</Text>
+            <Text style={styles.caption}>Memoria visual acumulada, sin coordenadas ni orientación métrica.</Text>
+          </View>
+          <Text style={styles.caption}>{isLoading ? 'Cargando...' : `${visibleVisits.length} visita${visibleVisits.length === 1 ? '' : 's'}`}</Text>
         </View>
 
-        {!isLoading && !visits?.length ? (
+        <View accessibilityLabel="Filtrar memoria visual" style={styles.chips}>
+          {MOUNTING_VISUAL_FILTERS.map((filter) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: visualFilter === filter.key }}
+              key={filter.key}
+              onPress={() => setVisualFilter(filter.key)}
+              style={[styles.chip, visualFilter === filter.key ? styles.chipActive : null]}
+            >
+              <Text style={[styles.chipText, visualFilter === filter.key ? styles.chipTextActive : null]}>{filter.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {!isLoading && !visibleVisits.length ? (
           <View style={styles.empty}>
-            <Text style={styles.sectionTitle}>Sin visitas de montaje</Text>
-            <Text style={styles.body}>La primera visita aparecerá aquí sin borrar la memoria visual existente.</Text>
+            <Text style={styles.sectionTitle}>{visits?.length ? 'Sin evidencias de este tipo' : 'Sin visitas de montaje'}</Text>
+            <Text style={styles.body}>{visits?.length ? 'Prueba otro filtro para ver la memoria completa.' : 'La primera visita aparecerá aquí sin borrar la memoria visual existente.'}</Text>
           </View>
         ) : null}
 
-        {(visits ?? []).map((visit) => (
+        {visibleVisits.map((visit) => (
           <View key={visit.id} style={styles.card}>
             <View style={styles.visitHeader}>
               <View style={styles.visitHeaderText}>
@@ -240,7 +265,7 @@ export default function MountingVisitsScreen() {
             {visit.evidence.map((evidence) => (
               <View key={evidence.id} style={styles.evidence}>
                 <View style={styles.evidenceImageFrame}>
-                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
+                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} resizeMode="cover" source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
                   {evidence.positionX !== null && evidence.positionY !== null ? (
                     <View
                       pointerEvents="none"
@@ -303,7 +328,7 @@ const styles = StyleSheet.create({
   evidence: { borderColor: '#2a2f3a', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing[2], overflow: 'hidden' },
   evidenceBody: { flex: 1, gap: 4, paddingVertical: spacing[2], paddingRight: spacing[2] },
   evidenceImageFrame: { height: MOUNTING_PHOTO_SIZE, overflow: 'hidden', position: 'relative', width: MOUNTING_PHOTO_SIZE },
-  evidenceImage: { backgroundColor: '#0f1117', height: 104, width: 104 },
+  evidenceImage: { backgroundColor: '#0f1117', height: MOUNTING_PHOTO_SIZE, width: MOUNTING_PHOTO_SIZE },
   evidenceMarker: { alignItems: 'center', backgroundColor: '#FACC15', borderColor: '#111827', borderRadius: 6, borderWidth: 1, height: 24, justifyContent: 'center', maxWidth: 72, minWidth: 24, paddingHorizontal: 4, position: 'absolute' },
   evidenceMarkerText: { color: '#111827', fontSize: 10, fontWeight: '900' },
   evidenceTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
@@ -318,7 +343,8 @@ const styles = StyleSheet.create({
   readOnlyNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
-  sectionHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingTop: spacing[2] },
+  sectionHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing[2], justifyContent: 'space-between', paddingTop: spacing[2] },
+  sectionHeaderCopy: { flex: 1, gap: 3 },
   sectionTitle: { color: colors.textPrimary, fontSize: typography.fontSizeBody, fontWeight: '900' },
   status: { backgroundColor: 'rgba(34, 197, 94, 0.16)', borderRadius: 999, color: colors.accentGreen, fontSize: 11, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5 },
   title: { color: colors.textPrimary, fontSize: 25, fontWeight: '900' },

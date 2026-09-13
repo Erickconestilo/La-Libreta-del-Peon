@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Mejorar localmente la memoria visual de montaje con filtros y croquis fotográfico legible | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 98 passed, 98 total`; `git diff --check` terminó sin salida. Se añadieron filtros por tipo de evidencia y una previsualización mayor para el croquis fotográfico, sin migración remota ni cambios en Supabase, Render, EAS, Play Store, Galaxy o `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer reintentables las políticas RLS de la migración local 027 y cubrirlas con regresión estática | cerrado (`npm run build --workspace apps/backend` terminó con código `0`; `npm test --workspace apps/backend` devolvió `ℹ tests 104`, `ℹ pass 104`, `ℹ fail 0`, incluida `mounting visits migration keeps tenant integrity and deny-all RLS`; `git diff --check` sin salida. Las políticas se crean dentro de guardas `pg_policies` porque PostgreSQL no admite `CREATE POLICY IF NOT EXISTS`. No se aplicó 027 en Supabase ni se tocó ningún servicio remoto.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir verificador público sin credenciales para el contrato remoto de F5 | cerrado (`npm run test:tooling` devolvió `ℹ tests 9`, `ℹ pass 9`, `ℹ fail 0`; `npm run verify:remote:public` devolvió `PUBLIC_HEALTH_STATUS=200`, `PUBLIC_ROUNDS_STATUS=401`, `PUBLIC_JOURNEY_STATUS=401`, los cuerpos `UNAUTHORIZED` esperados y `REMOTE_EXIT=0`. El verificador no envía bearer ni modifica Render. `npm run docs:check` revisó `40` documentos sin errores ni avisos y `git diff --check` terminó sin salida.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer idempotentes las claves foráneas compuestas de la migración local 027 y protegerlas con regresión estática | cerrado (`027_station_mounting_visits.sql` ahora comprueba cada clave en `pg_constraint` antes de ejecutar `ADD CONSTRAINT`, de modo que un reintento tras una aplicación parcial no falla por una restricción ya existente. La regresión estática pasó dentro de `npm run verify:local`; salida literal: backend `ℹ tests 103`, `ℹ pass 103`, `ℹ fail 0`; móvil `Test Suites: 22 passed, 22 total`, `Tests: 97 passed, 97 total`; tooling `ℹ tests 9`, `ℹ pass 9`, `ℹ fail 0`; `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`; `verify local completed successfully`. `git diff --check` sin salida. La migración no se aplicó remotamente.)` |
@@ -427,7 +428,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `104/104`
-tests; móvil pasa `22` suites y `97/97` tests; `docs:check` revisa `40`
+tests; móvil pasa `22` suites y `98/98` tests; `docs:check` revisa `40`
 documentos sin avisos; la release Android `versionCode=5` está preparada
 localmente como AAB y APK firmadas, pero no está instalada porque ADB no
 detecta el Galaxy. Render sigue vivo, aunque la última observación pública
@@ -500,6 +501,14 @@ debe presentar como cerrada.
   backend build y `85/85` tests; TypeScript móvil limpio y `17` suites/`73`
   tests. Pendientes: autorización/
   aplicación remota, despliegue y validación real de cámara/Storage en Galaxy.
+- **Croquis fotográfico local mejorado (13-09-2026):** la consulta móvil de
+  visitas de montaje ofrece filtros por evidencia (`Todas`, `Prismas`,
+  `Referencias` y `Accesos`) y una previsualización de `132px` para facilitar
+  la lectura en campo. El filtro conserva el vínculo entre visita y evidencia
+  y no altera el modelo append-only ni interpreta posiciones relativas como
+  coordenadas, orientación o precisión métrica. Verificación: TypeScript móvil
+  limpio y `22` suites/`98` tests. Sigue sin aplicarse la migración `027` y no
+  se han tocado servicios remotos.
 - **Auditoría de dependencia del exportador (24-08-2026):** `exceljs@4.4.0` queda instalado. `npm audit --workspace apps/backend --omit=dev` devuelve 2 vulnerabilidades moderadas transitivas de `uuid`; la corrección disponible exige `npm audit fix --force` y degradaría ExcelJS a `3.4.0`, por lo que queda pendiente revisión explícita antes de producción.
 - **Auditoría actualizada (12-09-2026):** `npm audit --workspace apps/backend --omit=dev` sigue devolviendo exactamente `2 moderate` en `uuid` bajo `exceljs@4.4.0`; la fuente de uso está en la dependencia transitiva y `npm audit fix --force` propone degradar ExcelJS a `3.4.0`. Se aplicó únicamente `npm audit fix` sin `--force` para `morgan` y `qs`; no se cambia el exportador hasta disponer de una actualización compatible y una nueva prueba de paridad.
 - **Auditoría Expo cerrada (12-09-2026):** se actualizaron las 12 dependencias que `npx expo install --check` había detectado para Expo 56, se añadió el plugin nativo de `expo-sqlite` y se regeneró el lockfile en el commit `6d9f31c`. La comprobación posterior devuelve literalmente `Dependencies are up to date`; TypeScript y `17/73` tests móviles siguen verdes. El diff previo de scripts `android/ios` se reaplicó y permanece fuera del commit.

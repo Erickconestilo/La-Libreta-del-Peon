@@ -1,4 +1,31 @@
-export const MOUNTING_PHOTO_SIZE = 104;
+import type { MountingEvidenceKind, MountingVisit } from '@shared/types';
+
+export const MOUNTING_PHOTO_SIZE = 132;
+
+export type MountingVisualFilter = 'all' | MountingEvidenceKind;
+
+export const MOUNTING_VISUAL_FILTERS: Array<{ key: MountingVisualFilter; label: string }> = [
+  { key: 'all', label: 'Todas' },
+  { key: 'prism', label: 'Prismas' },
+  { key: 'reference', label: 'Referencias' },
+  { key: 'access', label: 'Accesos' }
+];
+
+export const filterMountingVisitsForVisual = <T extends MountingVisit>(
+  visits: T[],
+  filter: MountingVisualFilter
+): T[] => {
+  if (filter === 'all') {
+    return visits;
+  }
+
+  return visits
+    .filter((visit) => visit.evidence.some((evidence) => evidence.kind === filter))
+    .map((visit) => ({
+      ...visit,
+      evidence: visit.evidence.filter((evidence) => evidence.kind === filter)
+    })) as T[];
+};
 
 export const MOUNTING_PHOTO_ANCHORS = [
   { key: 'top-left', label: 'Arriba izquierda', x: 0.2, y: 0.2 },

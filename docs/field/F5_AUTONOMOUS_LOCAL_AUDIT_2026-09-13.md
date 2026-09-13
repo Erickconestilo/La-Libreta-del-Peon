@@ -267,6 +267,12 @@ se ha desplegado desde esta sesión.
     ella. Esto solo protege ejecuciones locales autorizadas; no aplica ninguna
     migración remota ni cambia la política de Supabase.
 
+38. La memoria visual de montaje tiene una consulta más utilizable en campo:
+    filtros por tipo de evidencia y previsualización ampliada de `132px`.
+    La proyección filtra evidencias sin cambiar sus identificadores ni
+    interpretar la posición relativa como coordenada o orientación. Es una
+    mejora local de UX; la migración `027` continúa sin aplicación remota.
+
 ## Evidencia local
 
 ```text
@@ -278,7 +284,7 @@ se ha desplegado desde esta sesión.
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total
-Tests:       97 passed, 97 total
+Tests:       98 passed, 98 total
 
 check-docs: 40 documentos revisados en raíz y docs/.
 
