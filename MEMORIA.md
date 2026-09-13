@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Auditar de forma no destructiva las referencias activas y la purga histórica antes de continuar el cierre autónomo local | cerrado (`git branch --merged` confirmó que las ocho ramas históricas ya no existen como refs locales; la rama de trabajo mantiene el runtime neutralizado, pero la búsqueda histórica exacta detectó coincidencias en commits antiguos alcanzables y `origin/main` sigue siendo una referencia distinta. `git fsck --full` terminó con código `0` y enumeró objetos `dangling`; `docs:check` revisó `40 documentos` sin errores ni avisos; `git diff --check` sin salida. No se ejecutaron `filter-repo`, borrado de refs, `git gc`, `fetch`, `pull` ni `push`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar documentos vivos con el modelo de roles vigente y el supervisor de solo lectura | cerrado (`PRODUCT_STRATEGY.md`, `PILOT_READINESS_CHECKLIST.md` y `docs/field/TOPOFIELD_OPERATIONAL_REACTIVATION_2026-09-12.md` ya incluyen el rol `supervisor` y sus límites de consulta por membresía; se actualizaron las fechas de verificación de los documentos tocados. `npm run docs:check` y `git diff --check` pasan. No se modificó código ni ningún servicio remoto.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el runbook de build Android local con la release v5 firmada y la compuerta actual de ADB | cerrado (`LOCAL_ANDROID_BUILD_RUNBOOK.md` ya distingue la evidencia histórica de `INSTALL_FAILED_UPDATE_INCOMPATIBLE` de la release v5 firmada con `CN=TopoField Android Release`, documenta `versionCode=5`, ABI `arm64-v8a`, AAB/APK y la regla de no desinstalar automáticamente. `npm run docs:check` y `git diff --check` pasan; ADB sigue sin detectar el Galaxy y no se instaló nada.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Auditar el árbol completo de dependencias y separar el riesgo de runtime backend de las alertas de tooling Expo/Metro | cerrado (`npm audit --omit=dev --json` devuelve `7 high`, `16 moderate`, `0 critical` en el árbol completo, mientras `npm audit --workspace apps/backend --omit=dev --json` mantiene `2 moderate`, `0 high`, `0 critical` por `exceljs -> uuid@8.3.2`. No se aplicó `--force` ni un upgrade mayor de Expo; el informe local documenta que las alertas adicionales pertenecen principalmente al tooling móvil y que queda una tarea de mantenimiento separada.)` |
@@ -403,9 +404,21 @@ localmente como AAB y APK firmadas, pero no está instalada porque ADB no
 detecta el Galaxy. Render sigue vivo, aunque la última observación pública
 fue el commit `eb88db9`, anterior a los hardenings locales posteriores. El
 E2E físico del operador, la validación con datos autorizados y las entrevistas
-de campo siguen abiertos.
+de campo siguen abiertos. La auditoría de procedencia del 13-09-2026 también
+detectó que la historia alcanzable de la rama conserva objetos de la etapa
+anterior de purga, mientras `main` y `origin/main` apuntan a historiales
+distintos; el runtime actual está neutralizado, pero la purga completa no se
+debe presentar como cerrada.
 
 **Ahora (bloquea piloto real o es fricción activa):**
+- **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
+  destructiva encontró coincidencias exactas en commits antiguos alcanzables
+  desde la rama de trabajo, una referencia `origin/main` anterior y objetos
+  `dangling` reportados por `git fsck --full`. Las ocho ramas locales antiguas
+  ya no existen. No se ejecutaron `filter-repo`, borrado de refs, `git gc`,
+  `fetch` ni `push`; la evidencia está en
+  `docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md` y requiere una
+  compuerta separada antes de cualquier reescritura.
 - **Hallazgo E2E real en Galaxy (12-09-2026):** la lectura offline `8.25 mm` de la ronda `E2E-Galaxy-20260731-Atc` llegó una sola vez a Supabase con `client_request_id=6e8403ac-f462-411b-84b8-44a03d9c6cc0`, pero `attachment_count=0` y no existe objeto correspondiente en `storage.objects`. El log posterior fue literalmente `[SyncEngine] No pending items`. La prueba no se considera aprobada hasta repetirla con la foto presente.
 - **Corrección local del primer hallazgo (12-09-2026):** `68e001a fix(mobile): recover interrupted reading attachments` hace atómica la inserción de lectura+adjunto en SQLite y recupera operaciones que quedaron en `syncing` al reiniciar. Verificación literal: `npx tsc --noEmit --project apps/mobile/tsconfig.json` sin salida/código `0`; móvil `12` suites y `54` tests; backend `75/75` tests.
 - **Segundo intento E2E no válido y bug adicional (12-09-2026):** al preparar `14.58 mm` con foto, `settings put global airplane_mode_on 1` devolvió `settings=1`, pero el dispositivo siguió con conectividad y el flujo intentó subir la foto en caliente. Supabase registró una sola lectura `14.588 mm` con `client_request_id=40e4f1fb-e361-44df-a3d0-7e73efc7c671` y `attachment_count=0`. Render respondió literalmente `403 PROJECT_REQUIRED` al firmado de la foto. La causa local era que `/uploads/photos/sign` obtenía la lectura con `getInstrumentReadingById`, cuyo resultado no incluía `projectId`; el controlador pasaba `null` a `assertProjectWriteAccess`.
@@ -509,6 +522,16 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Reconciliación no destructiva de la purga histórica (Codex):**
+  la rama de trabajo mantiene el runtime neutralizado, pero su historia
+  alcanzable conserva coincidencias de tres cadenas de la lista confirmada;
+  `main` y `origin/main` tampoco apuntan a la misma historia. Las ocho ramas
+  locales antiguas ya no existen y `git fsck --full` terminó con código `0`,
+  aunque enumeró tres objetos `dangling`. `docs:check` revisó `40 documentos`
+  sin errores ni avisos; la evidencia está en
+  `docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md`. No se ejecutaron
+  reescrituras, borrado de refs, poda de objetos, `fetch`, `pull` ni `push`.
 
 - **2026-09-13 — Auditoría completa de dependencias (Codex):** `npm audit --omit=dev --json` devuelve `23` avisos en el árbol del monorepo (`7 high`, `16 moderate`, `0 critical`), principalmente por Expo/Metro/Xcode y dependencias de build móvil; el workspace backend aislado devuelve `2 moderate`, `0 high`, `0 critical` por `exceljs -> uuid@8.3.2`. No se aplicó un downgrade rompiente ni `--force`: no hay una corrección segura para F5 y se dejó planificado un upgrade mayor de Expo/Metro como tarea separada, con su propia build y auditoría. `npm run docs:check` y `git diff --check` pasan; no se tocó ningún servicio remoto.
 

@@ -11,6 +11,20 @@ rol: handoff
 Lee primero `ROADMAP.md`, después `MEMORIA.md` y `AGENTS.md`. Este archivo es
 solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 
+## Compuerta de procedencia del repositorio
+
+La auditoria local del 13-09-2026 encontro una discrepancia que no debe
+mezclarse con la prueba del Galaxy: el runtime actual de la rama de trabajo
+esta neutralizado, pero la historia alcanzable conserva commits antiguos de la
+etapa de purga. Ademas, `main` y `refs/remotes/origin/main` apuntan a historias
+distintas. La evidencia y los identificadores de objetos estan en
+`docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md`.
+
+No ejecutar `filter-repo`, borrar refs, podar objetos, hacer fetch ni publicar
+un `push --force` como parte del cierre autonomo local. Si se retoma esta
+deuda, debe partirse del mirror original intacto y verificarse primero el
+repositorio bare.
+
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.

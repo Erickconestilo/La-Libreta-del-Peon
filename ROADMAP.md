@@ -68,6 +68,14 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=5` se recompiló; el manifiesto, `jarsigner -verify` y `apksigner verify` del APK son correctos. La v4 sí fue instalada y validada históricamente en el Galaxy para la consulta supervisora; la v5 ya tiene APK arm64 release generada, pero aún no se instaló porque ADB no está disponible. El intento universal fallo en `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100 tries`; no es requisito para el Galaxy arm64. Eso no sustituye el E2E físico.
 
+La comprobacion de procedencia del repositorio se mantiene separada del estado
+funcional de F5. El contenido actual del runtime de la rama de trabajo esta
+neutralizado, pero la historia alcanzable todavia conserva objetos de la etapa
+anterior de purga y `main`/`origin/main` no son referencias equivalentes. La
+reconciliacion no destructiva esta documentada en
+`docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md`; no se borraran refs ni
+se reescribira historial dentro de la validacion autonoma local.
+
 La auditoría local vigente de 13-09-2026 está en
 `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
