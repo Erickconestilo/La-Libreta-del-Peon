@@ -195,15 +195,14 @@ export const getStationById = async (
     ORDER BY created_at ASC
   `;
 
-  const [stationResult, readingsResult] = await Promise.all([
-    pool.query(stationQuery, [stationId, ...scope.params]),
-    pool.query(readingQuery, [stationId])
-  ]);
+  const stationResult = await pool.query(stationQuery, [stationId, ...scope.params]);
 
   if (stationResult.rowCount === 0) {
     return null;
   }
 
+  // Do not read associated data until the station itself passed the tenant scope.
+  const readingsResult = await pool.query(readingQuery, [stationId]);
   const station = stationResult.rows[0];
 
   return {

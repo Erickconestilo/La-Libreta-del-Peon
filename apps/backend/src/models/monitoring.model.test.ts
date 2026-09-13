@@ -123,3 +123,15 @@ test('reading attachment idempotency remains compatible before migration 028', (
   assert.match(modelSource, /ON CONFLICT DO NOTHING\s+RETURNING \*/);
   assert.match(modelSource, /READING_ATTACHMENT_INSERT_INCONSISTENT/);
 });
+
+test('station details validate tenant scope before loading associated readings', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/stations.model.ts'),
+    'utf8'
+  );
+
+  assert.match(modelSource, /const stationResult = await pool\.query\(stationQuery/);
+  assert.match(modelSource, /if \(stationResult\.rowCount === 0\) \{\s+return null;\s+\}/);
+  assert.match(modelSource, /const readingsResult = await pool\.query\(readingQuery/);
+  assert.doesNotMatch(modelSource, /Promise\.all\(\[\s+pool\.query\(stationQuery[\s\S]*pool\.query\(readingQuery/);
+});
