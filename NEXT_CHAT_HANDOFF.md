@@ -68,6 +68,12 @@ y `GET /api/v1/round-points/<uuid>/execution-events` respondió `404 Route not
 found`. Ese `404` es evidencia del backend remoto anterior, no un fallo de la
 UI local; la tabla y la ruta nuevas deben publicarse juntas.
 
+La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
+`topofield` tiene aplicadas migraciones hasta `026_supervisor_role`; `027`,
+`028` y `029` siguen pendientes. El advisor de seguridad mantiene únicamente
+`auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
+claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
+
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
 confunde una acción pendiente del outbox con recepción del servidor.

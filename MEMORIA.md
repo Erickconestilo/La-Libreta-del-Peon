@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconfirmar migraciones y advisors de Supabase en solo lectura antes del cierre operativo | cerrado (`supabase_list_migrations` devolvió aplicadas hasta `026_supervisor_role`, sin `027`, `028` ni `029`; advisor de seguridad: solo `auth_leaked_password_protection` en `WARN`; advisor de rendimiento: `13` claves foráneas sin índice y `40` índices sin uso; no se aplicó SQL ni se modificaron datos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador autenticado al contrato de estados de trabajo sin imprimir secretos | cerrado (`node --check scripts/verify-authenticated-contract.mjs` terminó con código `0`; `node --test scripts/verify-authenticated-contract.test.mjs` devolvió `ℹ tests 3`, `ℹ pass 3`, `ℹ fail 0`; `npm run test:tooling` devolvió `ℹ tests 12`, `ℹ pass 12`, `℩ fail 0`; `adb start-server; adb devices -l` devolvió solo `List of devices attached`, sin Galaxy detectable; no se instaló ni modificó la app.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android local con el flujo de estados del operario | cerrado (`npm run verify:pre-apk:local` terminó literalmente con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se instaló la build ni se tocó Supabase, Render o el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Endurecer integridad tenant de la migración 029 con claves compuestas | cerrado (`npm run build --workspace apps/backend` terminó con código `0`; `npm test --workspace apps/backend -- --test-name-pattern "work execution migration"` devolvió `ℹ tests 113`, `ℹ pass 113`, `ℹ fail 0`; `npm run verify:local` terminó con `verify local completed successfully`, backend `113/113`, móvil `23` suites y `114/114`, tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. La migración 029 incorpora índices únicos y claves foráneas compuestas para mantener ronda-punto-obra; sigue sin aplicarse en Supabase.)` |
@@ -751,6 +752,16 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Reconfirmación remota de Supabase en solo lectura (Codex):**
+  `supabase_list_migrations` en `topofield` (`tmlexrsnxpmykbpeebri`) devuelve
+  migraciones hasta `026_supervisor_role`; `027_station_mounting_visits`,
+  `028_reading_attachment_idempotency` y
+  `029_monitoring_work_execution_events` no están aplicadas. El advisor de
+  seguridad devuelve únicamente `auth_leaked_password_protection` en nivel
+  `WARN`. El advisor de rendimiento devuelve `13` claves foráneas sin índice
+  y `40` índices sin uso, avisos informativos; no se aplicó SQL ni se cambió
+  ningún dato remoto.
 
 - **2026-09-13 — Verificador autenticado ampliado al resultado declarado del
   operario (Codex):** `scripts/verify-authenticated-contract.mjs` acepta ahora

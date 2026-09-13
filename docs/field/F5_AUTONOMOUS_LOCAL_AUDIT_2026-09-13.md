@@ -469,3 +469,19 @@ El bloque local y la publicación de exportación están endurecidos y
 verificados. F5 sigue abierta: no se afirma estabilidad completa hasta
 comparar los dos archivos, cerrar el recorrido con umbral autorizado y
 disponer de evidencia de una jornada observada y de entrevistas profesionales.
+
+## Addendum de estado remoto de Supabase
+
+La consulta de solo lectura realizada el 13-09-2026 contra el proyecto
+`topofield` (`tmlexrsnxpmykbpeebri`) devuelve migraciones aplicadas hasta
+`026_supervisor_role`. Las migraciones locales `027_station_mounting_visits`,
+`028_reading_attachment_idempotency` y
+`029_monitoring_work_execution_events` no aparecen aplicadas, por lo que sus
+rutas y tablas no se consideran desplegadas.
+
+El advisor de seguridad devuelve únicamente
+`auth_leaked_password_protection` en nivel `WARN`. El advisor de rendimiento
+devuelve `13` claves foráneas sin índice y `40` índices sin uso, ambos avisos
+informativos. Esta comprobación no aplicó SQL, no modificó datos y no cambia
+la conclusión de que el endpoint de estados de trabajo sigue respondiendo
+`404` en el Render anterior.
