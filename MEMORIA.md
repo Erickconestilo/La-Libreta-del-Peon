@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador público al endpoint de estados de trabajo sin credenciales | cerrado (`node --check scripts/verify-public-contract.mjs` terminó con código `0`; `node --test scripts/verify-public-contract.test.mjs` devolvió `ℹ tests 4`, `ℹ pass 4`, `ℹ fail 0`; `npm run verify:remote:public` mantuvo `PUBLIC_HEALTH_STATUS=200`, `PUBLIC_ROUNDS_STATUS=401` y `PUBLIC_JOURNEY_STATUS=401`; `git diff --check` sin salida. El chequeo nuevo es opcional mediante `TOPOFIELD_ROUND_POINT_ID`; no se modificó Render ni Supabase.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconfirmar migraciones y advisors de Supabase en solo lectura antes del cierre operativo | cerrado (`supabase_list_migrations` devolvió aplicadas hasta `026_supervisor_role`, sin `027`, `028` ni `029`; advisor de seguridad: solo `auth_leaked_password_protection` en `WARN`; advisor de rendimiento: `13` claves foráneas sin índice y `40` índices sin uso; no se aplicó SQL ni se modificaron datos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador autenticado al contrato de estados de trabajo sin imprimir secretos | cerrado (`node --check scripts/verify-authenticated-contract.mjs` terminó con código `0`; `node --test scripts/verify-authenticated-contract.test.mjs` devolvió `ℹ tests 3`, `ℹ pass 3`, `ℹ fail 0`; `npm run test:tooling` devolvió `ℹ tests 12`, `ℹ pass 12`, `℩ fail 0`; `adb start-server; adb devices -l` devolvió solo `List of devices attached`, sin Galaxy detectable; no se instaló ni modificó la app.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar bundle Android local con el flujo de estados del operario | cerrado (`npm run verify:pre-apk:local` terminó literalmente con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se instaló la build ni se tocó Supabase, Render o el Galaxy.)` |
@@ -752,6 +753,14 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Verificador público ampliado al endpoint de estados de trabajo
+  (Codex):** `scripts/verify-public-contract.mjs` acepta opcionalmente
+  `TOPOFIELD_ROUND_POINT_ID` y exige `401 UNAUTHORIZED` para
+  `GET /round-points/:roundPointId/execution-events` sin bearer; sin esa
+  variable conserva la comprobación remota actual. La regresión dirigida pasó
+  `4/4`; Render público mantuvo `health=200`, rondas `401` y jornada `401`.
+  No se modificaron Supabase, Render ni el Galaxy.
 
 - **2026-09-13 — Reconfirmación remota de Supabase en solo lectura (Codex):**
   `supabase_list_migrations` en `topofield` (`tmlexrsnxpmykbpeebri`) devuelve

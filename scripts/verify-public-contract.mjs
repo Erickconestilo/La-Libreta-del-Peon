@@ -35,6 +35,7 @@ const assertResponse = (name, result, expectedStatus, predicate) => {
 
 export const verifyPublicContract = async ({
   baseUrl = DEFAULT_BASE_URL,
+  roundPointId,
   fetchImpl = globalThis.fetch,
 } = {}) => {
   if (typeof fetchImpl !== "function") {
@@ -64,7 +65,23 @@ export const verifyPublicContract = async ({
     (body) => body?.error?.code === "UNAUTHORIZED",
   );
 
-  return { health, journey, rounds };
+  const result = { health, journey, rounds };
+
+  if (roundPointId) {
+    const executionEvents = await requestJson(
+      fetchImpl,
+      `${root}/round-points/${encodeURIComponent(roundPointId)}/execution-events`,
+    );
+    assertResponse(
+      "work execution events without bearer",
+      executionEvents,
+      401,
+      (body) => body?.error?.code === "UNAUTHORIZED",
+    );
+    result.executionEvents = executionEvents;
+  }
+
+  return result;
 };
 
 const isMainModule = process.argv[1]
@@ -74,7 +91,10 @@ const isMainModule = process.argv[1]
 if (isMainModule) {
   try {
     const baseUrl = process.env.TOPOFIELD_PUBLIC_API_BASE_URL || DEFAULT_BASE_URL;
-    const result = await verifyPublicContract({ baseUrl });
+    const result = await verifyPublicContract({
+      baseUrl,
+      roundPointId: process.env.TOPOFIELD_ROUND_POINT_ID,
+    });
 
     console.log(`PUBLIC_CONTRACT_BASE=${normalizeBaseUrl(baseUrl)}`);
     console.log(`PUBLIC_HEALTH_STATUS=${result.health.status}`);
@@ -83,6 +103,10 @@ if (isMainModule) {
     console.log(`PUBLIC_ROUNDS_BODY=${JSON.stringify(result.rounds.body)}`);
     console.log(`PUBLIC_JOURNEY_STATUS=${result.journey.status}`);
     console.log(`PUBLIC_JOURNEY_BODY=${JSON.stringify(result.journey.body)}`);
+    if (result.executionEvents) {
+      console.log(`PUBLIC_EXECUTION_EVENTS_STATUS=${result.executionEvents.status}`);
+      console.log(`PUBLIC_EXECUTION_EVENTS_BODY=${JSON.stringify(result.executionEvents.body)}`);
+    }
     console.log("Public contract verification completed successfully.");
   } catch (error) {
     console.error(`Public contract verification failed: ${error?.message ?? error}`);

@@ -30,6 +30,23 @@ test("accepts the expected public health and protected responses", async () => {
   assert.ok(requests.every(({ init }) => !("Authorization" in init.headers)));
 });
 
+test("checks the work execution route when a round point is supplied", async () => {
+  const requests = [];
+  const result = await verifyPublicContract({
+    baseUrl: "https://example.test/api/v1",
+    roundPointId: "round-point-a",
+    fetchImpl: async (url, init) => {
+      requests.push({ init, url });
+      if (url.endsWith("/health")) return response(200, { status: "ok" });
+      return response(401, { error: { code: "UNAUTHORIZED" } });
+    },
+  });
+
+  assert.equal(result.executionEvents.status, 401);
+  assert.ok(requests.some(({ url }) => url.endsWith("/round-points/round-point-a/execution-events")));
+  assert.ok(requests.every(({ init }) => !("Authorization" in init.headers)));
+});
+
 test("fails closed if a protected endpoint regresses to 404", async () => {
   await assert.rejects(
     verifyPublicContract({
