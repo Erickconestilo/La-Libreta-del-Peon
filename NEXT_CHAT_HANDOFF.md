@@ -94,29 +94,31 @@ La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
-## Estado local actual tras instalar v11
+## Estado local actual tras instalar v12
 
-La release local `versionCode=11` se generó con
-`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 8m
-20s` después del reintento incremental del script. La AAB quedó en
+La release local `versionCode=12` se generó con
+`npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 7m
+21s` después del reintento incremental del script. La AAB quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
 la APK arm64 quedó en
 `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`;
 la firma es `CN=TopoField Android Release` con SHA-256
 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
 La APK pasó `apksigner verify --verbose` con `Verifies`, firma V2 válida, y
-`aapt2 dump badging` identifica el mismo paquete y `versionCode=11`,
-`versionName=1.0.0`. Esta v11 incorpora las acciones `Continuar ronda` y
-`Parte de zona` en el resumen de trabajo asignado del parte diario, sin mezclar
-el estado operativo con la lectura metrológica. La AAB mide `40,152,373` bytes
-y la APK `53,446,114` bytes. `adb install -r` devolvió `Success` y
-`dumpsys package` confirmó `versionCode=11`, `firstInstallTime=2026-08-07
-10:49:51` y `lastUpdateTime=2026-09-13 12:12:48`, conservando la instalación
-existente. El smoke test dejó `topResumedActivity` en
+`aapt2 dump badging` identifica el mismo paquete y `versionCode=12`,
+`versionName=1.0.0`. Esta v12 incorpora la vista `Semana operativa` en el
+parte diario: lunes a viernes, rondas reales ordenadas por fecha y
+`executionOrder`, acceso directo a cada ronda y un bloque `Otras fechas` para
+no ocultar asignaciones. La AAB mide `40,154,257` bytes y la APK `53,450,274`
+bytes. `adb install -r` devolvió `Success` y `dumpsys package` confirmó
+`versionCode=12`, `firstInstallTime=2026-08-07 10:49:51` y
+`lastUpdateTime=2026-09-13 12:32:01`, conservando la instalación existente. El
+smoke test dejó `topResumedActivity` en
 `com.ciudadanoinusual.topofield/.MainActivity`; `uiautomator dump` mostró
-`LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...`, `Reintentar` y
-las pestañas principales. El logcat filtrado no mostró `FATAL EXCEPTION` ni
-`ReactNativeJS`. El recorrido autenticado de campo sigue pendiente.
+la ronda cacheada `E2E-Galaxy-20260731-Atc`, `Trabajo declarado`,
+`Preparar sin conexión`, `Parte de zona` y el bloqueo de cierre por puntos
+pendientes. El logcat de aplicación no mostró `FATAL EXCEPTION`; el recorrido
+autenticado de campo sigue pendiente.
 
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No

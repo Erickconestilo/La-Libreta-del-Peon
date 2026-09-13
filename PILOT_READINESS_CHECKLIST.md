@@ -31,6 +31,13 @@ validación en campo:
   devolvió `Success` y `dumpsys package` confirmó
   `lastUpdateTime=2026-09-13 12:12:48`. El smoke test abrió `MainActivity` y
   no mostró excepciones fatales; la prueba autenticada de campo sigue pendiente.
+- [x] La release Android v12 quedó preparada e instalada sobre la instalación
+  existente con Gradle, firmada como `CN=TopoField Android Release` y con
+  `versionCode=12`; `apksigner` confirmó el esquema V2, `adb install -r`
+  devolvió `Success` y `dumpsys package` confirmó
+  `lastUpdateTime=2026-09-13 12:32:01`. El smoke test recuperó una ronda
+  cacheada y mostró el progreso operativo y el cierre bloqueado con pendientes;
+  la prueba autenticada de campo sigue pendiente.
 - [x] La APK arm64 v7 está instalada en el Galaxy; `adb install -r` devolvió
   `Success` y `dumpsys package` confirmó `versionCode=7` y
   `lastUpdateTime=2026-09-13 07:39:25`.
