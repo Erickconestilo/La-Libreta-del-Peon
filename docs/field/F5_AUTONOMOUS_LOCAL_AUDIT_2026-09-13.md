@@ -239,7 +239,7 @@ se ha desplegado desde esta sesión.
 Test Suites: 22 passed, 22 total
 Tests:       97 passed, 97 total
 
-check-docs: 39 documentos revisados en raíz y docs/.
+check-docs: 40 documentos revisados en raíz y docs/.
 
 Sin errores ni avisos.
 

@@ -72,6 +72,11 @@ repositorio bare.
 - `12410aa` prepara la release local v5 y normaliza los dos últimos logs de
   error crudo detectados en Perfil y SQLite; no incluye el cambio previo de
   `apps/mobile/package.json`.
+- `aaf1388` corrige la invocación Windows del preflight para que la exportación
+  de Expo finalice y no deje procesos retenidos; `d43d06b` añade tres
+  regresiones para rutas con espacios y metacaracteres. La ejecución actual
+  devuelve `PRE_APK_EXIT=0`, crea `metadata.json` y deja cero procesos
+  Expo/Metro relacionados.
 - `verify:pre-apk:local` permite repetir build backend, TypeScript móvil y
   export Android sin credenciales; `verify:pre-apk` mantiene además la
   comprobación remota autenticada y falla cerrado si no existe la contraseña
@@ -81,8 +86,12 @@ repositorio bare.
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
   saltar el backoff ni dejar inutilizado el botón de reintento tras agotar el
   límite.
-- Commits más recientes de esta continuación: `12410aa` prepara la release
-  local `versionCode=5`; `a345ff8`, `5f44140`, `e52fde6` y `6c1c96b`
+- Commits más recientes de esta continuación: `d43d06b` cubre el preflight
+  Windows; `aaf1388` corrige su ejecución; `600f4cb`, `9ed4805`, `9fa8dd5`,
+  `339d022`, `5181dc4` y `d43d06b` actualizan la trazabilidad local. El
+  historial de commits anteriores se conserva en la bitácora.
+  `12410aa` prepara la release local `versionCode=5`; `a345ff8`, `5f44140`,
+  `e52fde6` y `6c1c96b`
   actualizan handoff, evidencia de APK, documentación de piloto y estado de
   despliegue. El cambio previo de `apps/mobile/package.json` sigue fuera de
   todos esos commits.
@@ -281,7 +290,7 @@ repositorio bare.
 - Verificación local posterior al hardening más reciente: backend compila y
   tiene `103/103` tests; móvil TypeScript sale sin errores y Jest tiene `22`
   suites y `97` tests. La captura de `fissure_witness` marca la foto como
-  obligatoria y no envía una unidad ficticia. `docs:check` revisa 39 documentos
+  obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 
 ## Comandos de verificación
