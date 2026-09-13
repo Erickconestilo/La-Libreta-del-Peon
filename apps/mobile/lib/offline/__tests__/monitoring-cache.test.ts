@@ -5,6 +5,7 @@ import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
   saveMonitoringRoundList,
+  saveMonitoringRoundsByProject,
   saveMonitoringRoundSnapshot
 } from '../monitoring-cache';
 
@@ -26,6 +27,26 @@ describe('monitoring cache', () => {
       cachedAt: expect.any(String),
       projectId: 'project-1',
       rounds
+    });
+    expect(getCachedMonitoringRoundList('session:two', 'project-1')).toBeNull();
+  });
+
+  it('seeds project lists from a cached journey without mixing projects', () => {
+    const rounds = [
+      { id: 'round-1', projectId: 'project-1', name: 'Ronda 1', roundDate: '2026-08-24', status: 'draft' },
+      { id: 'round-2', projectId: 'project-2', name: 'Ronda 2', roundDate: '2026-08-25', status: 'active' },
+      { id: 'round-3', projectId: 'project-1', name: 'Ronda 3', roundDate: '2026-08-26', status: 'active' }
+    ] as never[];
+
+    saveMonitoringRoundsByProject('session:one', rounds as never, '2026-09-13T06:00:00.000Z');
+
+    expect(getCachedMonitoringRoundList('session:one', 'project-1')).toMatchObject({
+      cachedAt: '2026-09-13T06:00:00.000Z',
+      rounds: [rounds[0], rounds[2]]
+    });
+    expect(getCachedMonitoringRoundList('session:one', 'project-2')).toMatchObject({
+      cachedAt: '2026-09-13T06:00:00.000Z',
+      rounds: [rounds[1]]
     });
     expect(getCachedMonitoringRoundList('session:two', 'project-1')).toBeNull();
   });

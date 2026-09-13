@@ -26,6 +26,7 @@ import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
   saveMonitoringRoundList,
+  saveMonitoringRoundsByProject,
   saveMonitoringRoundSnapshot,
   type MonitoringRoundSnapshot
 } from '@/lib/offline/monitoring-cache';
@@ -185,7 +186,9 @@ const fetchMyJourney = async () => {
 const fetchMyJourneyWithCache = async (cacheKey: string) => {
   try {
     const rounds = await fetchMyJourney();
-    saveJourney(cacheKey, rounds);
+    const cachedAt = new Date().toISOString();
+    saveJourney(cacheKey, rounds, cachedAt);
+    saveMonitoringRoundsByProject(cacheKey, rounds, cachedAt);
     return { cachedAt: null, isOfflineCache: false, rounds };
   } catch (error) {
     const cached = getCachedJourney(cacheKey);

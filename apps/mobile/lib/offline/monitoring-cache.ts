@@ -53,6 +53,25 @@ export const saveMonitoringRoundList = (
   );
 };
 
+/** Seed each project's list from a journey response so cold-start offline navigation has context. */
+export const saveMonitoringRoundsByProject = (
+  cacheKey: string,
+  rounds: MonitoringRound[],
+  cachedAt = new Date().toISOString()
+) => {
+  const roundsByProject = new Map<string, MonitoringRound[]>();
+
+  for (const round of rounds) {
+    const projectRounds = roundsByProject.get(round.projectId) ?? [];
+    projectRounds.push(round);
+    roundsByProject.set(round.projectId, projectRounds);
+  }
+
+  for (const [projectId, projectRounds] of roundsByProject) {
+    saveMonitoringRoundList(cacheKey, projectId, projectRounds, cachedAt);
+  }
+};
+
 export const getCachedMonitoringRoundList = (cacheKey: string, projectId: string) => {
   const row = getDatabase().getFirstSync<ListCacheRow>(
     'SELECT cache_key, project_id, rounds_json, cached_at FROM monitoring_round_list_cache WHERE cache_key = ? AND project_id = ?',
