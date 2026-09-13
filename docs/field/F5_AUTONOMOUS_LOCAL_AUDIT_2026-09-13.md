@@ -35,9 +35,12 @@ se ha desplegado desde esta sesión.
    el paquete de TopoField. La AAB esta firmada como `CN=TopoField Android
    Release`; Bundletool no se uso porque no pudo recibir la contraseña del
    keystore de forma autorizada en esta terminal. Gradle genero ademas la APK
-   release `app-release.apk`, y `apksig` confirmo `verified=true`, esquema V3,
-   un firmante y el mismo certificado de release. No se instalo ni se toco el
-   Galaxy.
+   release `app-release.apk`, y `apksigner` confirmo `verified=true`, esquema
+   V2, un firmante y el mismo certificado de release. El ultimo intento de
+   build universal fallo durante `externalNativeBuildCleanRelease` de
+   `react-native-reanimated` con `ninja: error: manifest 'build.ninja' still
+   dirty after 100 tries`; la APK arm64 sigue siendo la variante adecuada para
+   el Galaxy. No se instalo ni se toco el Galaxy.
 6. Los listados de prismas y observaciones por estación descartan una
    referencia cuyo prisma pertenezca a otra obra; se mantiene visible un
    prisma legacy sin `project_id` cuando no contradice la obra de su estación.
@@ -252,16 +255,16 @@ available fix would downgrade exceljs to 3.4.0; no --force fix applied
 adb devices -l:
 List of devices attached
 
-BUILD SUCCESSFUL in 16m 18s
+BUILD SUCCESSFUL in 14m 53s
 bundletool_exit=not-run (terminal policy blocked keystore credential transport)
 gradle_apk_exit=0
-javapksig_verified=true; signers=1; scheme=V3
+apksigner_verified=true; signers=1; scheme=V2
 jarsigner_exit=0
 android:versionCode="5"
 package="com.ciudadanoinusual.topofield"
 Propietario: CN=TopoField Android Release, OU=Mobile, O=TopoField, C=ES
 apk=C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
-apk_bytes=53,403,238
+apk_bytes=53,403,910
 ```
 
 La verificacion `jarsigner -verify -strict` mantiene el aviso de certificado
@@ -271,7 +274,10 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 ## Pendientes que no se pueden cerrar localmente
 
 - E2E en Galaxy: lectura, foto, reinicio, reconexion, outbox y duplicados; la
-  release v5 todavía necesita APK universal e instalación.
+  APK arm64 de la release v5 ya esta preparada y solo necesita instalación.
+  La variante universal queda opcional para ampliar compatibilidad: el intento
+  local fallo en `react-native-reanimated` con `manifest 'build.ninja' still
+  dirty after 100 tries`.
 - Prueba real de parte parcial, cierre y exportacion con datos autorizados.
 - Aplicar la migracion 027 y desplegar las visitas de montaje, si se autoriza.
 - Revisar y aplicar la migracion 028 solo despues de comprobar en Supabase que

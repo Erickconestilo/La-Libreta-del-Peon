@@ -121,10 +121,13 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   transporte de la contraseña quedó bloqueado por la política de terminal.
   Gradle generó también
   `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`,
-  `53,403,238` bytes; `apksig` confirmó `verified=true`, esquema V3 y
+  `53,403,910` bytes; `apksigner` confirmó `verified=true`, esquema V2 y
   `CN=TopoField Android Release`. La variante
   `jarsigner -verify -strict` conserva la advertencia esperable del certificado
-  local autofirmado, no una validación de Play Store. La v4 fue instalada y
+  local autofirmado, no una validación de Play Store. El intento de ampliar el
+  build a todos los ABI falló en `react-native-reanimated` con `ninja: error:
+  manifest 'build.ninja' still dirty after 100 tries`; la APK arm64 es la
+  variante preparada para el Galaxy. La v4 fue instalada y
   validada históricamente en el Galaxy para la consulta supervisora; la v5 no
   se instaló porque ADB no está disponible.
 
