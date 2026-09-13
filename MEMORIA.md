@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Verificación integral del bloque de fluidez y preflight Android | cerrado (`npm run verify:local` terminó literalmente con `verify local completed successfully`: backend `112/112`, móvil `23` suites y `113/113`, tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida; `npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `git status --short --untracked-files=no` muestra solo `MEMORIA.md` y el cambio previo de `apps/mobile/package.json` antes de este cierre. No se tocó Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff con la mejora de fluidez de ronda y la conexión del Galaxy | cerrado (`adb devices -l` devolvió literalmente `R5CY21X6FLE device product:pa3qxee model:SM_S938B device`; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. El handoff refleja `2d182a0`, `2399de6` y `113/113` tests móviles. No se instaló una build nueva, no se tocó Supabase ni Render y `apps/mobile/package.json` sigue fuera del commit.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mejorar la fluidez del registro de trabajo en la ronda | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `113` tests, `113` pasados; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. La cabecera de ronda resume el resultado operativo y permite continuar con el primer punto accionable en el orden recibido. No se tocó Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Invalidar el historial del punto después de sincronizar un resultado online | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `git diff --check` terminó sin salida. Tras una sincronización online se invalida el historial del punto, sin presentar eventos pendientes del outbox como recibidos.)` |
@@ -781,6 +782,16 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   el backend confirma la operación, evitando una vista remota obsoleta después
   de guardar. TypeScript móvil terminó con código `0` y Jest móvil con `23`
   suites/`111` tests, `111` pasados. No se tocó Supabase, Render ni el Galaxy.
+
+- **2026-09-13 — Verificación integral del seguimiento operativo (Codex):**
+  `npm run verify:local` terminó literalmente con `verify local completed
+  successfully`, backend `112/112` tests, móvil `23` suites y `113/113` tests,
+  tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y
+  `git diff --check` sin salida. `npm run verify:pre-apk:local` terminó con
+  `verify pre-apk local-only completed successfully`, `metadata.json=6101`
+  bytes y `files=95`; el bundle incluye el código de la mejora, pero no se
+  instaló en el Galaxy porque la migración 029 no está aplicada en el backend
+  remoto. No se tocó Supabase, Render ni `apps/mobile/package.json`.
 
 - **2026-09-13 — Fluidez de ronda mejorada (Codex):** la cabecera de cada ronda
   resume los resultados declarados por el operario (`hechos`, `en curso`,
