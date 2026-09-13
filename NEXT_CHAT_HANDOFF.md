@@ -60,6 +60,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   actualizan handoff, evidencia de APK, documentación de piloto y estado de
   despliegue. El cambio previo de `apps/mobile/package.json` sigue fuera de
   todos esos commits.
+- `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
+  se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
+  queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
+  móvil actual pasa `22` suites y `97` tests.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
