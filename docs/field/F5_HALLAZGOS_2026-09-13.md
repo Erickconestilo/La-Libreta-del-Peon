@@ -37,6 +37,22 @@ la APK release no depurable para comparar filas estructuradas. La exportación
 está validada a nivel de HTTP, generación y selector, no todavía a nivel de
 paridad de contenido real.
 
+La comprobación directa del selector, realizada sin enviar los archivos a
+ningún destino, mostró estas salidas literales:
+
+```text
+CSV: topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv
+Destinos: WhatsApp, Drive, Outlook, Quick Share, Gemini, Telegram, ChatGPT
+
+XLSX: topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281343797.xlsx
+Destinos: WhatsApp, Mensajes, Drive, Quick Share, Telegram, Gmail, ChatGPT
+```
+
+La APK release no ofrece `run-as` depurable ni un destino de almacenamiento
+extraíble en ese selector. Por ello la comparación estructurada de ambos
+binarios sigue pendiente y se mantiene cubierta localmente por
+`npm run verify:export-artifacts`.
+
 ## Matriz de cierre de F5
 
 | Criterio | Estado actual | Evidencia o compuerta |
@@ -61,7 +77,7 @@ demuestra la paridad de dos archivos que no se han podido leer.
 
 - Dispositivo: Samsung Galaxy `SM-S938B`, serial ADB `R5CY21X6FLE`.
 - Paquete: `com.ciudadanoinusual.topofield`.
-- Release instalada durante el recorrido histórico: `versionCode=6`, `versionName=1.0.0`.
+- Release instalada durante la comprobación actual: `versionCode=7`, `versionName=1.0.0`.
 - Firma: `CN=TopoField Android Release`.
 - Red: LTE restaurada despues de la prueba; Wi-Fi apagado durante el corte.
 - Ronda: `E2E-Galaxy-20260731-Atc`.
@@ -136,19 +152,21 @@ La consulta de solo lectura devolvio una unica fila:
 [{"id":"62135c22-003f-4e62-88a6-7d5a4a02a1db","round_id":"db3a59e3-3756-4d95-9890-f026379f33db","zone_label":"Zona-piloto-E2E","status":"partial","completed_point_count":0,"pending_point_count":1,"client_request_id":"b13aacdb-fd6b-4c67-b72d-e8e29cbc8a84"}]
 ```
 
-Al probar `Compartir CSV` y `Compartir Excel` en el resumen de la ronda, la
-app no abrio la hoja de compartir y mostro en ambos casos:
+El intento histórico de `Compartir CSV` y `Compartir Excel` se ejecutó contra
+un despliegue anterior y la app no abrió la hoja de compartir; mostró en ambos
+casos:
 
 ```text
 No se pudo completar la operación. Reintenta en unos segundos.
 ```
 
 No se obtuvo un codigo HTTP visible en la UI ni en el logcat filtrado. Por eso
-el resultado se clasifica como exportacion no validada, no como un bug de
-formato demostrado. La observacion publica de Render de este recorrido era
-`eb88db9`, anterior a los cambios locales de exportacion. Queda sustituida por
-la actualización v7 de esta misma nota, con Render `df224f9` y respuestas
-autenticadas `200`; sigue pendiente comparar CSV/XLSX estructuralmente.
+el resultado histórico se clasifica como exportación no validada, no como un
+bug de formato demostrado. La observación pública de Render de ese recorrido
+era `eb88db9`, anterior a los cambios locales de exportación. Queda sustituida
+por la actualización v7 de esta misma nota, con Render `df224f9`, respuestas
+autenticadas `200` y apertura del selector nativo; sigue pendiente comparar
+CSV/XLSX estructuralmente.
 
 ## Arranque en frio sin red
 

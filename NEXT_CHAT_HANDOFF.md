@@ -75,6 +75,12 @@ repositorio bare.
   fila congelada y filas normalizadas idénticas. Falta ejecutarla con los dos
   binarios de una misma descarga real, porque el selector nativo del Galaxy no
   los dejó accesibles en almacenamiento público.
+- La comprobación adicional en el Galaxy v7 generó literalmente los archivos
+  `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y
+  `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281343797.xlsx`.
+  El selector nativo ofreció destinos de compartir para ambos y no se envió
+  ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
+  APK release no deja esos temporales accesibles para lectura local.
 - Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado en ese commit con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. La batería actual, tras añadir el verificador, queda en `106/106` backend y `104/104` móvil. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
