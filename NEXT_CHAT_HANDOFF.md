@@ -28,7 +28,7 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit funcional local: `530a041` (`feat(mobile): filter mounting visits by status`). Los commits posteriores son exclusivamente documentales. La
+- Último commit funcional local: `5c55a9c` (`fix(mobile): distinguish mounting visit states`). Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
@@ -53,7 +53,7 @@ repositorio bare.
 - La memoria visual también permite filtrar por estado (`En curso`, `Realizadas`
   y `No realizables`) sin mutar ni reordenar las visitas. La regresión cubre la
   combinación con el filtro de evidencia; la suite móvil queda en `22` suites
-  y `100` tests.
+  y `101` tests.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
