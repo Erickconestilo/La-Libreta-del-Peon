@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Añadir verificador autenticado de Render sin imprimir tokens ni cuerpos y reconciliar el hardening local no desplegado | cerrado (`node --test scripts/verify-authenticated-contract.test.mjs` pasó `3/3`; `npm run test:tooling` pasó `12/12`; `npm run docs:check` devolvió `check-docs: 42 documentos revisados en raíz y docs/.` y `Sin errores ni avisos`; `node --check scripts/verify-authenticated-contract.mjs` y `git diff --check` terminaron con código `0`. El comando real sin `TOPOFIELD_AUTH_TOKEN` falló cerrado con `TOPOFIELD_AUTH_TOKEN is required and is never printed`. GitHub confirmó que el hardening local `f90c995` no es antecesor de Render `df224f9`; no se publicó ni modificó ningún servicio remoto.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar referencias históricas de v6/Render y la cifra activa de documentación tras la comprobación de exportación en Galaxy | cerrado (`MEMORIA.md` ahora refleja `docs:check` con `42` documentos y marca la prueba CSV/XLSX anterior contra `eb88db9` como histórica; la evidencia vigente es Galaxy v7 + Render `df224f9`. `npm run docs:check` devolvió `check-docs: 42 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`; `git diff --check` terminó con código `0`. No se modificaron código, Supabase, Render, EAS, Play Store ni datos remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Completar validación autónoma de entrega CSV/XLSX en Galaxy conectado y cerrar batería local/documental sin tocar servicios remotos | cerrado (`adb devices -l` devolvió `R5CY21X6FLE device`; la UI generó `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y abrió el selector nativo con WhatsApp, Drive, Outlook, Quick Share, Gemini, Telegram y ChatGPT; al volver generó `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281343797.xlsx` y abrió el selector con WhatsApp, Mensajes, Drive, Quick Share, Telegram, Gmail y ChatGPT. No se envió ningún archivo. `npm run verify:local` terminó con backend `106/106`, móvil `22` suites/`104` tests, tooling `9/9` y `docs:check` con `42` documentos sin errores ni avisos. Render público: health `200` en `df224f9`, rondas y jornada sin token `401`. `npm audit --workspace apps/backend --omit=dev` mantiene `2 moderate`, `0 high`, `0 critical`, transitivas de `uuid`; no se usó `--force`. `git diff --check` código `0`. Se conserva fuera del commit `apps/mobile/package.json` y la evidencia PNG/XML.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Continuar cierre autónomo F5 con Galaxy conectado: validar v7, auditar pendientes locales y consolidar evidencia sin tocar Supabase ni Render | cerrado (ADB devolvió `R5CY21X6FLE device`; `dumpsys package` confirmó `versionCode=7`, `versionName=1.0.0`, `lastUpdateTime=2026-09-13 07:39:25`; la jornada preparada y el modo avión real se observaron en el Galaxy. La exportación CSV/XLSX autenticada ya había quedado en `200` tras el despliegue `df224f9`; no se añadieron datos remotos nuevos.) |
@@ -471,6 +472,14 @@ etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
 distintos; el runtime actual está neutralizado y la purga completa sigue sin
 presentarse como cerrada.
 
+El hardening local `f90c995` añade fallo cerrado cuando una sesión de topógrafo
+carece del mapa de membresías, pero la comparación remota verificó que no es
+antecesor de `df224f9`; por tanto esa defensa sigue pendiente de publicación y
+verificación en Render. Se añadió `npm run verify:remote:auth`, que lee el token
+solo desde `TOPOFIELD_AUTH_TOKEN`, comprueba `/auth/me`, `GET /me/journey` y
+UUIDs opcionales de obra/ronda, y solo imprime estados/códigos sin cuerpos ni
+credenciales.
+
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
 falla. Esto permite producir la AAB v5 sin borrar manualmente artefactos
@@ -710,7 +719,18 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
 
+- **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
+  añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin
+  imprimirlo, comprueba `/auth/me`, `GET /me/journey` y UUIDs opcionales de
+  obra/ronda, y falla ante rutas ausentes `404`. La prueba aislada pasó `3/3`;
+  el comando ejecutado sin token terminó literalmente con
+  `TOPOFIELD_AUTH_TOKEN is required and is never printed`. `npm run
+  test:tooling` pasó `12/12`. La comparación de GitHub confirmó que el
+  hardening local `f90c995` no es antecesor de Render `df224f9`; no se publicó
+  ni modificó ningún servicio remoto.
+
 - **2026-09-13 — Entrega CSV/XLSX comprobada de extremo a extremo en la UI del Galaxy (Codex):** con `adb devices -l` devolviendo literalmente `R5CY21X6FLE device`, el resumen de ronda generó `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y el selector nativo mostró `WhatsApp`, `Drive`, `Outlook`, `Quick Share`, `Gemini`, `Telegram` y `ChatGPT`. Tras volver a la app, generó `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281343797.xlsx` y el selector mostró `WhatsApp`, `Mensajes`, `Drive`, `Quick Share`, `Telegram`, `Gmail` y `ChatGPT`. No se envió ningún archivo. La paridad estructurada sigue pendiente porque la APK release no es depurable y el selector no ofreció una ruta local extraíble. La batería `npm run verify:local` terminó con backend `106/106`, móvil `22` suites/`104` tests, tooling `9/9` y `docs:check` con `42 documentos` sin errores ni avisos. `npm audit --workspace apps/backend --omit=dev` mantiene `2 moderate`, `0 high`, `0 critical`, transitivas de `uuid`; no se usó `--force`.
+
 
 - **2026-09-13 — Verificación pública de exportación tras reconexión (Codex):**
   `GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv`

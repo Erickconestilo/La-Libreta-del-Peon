@@ -260,14 +260,34 @@ repositorio bare.
 
 - Render: `https://la-libreta-del-peon-1.onrender.com`.
 - Último despliegue observado: `/api/v1/health` devolvió `200` y estado `ok`
-  con commit `eb88db922a03b1e01a47f90dba8346542df3f212` el 13-09-2026.
+  con commit `df224f9b7226c8aa5899a5e889898663b4642016` el 13-09-2026.
   Las rutas de rondas y `GET /api/v1/me/journey` sin bearer devolvieron
   `401 UNAUTHORIZED`, nunca `404`.
-- El commit remoto observado (`eb88db9`) es anterior a los hardenings locales
-  posteriores de esta rama; no contiene automáticamente los commits locales
-  más recientes hasta una publicación mediante PR y despliegue.
+- El commit remoto observado (`df224f9`) contiene la corrección de exportación,
+  pero el hardening local `f90c995` (`PROJECT_ACCESS_REQUIRED` cuando falta el
+  mapa de membresías) no es antecesor de ese despliegue. No se debe presentar
+  esa defensa como activa en Render hasta publicar y verificar el commit que la
+  contenga.
 - No aplicar migraciones ni cambiar Supabase Auth/RLS sin autorización explícita
   en el momento.
+
+Para verificar el contrato autenticado sin exponer el token, usar una variable
+de entorno temporal en PowerShell, nunca un argumento ni un archivo versionado:
+
+```powershell
+$env:TOPOFIELD_AUTH_TOKEN = '<token QA temporal>'
+$env:TOPOFIELD_PROJECT_ID = '<uuid de obra autorizada>'
+$env:TOPOFIELD_ROUND_ID = '<uuid de ronda autorizada>'
+npm run verify:remote:auth
+Remove-Item Env:TOPOFIELD_AUTH_TOKEN
+Remove-Item Env:TOPOFIELD_PROJECT_ID
+Remove-Item Env:TOPOFIELD_ROUND_ID
+```
+
+El verificador solo imprime estados HTTP y códigos de error; exige `200` en
+`/auth/me`, acepta `200` o `403` en `Mi jornada` según el rol, y falla ante
+`404` en rutas que deben existir. La suite de tooling cubre que no imprime
+cuerpos ni credenciales.
 
 ## Estado móvil y Galaxy
 
@@ -291,22 +311,25 @@ repositorio bare.
 
 ## Trabajo pendiente prioritario
 
-1. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
+1. Ejecutar `npm run verify:remote:auth` con un token QA temporal y los UUID
+   autorizados, para comprobar `/auth/me`, `Mi jornada` y, si se proporcionan,
+   la obra y ronda sin aceptar un `404`.
+2. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
    los dos archivos de una misma ronda real; la generación autenticada ya
    responde `200` y la prueba local cubre la paridad del contrato.
-2. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
+3. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
    exportación para una membresía `read`.
-3. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos
+4. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos
    como evidencia del recorrido repetido.
-4. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
-5. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
+5. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
+6. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-6. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
+7. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
    validar en campo la pantalla local de visitas de montaje, incluida cámara,
    Storage, reinicio y reconexión. La captura offline local ya usa caché
    SQLite por sesión y estación más el outbox (migración local 007). Después
    decidir el croquis fotográfico según evidencia y no según una demo.
-7. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
+8. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
 
 ## Cambios locales que no se deben mezclar
 
