@@ -87,6 +87,9 @@ repositorio bare.
   Expo: `metadata.json` debe existir, ser no vacío y acompañarse de archivos
   de assets. La última ejecución real devolvió `metadata.json=6101 bytes`,
   `files=95`, `PRE_APK_COMMAND_EXIT=0` y `PRE_APK_RELATED_PROCESSES=0`.
+- `673fc15` versiona el validador de salida Expo y sus seis pruebas de tooling;
+  el commit no incluye `apps/mobile/package.json` ni las capturas locales del
+  Galaxy.
 - El reintento manual del outbox reinicia el ciclo completo, incluido el límite
   de intentos y el backoff. Los fallos automáticos usan una operación separada
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
