@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Verificar contrato remoto del registro operativo sin modificar servicios | cerrado (`curl.exe --max-time 30 -i https://la-libreta-del-peon-1.onrender.com/api/v1/health` devolvió `HTTP/1.1 200 OK` con commit `df224f9b7226c8aa5899a5e889898663b4642016`; rondas y `GET /me/journey` sin bearer devolvieron `HTTP/1.1 401 Unauthorized`; `GET /round-points/<uuid>/execution-events` devolvió `HTTP/1.1 404 Not Found`. Se actualizó `NEXT_CHAT_HANDOFF.md`; `npm run docs:check` revisó `44` documentos sin avisos y `git diff --check` terminó sin salida. No se tocaron Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar cifras activas y auditoría con la mejora de fluidez de ronda | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida; la búsqueda de cifras activas confirma `113/113` en checklist, handoff y auditoría, manteniendo `111/111` solo en entradas históricas; no se tocó código ni servicios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificación integral del bloque de fluidez y preflight Android | cerrado (`npm run verify:local` terminó literalmente con `verify local completed successfully`: backend `112/112`, móvil `23` suites y `113/113`, tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida; `npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `git status --short --untracked-files=no` muestra solo `MEMORIA.md` y el cambio previo de `apps/mobile/package.json` antes de este cierre. No se tocó Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff con la mejora de fluidez de ronda y la conexión del Galaxy | cerrado (`adb devices -l` devolvió literalmente `R5CY21X6FLE device product:pa3qxee model:SM_S938B device`; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. El handoff refleja `2d182a0`, `2399de6` y `113/113` tests móviles. No se instaló una build nueva, no se tocó Supabase ni Render y `apps/mobile/package.json` sigue fuera del commit.)` |
@@ -803,6 +804,18 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   móvil terminó con código `0`, Jest móvil con `23` suites/`113` tests,
   `113` pasados, y `docs:check` revisó `44` documentos sin avisos. No se tocó
   Supabase, Render ni el Galaxy.
+
+- **2026-09-13 — Contrato remoto del registro operativo comprobado (Codex):**
+  Render respondió `HTTP/1.1 200 OK` en `/api/v1/health` con commit
+  `df224f9b7226c8aa5899a5e889898663b4642016`; las rutas protegidas de rondas
+  y `GET /api/v1/me/journey` devolvieron `HTTP/1.1 401 Unauthorized` sin
+  bearer. La ruta nueva `GET
+  /api/v1/round-points/00000000-0000-0000-0000-000000000000/execution-events`
+  devolvió literalmente `HTTP/1.1 404 Not Found` y
+  `{"data":null,"error":{"code":"NOT_FOUND","message":"Route not found:
+  GET /api/v1/round-points/00000000-0000-0000-0000-000000000000/execution-events"}}`.
+  Esto confirma que la migración 029 y el endpoint de resultados siguen solo
+  locales; no se aplicó SQL, no se desplegó Render y no se tocó el Galaxy.
 
 - **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
   añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin

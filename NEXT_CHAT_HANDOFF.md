@@ -52,6 +52,12 @@ Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
 probarlo contra el backend remoto hasta que la migración y el despliegue estén
 autorizados.
 
+Comprobación remota más reciente: Render sigue en `df224f9`; `/health`
+respondió `200`, las rutas protegidas existentes sin bearer respondieron `401`
+y `GET /api/v1/round-points/<uuid>/execution-events` respondió `404 Route not
+found`. Ese `404` es evidencia del backend remoto anterior, no un fallo de la
+UI local; la tabla y la ruta nuevas deben publicarse juntas.
+
 La pantalla de resultado también consulta el historial append-only protegido
 del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
 confunde una acción pendiente del outbox con recepción del servidor.
