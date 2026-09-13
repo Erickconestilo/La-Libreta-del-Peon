@@ -15,6 +15,12 @@ test("accepts the expected public health and protected responses", async () => {
     fetchImpl: async (url, init) => {
       requests.push({ init, url });
       if (url.endsWith("/health")) return response(200, { commit: "test", status: "ok" });
+      if (url.endsWith("/readiness")) {
+        return response(200, {
+          status: "ready",
+          workExecution: { available: true },
+        });
+      }
       return response(401, {
         data: null,
         error: { code: "UNAUTHORIZED", message: "Authentication required" },
@@ -23,9 +29,10 @@ test("accepts the expected public health and protected responses", async () => {
   });
 
   assert.equal(result.health.status, 200);
+  assert.equal(result.readiness.status, 200);
   assert.equal(result.rounds.status, 401);
   assert.equal(result.journey.status, 401);
-  assert.equal(requests.length, 3);
+  assert.equal(requests.length, 4);
   assert.ok(requests.every(({ init }) => init.headers.Accept === "application/json"));
   assert.ok(requests.every(({ init }) => !("Authorization" in init.headers)));
 });
@@ -38,6 +45,9 @@ test("checks the work execution route when a round point is supplied", async () 
     fetchImpl: async (url, init) => {
       requests.push({ init, url });
       if (url.endsWith("/health")) return response(200, { status: "ok" });
+      if (url.endsWith("/readiness")) {
+        return response(200, { status: "ready", workExecution: { available: true } });
+      }
       return response(401, { error: { code: "UNAUTHORIZED" } });
     },
   });
@@ -52,6 +62,9 @@ test("fails closed if a protected endpoint regresses to 404", async () => {
     verifyPublicContract({
       fetchImpl: async (url) => {
         if (url.endsWith("/health")) return response(200, { status: "ok" });
+        if (url.endsWith("/readiness")) {
+          return response(200, { status: "ready", workExecution: { available: true } });
+        }
         return response(404, { error: { code: "NOT_FOUND" } });
       },
     }),
@@ -64,11 +77,31 @@ test("never sends credentials to the public contract verifier", async () => {
   await verifyPublicContract({
     fetchImpl: async (url, init) => {
       requests.push({ init, url });
-      return url.endsWith("/health")
-        ? response(200, { status: "ok" })
-        : response(401, { error: { code: "UNAUTHORIZED" } });
+      if (url.endsWith("/health")) return response(200, { status: "ok" });
+      if (url.endsWith("/readiness")) {
+        return response(200, { status: "ready", workExecution: { available: true } });
+      }
+      return response(401, { error: { code: "UNAUTHORIZED" } });
     },
   });
 
   assert.ok(requests.every(({ init }) => Object.keys(init.headers).every((key) => key !== "Authorization")));
+});
+
+test("fails closed when work execution readiness is unavailable", async () => {
+  await assert.rejects(
+    verifyPublicContract({
+      fetchImpl: async (url) => {
+        if (url.endsWith("/health")) return response(200, { status: "ok" });
+        if (url.endsWith("/readiness")) {
+          return response(503, {
+            status: "not_ready",
+            workExecution: { available: false, reason: "migration_missing" },
+          });
+        }
+        return response(401, { error: { code: "UNAUTHORIZED" } });
+      },
+    }),
+    /readiness unexpected response: HTTP 503/,
+  );
 });

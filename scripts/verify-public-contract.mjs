@@ -46,6 +46,14 @@ export const verifyPublicContract = async ({
   const health = await requestJson(fetchImpl, `${root}/health`);
   assertResponse("health", health, 200, (body) => body?.status === "ok");
 
+  const readiness = await requestJson(fetchImpl, `${root}/readiness`);
+  assertResponse(
+    "readiness",
+    readiness,
+    200,
+    (body) => body?.status === "ready" && body?.workExecution?.available === true,
+  );
+
   const rounds = await requestJson(
     fetchImpl,
     `${root}/projects/${PLACEHOLDER_PROJECT_ID}/rounds`,
@@ -65,7 +73,7 @@ export const verifyPublicContract = async ({
     (body) => body?.error?.code === "UNAUTHORIZED",
   );
 
-  const result = { health, journey, rounds };
+  const result = { health, journey, readiness, rounds };
 
   if (roundPointId) {
     const executionEvents = await requestJson(
@@ -99,6 +107,8 @@ if (isMainModule) {
     console.log(`PUBLIC_CONTRACT_BASE=${normalizeBaseUrl(baseUrl)}`);
     console.log(`PUBLIC_HEALTH_STATUS=${result.health.status}`);
     console.log(`PUBLIC_HEALTH_BODY=${JSON.stringify(result.health.body)}`);
+    console.log(`PUBLIC_READINESS_STATUS=${result.readiness.status}`);
+    console.log(`PUBLIC_READINESS_BODY=${JSON.stringify(result.readiness.body)}`);
     console.log(`PUBLIC_ROUNDS_STATUS=${result.rounds.status}`);
     console.log(`PUBLIC_ROUNDS_BODY=${JSON.stringify(result.rounds.body)}`);
     console.log(`PUBLIC_JOURNEY_STATUS=${result.journey.status}`);
