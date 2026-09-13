@@ -306,6 +306,29 @@ export function retryItem(id: string, sessionId?: string): void {
 
   db.runSync(
     `UPDATE outbox
+     SET status = 'pending',
+         retry_count = 0,
+         last_sync_attempt_at = NULL,
+         synced_at = NULL,
+         error_message = NULL,
+         conflict_data = NULL
+     WHERE id = ? AND session_id = ?`,
+    [id, scopedSessionId]
+  );
+}
+
+/**
+ * Return an automatically failed item to pending without resetting retry state.
+ * The next flush must respect the backoff calculated from the last attempt.
+ */
+export function markPendingForRetry(id: string, sessionId?: string): void {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return;
+
+  const db = getDatabase();
+
+  db.runSync(
+    `UPDATE outbox
      SET status = 'pending', error_message = NULL, conflict_data = NULL
      WHERE id = ? AND session_id = ?`,
     [id, scopedSessionId]

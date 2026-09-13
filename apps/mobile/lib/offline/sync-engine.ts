@@ -17,6 +17,7 @@ import {
   markError,
   markConflict,
   recoverInterruptedItems,
+  markPendingForRetry,
   retryItem
 } from './outbox';
 import type { OutboxItem } from './outbox';
@@ -272,7 +273,7 @@ async function syncItem(
       case 'network':
       case 'server':
         // Errores transitorios: volver a pending para retry
-        retryItem(item.id, sessionId);
+        markPendingForRetry(item.id, sessionId);
         console.log(`[SyncEngine] Item ${item.id} will retry (${errorType})`);
         break;
 

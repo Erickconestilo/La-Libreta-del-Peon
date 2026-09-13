@@ -358,6 +358,38 @@ describe('Outbox API', () => {
       expect(pending[0].status).toBe('pending');
       expect(pending[0].errorMessage).toBeNull();
     });
+
+    it('debe reiniciar el backoff y el límite de intentos al reintentar', () => {
+      outbox.enqueue({
+        id: 'test-id',
+        clientRequestId: 'req-1',
+        entityType: 'station_message',
+        operation: 'insert',
+        payload: {},
+      });
+
+      const db = getDatabase();
+      db.runSync(
+        `UPDATE outbox
+         SET status = 'error',
+             retry_count = 6,
+             last_sync_attempt_at = datetime('now', '-1 day'),
+             synced_at = datetime('now', '-1 day'),
+             error_message = 'Attempts exhausted'
+         WHERE id = ?`,
+        ['test-id']
+      );
+
+      outbox.retryItem('test-id');
+
+      const pending = outbox.getPending();
+      expect(pending).toHaveLength(1);
+      expect(pending[0].status).toBe('pending');
+      expect(pending[0].retryCount).toBe(0);
+      expect(pending[0].lastSyncAttemptAt).toBeNull();
+      expect(pending[0].syncedAt).toBeNull();
+      expect(pending[0].errorMessage).toBeNull();
+    });
   });
 
   describe('deleteItem', () => {
