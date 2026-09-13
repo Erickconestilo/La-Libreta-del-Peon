@@ -55,6 +55,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
   saltar el backoff ni dejar inutilizado el botón de reintento tras agotar el
   límite.
+- Commits más recientes de esta continuación: `12410aa` prepara la release
+  local `versionCode=5`; `a345ff8`, `5f44140`, `e52fde6` y `6c1c96b`
+  actualizan handoff, evidencia de APK, documentación de piloto y estado de
+  despliegue. El cambio previo de `apps/mobile/package.json` sigue fuera de
+  todos esos commits.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
