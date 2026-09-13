@@ -33,7 +33,7 @@ repositorio bare.
   cada clave foránea compuesta para tolerar un reintento tras una aplicación
   parcial; su regresión está incluida en la batería backend. La migración
   continúa sin aplicar en Supabase.
-- Hardening local más reciente: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
+- Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
   escritura y exigen en backend el mapa efectivo para cualquier escritura de
@@ -104,7 +104,7 @@ repositorio bare.
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
   saltar el backoff ni dejar inutilizado el botón de reintento tras agotar el
   límite.
-- Commits más recientes de esta continuación: `d43d06b` cubre el preflight
+- Commits anteriores de esta continuación: `d43d06b` cubre el preflight
   Windows; `aaf1388` corrige su ejecución; `600f4cb`, `9ed4805`, `9fa8dd5`,
   `339d022`, `5181dc4` y `d43d06b` actualizan la trazabilidad local. El
   historial de commits anteriores se conserva en la bitácora.
