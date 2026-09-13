@@ -433,7 +433,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `104/104`
-tests; móvil pasa `22` suites y `100/100` tests; `docs:check` revisa `40`
+tests; móvil pasa `22` suites y `101/101` tests; `docs:check` revisa `40`
 documentos sin avisos; la release Android `versionCode=5` está preparada
 localmente como AAB y APK firmadas, pero no está instalada porque ADB no
 detecta el Galaxy. Render sigue vivo, aunque la última observación pública
@@ -524,7 +524,7 @@ debe presentar como cerrada.
   filtrar también por `En curso`, `Realizadas` y `No realizables`, conservando
   el orden recibido y combinándolo con el filtro de tipo de evidencia. La
   regresión verifica que el filtrado no muta ni reordena la entrada. Verificación:
-  TypeScript móvil limpio y `22` suites/`100` tests.
+  TypeScript móvil limpio y `22` suites/`101` tests.
 - **Auditoría de dependencia del exportador (24-08-2026):** `exceljs@4.4.0` queda instalado. `npm audit --workspace apps/backend --omit=dev` devuelve 2 vulnerabilidades moderadas transitivas de `uuid`; la corrección disponible exige `npm audit fix --force` y degradaría ExcelJS a `3.4.0`, por lo que queda pendiente revisión explícita antes de producción.
 - **Auditoría actualizada (12-09-2026):** `npm audit --workspace apps/backend --omit=dev` sigue devolviendo exactamente `2 moderate` en `uuid` bajo `exceljs@4.4.0`; la fuente de uso está en la dependencia transitiva y `npm audit fix --force` propone degradar ExcelJS a `3.4.0`. Se aplicó únicamente `npm audit fix` sin `--force` para `morgan` y `qs`; no se cambia el exportador hasta disponer de una actualización compatible y una nueva prueba de paridad.
 - **Auditoría Expo cerrada (12-09-2026):** se actualizaron las 12 dependencias que `npx expo install --check` había detectado para Expo 56, se añadió el plugin nativo de `expo-sqlite` y se regeneró el lockfile en el commit `6d9f31c`. La comprobación posterior devuelve literalmente `Dependencies are up to date`; TypeScript y `17/73` tests móviles siguen verdes. El diff previo de scripts `android/ios` se reaplicó y permanece fuera del commit.

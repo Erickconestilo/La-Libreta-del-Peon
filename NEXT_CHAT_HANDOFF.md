@@ -330,7 +330,7 @@ repositorio bare.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
   tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
-  suites y `100` tests. La captura de `fissure_witness` marca la foto como
+  suites y `101` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 

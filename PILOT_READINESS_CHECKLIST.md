@@ -13,7 +13,7 @@ Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
 - [x] Backend compila y pasa `104/104` tests con `npm run verify:local`.
-- [x] Móvil pasa TypeScript, `22` suites y `100/100` tests.
+- [x] Móvil pasa TypeScript, `22` suites y `101/101` tests.
 - [x] Tooling local pasa `9/9` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `40 documentos revisados en raíz y docs/` sin errores
