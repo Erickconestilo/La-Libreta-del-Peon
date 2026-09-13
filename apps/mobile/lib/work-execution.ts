@@ -3,7 +3,8 @@ import type {
   WorkExecutionEventType,
   WorkExecutionState,
   WorkExecutionStateStatus,
-  MonitoringRoundPoint
+  MonitoringRoundPoint,
+  JourneyRound
 } from '@shared/types';
 
 export const WORK_EXECUTION_OPTIONS: Array<{
@@ -70,6 +71,15 @@ export const getWorkExecutionSummary = (
 
   return summary;
 };
+
+export const formatJourneyWorkSummary = (
+  round: Pick<JourneyRound, 'workCompletedPointCount' | 'workInProgressPointCount' | 'workPendingPointCount' | 'workReviewPointCount'>
+) => [
+  `${round.workCompletedPointCount ?? 0} hechos`,
+  `${round.workInProgressPointCount ?? 0} en curso`,
+  `${round.workPendingPointCount ?? 0} pendientes`,
+  `${round.workReviewPointCount ?? 0} por revisar`
+].join(' · ');
 
 /** Keeps the round order while prioritising work that can still be continued. */
 export const getNextWorkExecutionPointId = (

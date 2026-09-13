@@ -41,7 +41,7 @@ son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 La captura móvil usa el outbox existente y `clientRequestId`, actualiza la
 caché local y conserva separado el resultado declarado de la lectura
 metrológica y del cierre de ronda. Backend pasa `113/113` tests y móvil
-`113/113`; TypeScript móvil y documentación están en verde. El núcleo quedó en
+`114/114`; TypeScript móvil y documentación están en verde. El núcleo quedó en
 `6ed9a84`, la entrega de oficina en `8aff703`, el historial móvil en
 `3b5ed4b` y su refresco tras sincronización en `2399de6`. La mejora de
 fluidez de ronda quedó en `2d182a0`: la cabecera resume hechos, en curso,
@@ -131,7 +131,7 @@ confunde una acción pendiente del outbox con recepción del servidor.
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último slice funcional local: `7f23258` (`feat(mobile): resumir trabajo recibido en mi jornada`), precedido por `2d182a0` (`feat(mobile): agilizar seguimiento de la ronda`), `2399de6` (`fix(mobile): refrescar historial de trabajo`), `3b5ed4b` (`feat(mobile): mostrar historial de trabajo`), `8aff703` (`feat(export): incluir resultado del trabajo de campo`) y `6ed9a84` (`feat(mobile): registrar resultado del trabajo de campo`). La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `113/113` backend y `113/113` móvil; tooling mantiene `12/12` y `docs:check` revisa `44` documentos sin avisos. La build v7 del Galaxy no contiene este último slice; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último slice funcional local: `7f23258` (`feat(mobile): resumir trabajo recibido en mi jornada`), precedido por `2d182a0` (`feat(mobile): agilizar seguimiento de la ronda`), `2399de6` (`fix(mobile): refrescar historial de trabajo`), `3b5ed4b` (`feat(mobile): mostrar historial de trabajo`), `8aff703` (`feat(export): incluir resultado del trabajo de campo`) y `6ed9a84` (`feat(mobile): registrar resultado del trabajo de campo`). La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `113/113` backend y `114/114` móvil; tooling mantiene `12/12` y `docs:check` revisa `44` documentos sin avisos. La build v7 del Galaxy no contiene este último slice; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y

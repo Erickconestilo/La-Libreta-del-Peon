@@ -28,7 +28,7 @@ acceso `Continuar con <código>`, que abre el primer punto accionable sin
 alterar el orden configurado. La selección excluye puntos bloqueados y no
 modifica el estado metrológico ni el cierre de la ronda. La regresión cubre el
 conteo por estado y la selección ordenada; la batería actual queda en
-`113/113` tests móviles.
+`114/114` tests móviles.
 
 El slice posterior también expone esos cuatro contadores en `Mi jornada` a
 partir del último evento recibido por punto. La consulta mantiene la relación

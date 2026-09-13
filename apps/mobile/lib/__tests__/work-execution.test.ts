@@ -6,6 +6,7 @@ import {
   getWorkExecutionStatePresentation,
   getWorkExecutionSummary,
   getNextWorkExecutionPointId,
+  formatJourneyWorkSummary,
   requiresWorkExecutionReason
 } from '../work-execution';
 
@@ -75,5 +76,14 @@ describe('work execution status', () => {
       { id: 'completed-only', executionState: getWorkExecutionState(event('completed')) },
       { id: 'blocked-only', executionState: getWorkExecutionState(event('blocked')) }
     ])).toBeNull();
+  });
+
+  it('keeps pending work separate from items that need review', () => {
+    expect(formatJourneyWorkSummary({
+      workCompletedPointCount: 2,
+      workInProgressPointCount: 1,
+      workPendingPointCount: 3,
+      workReviewPointCount: 4
+    })).toBe('2 hechos · 1 en curso · 3 pendientes · 4 por revisar');
   });
 });
