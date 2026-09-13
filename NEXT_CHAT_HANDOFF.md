@@ -28,7 +28,10 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit local: `b4f78ce` (`fix(db): make mounting visit constraints retry-safe`). La migración
+- Último commit local: `bddf7f9` (`docs: reconcile tooling test counts`). La secuencia
+  inmediata anterior incluye `689d356` (benchmark de mercado), `0ebe542`,
+  `abbe5b1` y `b4f78ce` (hardening y trazabilidad de la migración 027). La
+  migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta para tolerar un reintento tras una aplicación
   parcial; su regresión está incluida en la batería backend. La migración
