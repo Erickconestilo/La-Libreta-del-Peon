@@ -180,6 +180,8 @@ describe('Sync Engine', () => {
 
       const conflictError = new Error('Conflict');
       (conflictError as any).status = 409;
+      (conflictError as any).code = 'ROUND_VERSION_CONFLICT';
+      (conflictError as any).rawMessage = 'body=eyJhbGciOiJ9.abc.def';
 
       const mockSyncCallback = jest
         .fn<(item: OutboxItem) => Promise<void>>()
@@ -192,6 +194,11 @@ describe('Sync Engine', () => {
       const conflicts = outbox.getConflicts();
       expect(conflicts).toHaveLength(1);
       expect(conflicts[0].id).toBe('test-1');
+      expect(conflicts[0].conflictData).toEqual({
+        serverError: { status: 409, code: 'ROUND_VERSION_CONFLICT' }
+      });
+      expect(JSON.stringify(conflicts[0].conflictData)).not.toContain('eyJhbGciOiJ9');
+      expect(JSON.stringify(conflicts[0].conflictData)).not.toContain('body=');
     });
 
     it('debe marcar como error errores de validación (422)', async () => {

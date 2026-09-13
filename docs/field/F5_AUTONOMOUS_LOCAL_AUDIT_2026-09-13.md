@@ -154,6 +154,12 @@ se ha desplegado desde esta sesión.
     actualizó `apps/mobile/lib/offline/DESIGN.md` para distinguir el diagnóstico
     disponible en Perfil de la resolución futura; así el diseño no promete una
     operación destructiva que el MVP no puede ejecutar de forma segura.
+24. El sincronizador persistía el objeto de error completo al clasificar un
+    conflicto `409`, lo que podía conservar `rawMessage` o detalles de la
+    respuesta en SQLite aunque la interfaz no los mostrara. Ahora solo persiste
+    `status` y un código técnico con formato validado; la regresión de
+    `sync-engine.test.ts` confirma que cuerpos y tokens no entran en
+    `conflictData`.
 
 ## Evidencia local
 

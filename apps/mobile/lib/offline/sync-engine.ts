@@ -259,7 +259,7 @@ async function syncItem(
     switch (errorType) {
       case 'conflict':
         // 409 Conflict: requiere intervención manual
-        markConflict(item.id, { serverError: error }, sessionId);
+        markConflict(item.id, { serverError: toPersistedConflictData(error) }, sessionId);
         console.warn(`[SyncEngine] Conflict detected for item ${item.id}`);
         break;
 
@@ -311,6 +311,20 @@ function classifyError(error: { message?: string; status?: number; code?: string
 
   return 'unknown';
 }
+
+const toPersistedConflictData = (error: { status?: number; code?: string }) => {
+  const safeData: Record<string, number | string> = {};
+
+  if (typeof error.status === 'number' && Number.isInteger(error.status)) {
+    safeData.status = error.status;
+  }
+
+  if (typeof error.code === 'string' && /^[A-Z0-9_.-]{1,48}$/i.test(error.code)) {
+    safeData.code = error.code;
+  }
+
+  return safeData;
+};
 
 /**
  * Obtener el delay en ms para un retry específico
