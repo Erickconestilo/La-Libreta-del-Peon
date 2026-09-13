@@ -26,6 +26,8 @@ validación en campo:
   `lastUpdateTime=2026-09-13 07:39:25`.
 - [x] La auditoría local cubre autenticación, roles, scope entre obras,
   adjuntos, idempotencia, caché por sesión, outbox y exportación.
+- [x] La pantalla de resumen permite guardar CSV/XLSX en una carpeta elegida
+  por el usuario mediante SAF, sin envío automático ni escritura al cancelar.
 - [x] Publicar el arreglo de scope de exportación mediante PR #19/#20 y
   repetir las comprobaciones autenticadas. Render sirve `df224f9` y las
   exportaciones CSV/XLSX responden `200` desde el Galaxy.

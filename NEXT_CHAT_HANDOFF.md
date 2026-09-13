@@ -88,7 +88,7 @@ repositorio bare.
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado en ese commit con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. La batería actual, tras añadir el guardado SAF y sus regresiones, queda en `106/106` backend y `106/106` móvil; tooling `12/12` y `docs:check` `43` documentos sin avisos. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último arreglo funcional local: `979b5b7` (`fix(mobile): serialize round export actions`), precedido por `e3124df` (protección de APIs SAF por plataforma) y `9442b08` (guardado local de exportaciones). La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `106/106` backend y `106/106` móvil; tooling `12/12` y `docs:check` `43` documentos sin avisos. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
