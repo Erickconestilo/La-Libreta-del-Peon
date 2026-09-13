@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # F5 — Contrato de Mi jornada
@@ -46,7 +46,8 @@ El contrato de `Mi jornada` queda verificado localmente con TypeScript y tests,
 y sus migraciones de asignación ya están aplicadas en Supabase. El soporte de
 rol `supervisor` se implementa como consulta separada y no consume este
 endpoint. La migración `026_supervisor_role.sql` ya está aplicada y la cuenta
-QA ya está migrada con membresía `read` en `campus-nord`. La release
-`versionCode=4` se instaló en el Galaxy y la consulta supervisora quedó
-validada allí; este documento no presenta esa validación como evidencia del
-recorrido de operador offline, que sigue pendiente.
+QA ya está migrada con membresía `read` en `campus-nord`. La consulta
+supervisora quedó validada históricamente en el Galaxy con la release
+`versionCode=4`; esa evidencia no implica que la release `versionCode=5`
+ya esté instalada ni que el recorrido de operador offline esté cerrado.
+La v5 está preparada localmente y sigue pendiente de instalación física.

@@ -81,7 +81,7 @@ certificada de seguridad.
 
 ## Validación Galaxy completada el 12-09-2026
 
-La release local `versionCode=4` se instaló en el Galaxy `SM-S938B`, serial
+Como evidencia histórica, la release local `versionCode=4` se instaló en el Galaxy `SM-S938B`, serial
 `R5CY21X6FLE`, con `adb install -r`, cuyo resultado literal fue `Success`.
 
 Con la cuenta supervisora se verificó en pantalla:

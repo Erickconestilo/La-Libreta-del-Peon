@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar referencias vivas de v4/v5, Render y validación supervisora antes de continuar el cierre autónomo local | cerrado (`F5_JOURNEY_ASSIGNMENT_CONTRACT_2026-08-24.md`, `TOPOFIELD_OPERATIONAL_REACTIVATION_2026-09-12.md` y `README.md` distinguen la v4 validada históricamente de la v5 preparada localmente; `MEMORIA.md §12a` queda actualizado al estado 13-09; backend `99/99` tests, móvil `21` suites/`93/93` tests, TypeScript móvil limpio, `docs:check` con `39` documentos sin avisos y `git diff --check` sin salida.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Separar el preflight local del chequeo remoto autenticado para poder verificar la APK sin credenciales | cerrado (`npm run verify:pre-apk:local` terminó con build backend correcta, TypeScript móvil sin salida y `expo export android` correcto; salida en `C:\Users\guill\AppData\Local\Temp\topofield-export-android-preapk`; el modo completo sigue fallando cerrado sin `TOPOFIELD_VERIFY_PASSWORD` ni credenciales locales. No se usaron secretos ni se tocaron servicios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar documentación viva con la release v5 y separar la validación histórica v4 | cerrado (`README.md` y `PILOT_READINESS_CHECKLIST.md` reflejan v5 preparada y supervisor validado históricamente; los runbooks fechados identifican v4 como evidencia histórica; `npm run docs:check` revisa `39` documentos sin errores ni avisos; `git diff --check` sin salida.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Generar y verificar APK release v5 directamente con Gradle sin transportar secretos por Bundletool | cerrado (`gradlew.bat app:assembleRelease --no-daemon --no-parallel --max-workers=1 -PreactNativeArchitectures=arm64-v8a` terminó con `BUILD SUCCESSFUL in 3m 57s`; APK en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`, `53,403,238` bytes; `apkanalyzer` confirma paquete `com.ciudadanoinusual.topofield`, `versionCode=5`, `versionName=1.0.0`; `apksig` confirma `verified=true`, esquema `V3`, un firmante y `CN=TopoField Android Release`. No se instaló ni se tocó el Galaxy.)` |
@@ -369,9 +370,18 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 ---
 
-## 12a. Lista consolidada de pendientes (12-09-2026)
+## 12a. Lista consolidada de pendientes (actualizada 13-09-2026)
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
+
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `99/99`
+tests; móvil pasa `21` suites y `93/93` tests; `docs:check` revisa `39`
+documentos sin avisos; la release Android `versionCode=5` está preparada
+localmente como AAB y APK firmadas, pero no está instalada porque ADB no
+detecta el Galaxy. Render sigue vivo, aunque la última observación pública
+fue el commit `eb88db9`, anterior a los hardenings locales posteriores. El
+E2E físico del operador, la validación con datos autorizados y las entrevistas
+de campo siguen abiertos.
 
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Hallazgo E2E real en Galaxy (12-09-2026):** la lectura offline `8.25 mm` de la ronda `E2E-Galaxy-20260731-Atc` llegó una sola vez a Supabase con `client_request_id=6e8403ac-f462-411b-84b8-44a03d9c6cc0`, pero `attachment_count=0` y no existe objeto correspondiente en `storage.objects`. El log posterior fue literalmente `[SyncEngine] No pending items`. La prueba no se considera aprobada hasta repetirla con la foto presente.
@@ -474,6 +484,8 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Reconciliación documental autónoma (Codex):** los documentos vivos ya diferencian la v4 históricamente validada en Galaxy de la v5 preparada localmente, y `README.md` distingue el último despliegue funcional conocido de la última observación pública de Render (`eb88db9`). La lista consolidada de pendientes refleja que el E2E físico, datos autorizados y entrevistas siguen abiertos. `npm run docs:check` terminó con `check-docs: 39 documentos revisados en raíz y docs/.` y `Sin errores ni avisos`; `git diff --check` no devolvió salida. No se tocó código, Supabase, Render, EAS, Play Store ni el Galaxy.
 
 - **2026-09-13 — Diagnóstico seguro del outbox (Codex):** el Perfil ya lista por sesión los items `error` y `conflict`; los errores conservan el botón `Reintentar` y los conflictos quedan en `Revisión necesaria`, sin reenvío automático ni exposición del payload o de metadatos sensibles. Verificación literal: `npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó sin salida/código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 20 passed, 20 total` y `Tests: 88 passed, 88 total`; `npm run docs:check` revisó `39 documentos` sin errores ni avisos; `git diff --check` sin salida. No se tocó backend, Supabase, Render, EAS, Play Store ni el Galaxy.
 - **2026-09-13 — Contrato de conflictos offline reconciliado (Codex):** `apps/mobile/lib/offline/DESIGN.md` ya no promete acciones de resolución que el MVP no implementa; documenta el diagnóstico visible en Perfil y deja `Usar mío`/`Usar servidor`/`Descartar` para una fase posterior con permisos y concurrencia definidos. `npm run docs:check` mantiene `39 documentos` sin errores ni avisos. No se tocó backend, Supabase, Render, EAS, Play Store ni el Galaxy.
