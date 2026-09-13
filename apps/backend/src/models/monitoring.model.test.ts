@@ -76,3 +76,20 @@ test('terminal rounds cannot be changed', () => {
     (error: unknown) => error instanceof AppError && error.code === 'ROUND_TERMINAL'
   );
 });
+
+
+test('round export applies the actor project scope to its data query', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const exportSource = modelSource.slice(
+    modelSource.indexOf('export const getMonitoringRoundExportRows'),
+    modelSource.indexOf('export const createReadingAttachment')
+  );
+
+  assert.equal(
+    (exportSource.match(/WHERE mr\.id = \$1\s+\$\{scope\.clause\}/g) ?? []).length,
+    2
+  );
+});
