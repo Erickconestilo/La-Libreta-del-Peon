@@ -78,7 +78,7 @@ test('reading attachment only accepts photo metadata with bounded text', () => {
 test('monitoring round creation defaults to draft status and requires a plain date', () => {
   assert.equal(
     validateCreateMonitoringRoundInput({
-      name: 'Ronda semanal linea 8',
+      name: 'Ronda semanal de ejemplo',
       roundDate: '2026-08-03'
     }).status,
     'draft'
@@ -91,7 +91,7 @@ test('monitoring round creation defaults to draft status and requires a plain da
   assert.throws(
     () =>
       validateCreateMonitoringRoundInput({
-        name: 'Ronda semanal linea 8',
+        name: 'Ronda semanal de ejemplo',
         roundDate: '2026-08-03T10:00:00.000Z'
       }),
     /Invalid monitoring round payload/
