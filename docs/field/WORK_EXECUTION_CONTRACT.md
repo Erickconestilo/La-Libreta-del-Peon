@@ -67,6 +67,12 @@ orden de `monitoring_round_points.sort_order`; un punto `bloqueado` no se
 presenta como siguiente trabajo. Esto reduce navegación manual sin convertir
 un resultado operativo en una lectura válida ni en un cierre de ronda.
 
+El parte de zona repite esta separación antes de guardar: muestra por un lado
+la lectura metrológica (`x/y puntos con estado final`) y por otro el trabajo
+declarado (`hechos`, `en curso`, `pendientes` y `por revisar`). Así el operario
+puede confirmar que terminó una tarea aunque la lectura todavía esté pendiente
+de revisión, sin que la interfaz lo presente como un cierre técnico.
+
 ## Contrato de datos
 
 La migración preparada `apps/backend/migrations/029_monitoring_work_execution_events.sql`

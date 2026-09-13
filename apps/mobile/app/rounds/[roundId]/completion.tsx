@@ -9,6 +9,7 @@ import { ChoiceChip, formatShortDate } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { useCreateWorkCompletionReport, useMonitoringRound } from '@/hooks/use-monitoring';
 import { getWriteScreenAccessState } from '@/lib/field-access';
+import { getWorkExecutionSummary } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
 
 const STATUS_OPTIONS: Array<{ label: string; value: WorkCompletionStatus }> = [
@@ -28,6 +29,10 @@ export default function WorkCompletionScreen() {
   const writeScreenState = getWriteScreenAccessState(currentUser, round?.projectId, Boolean(round));
   const pendingPointCount = useMemo(
     () => round?.points.filter((point) => point.status === 'pending').length ?? 0,
+    [round?.points]
+  );
+  const workSummary = useMemo(
+    () => getWorkExecutionSummary(round?.points ?? []),
     [round?.points]
   );
   const [status, setStatus] = useState<WorkCompletionStatus>(pendingPointCount > 0 ? 'partial' : 'completed');
@@ -87,8 +92,13 @@ export default function WorkCompletionScreen() {
           <Text style={styles.eyebrow}>Finalización de visita</Text>
           <Text style={styles.title}>{round?.name ?? 'Ronda'}</Text>
           <Text style={styles.body}>
-            {round ? `${formatShortDate(round.roundDate)} · ${round.points.length - pendingPointCount}/${round.points.length} puntos con estado final` : 'Comprueba el resultado antes de enviarlo.'}
+            {round ? `${formatShortDate(round.roundDate)} · Lectura: ${round.points.length - pendingPointCount}/${round.points.length} puntos con estado final` : 'Comprueba el resultado antes de enviarlo.'}
           </Text>
+          {round ? <View style={styles.workSummary}>
+            <Text style={styles.workSummaryTitle}>Trabajo declarado por el operario</Text>
+            <Text style={styles.body}>{workSummary.completed} hechos · {workSummary.in_progress} en curso · {workSummary.pending} pendientes · {workSummary.repeat_required + workSummary.not_done + workSummary.blocked} por revisar</Text>
+            <Text style={styles.caption}>Marcar un trabajo como hecho no sustituye la lectura ni permite cerrar la ronda si quedan puntos metrológicos pendientes.</Text>
+          </View> : null}
         </View>
 
         {isRoundLoading && !round ? <View style={styles.card}><Text style={styles.body}>Cargando la ronda...</Text></View> : null}
@@ -134,6 +144,7 @@ export default function WorkCompletionScreen() {
 
 const styles = StyleSheet.create({
   body: { color: colors.textSecondary, fontSize: typography.fontSizeBody - 1, lineHeight: 21 },
+  caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[3] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
   container: { backgroundColor: colors.background, flex: 1 },
@@ -156,5 +167,7 @@ const styles = StyleSheet.create({
   success: { alignItems: 'center', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.4)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[3] },
   successText: { color: colors.accentGreen, flex: 1, fontSize: 14, fontWeight: '800', lineHeight: 20 },
   title: { color: colors.textPrimary, fontSize: 28, fontWeight: '900' },
-  warningText: { color: colors.amber, fontSize: 13, fontWeight: '800', lineHeight: 20 }
+  warningText: { color: colors.amber, fontSize: 13, fontWeight: '800', lineHeight: 20 },
+  workSummary: { backgroundColor: 'rgba(34, 197, 94, 0.06)', borderColor: 'rgba(34, 197, 94, 0.35)', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[2] },
+  workSummaryTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900' }
 });
