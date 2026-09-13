@@ -207,6 +207,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
 | 2026-09-13 | Codex | codex/f5-field-stability | Continuar cierre autónomo F5 con Galaxy conectado: validar v7, auditar pendientes locales y consolidar evidencia sin tocar Supabase ni Render | cerrado (ADB devolvió `R5CY21X6FLE device`; `dumpsys package` confirmó `versionCode=7`, `versionName=1.0.0`, `lastUpdateTime=2026-09-13 07:39:25`; la jornada preparada y el modo avión real se observaron en el Galaxy. La exportación CSV/XLSX autenticada ya había quedado en `200` tras el despliegue `df224f9`; no se añadieron datos remotos nuevos.) |
+| 2026-09-13 | Codex | codex/f5-field-stability | Añadir verificación estructurada de los artefactos CSV/XLSX de una ronda y reconciliar los pendientes locales sin tocar el Galaxy ni servicios remotos | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend` devolvió `106` tests, `106` pasados, `0` fallidos; el verificador rechazó una diferencia real entre CSV y XLSX; no se tocaron Galaxy, Supabase, Render, EAS ni Play Store.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Generar release v7 tras corregir la pérdida de diagnóstico en exportación y validarla con ADB | cerrado (la compilación Gradle generó la APK firmada `CN=TopoField Android Release`; `adb install -r` devolvió `Success`; `dumpsys package` confirmó `versionCode=7` y `lastUpdateTime=2026-09-13 07:39:25`. La UI mostró el diagnóstico HTTP y el código de soporte sin exponer secretos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Exponer diagnóstico seguro cuando falla la exportación móvil reproducida en Galaxy | cerrado (se añadió `getRoundExportErrorMessage`, que muestra solo `HTTP`, código funcional y un UUID de soporte válido; se excluyen mensajes internos y valores no UUID. El test dirigido pasó `4` tests y TypeScript móvil terminó con código `0`. La causa remota quedó aislada en el backend: faltaba interpolar el scope en la segunda consulta.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir la consulta de exportación que enviaba scope sin filtro SQL | cerrado localmente (se añadió `${scope.clause}` al SELECT de filas de exportación y una regresión que exige el filtro en el guard y en la consulta de datos. Build y batería local quedan en verde; falta publicar mediante PR y volver a probar con Render.) |
@@ -445,7 +446,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `105/105`
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `106/106`
 tests; móvil pasa `22` suites y `104/104` tests; tooling pasa `9/9` y
 `docs:check` revisa `41` documentos sin avisos. La release Android
 `versionCode=7` está instalada en el Galaxy y firmada con
@@ -454,8 +455,11 @@ offline, reinicio, reconexión automática y unicidad en Supabase; también se
 validó la lista de rondas desde caché tras arranque en frío sin red. La v7
 verificó además que CSV y XLSX se generan y abren el selector nativo, con
 respuestas autenticadas `200` registradas por Render. Siguen abiertos el
-cierre definitivo con umbrales autorizados, la comparación estructurada de
-los archivos exportados, la jornada observada y las entrevistas. Render está
+cierre definitivo con umbrales autorizados, la ejecución de la comparación
+estructurada sobre los archivos exportados, la jornada observada y las
+entrevistas. El verificador local de CSV/XLSX ya está disponible mediante
+`npm run verify:export-artifacts`, pero todavía no se le han entregado dos
+binarios accesibles de una misma descarga real. Render está
 vivo en el commit `df224f9`, equivalente limpio del arreglo de scope de
 exportación. La auditoría de procedencia del
 13-09-2026 detectó además que la historia alcanzable conserva objetos de la
@@ -545,6 +549,14 @@ estado actual.
   `fetch` ni `push`; la evidencia está en
   `docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md` y requiere una
   compuerta separada antes de cualquier reescritura.
+- **Verificación estructurada de exportaciones preparada (13-09-2026):** se
+  añadió `verifyRoundExportArtifacts` y el comando
+  `npm run verify:export-artifacts`. Valida las 24 columnas, BOM UTF-8, fechas,
+  números, filas pendientes, hoja `Auscultación`, filtro `A1:X1`, cabecera
+  congelada y paridad de contenido sin imprimir lecturas. La regresión backend
+  pasa junto con `106/106` tests. La validación contra los dos archivos reales
+  descargados en Galaxy queda pendiente porque el selector nativo no dejó esos
+  binarios accesibles para lectura estructurada.
 - **Hallazgo E2E real en Galaxy (12-09-2026):** la lectura offline `8.25 mm` de la ronda `E2E-Galaxy-20260731-Atc` llegó una sola vez a Supabase con `client_request_id=6e8403ac-f462-411b-84b8-44a03d9c6cc0`, pero `attachment_count=0` y no existe objeto correspondiente en `storage.objects`. El log posterior fue literalmente `[SyncEngine] No pending items`. La prueba no se considera aprobada hasta repetirla con la foto presente.
 - **Corrección local del primer hallazgo (12-09-2026):** `68e001a fix(mobile): recover interrupted reading attachments` hace atómica la inserción de lectura+adjunto en SQLite y recupera operaciones que quedaron en `syncing` al reiniciar. Verificación literal: `npx tsc --noEmit --project apps/mobile/tsconfig.json` sin salida/código `0`; móvil `12` suites y `54` tests; backend `75/75` tests.
 - **Segundo intento E2E no válido y bug adicional (12-09-2026):** al preparar `14.58 mm` con foto, `settings put global airplane_mode_on 1` devolvió `settings=1`, pero el dispositivo siguió con conectividad y el flujo intentó subir la foto en caliente. Supabase registró una sola lectura `14.588 mm` con `client_request_id=40e4f1fb-e361-44df-a3d0-7e73efc7c671` y `attachment_count=0`. Render respondió literalmente `403 PROJECT_REQUIRED` al firmado de la foto. La causa local era que `/uploads/photos/sign` obtenía la lectura con `getInstrumentReadingById`, cuyo resultado no incluía `projectId`; el controlador pasaba `null` a `assertProjectWriteAccess`.
@@ -1002,3 +1014,4 @@ Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corre
 - **2026-09-13 — Documentación activa publicada (Codex):** la PR #21 se fusionó mediante GitHub como `096052c3acea3f9c232ce8958cb5309022529490`, actualizando `MEMORIA.md`, `NEXT_CHAT_HANDOFF.md`, `ROADMAP.md`, `PILOT_READINESS_CHECKLIST.md` y añadiendo `docs/field/F5_DEPLOYMENT_EXPORT_EVIDENCE_2026-09-13.md`. La documentación publicada refleja Render `df224f9`, Galaxy v7 y los exports CSV/XLSX `200`; la PR no cambia código ni datos remotos. La PR divergente #18 quedó cerrada sin fusionarse.
 - **2026-09-13 — Advisors Supabase revisados en solo lectura (Codex):** para `topofield` (`tmlexrsnxpmykbpeebri`), seguridad devuelve únicamente `auth_leaked_password_protection` en nivel `WARN` (`count: 1`), sin una alerta RLS nueva. Rendimiento devuelve `unindexed_foreign_keys` `count: 13` y `unused_index` `count: 40`; se conservan como deuda observada y no se aplican índices ni cambios remotos durante el piloto. `supabase_list_migrations` confirma aplicadas `022_project_membership_access_level`, `023_work_completion_reports`, `024_field_instrument_catalog`, `025_fix_auth_user_trigger_users` y `026_supervisor_role`. No se aplicó ninguna migración ni se modificó Auth/RLS.
 - **2026-09-13 — Matriz de cierre F5 consolidada (Codex):** `docs/field/F5_HALLAZGOS_2026-09-13.md` ahora separa los criterios verificados en el Galaxy de las compuertas aún pendientes: cierre positivo con umbral autorizado, lectura estructurada de CSV/XLSX, jornada observada, entrevistas y segundo dispositivo. `adb logcat` no mostró excepciones recientes; el Galaxy continúa en `versionCode=7`. `npm run verify:local` y `npm run docs:check` terminaron correctamente; no se añadieron datos remotos ni se modificó el código de producto.
+- **2026-09-13 — Verificador de artefactos CSV/XLSX añadido (Codex):** `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` compara dos archivos concretos desde `RoundExportRow` y falla cerrado ante cabeceras, filas, fechas, números, filtros o congelación de hoja inconsistentes. La prueba de regresión pasa junto con `106/106` tests backend; la ejecución contra los binarios descargados del Galaxy sigue pendiente porque no quedaron accesibles para lectura estructurada.

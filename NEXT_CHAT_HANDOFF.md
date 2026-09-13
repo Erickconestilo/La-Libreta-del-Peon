@@ -68,6 +68,13 @@ repositorio bare.
   `HTTP/1.1 200 OK` con ese commit y las rutas protegidas sin token devuelven
   `401 Unauthorized`. En esta validación no se hizo migración ni cambio de
   datos.
+- La comparación estructurada de exportaciones ya tiene un verificador local:
+  ejecutar `npm run build --workspace apps/backend` y después
+  `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>`. La herramienta
+  exige las 24 columnas, BOM UTF-8, hoja `Auscultación`, filtro `A1:X1`, primera
+  fila congelada y filas normalizadas idénticas. Falta ejecutarla con los dos
+  binarios de una misma descarga real, porque el selector nativo del Galaxy no
+  los dejó accesibles en almacenamiento público.
 - Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
@@ -109,7 +116,7 @@ repositorio bare.
 - `35fc885` corrige otra relación defensiva de memoria de montaje: las
   evidencias se agregan solo si coinciden simultáneamente `visit_id` y
   `station_id`. La regresión está en `monitoring.model.test.ts`; el backend
-  local queda en `105/105` tests.
+  local queda en `106/106` tests.
 - `a475976` corrige una lectura defensiva adicional: `getStationById` confirma
   primero el scope de la estación y solo después consulta sus lecturas
   asociadas. La regresión evita volver a ejecutar la carga de historial antes

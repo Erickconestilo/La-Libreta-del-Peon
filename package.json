@@ -14,6 +14,7 @@
     "verify:pre-apk": "node scripts/verify-pre-apk.mjs",
     "verify:pre-apk:local": "node scripts/verify-pre-apk.mjs --local-only",
     "verify:remote:public": "node scripts/verify-public-contract.mjs",
+    "verify:export-artifacts": "node scripts/verify-round-export-artifacts.mjs",
     "test:tooling": "node --test scripts/windows-command.test.mjs scripts/export-output.test.mjs scripts/verify-public-contract.test.mjs",
     "verify:local": "node scripts/verify-local.mjs",
     "verify:local:pre-apk": "node scripts/verify-local.mjs --with-pre-apk",
