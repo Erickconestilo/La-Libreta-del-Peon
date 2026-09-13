@@ -13,7 +13,7 @@ Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
 - [x] Backend compila y pasa `112/112` tests con la batería local.
-- [x] Móvil pasa TypeScript, `23` suites y `111/111` tests.
+- [x] Móvil pasa TypeScript, `23` suites y `113/113` tests.
 - [x] Tooling local pasa `12/12` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `44 documentos revisados en raíz y docs/` sin errores
@@ -44,6 +44,9 @@ validación en campo:
 - [x] El operario puede declarar por punto `Empezar`, `Hecho`, `No realizado`,
   `Repetir` o `Bloqueado`; los resultados no realizados exigen motivo y el
   guardado offline usa el outbox con idempotencia.
+- [x] La cabecera de la ronda resume hechos, en curso, pendientes y puntos por
+  revisar, y permite continuar con el primer punto accionable respetando el
+  orden de la jornada.
 - [ ] Aplicar la migración local `029_monitoring_work_execution_events.sql`,
   desplegar el endpoint y validar en el Galaxy que el resultado sincronizado
   aparece para el supervisor sin presentarlo como lectura ni cierre de ronda.

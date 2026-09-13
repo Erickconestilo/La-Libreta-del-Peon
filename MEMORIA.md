@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar cifras activas y auditoría con la mejora de fluidez de ronda | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida; la búsqueda de cifras activas confirma `113/113` en checklist, handoff y auditoría, manteniendo `111/111` solo en entradas históricas; no se tocó código ni servicios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificación integral del bloque de fluidez y preflight Android | cerrado (`npm run verify:local` terminó literalmente con `verify local completed successfully`: backend `112/112`, móvil `23` suites y `113/113`, tooling `12/12`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida; `npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `git status --short --untracked-files=no` muestra solo `MEMORIA.md` y el cambio previo de `apps/mobile/package.json` antes de este cierre. No se tocó Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff con la mejora de fluidez de ronda y la conexión del Galaxy | cerrado (`adb devices -l` devolvió literalmente `R5CY21X6FLE device product:pa3qxee model:SM_S938B device`; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. El handoff refleja `2d182a0`, `2399de6` y `113/113` tests móviles. No se instaló una build nueva, no se tocó Supabase ni Render y `apps/mobile/package.json` sigue fuera del commit.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mejorar la fluidez del registro de trabajo en la ronda | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `113` tests, `113` pasados; `npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. La cabecera de ronda resume el resultado operativo y permite continuar con el primer punto accionable en el orden recibido. No se tocó Supabase, Render ni el Galaxy.)` |
@@ -469,7 +470,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `112/112`
-tests; móvil pasa `23` suites y `111/111` tests; tooling mantiene `12/12` y
+tests; móvil pasa `23` suites y `113/113` tests; tooling mantiene `12/12` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7` está instalada en el Galaxy y firmada con
 `CN=TopoField Android Release`. El E2E físico ya demostró lectura y foto

@@ -20,6 +20,16 @@ y `GET /api/v1/me/journey` respondieron `401` sin bearer. La corrección de
 scope de exportación está publicada y fue ejercitada desde el Galaxy con
 respuestas autenticadas `200` para CSV y XLSX.
 
+## Addendum de fluidez operativa
+
+El slice local `2d182a0` añade en la cabecera de cada ronda el resumen de
+trabajo declarado (`hechos`, `en curso`, `pendientes` y `por revisar`) y el
+acceso `Continuar con <código>`, que abre el primer punto accionable sin
+alterar el orden configurado. La selección excluye puntos bloqueados y no
+modifica el estado metrológico ni el cierre de la ronda. La regresión cubre el
+conteo por estado y la selección ordenada; la batería actual queda en
+`113/113` tests móviles.
+
 ## Addendum fisico del 13-09-2026
 
 La prueba posterior uso la release `versionCode=7` instalada en el Galaxy
