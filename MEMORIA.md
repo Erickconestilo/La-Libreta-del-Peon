@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff con el commit final del historial de trabajo | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. El handoff identifica `3b5ed4b` como último slice y conserva `8aff703`/`6ed9a84` como antecedentes; no se tocó el Galaxy, Supabase, Render ni `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mostrar en móvil el historial append-only de resultados de trabajo por punto | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `git diff --check` terminó sin salida. La pantalla consulta el historial protegido y mantiene el resultado local separado de los eventos recibidos; no se tocó Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el contrato vivo de exportación y el handoff con el resultado operativo del operario | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `112` tests, `112` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos; `git diff --check` terminó sin salida. El contrato vivo y el handoff reflejan `29` columnas y `A1:AC1`; el cambio quedó en `8aff703`. No se tocaron Supabase, Render ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el verificador y handoff de exportación con las columnas de resultado operativo | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `112` tests, `112` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos; `git diff --check` terminó sin salida. El contrato de exportación refleja el último resultado operativo y usa el filtro dinámico `A1:AC1`. La migración 029 sigue sin aplicar y no se tocaron Supabase, Render ni el Galaxy.)` |
@@ -770,7 +771,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   de consulta y no sobrescribe eventos anteriores; un resultado guardado en el
   outbox continúa etiquetado como local hasta sincronizarse. TypeScript móvil
   terminó con código `0` y Jest móvil con `23` suites/`111` tests. El cambio
-  quedó incluido en la entrega local del flujo, sin tocar servicios remotos.
+  quedó en el commit local `3b5ed4b`, sin tocar servicios remotos.
 
 - **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
   añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin
