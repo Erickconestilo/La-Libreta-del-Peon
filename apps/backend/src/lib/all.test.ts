@@ -7,6 +7,7 @@ import './mounting-migration-safety.test.js';
 import './reading-attachment-migration-safety.test.js';
 import './monitoring-reading-evaluation.test.js';
 import './work-execution.test.js';
+import './weekly-work.test.js';
 import './round-export.test.js';
 import './round-export-parity.test.js';
 import './photo-storage-path.test.js';
