@@ -29,6 +29,11 @@ repositorio bare.
 
 - Rama activa: `codex/f5-field-stability`.
 
+La validación física de la v7 es histórica. La comprobación ADB más reciente
+de esta sesión devolvió `error: no devices/emulators found` y no mostró ninguna
+fila bajo `List of devices attached`; no se debe afirmar que el Galaxy está
+conectado ni instalar una build hasta que vuelva a aparecer como `device`.
+
 ## Slice implementado después del último estado remoto
 
 El análisis local del control semanal de Excel llevó a una mejora operativa:

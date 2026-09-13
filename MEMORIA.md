@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Separar evidencia histórica de Galaxy y detección ADB actual | cerrado (`MEMORIA.md §12a`, `ROADMAP.md` y `NEXT_CHAT_HANDOFF.md` ahora indican que la v7 fue validada históricamente y que la comprobación actual devolvió `error: no devices/emulators found`; `docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se instaló nada.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar roadmap y handoff con el atajo `Marcar hecho` | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. `ROADMAP.md` y `NEXT_CHAT_HANDOFF.md` distinguen el atajo local del despliegue pendiente de la migración 029 y la validación en Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mejorar el registro rápido de trabajo a partir del Excel semanal aportado | cerrado (`CONTROL DE LECTURA SEMANAL (2).xlsx` se analizó solo como referencia local: 59 pestañas con matriz diaria, objetivos semanales/mensuales y contadores `HECHO`; no se copiaron datos al repo. La lista de puntos incorpora `Marcar hecho` en una pulsación y conserva `Más opciones` para motivos; TypeScript móvil terminó sin salida, Jest móvil devolvió `23` suites y `114/114` tests, `docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se instaló la app ni se tocaron Supabase, Render o el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir estado inicial y reenvío accidental del parte de zona | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites y `114/114` tests; `npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; `docs:check` revisó `44` documentos sin errores ni avisos. No se instaló la APK ni se tocaron servicios remotos.)` |
@@ -492,8 +493,8 @@ Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (est
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `113/113`
 tests; móvil pasa `23` suites y `114/114` tests; tooling mantiene `13/13` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
-`versionCode=7` está instalada en el Galaxy y firmada con
-`CN=TopoField Android Release`. El E2E físico ya demostró lectura y foto
+`versionCode=7`, firmada con `CN=TopoField Android Release`, fue instalada y
+validada históricamente en el Galaxy. Esa evidencia demostró lectura y foto
 offline, reinicio, reconexión automática y unicidad en Supabase; también se
 validó la lista de rondas desde caché tras arranque en frío sin red. La v7
 verificó además que CSV y XLSX se generan y abren el selector nativo, con
@@ -507,8 +508,13 @@ vivo en el commit `df224f9`, equivalente limpio del arreglo de scope de
 exportación. La auditoría de procedencia del
 13-09-2026 detectó además que la historia alcanzable conserva objetos de la
 etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
-distintos; el runtime actual está neutralizado y la purga completa sigue sin
-presentarse como cerrada.
+ distintos; el runtime actual está neutralizado y la purga completa sigue sin
+ presentarse como cerrada.
+
+La comprobación ADB más reciente de esta sesión devolvió literalmente
+`error: no devices/emulators found` y `List of devices attached` sin filas.
+Por tanto, la v7 no se considera disponible para repetir ahora la prueba hasta
+que Windows vuelva a detectar el Galaxy.
 
 El hardening local `f90c995` añade fallo cerrado cuando una sesión de topógrafo
 carece del mapa de membresías, pero la comparación remota verificó que no es
