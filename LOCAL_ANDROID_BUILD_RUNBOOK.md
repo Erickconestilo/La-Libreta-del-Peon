@@ -438,15 +438,20 @@ Cubierto por `.gitignore` (`.env`), igual que el keystore de firma — nunca se 
 
 ### Opcion A - instalar la APK local cuando ADB detecte el Galaxy
 
-Desinstalar la app actual del Galaxy y luego instalar la nueva:
+Intentar primero una actualización sobre la instalación existente. La APK v5 usa
+la firma de release de TopoField; `adb install -r` conserva la sesión y la caché
+offline si la firma y el `applicationId` coinciden:
 
 ```powershell
 adb devices -l
 adb install -r "C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
 ```
 
-Si aparece `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, detenerse y no ejecutar
-`adb uninstall` sin confirmar antes la pérdida de sesión y caché offline.
+Si aparece `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, detenerse. Solo después de que
+Erick confirme explícitamente la pérdida de sesión y caché offline se puede
+ejecutar `adb uninstall com.ciudadanoinusual.topofield` y repetir la instalación.
+No se debe presentar la desinstalación como paso normal de una actualización
+firmada con la misma identidad.
 
 ### Opcion B - mantener actualizacion sin desinstalar
 
