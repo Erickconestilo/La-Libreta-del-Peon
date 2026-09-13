@@ -31,7 +31,7 @@ test('uses projects.id when scoping a projects query', () => {
   assert.deepEqual(scope.params, [['11111111-1111-1111-1111-111111111111']]);
 });
 
-test('journey summarises the latest operational result per point', () => {
+test('journey summarises the latest operational result per point through the schema capability join', () => {
   const modelSource = readFileSync(
     resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
     'utf8'
@@ -41,13 +41,27 @@ test('journey summarises the latest operational result per point', () => {
     modelSource.indexOf('export const createControlPoint')
   );
 
-  assert.match(journeySource, /LEFT JOIN LATERAL \([\s\S]*monitoring_work_execution_events/);
-  assert.match(journeySource, /wee\.round_point_id = mrp\.id/);
-  assert.match(journeySource, /ORDER BY wee\.occurred_at DESC, wee\.created_at DESC, wee\.id DESC/);
+  assert.match(journeySource, /buildJourneyWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(journeySource, /\$\{workExecutionJoin\}/);
   assert.match(journeySource, /work_completed_point_count/);
   assert.match(journeySource, /work_in_progress_point_count/);
   assert.match(journeySource, /work_pending_point_count/);
   assert.match(journeySource, /work_review_point_count/);
+});
+
+test('round detail projects the latest work execution event into executionState', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const detailSource = modelSource.slice(
+    modelSource.indexOf('export const getMonitoringRoundDetail'),
+    modelSource.indexOf('export const assertMonitoringRoundStatusTransition')
+  );
+
+  assert.match(detailSource, /execution\.\*/);
+  assert.match(detailSource, /buildRoundPointWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(detailSource, /\$\{workExecutionJoin\}/);
 });
 
 test('uses project_id by default for monitoring child tables', () => {
@@ -157,9 +171,8 @@ test('round export applies the actor project scope to its data query', () => {
     (exportSource.match(/WHERE mr\.id = \$1\s+\$\{scope\.clause\}/g) ?? []).length,
     2
   );
-  assert.match(exportSource, /monitoring_work_execution_events/);
-  assert.match(exportSource, /wee\.round_id = mr\.id/);
-  assert.match(exportSource, /wee\.round_point_id = mrp\.id/);
+  assert.match(exportSource, /buildExportWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(exportSource, /\$\{workExecutionJoin\}/);
 });
 
 test('station details validate tenant scope before loading associated readings', () => {

@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 import { authenticateRequest } from './middleware/auth.js';
+import { refreshWorkExecutionCapability, WORK_EXECUTION_MIGRATION } from './lib/work-execution-capability.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
 import { apiRateLimit } from './middleware/rate-limit.js';
@@ -51,6 +52,26 @@ app.get('/api/v1/health', (_request, response) => {
     commit: process.env.RENDER_GIT_COMMIT ?? null,
     status: 'ok'
   });
+});
+app.get('/api/v1/readiness', async (_request, response) => {
+  try {
+    const workExecution = await refreshWorkExecutionCapability();
+    response.status(workExecution.available ? 200 : 503).json({
+      capabilities: { workExecution },
+      status: workExecution.available ? 'ready' : 'not_ready'
+    });
+  } catch {
+    response.status(503).json({
+      capabilities: {
+        workExecution: {
+          available: false,
+          migration: WORK_EXECUTION_MIGRATION,
+          reason: 'probe_failed'
+        }
+      },
+      status: 'not_ready'
+    });
+  }
 });
 
 app.use('/api/v1', apiRateLimit);

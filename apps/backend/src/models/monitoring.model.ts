@@ -4,6 +4,7 @@ import { pool } from '../db/pool.js';
 import { AppError } from '../lib/app-error.js';
 import { evaluateReadingStatus } from '../lib/monitoring-reading-evaluation.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
+import { getWorkExecutionCapability, requireWorkExecutionCapability } from '../lib/work-execution-capability.js';
 import type {
   ValidatedCodeCatalogQuery,
   ValidatedCreateControlPointInput,
@@ -41,6 +42,93 @@ type WorkExecutionEvent = {
 
 const MONITORING_POINT_TENANT_CONDITION = 'cp.project_id = mr.project_id';
 const READING_POINT_TENANT_CONDITION = 'ir.control_point_id = mrp.control_point_id';
+
+export const buildRoundPointWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT
+          wee.client_request_id AS execution_client_request_id,
+          wee.created_at AS execution_created_at,
+          wee.event_type AS execution_event_type,
+          wee.id AS execution_event_id,
+          wee.notes AS execution_notes,
+          wee.occurred_at AS execution_occurred_at,
+          wee.project_id AS execution_project_id,
+          wee.reason AS execution_reason,
+          wee.recorded_by AS execution_recorded_by,
+          wee.round_id AS execution_round_id,
+          wee.round_point_id AS execution_round_point_id
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mrp.round_id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT
+          NULL::uuid AS execution_client_request_id,
+          NULL::timestamptz AS execution_created_at,
+          NULL::text AS execution_event_type,
+          NULL::uuid AS execution_event_id,
+          NULL::text AS execution_notes,
+          NULL::timestamptz AS execution_occurred_at,
+          NULL::uuid AS execution_project_id,
+          NULL::text AS execution_reason,
+          NULL::uuid AS execution_recorded_by,
+          NULL::uuid AS execution_round_id,
+          NULL::uuid AS execution_round_point_id
+        WHERE FALSE
+      ) execution ON TRUE
+    `;
+
+export const buildJourneyWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT NULL::text AS event_type
+        WHERE FALSE
+      ) work_execution ON TRUE
+    `;
+
+export const buildExportWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type, wee.reason, wee.notes, wee.occurred_at, wee.recorded_by
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT
+          NULL::text AS event_type,
+          NULL::text AS reason,
+          NULL::text AS notes,
+          NULL::timestamptz AS occurred_at,
+          NULL::uuid AS recorded_by
+        WHERE FALSE
+      ) work_execution ON TRUE
+    `;
 
 export const buildMonitoringPointTenantCondition = () => MONITORING_POINT_TENANT_CONDITION;
 export const buildReadingPointTenantCondition = () => READING_POINT_TENANT_CONDITION;
@@ -567,35 +655,19 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
     return null;
   }
 
+  const workExecutionJoin = buildRoundPointWorkExecutionJoin((await getWorkExecutionCapability()).available);
+
   const pointsResult = await pool.query(
     `
       SELECT
         mrp.*,
         cp.code AS control_point_code,
-        cp.name AS control_point_name
+        cp.name AS control_point_name,
+        execution.*
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
       INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
-      LEFT JOIN LATERAL (
-        SELECT
-          wee.client_request_id AS execution_client_request_id,
-          wee.created_at AS execution_created_at,
-          wee.event_type AS execution_event_type,
-          wee.id AS execution_event_id,
-          wee.notes AS execution_notes,
-          wee.occurred_at AS execution_occurred_at,
-          wee.project_id AS execution_project_id,
-          wee.reason AS execution_reason,
-          wee.recorded_by AS execution_recorded_by,
-          wee.round_id AS execution_round_id,
-          wee.round_point_id AS execution_round_point_id
-        FROM monitoring_work_execution_events wee
-        WHERE wee.round_id = mrp.round_id
-          AND wee.round_point_id = mrp.id
-          AND wee.project_id = mr.project_id
-        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
-        LIMIT 1
-      ) execution ON TRUE
+      ${workExecutionJoin}
       WHERE mrp.round_id = $1
       ORDER BY mrp.sort_order ASC, mrp.created_at ASC
     `,
@@ -817,6 +889,7 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
   const scope = buildProjectScopeCondition(projectScope, 'mr', 2);
   const params: unknown[] = [userId, ...scope.params, query.limit];
   const limitParamIndex = params.length;
+  const workExecutionJoin = buildJourneyWorkExecutionJoin((await getWorkExecutionCapability()).available);
 
   const result = await pool.query(
     `
@@ -834,15 +907,7 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       LEFT JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
-      LEFT JOIN LATERAL (
-        SELECT wee.event_type
-        FROM monitoring_work_execution_events wee
-        WHERE wee.round_id = mr.id
-          AND wee.round_point_id = mrp.id
-          AND wee.project_id = mr.project_id
-        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
-        LIMIT 1
-      ) work_execution ON TRUE
+      ${workExecutionJoin}
       WHERE mr.operator_id = $1
         AND mr.status IN ('draft', 'active')
         ${scope.clause}
@@ -1558,6 +1623,8 @@ export const getMonitoringRoundExportRows = async (
     return null;
   }
 
+  const workExecutionJoin = buildExportWorkExecutionJoin((await getWorkExecutionCapability()).available);
+
   const result = await pool.query(
     `
       SELECT
@@ -1605,15 +1672,7 @@ export const getMonitoringRoundExportRows = async (
        AND ir.instrument_type = mrp.expected_instrument_type
       LEFT JOIN users measured_user ON measured_user.id = ir.measured_by
       LEFT JOIN users operator_user ON operator_user.id = mr.operator_id
-      LEFT JOIN LATERAL (
-        SELECT wee.event_type, wee.reason, wee.notes, wee.occurred_at, wee.recorded_by
-        FROM monitoring_work_execution_events wee
-        WHERE wee.round_id = mr.id
-          AND wee.round_point_id = mrp.id
-          AND wee.project_id = mr.project_id
-        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
-        LIMIT 1
-      ) work_execution ON TRUE
+      ${workExecutionJoin}
       LEFT JOIN users work_execution_user ON work_execution_user.id = work_execution.recorded_by
       LEFT JOIN LATERAL (
         SELECT prior_reading.value_numeric
@@ -1845,10 +1904,39 @@ const getWorkExecutionContext = async (
   };
 };
 
+const normalizeWorkExecutionText = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const isEquivalentWorkExecutionReplay = (
+  existing: Record<string, unknown>,
+  roundPointId: string,
+  context: { projectId: string; roundId: string },
+  input: ValidatedCreateWorkExecutionEventInput,
+  recordedBy: string
+) => {
+  const occurredAtMatches =
+    input.occurredAt === undefined || toIsoTimestamp(existing.occurred_at) === new Date(input.occurredAt).toISOString();
+
+  return (
+    existing.round_point_id === roundPointId &&
+    existing.round_id === context.roundId &&
+    existing.project_id === context.projectId &&
+    existing.event_type === input.eventType &&
+    existing.recorded_by === recordedBy &&
+    normalizeWorkExecutionText(existing.reason) === normalizeWorkExecutionText(input.reason) &&
+    normalizeWorkExecutionText(existing.notes) === normalizeWorkExecutionText(input.notes) &&
+    occurredAtMatches
+  );
+};
+
 export const listWorkExecutionEvents = async (
   roundPointId: string,
   projectScope: string[] | null = null
 ) => {
+  await requireWorkExecutionCapability();
   const scope = buildRoundProjectScopeCondition(projectScope, 2);
   const result = await pool.query(
     `
@@ -1879,6 +1967,7 @@ export const createWorkExecutionEvent = async (
   recordedBy: string,
   projectScope: string[] | null = null
 ) => {
+  await requireWorkExecutionCapability();
   const client = await pool.connect();
 
   try {
@@ -1902,9 +1991,9 @@ export const createWorkExecutionEvent = async (
 
     if ((existingResult.rowCount ?? 0) > 0) {
       const existing = existingResult.rows[0];
-      if (existing.round_point_id !== roundPointId || existing.project_id !== context.projectId) {
+      if (!isEquivalentWorkExecutionReplay(existing, roundPointId, context, input, recordedBy)) {
         throw new AppError(
-          'Client request id already used for another work result',
+          'Client request id already used for a different work result',
           409,
           'CLIENT_REQUEST_ID_CONFLICT'
         );
@@ -1964,9 +2053,9 @@ export const createWorkExecutionEvent = async (
       }
 
       const concurrent = concurrentResult.rows[0];
-      if (concurrent.round_point_id !== roundPointId || concurrent.project_id !== context.projectId) {
+      if (!isEquivalentWorkExecutionReplay(concurrent, roundPointId, context, input, recordedBy)) {
         throw new AppError(
-          'Client request id already used for another work result',
+          'Client request id already used for a different work result',
           409,
           'CLIENT_REQUEST_ID_CONFLICT'
         );
