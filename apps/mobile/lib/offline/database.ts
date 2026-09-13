@@ -5,6 +5,8 @@
 
 import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 
+import { formatSafeErrorForLog } from '../safe-error-log';
+
 const DB_NAME = 'topofield.db';
 
 let _db: SQLiteDatabase | null = null;
@@ -92,7 +94,10 @@ export async function applyMigrations(): Promise<void> {
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
       } catch (err) {
-        console.error(`[SQLite] Failed to apply migration ${migration.version}:`, err);
+        console.error(
+          `[SQLite] Failed to apply migration ${migration.version}`,
+          formatSafeErrorForLog(err)
+        );
         throw err;
       }
     }

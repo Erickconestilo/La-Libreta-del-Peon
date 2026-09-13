@@ -25,7 +25,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor, release v4 y corrección de adjuntos ya validados/publicados** | PLAN Fase 4 (nunca ejecutada) |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — operador offline y evidencia de jornada pendientes; supervisor validado, release v4 instalada históricamente y release v5 preparada localmente** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación y paridad local CSV/XLSX implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; migración 027 preparada, no aplicada, y pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
@@ -66,7 +66,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 13-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=4` se recompiló; `bundletool validate` y `jarsigner -verify` devuelven código 0. La v4 sí fue instalada y validada históricamente en el Galaxy para la consulta supervisora; la recompilación posterior no se instaló porque ADB no detectó el dispositivo. Eso no sustituye el E2E físico.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=5` se recompiló; el manifiesto y `jarsigner -verify` son correctos. La v4 sí fue instalada y validada históricamente en el Galaxy para la consulta supervisora; la v5 aún no se convirtió a APK universal ni se instaló porque el transporte de la contraseña de bundletool quedó bloqueado y ADB no está disponible. Eso no sustituye el E2E físico.
 
 La auditoría local vigente de 13-09-2026 está en
 `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
@@ -131,8 +131,10 @@ Las migraciones `022_project_membership_access_level.sql`,
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
 El último despliegue funcional verificado sirve el merge commit
 `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`, que contiene `b0572a0`.
-La fuente y la release móvil local están preparadas con `versionCode=4`; la
-firma y el APK universal fueron verificados. La release se instaló en el Galaxy
+La fuente y la release móvil local más reciente están preparadas con
+`versionCode=5`; la AAB está firmada y verificada, pero el APK universal todavía
+no se ha generado por el bloqueo de transporte de la contraseña de bundletool.
+La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, única obra
 la obra QA autorizada, rondas, punto, histórico y evidencia visibles; la UI muestra
@@ -258,7 +260,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — bloqueante de validación:** ejecutar el recorrido offline completo del operador en el Galaxy y validar exportación con datos autorizados. Supervisor y release `versionCode=4` ya están comprobados; el E2E no puede continuar mientras ADB no detecte el dispositivo.
+- **Abierto — bloqueante de validación:** ejecutar el recorrido offline completo del operador en el Galaxy y validar exportación con datos autorizados. Supervisor y release `versionCode=4` ya están comprobados; la release `versionCode=5` está preparada como AAB pero necesita APK universal e instalación cuando se disponga del dispositivo y de un transporte autorizado de la contraseña del keystore.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo

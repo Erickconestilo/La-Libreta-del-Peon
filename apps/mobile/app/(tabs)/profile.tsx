@@ -9,6 +9,7 @@ import { useCurrentSession } from '@/hooks/use-auth';
 import { useProjects } from '@/hooks/use-projects';
 import { getConflicts, getErrors, type OutboxItem } from '@/lib/offline/outbox';
 import { buildOutboxDiagnostic } from '@/lib/offline/outbox-diagnostics';
+import { formatSafeErrorForLog } from '@/lib/safe-error-log';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, forceRetry } from '@/lib/offline/sync-engine';
 import { colors } from '@/src/theme';
@@ -49,7 +50,7 @@ export default function ProfileScreen() {
       setOutboxErrors(activeSessionId ? getErrors(activeSessionId) : []);
       setOutboxConflicts(activeSessionId ? getConflicts(activeSessionId) : []);
     } catch (error) {
-      console.warn('[Profile] Unable to load outbox diagnostics:', error);
+      console.warn('[Profile] Unable to load outbox diagnostics', formatSafeErrorForLog(error));
       setOutboxErrors([]);
       setOutboxConflicts([]);
     }

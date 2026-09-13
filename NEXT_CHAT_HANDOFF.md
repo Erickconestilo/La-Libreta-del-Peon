@@ -76,15 +76,18 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `20d8520f0db6022cc2163a51cd9a3464c7600010`.
 - El `origin/main` local puede estar atrasado; no usarlo como estado remoto
   sin refrescarlo o consultar GitHub.
-- La release local se recompiló el 13-09-2026 después de alinear Expo:
+- La release local v5 se recompiló el 13-09-2026 después de alinear Expo y
+  corregir bugs reales del outbox:
   `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`,
-  `40,128,211` bytes, firmada como `CN=TopoField Android Release`. El
-  manifiesto confirma `versionCode=4` y `com.ciudadanoinusual.topofield`;
-  `bundletool validate` y `jarsigner -verify` devuelven código 0. La variante
+  `40,134,659` bytes, firmada como `CN=TopoField Android Release`. El
+  manifiesto confirma `versionCode=5` y `com.ciudadanoinusual.topofield`;
+  `jarsigner -verify` devuelve código 0. Bundletool no produjo APK universal:
+  el transporte de la contraseña quedó bloqueado por la política de terminal y
+  el modo interactivo no tenía consola. La variante
   `jarsigner -verify -strict` conserva la advertencia esperable del certificado
-  local autofirmado, no una validación de Play Store. La misma v4 fue instalada
-  y validada históricamente en el Galaxy para la consulta supervisora; esta
-  recompilación posterior no se instaló porque ADB no detectó el dispositivo.
+  local autofirmado, no una validación de Play Store. La v4 fue instalada y
+  validada históricamente en el Galaxy para la consulta supervisora; la v5 no
+  se instaló porque todavía no existe APK universal y ADB no está disponible.
 
 ## Estado desplegado
 
@@ -107,7 +110,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   una repetición anterior no dejó adjunto y después el dispositivo dejó de estar
   visible para ADB.
 - Último preflight conocido: `adb devices -l` mostró solo `List of devices attached`.
-- No generar `versionCode=5` salvo que aparezca un bug móvil reproducible.
+- La release v5 ya está generada por bugs móviles reproducibles del outbox; no
+  generar una v6 salvo que aparezca otro bug móvil reproducible.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión

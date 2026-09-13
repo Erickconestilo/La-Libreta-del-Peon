@@ -30,9 +30,12 @@ se ha desplegado desde esta sesión.
    La creacion ya rechazaba esa mezcla; ahora la lectura tambien es defensiva.
 4. El catalogo semilla de obras nuevas usa solo datos neutros `EJ-*`, zonas
    genericas y umbrales ilustrativos. No contiene nombres ni codigos reales.
-5. La release local se recompilo despues de alinear Expo 56. El manifiesto
-   confirma `versionCode=4` y el paquete de TopoField. El AAB no se instalo
-   durante esta sesion porque ADB no detecto el Galaxy.
+5. La release local v5 se recompilo despues de alinear Expo 56 y corregir
+   fallos reproducibles del outbox. El manifiesto confirma `versionCode=5` y
+   el paquete de TopoField. La AAB esta firmada como `CN=TopoField Android
+   Release`; no se convirtio a APK universal porque bundletool no pudo recibir
+   la contraseña del keystore de forma autorizada en esta terminal. No se
+   instalo ni se toco el Galaxy.
 6. Los listados de prismas y observaciones por estación descartan una
    referencia cuyo prisma pertenezca a otra obra; se mantiene visible un
    prisma legacy sin `project_id` cuando no contradice la obra de su estación.
@@ -185,6 +188,12 @@ se ha desplegado desde esta sesión.
     guardado elimina esos patrones y limita el texto a `240` caracteres; la
     regresión comprueba que los secretos simulados no se almacenan.
 
+29. La revisión final de observabilidad encontró dos logs móviles que todavía
+    pasaban objetos de error completos: el diagnóstico del outbox en Perfil y
+    el fallo de una migración SQLite. Ambos usan ahora `formatSafeErrorForLog`,
+    por lo que el mensaje, cuerpo HTTP y credenciales no se leen ni se emiten.
+    La regresión existente del helper mantiene esa garantía.
+
 ## Evidencia local
 
 ```text
@@ -202,10 +211,11 @@ check-docs: 39 documentos revisados en raíz y docs/.
 
 Sin errores ni avisos.
 
-BUILD SUCCESSFUL in 17m 15s
-bundletool_exit=0
+BUILD SUCCESSFUL in 16m 18s
+bundletool_exit=not-run (terminal policy blocked keystore credential transport;
+interactive mode failed because System.console() was null)
 jarsigner_exit=0
-android:versionCode="4"
+android:versionCode="5"
 package="com.ciudadanoinusual.topofield"
 Propietario: CN=TopoField Android Release, OU=Mobile, O=TopoField, C=ES
 ```
@@ -216,7 +226,8 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 
 ## Pendientes que no se pueden cerrar localmente
 
-- E2E en Galaxy: lectura, foto, reinicio, reconexion, outbox y duplicados.
+- E2E en Galaxy: lectura, foto, reinicio, reconexion, outbox y duplicados; la
+  release v5 todavía necesita APK universal e instalación.
 - Prueba real de parte parcial, cierre y exportacion con datos autorizados.
 - Aplicar la migracion 027 y desplegar las visitas de montaje, si se autoriza.
 - Revisar y aplicar la migracion 028 solo despues de comprobar en Supabase que
