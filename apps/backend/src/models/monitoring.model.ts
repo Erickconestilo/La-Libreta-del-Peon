@@ -1504,6 +1504,7 @@ export const getMonitoringRoundExportRows = async (
         LIMIT 1
       ) rule ON TRUE
       WHERE mr.id = $1
+      ${scope.clause}
       ORDER BY mrp.sort_order ASC, ir.measured_at ASC NULLS LAST, ir.created_at ASC NULLS LAST
     `,
     [roundId, ...scope.params]
