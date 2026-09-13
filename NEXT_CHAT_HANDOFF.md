@@ -120,6 +120,16 @@ en 026, ejecutar el runner no significaría «solo 029»: también intentaría 0
 autorización/revisión explícita propia; no deben colarse dentro de una
 autorización genérica de 029.
 
+**Autorización posterior (13-09-2026):** Erick autorizó expresamente el bloque
+completo por compuertas: backup remoto; 027 -> 028 -> 029 tras prechecks verdes;
+despliegue/verificación de backend; y después build/instalación/E2E Galaxy si
+todo lo anterior pasa. En la sesión que recibió la autorización, la herramienta
+de ejecución bloqueó antes de ejecutarse incluso la consulta remota de solo
+lectura a `schema_migrations`. No confundir «autorizado» con «ejecutado»: no se
+obtuvo backup nuevo, no se aplicó SQL, no se desplegó Render y no se instaló una
+build nueva en ese intento. El próximo agente debe reanudar exactamente en
+**backup + estado real de migraciones**, sin volver a cambiar Work Execution 029.
+
 La batería integrada de cierre local pasó con backend `120/120`, móvil `23`
 suites y `130/130`, TypeScript móvil sin errores, tooling `14/14`,
 `docs:check` sobre `44` documentos y `git diff --check` limpio. El árbol sigue

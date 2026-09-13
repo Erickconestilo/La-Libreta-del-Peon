@@ -281,7 +281,15 @@ explícita de Erick en el momento.
 ### Estado de autorización
 
 Completado autónomamente en local: implementación, tests, gate de readiness,
-verificador público y prueba PostgreSQL efímera. Pendiente de autorización:
-backup remoto, cualquier migración 027/028/029, despliegue Render, prueba
-autenticada real, generación/instalación de la build de esta misión y E2E en
-Galaxy. Ninguno de esos pasos remotos o físicos se ejecutó durante esta misión.
+verificador público y prueba PostgreSQL efímera. El 13-09-2026 Erick autorizó
+la secuencia de despliegue por compuertas: backup remoto; revisión y aplicación
+de 027 -> 028 -> 029 si los prechecks son verdes; despliegue y verificaciones de
+backend; y, únicamente después, nueva build/instalación y E2E físico en Galaxy.
+
+En la sesión que recibió esa autorización se intentó iniciar la comprobación
+remota de solo lectura de `schema_migrations` usando el stack del backend, pero
+el conector de ejecución bloqueó la operación antes de abrir la consulta. Por
+tanto, la autorización existe pero **backup, migraciones, Render y Galaxy siguen
+sin ejecutarse ni verificarse**. No se debe saltar esa compuerta: el backend
+nuevo no se publica hasta demostrar backup recuperable, estado real de
+migraciones y prechecks de 027/028/029.
