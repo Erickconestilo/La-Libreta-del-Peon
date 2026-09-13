@@ -133,6 +133,25 @@ obtuvo backup nuevo, no se aplicó SQL, no se desplegó Render y no se instaló 
 build nueva en ese intento. El próximo agente debe reanudar exactamente en
 **backup + estado real de migraciones**, sin volver a cambiar Work Execution 029.
 
+**Reanudación verificada posterior (13-09-2026):** el conector de Supabase sí
+permitió lectura remota. El proyecto `topofield` está `ACTIVE_HEALTHY` y su
+tracker de Supabase sigue exactamente hasta `026_supervisor_role`; 027/028/029
+no aparecen. El precheck de 028 devolvió cero duplicados por
+`(reading_id, storage_path)`. Se creó fuera del repo un backup local recuperable
+del estado previo de las cuatro tablas existentes que 027-029 tocan
+(`stations`, `reading_attachments`, `monitoring_rounds`,
+`monitoring_round_points`), incluyendo filas, columnas, constraints e índices:
+`C:\Users\guill\Documents\Aplicacion_Movil\topofield-backups\topofield-pre-027-029-2026-09-13T12-28-21-067Z.json`, 36.306 bytes, SHA-256
+`5b53d73b936e3bde06bc35eb9bc6cbe13af708c6a75134dbb2d4cb0dd038828e`.
+La primera llamada oficial `apply_migration` para 027 fue bloqueada por los
+controles del entorno antes de ejecutar SQL. No se sustituyó por el runner
+genérico porque `public.schema_migrations` solo registra hasta 018 mientras el
+tracker de Supabase registra 019-026; ejecutarlo habría intentado reejecutar
+migraciones ya aplicadas. Una nueva lectura del tracker de Supabase siguió
+mostrando 026 como última migración, por lo que no hay evidencia de que 027 se
+haya aplicado. Reanudar desde una vía oficial capaz de aplicar y registrar
+027->028->029 sin reconciliar a ciegas ambos trackers.
+
 La batería integrada de cierre local pasó con backend `120/120`, móvil `23`
 suites y `130/130`, TypeScript móvil sin errores, tooling `15/15`,
 `docs:check` sobre `44` documentos y `git diff --check` limpio. El árbol sigue
