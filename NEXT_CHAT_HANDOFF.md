@@ -108,6 +108,11 @@ repositorio bare.
   Expo/Metro relacionados.
 - La regresión queda disponible como `npm run test:tooling` y no depende de
   credenciales, Expo ni un dispositivo físico.
+- `32c177c` endurece `scripts/build-local-android.ps1`: si la limpieza de
+  Gradle falla por `ninja: error: manifest 'build.ninja' still dirty after 100
+  tries`, el mismo script reintenta `app:bundleRelease` sin `clean`. La prueba
+  real del 13-09-2026 terminó con `BUILD SUCCESSFUL in 7m 15s` y generó la AAB
+  v5 firmada; esto no equivale a instalación ni validación física.
 - `verify:pre-apk:local` permite repetir build backend, TypeScript móvil y
   export Android sin credenciales; `verify:pre-apk` mantiene además la
   comprobación remota autenticada y falla cerrado si no existe la contraseña
@@ -221,6 +226,11 @@ repositorio bare.
 - Último preflight conocido: `adb devices -l` mostró solo `List of devices attached`.
 - La release v5 ya está generada por bugs móviles reproducibles del outbox; no
   generar una v6 salvo que aparezca otro bug móvil reproducible.
+- La ejecución más reciente del script terminó con AAB de `40,135,874` bytes
+  en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
+  `keytool -printcert -jarfile` confirma `CN=TopoField Android Release` y la
+  huella SHA-256 conocida. El fallback se probó, pero la AAB v5 sigue sin
+  instalarse mientras ADB no detecte el Galaxy.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión
