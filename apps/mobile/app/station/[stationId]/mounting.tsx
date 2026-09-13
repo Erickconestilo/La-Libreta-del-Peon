@@ -17,6 +17,7 @@ import {
   filterMountingVisitsForVisual,
   getMountingEvidenceUri,
   filterMountingVisitsForStatus,
+  getMountingVisitStatusPresentation,
   MOUNTING_STATUS_FILTERS,
   type MountingVisualEvidence,
   type MountingVisualFilter,
@@ -25,12 +26,6 @@ import {
 } from '@/lib/mounting-visual';
 import type { MountingEvidenceKind, MountingVisitStatus } from '@shared/types';
 import { colors, spacing, typography } from '@/src/theme';
-
-const STATUS_LABELS: Record<MountingVisitStatus, string> = {
-  blocked: 'No realizable',
-  completed: 'Realizada',
-  draft: 'En curso'
-};
 
 export default function MountingVisitsScreen() {
   const insets = useSafeAreaInsets();
@@ -271,60 +266,69 @@ export default function MountingVisitsScreen() {
           </View>
         ) : null}
 
-        {visibleVisits.map((visit) => (
-          <View key={visit.id} style={styles.card}>
-            <View style={styles.visitHeader}>
-              <View style={styles.visitHeaderText}>
-                <Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleString('es-ES')}</Text>
-                <Text style={styles.caption}>Visita registrada por {visit.recordedBy}</Text>
+        {visibleVisits.map((visit) => {
+          const statusPresentation = getMountingVisitStatusPresentation(visit.status);
+          const statusStyle = statusPresentation.tone === 'danger'
+            ? styles.statusDanger
+            : statusPresentation.tone === 'warning'
+              ? styles.statusWarning
+              : styles.statusSuccess;
+
+          return (
+            <View key={visit.id} style={styles.card}>
+              <View style={styles.visitHeader}>
+                <View style={styles.visitHeaderText}>
+                  <Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleString('es-ES')}</Text>
+                  <Text style={styles.caption}>Visita registrada por {visit.recordedBy}</Text>
+                </View>
+                <Text style={[styles.status, statusStyle]}>{statusPresentation.label}</Text>
               </View>
-              <Text style={styles.status}>{STATUS_LABELS[visit.status]}</Text>
+              {visit.changeSummary ? <Text style={styles.body}><Text style={styles.bold}>Cambio:</Text> {visit.changeSummary}</Text> : null}
+              {visit.notes ? <Text style={styles.body}>{visit.notes}</Text> : null}
+              {visit.evidence.map((evidence) => (
+                <Pressable
+                  accessibilityLabel={`Ampliar ${evidence.title ?? 'evidencia de montaje'}`}
+                  accessibilityRole="button"
+                  key={evidence.id}
+                  onPress={() => setPreviewEvidence(evidence)}
+                  style={styles.evidence}
+                >
+                  <View style={styles.evidenceImageFrame}>
+                    <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} resizeMode="cover" source={{ uri: getMountingEvidenceUri(evidence) }} style={styles.evidenceImage} />
+                    {evidence.positionX !== null && evidence.positionY !== null ? (
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          styles.evidenceMarker,
+                          getMountingPhotoMarkerPosition(evidence.positionX, evidence.positionY, MOUNTING_PHOTO_SIZE)
+                        ]}
+                      >
+                        <Text numberOfLines={1} style={styles.evidenceMarkerText}>{evidence.title ?? 'Punto'}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.evidenceBody}>
+                    <Text style={styles.evidenceTitle}>{evidence.title ?? 'Evidencia sin título'}</Text>
+                    <Text style={styles.caption}>{evidence.kind === 'prism' ? 'Prisma' : evidence.kind === 'reference' ? 'Referencia' : evidence.kind === 'access' ? 'Acceso' : 'General'}</Text>
+                    {evidence.notes ? <Text style={styles.body}>{evidence.notes}</Text> : null}
+                  </View>
+                </Pressable>
+              ))}
+              {canEdit && visit.status === 'draft' ? (
+                <View style={styles.actionRow}>
+                  <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'completed').catch(() => undefined)} style={[styles.primaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                    <MaterialIcons color={colors.background} name="done" size={18} />
+                    <Text style={styles.primaryButtonText}>Marcar realizada</Text>
+                  </Pressable>
+                  <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'blocked').catch(() => undefined)} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
+                    <MaterialIcons color={colors.textPrimary} name="block" size={18} />
+                    <Text style={styles.secondaryButtonText}>No realizable</Text>
+                  </Pressable>
+                </View>
+              ) : null}
             </View>
-            {visit.changeSummary ? <Text style={styles.body}><Text style={styles.bold}>Cambio:</Text> {visit.changeSummary}</Text> : null}
-            {visit.notes ? <Text style={styles.body}>{visit.notes}</Text> : null}
-            {visit.evidence.map((evidence) => (
-              <Pressable
-                accessibilityLabel={`Ampliar ${evidence.title ?? 'evidencia de montaje'}`}
-                accessibilityRole="button"
-                key={evidence.id}
-                onPress={() => setPreviewEvidence(evidence)}
-                style={styles.evidence}
-              >
-                <View style={styles.evidenceImageFrame}>
-                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} resizeMode="cover" source={{ uri: getMountingEvidenceUri(evidence) }} style={styles.evidenceImage} />
-                  {evidence.positionX !== null && evidence.positionY !== null ? (
-                    <View
-                      pointerEvents="none"
-                      style={[
-                        styles.evidenceMarker,
-                        getMountingPhotoMarkerPosition(evidence.positionX, evidence.positionY, MOUNTING_PHOTO_SIZE)
-                      ]}
-                    >
-                      <Text numberOfLines={1} style={styles.evidenceMarkerText}>{evidence.title ?? 'Punto'}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <View style={styles.evidenceBody}>
-                  <Text style={styles.evidenceTitle}>{evidence.title ?? 'Evidencia sin título'}</Text>
-                  <Text style={styles.caption}>{evidence.kind === 'prism' ? 'Prisma' : evidence.kind === 'reference' ? 'Referencia' : evidence.kind === 'access' ? 'Acceso' : 'General'}</Text>
-                  {evidence.notes ? <Text style={styles.body}>{evidence.notes}</Text> : null}
-                </View>
-              </Pressable>
-            ))}
-            {canEdit && visit.status === 'draft' ? (
-              <View style={styles.actionRow}>
-                <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'completed').catch(() => undefined)} style={[styles.primaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
-                  <MaterialIcons color={colors.background} name="done" size={18} />
-                  <Text style={styles.primaryButtonText}>Marcar realizada</Text>
-                </Pressable>
-                <Pressable disabled={isMutating} onPress={() => void handleUpdateStatus(visit.id, 'blocked').catch(() => undefined)} style={[styles.secondaryButton, styles.actionButton, isMutating ? styles.disabled : null]}>
-                  <MaterialIcons color={colors.textPrimary} name="block" size={18} />
-                  <Text style={styles.secondaryButtonText}>No realizable</Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
       <Modal animationType="fade" onRequestClose={() => setPreviewEvidence(null)} transparent visible={Boolean(previewEvidence)}>
         <View style={[styles.previewBackdrop, { paddingBottom: insets.bottom, paddingTop: insets.top }]}>
@@ -395,7 +399,10 @@ const styles = StyleSheet.create({
   sectionHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing[2], justifyContent: 'space-between', paddingTop: spacing[2] },
   sectionHeaderCopy: { flex: 1, gap: 3 },
   sectionTitle: { color: colors.textPrimary, fontSize: typography.fontSizeBody, fontWeight: '900' },
-  status: { backgroundColor: 'rgba(34, 197, 94, 0.16)', borderRadius: 999, color: colors.accentGreen, fontSize: 11, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5 },
+  status: { borderRadius: 999, fontSize: 11, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5 },
+  statusDanger: { backgroundColor: 'rgba(248, 113, 113, 0.16)', color: colors.red },
+  statusSuccess: { backgroundColor: 'rgba(34, 197, 94, 0.16)', color: colors.accentGreen },
+  statusWarning: { backgroundColor: 'rgba(245, 158, 11, 0.16)', color: colors.amber },
   title: { color: colors.textPrimary, fontSize: 25, fontWeight: '900' },
   visitDate: { color: colors.textPrimary, fontSize: 16, fontWeight: '900' },
   visitHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing[2], justifyContent: 'space-between' },

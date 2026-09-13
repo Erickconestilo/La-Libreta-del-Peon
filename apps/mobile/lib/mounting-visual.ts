@@ -5,6 +5,11 @@ export const MOUNTING_PHOTO_SIZE = 132;
 export type MountingVisualFilter = 'all' | MountingEvidenceKind;
 export type MountingVisualEvidence = MountingEvidence & { localUri?: string };
 export type MountingVisitStatusFilter = 'all' | MountingVisitStatus;
+export type MountingVisitStatusTone = 'success' | 'warning' | 'danger';
+export type MountingVisitStatusPresentation = {
+  label: string;
+  tone: MountingVisitStatusTone;
+};
 
 export const MOUNTING_VISUAL_FILTERS: Array<{ key: MountingVisualFilter; label: string }> = [
   { key: 'all', label: 'Todas' },
@@ -19,6 +24,18 @@ export const MOUNTING_STATUS_FILTERS: Array<{ key: MountingVisitStatusFilter; la
   { key: 'completed', label: 'Realizadas' },
   { key: 'blocked', label: 'No realizables' }
 ];
+
+export const getMountingVisitStatusPresentation = (status: MountingVisitStatus): MountingVisitStatusPresentation => {
+  if (status === 'blocked') {
+    return { label: 'No realizable', tone: 'danger' };
+  }
+
+  if (status === 'completed') {
+    return { label: 'Realizada', tone: 'success' };
+  }
+
+  return { label: 'En curso', tone: 'warning' };
+};
 
 export const filterMountingVisitsForVisual = <T extends MountingVisit>(
   visits: T[],

@@ -4,6 +4,7 @@ import type { MountingVisit } from '@shared/types';
 import {
   filterMountingVisitsForVisual,
   filterMountingVisitsForStatus,
+  getMountingVisitStatusPresentation,
   getMountingEvidenceUri,
   MOUNTING_STATUS_FILTERS,
   getMountingPhotoMarkerPosition,
@@ -64,5 +65,11 @@ describe('mounting photo visual contract', () => {
     ]);
     expect(filterMountingVisitsForStatus(visits, 'blocked').map((visit) => visit.id)).toEqual(['visit-blocked']);
     expect(MOUNTING_STATUS_FILTERS.map((filter) => filter.key)).toEqual(['all', 'draft', 'completed', 'blocked']);
+  });
+
+  it('presents blocked visits differently from completed work', () => {
+    expect(getMountingVisitStatusPresentation('draft')).toEqual({ label: 'En curso', tone: 'warning' });
+    expect(getMountingVisitStatusPresentation('completed')).toEqual({ label: 'Realizada', tone: 'success' });
+    expect(getMountingVisitStatusPresentation('blocked')).toEqual({ label: 'No realizable', tone: 'danger' });
   });
 });
