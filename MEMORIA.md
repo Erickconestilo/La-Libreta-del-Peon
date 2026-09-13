@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Cerrar el E2E físico F5 en Galaxy con release v6: login operador, lectura y foto offline, reinicio, reconexión, unicidad y revisión de cierre | cerrado parcialmente (v6 instalada; lectura y foto offline sobrevivieron al reinicio y sincronizaron una sola vez; se verificó el aviso y la lista de rondas desde caché tras arranque en frío sin red; cierre definitivo, exportación y validación observada siguen pendientes. No se tocaron migraciones ni servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer resiliente el script de build Android ante fallo de limpieza nativa | cerrado (`npm run mobile:build-local-android` ejecutó `expo prebuild --clean`; la limpieza Gradle falló literalmente en `react-native-reanimated:externalNativeBuildCleanRelease` con `ninja: error: manifest 'build.ninja' still dirty after 100 tries`, y el reintento `app:bundleRelease` sin `clean` terminó con `BUILD SUCCESSFUL in 7m 15s`. AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, `40,135,874` bytes; `keytool -printcert -jarfile` confirma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `git diff --check` sin salida. El Galaxy no se tocó y no hubo cambios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff con el fallback de build Android verificado | cerrado (`NEXT_CHAT_HANDOFF.md` documenta `32c177c`, el fallback de `app:bundleRelease` sin `clean`, la AAB v5 de `40,135,874` bytes y la firma `CN=TopoField Android Release`. `npm run docs:check` devolvió `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`; `git diff --check` terminó sin salida. No se tocó el Galaxy ni ningún servicio remoto.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff activo con la semilla genérica completa | cerrado (`NEXT_CHAT_HANDOFF.md` identifica `a86fa4e` como último commit funcional local y documenta la semilla genérica de tres zonas, incluida `Zona Centro`/`EJ-C-001`, alineada con el CSV. `npm run docs:check` terminó con `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.` No se tocaron servicios remotos ni el Galaxy.)` |
@@ -438,23 +439,46 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `104/104`
-tests; móvil pasa `22` suites y `101/101` tests; `docs:check` revisa `40`
-documentos sin avisos; la release Android `versionCode=5` está preparada
-localmente como AAB y APK firmadas, pero no está instalada porque ADB no
-detecta el Galaxy. Render sigue vivo, aunque la última observación pública
-fue el commit `eb88db9`, anterior a los hardenings locales posteriores. El
-E2E físico del operador, la validación con datos autorizados y las entrevistas
-de campo siguen abiertos. La auditoría de procedencia del 13-09-2026 también
-detectó que la historia alcanzable de la rama conserva objetos de la etapa
-anterior de purga, mientras `main` y `origin/main` apuntan a historiales
-distintos; el runtime actual está neutralizado, pero la purga completa no se
-debe presentar como cerrada.
+tests; móvil pasa `22` suites y `101/101` tests antes de la corrección de caché
+de rondas, y la comprobación enfocada posterior pasa `102/102`; `docs:check`
+revisa `40` documentos sin avisos. La release Android `versionCode=6` está
+instalada en el Galaxy y firmada con `CN=TopoField Android Release`. El E2E
+físico ya demostró lectura y foto offline, reinicio, reconexión automática y
+unicidad en Supabase; también se validó la lista de rondas desde caché tras
+arranque en frío sin red. Siguen abiertos el cierre definitivo con umbrales
+autorizados, la validación de CSV/XLSX, la jornada observada y las entrevistas.
+Render sigue vivo, pero la última observación pública fue el commit `eb88db9`,
+anterior a los hardenings locales posteriores. La auditoría de procedencia del
+13-09-2026 detectó además que la historia alcanzable conserva objetos de la
+etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
+distintos; el runtime actual está neutralizado y la purga completa sigue sin
+presentarse como cerrada.
 
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
 falla. Esto permite producir la AAB v5 sin borrar manualmente artefactos
 generados; no cambia el criterio de instalación ni sustituye la validación
-física en el Galaxy.
+  física en el Galaxy.
+
+**Evidencia física más reciente (13-09-2026, v6):** `adb devices -l` devolvió
+`R5CY21X6FLE device product:pa3qxee model:SM_S938B device`. La APK release
+arm64 se instaló con `adb install -r` y devolvió `Success`; `dumpsys package`
+confirmó `versionCode=6`, `versionName=1.0.0`, `firstInstallTime=2026-08-07
+10:49:51` y `lastUpdateTime=2026-09-13 06:58:15`. Con red aislada mediante el
+modo avión visible del sistema, la UI mostró `2 cambios pendientes de
+sincronizar`, `Lectura guardada sin conexión` y `La foto también queda
+pendiente de sincronizar`. Logcat registró la lectura y el adjunto encolados;
+tras restaurar LTE registró `Flushing 2 pending items...`, dos mensajes
+`synced successfully` y `Flush complete: 2/2 synced`. La consulta de solo
+lectura en Supabase verificó exactamente una lectura con
+`client_request_id=19eeb99b-8409-40fc-9c3d-c03cfc3d92b7`, valor `825 mm`,
+estado `draft`, y un único adjunto asociado. El punto permanece `pending`
+porque no hay umbral vigente, por lo que el cierre sigue correctamente
+bloqueado. Tras preparar la caché en línea, el arranque en frío sin red mostró
+`Rondas sin actualizar. Última copia: 2026-09-13T05:00:36.436Z.` y la ronda
+`E2E-Galaxy-20260731-Atc`. Evidencia visual no versionada:
+`topofield-v6-airplane-hard-offline.png`,
+`topofield-v6-rounds-online-cache-seed.png` y las capturas `topofield-v5-*`.
 
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
@@ -468,7 +492,7 @@ física en el Galaxy.
 - **Hallazgo E2E real en Galaxy (12-09-2026):** la lectura offline `8.25 mm` de la ronda `E2E-Galaxy-20260731-Atc` llegó una sola vez a Supabase con `client_request_id=6e8403ac-f462-411b-84b8-44a03d9c6cc0`, pero `attachment_count=0` y no existe objeto correspondiente en `storage.objects`. El log posterior fue literalmente `[SyncEngine] No pending items`. La prueba no se considera aprobada hasta repetirla con la foto presente.
 - **Corrección local del primer hallazgo (12-09-2026):** `68e001a fix(mobile): recover interrupted reading attachments` hace atómica la inserción de lectura+adjunto en SQLite y recupera operaciones que quedaron en `syncing` al reiniciar. Verificación literal: `npx tsc --noEmit --project apps/mobile/tsconfig.json` sin salida/código `0`; móvil `12` suites y `54` tests; backend `75/75` tests.
 - **Segundo intento E2E no válido y bug adicional (12-09-2026):** al preparar `14.58 mm` con foto, `settings put global airplane_mode_on 1` devolvió `settings=1`, pero el dispositivo siguió con conectividad y el flujo intentó subir la foto en caliente. Supabase registró una sola lectura `14.588 mm` con `client_request_id=40e4f1fb-e361-44df-a3d0-7e73efc7c671` y `attachment_count=0`. Render respondió literalmente `403 PROJECT_REQUIRED` al firmado de la foto. La causa local era que `/uploads/photos/sign` obtenía la lectura con `getInstrumentReadingById`, cuyo resultado no incluía `projectId`; el controlador pasaba `null` a `assertProjectWriteAccess`.
-- **Corrección backend desplegada (12-09-2026):** `b0572a0 fix(backend): preserve reading project scope for photo uploads` usa `getInstrumentReadingContext`, que conserva el `projectId` obtenido mediante joins y scope de obra. La PR #10 se fusionó con `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0` y Render ya sirve ese commit. La prueba autenticada de subida y el E2E físico siguen pendientes porque el Galaxy no está conectado.
+- **Corrección backend implementada (12-09-2026):** `b0572a0 fix(backend): preserve reading project scope for photo uploads` usa `getInstrumentReadingContext`, que conserva el `projectId` obtenido mediante joins y scope de obra. La PR #10 se fusionó con `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`; la corrección quedó validada localmente y en la prueba física de la release v6. La última observación pública de Render sigue en `eb88db9`, por lo que no se presenta como desplegada en el entorno público actual.
 - **Implementado y aplicado (12-09-2026):** reactivación operativa para campañas manuales: permiso efectivo `read/write` por membresía, parte idempotente de finalización de zona, sincronización offline del parte y captura inicial de testigo fotográfico, fisurómetro digital y potenciómetro. Las migraciones `022_project_membership_access_level.sql`, `023_work_completion_reports.sql` y `024_field_instrument_catalog.sql` están aplicadas en Supabase `topofield` y el backend correspondiente está desplegado en Render.
 - **Implementado localmente (12-09-2026):** el recorrido de consulta supervisora ya permite abrir puntos de una ronda y ver su histórico sin exponer edición; `Mi jornada` añade preparación directa sin conexión y un resumen operativo de ronda. Verificado con TypeScript móvil limpio y `11` suites/`49` tests móviles en verde; la publicación y las migraciones remotas de este bloque quedan registradas en la bitácora de §12.
 - **Implementado localmente (12-09-2026):** el histórico de lecturas ahora incluye las evidencias asociadas a cada lectura y las muestra como miniaturas en la consulta supervisora y en el detalle del punto. La ruta de escritura de adjuntos mantiene `admin`/`topografo` y scope de obra; no se abrió acceso de escritura al visitante.
@@ -480,9 +504,9 @@ física en el Galaxy.
 - **Implementado localmente y aplicado remotamente (12-09-2026):** el rol global `supervisor` ya se reconoce en sesión persistida móvil, Perfil, obras, estaciones, prismas, mensajes/incidencias, rondas, históricos y resúmenes. Las pantallas de captura, edición, preparación offline, cierre, outbox reintentable y exportación quedan ocultas o restringidas; `canWriteProject` mantiene el supervisor en solo lectura aunque la membresía diga `write`. La migración `026_supervisor_role.sql` está aplicada en Supabase y la cuenta QA quedó migrada a `supervisor` con una única membresía activa `read` en `campus-nord`.
 - **Validación supervisora cerrada (12-09-2026):** la release local `versionCode=4` está instalada en el Galaxy y la cuenta `supervisor-piloto@topofield.local` consulta únicamente `campus-nord`; se verificaron Perfil, obra, ronda, punto, histórico, evidencia y persistencia tras reinicio. El pendiente activo es el recorrido de operador offline.
 - **Corregido y verificado en Supabase (12-09-2026):** la migración `025_fix_auth_user_trigger_users` sustituyó la referencia obsoleta a `public.profiles` por el modelo canónico `public.users`. La cuenta sintética `supervisor-piloto@topofield.local` se creó confirmada, inició sesión contra Auth y Render respondió `200` en `/auth/me`; la consulta de rondas y `GET /me/journey` respondieron `200`, mientras un intento de crear ronda devolvió `403 READ_ONLY_PROJECT_MEMBERSHIP`. La contraseña temporal se generó en memoria, no se guardó en archivos ni documentación.
-- **Implementado y aplicado (24-08-2026, estado actualizado 12-09-2026):** Mi jornada usa las rondas existentes como trabajo asignado; `admin` puede asignar topógrafo, fecha y `executionOrder`, el móvil obtiene `GET /api/v1/me/journey`, conserva la cola y aplaza localmente hasta fin de día. La migración 021 y las migraciones F5 están verificadas en Supabase, Render sirve el backend compatible y la release `versionCode=4` está instalada. Falta validar el recorrido autenticado completo de operador offline con lectura y foto.
+- **Implementado y aplicado (24-08-2026, estado actualizado 13-09-2026):** Mi jornada usa las rondas existentes como trabajo asignado; `admin` puede asignar topógrafo, fecha y `executionOrder`, el móvil obtiene `GET /api/v1/me/journey`, conserva la cola y aplaza localmente hasta fin de día. La migración 021 y las migraciones F5 están verificadas en Supabase. La release `versionCode=6` está instalada y el recorrido autenticado de operador offline con lectura y foto quedó verificado una vez sin duplicados; el cierre definitivo y la exportación real siguen pendientes.
 - **Corregido en móvil (24-08-2026):** un topógrafo ya no puede seleccionar `Sin obra` al crear una estación; la obra única se autoselecciona, una obra pasada por navegación se acepta solo si está entre sus obras disponibles y la pantalla muestra un bloqueo comprensible si no tiene ninguna. La pantalla de rondas vacía ahora ofrece crear la primera ronda/preparar puntos y separa el error de carga con botón de reintento.
-- **Completado localmente (24-08-2026, continuación en v4):** preparación offline de una ronda, caché de puntos/histórico/umbrales y cierre operativo con pendientes. La release `versionCode=4` está instalada; la prueba real de lectura/foto sin red, reinicio y sincronización idempotente debe repetirse después de desplegar `b0572a0`.
+- **Completado localmente (24-08-2026, actualizado 13-09-2026):** preparación offline de una ronda, caché de puntos/histórico/umbrales y cierre operativo con pendientes. La release `versionCode=6` está instalada; lectura y foto sin red, reinicio y sincronización idempotente quedaron verificadas en el Galaxy. La lista de rondas también se recupera desde caché tras arranque en frío sin red. La ronda de prueba permanece abierta porque su lectura está en `draft` y no existe umbral vigente.
 - **Completado localmente (24-08-2026):** exportación de ronda CSV/XLSX desde un único contrato `RoundExportRow`, con una fila por lectura y por punto pendiente, delta/umbral calculados, scope de proyecto y roles `admin`/`topografo`. Falta validarla contra una ronda real y el formato operativo que consume el equipo.
 - **Implementado localmente (24-08-2026):** el croquis orientativo de prismas conserva su carácter relativo a la estación y añade filtro `Todos/Activos/Revisar`, estado vacío específico, antigüedad de última observación y etiquetas con anclaje lateral. Falta validarlo en dos jornadas observadas; no se afirma precisión geográfica ni CAD.
 - **Corregido en app (31-07-2026):** re-login tras inactividad. El refresh se hacía, pero un fallo transitorio borraba el access token persistido. Ahora se conserva y solo se invalida ante `401 INVALID_REFRESH_TOKEN`. Pendiente de Erick, solo como comprobación de dashboard: confirmar que Auth no tenga activados *Inactivity timeout*, *Time-box user sessions* o sesión única con una política que quiera mantener.
@@ -548,7 +572,7 @@ física en el Galaxy.
 - **Relación visita-evidencia endurecida (13-09-2026):** las consultas de memoria de montaje ahora relacionan cada evidencia por `visit_id` y `station_id`, evitando que una fila cruzada de otra estación se agregue al historial de la visita antes de aplicar la migración `027`. Regresión añadida; backend verificado con `102/102` tests. No se tocó Supabase, Render, EAS, Play Store ni el Galaxy.
 - **Auditoría autónoma local consolidada (13-09-2026):** el informe vivo `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md` reúne la superficie de seguridad, la corrección de incidencias, la release `versionCode=5`, el resultado de Expo y los bloqueos que requieren Galaxy, nube o personas reales. `npm audit --workspace apps/backend --omit=dev` conserva exactamente dos vulnerabilidades moderadas transitivas de `uuid`; no se usa `--force`. `npm run verify:pre-apk:local` terminó correctamente y `adb devices -l` devolvió solo `List of devices attached`.
 - **Preparación de validación de campo (12-09-2026):** se añadió `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` con una hoja de registro de jornada y entrevistas. Es una plantilla vacía: no sustituye la evidencia de Galaxy, la observación real ni las cinco conversaciones necesarias para cerrar F5.
-- **Validación histórica en Galaxy (12-09-2026):** la consulta supervisora se comprobó físicamente con la release `versionCode=4`; el AAB/APK universal estaba firmado y verificado con `CN=TopoField Android Release` y `adb install -r` devolvió `Success`. La fuente actual tiene `versionCode=5` y su APK arm64 está preparada localmente, pero no se ha instalado porque ADB no detecta el Galaxy.
+- **Validación histórica y actual en Galaxy (13-09-2026):** la consulta supervisora se comprobó físicamente con la release `versionCode=4`. Después, la APK arm64 de `versionCode=6`, firmada como `CN=TopoField Android Release`, se instaló con `adb install -r` y devolvió `Success`; `dumpsys package` confirmó la actualización de hoy. La v6 incluye la corrección de caché de rondas para arranque en frío offline.
 - Fase 6: reemplazar el blob genérico de `instrument_readings` por estructura propia cuando lleguen piezómetro/inclinómetro y exista un procedimiento confirmado.
 - Visitas de montaje agrupadas, croquis fotográfico anotable, formularios de pares para convergencia/peralte y entrega preparada a proveedor.
 

@@ -28,6 +28,28 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
+
+## Estado verificado más reciente (13-09-2026)
+
+- El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.
+- La release arm64 `versionCode=6` de
+  `com.ciudadanoinusual.topofield` está instalada; `adb install -r` devolvió
+  `Success`. La APK está firmada como `CN=TopoField Android Release`.
+- El E2E físico del operador pasó la parte crítica: lectura `825 mm` y foto
+  se guardaron sin conexión, sobrevivieron al reinicio y sincronizaron dos
+  elementos automáticamente al volver LTE. Supabase verificó exactamente una
+  lectura para el `clientRequestId` y exactamente un adjunto asociado.
+- Con la caché preparada en línea, el modo avión activado desde los ajustes
+  visibles y un arranque en frío, `Rondas de auscultación` mostró el aviso
+  `Rondas sin actualizar. Última copia: 2026-09-13T05:00:36.436Z.` y la ronda
+  `E2E-Galaxy-20260731-Atc`. La corrección local está en
+  `apps/mobile/lib/offline/monitoring-cache.ts` y
+  `apps/mobile/hooks/use-monitoring.ts`, con regresión enfocada `4/4`.
+- El punto continúa `pending` porque la lectura llegó con estado `draft` y no
+  existe umbral vigente; por tanto no se ha falseado el cierre como completo.
+- La conectividad se restauró y `ping` a Render devolvió `0% packet loss`.
+- Render público sigue observado en `eb88db9`; no se hizo deploy, migración,
+  fetch, pull ni push en esta validación.
 - Último commit funcional local: `a86fa4e` (`fix(backend): seed complete generic project catalog`). Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
@@ -220,17 +242,15 @@ repositorio bare.
 
 - Release histórica instalada: `versionCode=4`, firmada como `CN=TopoField Android Release`.
 - La consulta supervisora fue validada anteriormente en el Galaxy.
-- El recorrido de operador con lectura y foto offline sigue sin aprobar porque
-  una repetición anterior no dejó adjunto y después el dispositivo dejó de estar
-  visible para ADB.
-- Último preflight conocido: `adb devices -l` mostró solo `List of devices attached`.
-- La release v5 ya está generada por bugs móviles reproducibles del outbox; no
-  generar una v6 salvo que aparezca otro bug móvil reproducible.
-- La ejecución más reciente del script terminó con AAB de `40,135,874` bytes
-  en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`;
-  `keytool -printcert -jarfile` confirma `CN=TopoField Android Release` y la
-  huella SHA-256 conocida. El fallback se probó, pero la AAB v5 sigue sin
-  instalarse mientras ADB no detecte el Galaxy.
+- La release arm64 `versionCode=6` se instaló el 13-09-2026 con `adb install -r`
+  y `Success`; `dumpsys package` confirmó `lastUpdateTime=2026-09-13
+  06:58:15`.
+- El recorrido de operador con lectura y foto offline quedó verificado una vez:
+  reinicio sin pérdida, sincronización automática `2/2` y exactamente una
+  lectura más un adjunto en Supabase. El arranque en frío offline recuperó
+  además la lista de rondas desde caché con aviso de antigüedad.
+- La v6 se generó porque se reprodujo un fallo móvil real de caché de rondas;
+  no generar otra release salvo que aparezca un nuevo bug móvil reproducible.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión

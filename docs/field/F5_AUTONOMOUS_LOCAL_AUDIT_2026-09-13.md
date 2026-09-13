@@ -8,15 +8,34 @@ rol: audit
 
 ## Alcance
 
-Esta auditoria cubre lo que puede verificarse sin el Galaxy, sin aplicar
-migraciones y sin modificar Supabase, Render, EAS o Play Store. No sustituye
-la prueba fisica, la jornada observada ni las entrevistas profesionales.
+Esta auditoria comenzo como revision local sin el Galaxy, sin aplicar
+migraciones y sin modificar Supabase, Render, EAS o Play Store. El addendum
+fisico de esta misma fecha incorpora la evidencia posterior del Galaxy, pero
+no sustituye la jornada observada ni las entrevistas profesionales.
 
 La comprobación pública del 13-09-2026 observó Render vivo: `/api/v1/health`
 respondió `200` con commit `eb88db922a03b1e01a47f90dba8346542df3f212`, y las
 rutas protegidas de rondas y `GET /api/v1/me/journey` respondieron `401` sin
 bearer. Ese hash remoto es anterior a los hardenings locales posteriores; no
 se ha desplegado desde esta sesión.
+
+## Addendum fisico del 13-09-2026
+
+La prueba posterior uso la release `versionCode=6` instalada en el Galaxy
+`SM-S938B`/ADB `R5CY21X6FLE`. La lectura `825 mm` y una foto se guardaron sin
+red, sobrevivieron al reinicio y el sincronizador registro dos elementos
+completados tras restaurar LTE. La consulta de solo lectura en Supabase
+verifico exactamente una lectura con `client_request_id` poblado y
+`attachment_count=1`, junto con exactamente una fila en
+`reading_attachments`. El detalle completo, incluidos los identificadores y
+los logs literales, esta en `F5_HALLAZGOS_2026-09-13.md`.
+
+La misma release cargo la lista de rondas en linea antes del corte. Tras
+activar modo avion desde la interfaz del sistema y reabrir la app, la ruta
+`Obras -> Campus Nord -> Rondas de auscultacion` mostro `Rondas sin actualizar`
+y la ronda `E2E-Galaxy-20260731-Atc`. Esto confirma la correccion de cache por
+proyecto incorporada en v6. El punto sigue `pending` porque no hay umbral
+vigente y la lectura permanece `draft`; el cierre bloqueado es correcto.
 
 ## Hallazgos y acciones
 
@@ -338,11 +357,13 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 
 ## Pendientes que no se pueden cerrar localmente
 
-- E2E en Galaxy: lectura, foto, reinicio, reconexion, outbox y duplicados; la
-  APK arm64 de la release v5 ya esta preparada y solo necesita instalación.
-  La variante universal queda opcional para ampliar compatibilidad: el intento
-  local fallo en `react-native-reanimated` con `manifest 'build.ninja' still
-  dirty after 100 tries`.
+- E2E en Galaxy: lectura, foto, reinicio, reconexion y unicidad ya estan
+  verificados una vez con la APK arm64 release `versionCode=6`. Siguen
+  pendientes la repeticion con umbral autorizado, el cierre definitivo, la
+  exportacion real y la observacion de jornada. La variante universal queda
+  opcional para ampliar compatibilidad: el intento local fallo en
+  `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100
+  tries`.
 - Prueba real de parte parcial, cierre y exportacion con datos autorizados.
 - Aplicar la migracion 027 y desplegar las visitas de montaje, si se autoriza.
 - Revisar y aplicar la migracion 028 solo despues de comprobar en Supabase que
