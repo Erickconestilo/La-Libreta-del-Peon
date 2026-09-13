@@ -166,6 +166,12 @@ se ha desplegado desde esta sesión.
     dejando el item visible para que el sincronizador lo clasifique como error
     en vez de ocultar toda la cola. La regresión está en
     `apps/mobile/lib/offline/__tests__/outbox.test.ts`.
+26. La observabilidad móvil pasaba objetos de error completos a varios logs;
+    eso podía emitir `message` o `rawMessage` del servidor. Se añadió
+    `apps/mobile/lib/safe-error-log.ts` y se sustituyeron esos logs por estado,
+    código, request ID y tipo de error. La regresión
+    `safe-error-log.test.ts` confirma que mensajes con contraseñas y cuerpos
+    simulados no aparecen en la salida.
 
 ## Evidencia local
 
@@ -177,8 +183,8 @@ se ha desplegado desde esta sesión.
 ℹ pass 99
 ℹ fail 0
 
-Test Suites: 20 passed, 20 total
-Tests:       89 passed, 89 total
+Test Suites: 21 passed, 21 total
+Tests:       91 passed, 91 total
 
 check-docs: 39 documentos revisados en raíz y docs/.
 

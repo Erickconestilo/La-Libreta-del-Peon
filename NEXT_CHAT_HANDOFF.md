@@ -36,6 +36,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   conserva únicamente estado y código técnico validado.
 - El lector del outbox tolera JSON local corrupto y mantiene visible el item
   para diagnóstico; no descarta ni reinterpreta sus datos como válidos.
+- La observabilidad móvil usa `formatSafeErrorForLog`: no imprime mensajes de
+  error ni cuerpos HTTP, solo metadatos operativos validados.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
@@ -202,8 +204,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
-  `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `20` suites y
-  `89` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `21` suites y
+  `91` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 
