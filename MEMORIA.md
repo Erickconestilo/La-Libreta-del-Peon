@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el resumen consolidado de tests móviles tras los filtros de memoria visual | cerrado (`npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 100 passed, 100 total`; `npm run docs:check` revisó `40 documentos revisados en raíz y docs/` sin errores ni avisos; `git diff --check` terminó sin salida.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir filtro operativo por estado a la memoria visual de montaje | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 100 passed, 100 total`; `git diff --check` terminó sin salida. La pantalla filtra por estado sin cambiar el orden ni los datos de visita; no se tocaron servicios remotos ni `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir vista ampliada segura para evidencias del croquis fotográfico | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 99 passed, 99 total`; `git diff --check` terminó sin salida. Las miniaturas ahora abren una vista ampliada que prioriza la imagen local pendiente de sincronización y permite cerrar con un botón accesible; no se tocaron servicios remotos ni `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mejorar localmente la memoria visual de montaje con filtros y croquis fotográfico legible | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 98 passed, 98 total`; `git diff --check` terminó sin salida. Se añadieron filtros por tipo de evidencia y una previsualización mayor para el croquis fotográfico, sin migración remota ni cambios en Supabase, Render, EAS, Play Store, Galaxy o `apps/mobile/package.json`.) |
@@ -430,7 +431,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `104/104`
-tests; móvil pasa `22` suites y `98/98` tests; `docs:check` revisa `40`
+tests; móvil pasa `22` suites y `100/100` tests; `docs:check` revisa `40`
 documentos sin avisos; la release Android `versionCode=5` está preparada
 localmente como AAB y APK firmadas, pero no está instalada porque ADB no
 detecta el Galaxy. Render sigue vivo, aunque la última observación pública
