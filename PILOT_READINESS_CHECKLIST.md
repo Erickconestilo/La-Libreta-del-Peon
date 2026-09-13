@@ -13,7 +13,7 @@ Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
 - [x] Backend compila y pasa `114/114` tests con la batería local.
-- [x] Móvil pasa TypeScript, `23` suites y `117/117` tests.
+- [x] Móvil pasa TypeScript, `23` suites y `119/119` tests.
 - [x] Tooling local pasa `13/13` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `44 documentos revisados en raíz y docs/` sin errores
@@ -38,9 +38,10 @@ validación en campo:
   `lastUpdateTime=2026-09-13 12:32:01`. El smoke test recuperó una ronda
   cacheada y mostró el progreso operativo y el cierre bloqueado con pendientes;
   la prueba autenticada de campo sigue pendiente.
-- [x] La APK arm64 v7 está instalada en el Galaxy; `adb install -r` devolvió
-  `Success` y `dumpsys package` confirmó `versionCode=7` y
-  `lastUpdateTime=2026-09-13 07:39:25`.
+- [x] La APK arm64 v7 quedó instalada históricamente en el Galaxy; `adb install -r`
+  devolvió `Success` y `dumpsys package` confirmó `versionCode=7` y
+  `lastUpdateTime=2026-09-13 07:39:25`. Se conserva como evidencia de esa
+  ejecución, no como la versión activa.
 - [x] La auditoría local cubre autenticación, roles, scope entre obras,
   adjuntos, idempotencia, caché por sesión, outbox y exportación.
 - [x] La pantalla de resumen permite guardar CSV/XLSX en una carpeta elegida

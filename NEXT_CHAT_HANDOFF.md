@@ -46,7 +46,7 @@ son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 La captura móvil usa el outbox existente y `clientRequestId`, actualiza la
 caché local y conserva separado el resultado declarado de la lectura
 metrológica y del cierre de ronda. Backend pasa `114/114` tests y móvil
-`117/117`; TypeScript móvil y documentación están en verde. El núcleo quedó en
+`119/119`; TypeScript móvil y documentación están en verde. El núcleo quedó en
 `6ed9a84`, la entrega de oficina en `8aff703`, el historial móvil en
 `3b5ed4b` y su refresco tras sincronización en `2399de6`. La mejora de
 fluidez de ronda quedó en `2d182a0`: la cabecera resume hechos, en curso,
@@ -127,9 +127,10 @@ confunde una acción pendiente del outbox con recepción del servidor.
 Los verificadores aceptan `TOPOFIELD_ROUND_POINT_ID` para comprobar ese
 endpoint cuando 029 esté desplegada: `npm run verify:remote:public` exige
 `401` sin bearer y `npm run verify:remote:auth` acepta `200` o `403` según el
-rol. Ambos solo imprimen códigos y estados, nunca tokens ni cuerpos. En esta sesión se intentó
-reactivar ADB, pero `adb devices -l` devolvió únicamente `List of devices
-attached`; no se instaló ninguna build ni se modificó el Galaxy.
+rol. Ambos solo imprimen códigos y estados, nunca tokens ni cuerpos. En la
+sesión actual `adb devices -l` devolvió el Galaxy como `device`; se instaló la
+release v12 con `adb install -r` y `dumpsys package` confirmó
+`versionCode=12`. No se hicieron nuevas lecturas, fotos ni cambios remotos.
 
 ## Evidencia histórica verificada en Galaxy (13-09-2026, v7)
 
@@ -195,7 +196,7 @@ attached`; no se instaló ninguna build ni se modificó el Galaxy.
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último slice funcional local: `750153a` (`feat: exigir motivo en visitas no realizables`), precedido por `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `114/114` backend y `117/117` móvil; tooling mantiene `13/13` y `docs:check` revisa `44` documentos sin avisos. La build v7 del Galaxy no contiene estos últimos slices; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último slice funcional local: `750153a` (`feat: exigir motivo en visitas no realizables`), precedido por `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `114/114` backend y `119/119` móvil; tooling mantiene `13/13` y `docs:check` revisa `44` documentos sin avisos. La build v12 del Galaxy contiene el slice de semana operativa y su smoke test no generó cambios remotos; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. La evidencia de E2E offline completo en v7 permanece histórica y separada. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y

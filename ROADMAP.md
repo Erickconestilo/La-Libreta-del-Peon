@@ -189,7 +189,7 @@ El último despliegue funcional verificado sirve el commit
 `df224f9b7226c8aa5899a5e889898663b4642016`, que contiene la corrección de
 exportación y el scope de adjuntos.
 La fuente y la release móvil instalada más reciente están en
-`versionCode=7`, firmada y verificada con el certificado local de release.
+`versionCode=12`, firmada y verificada con el certificado local de release.
 La AAB/APK arm64 quedó comprobada con Gradle y la instalación física devolvió
 `Success`.
 La release histórica `versionCode=4` se instaló en el Galaxy
@@ -320,7 +320,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar la comparación estructurada de los archivos exportados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad ya está comprobado en el Galaxy; la release actualmente instalada es `versionCode=7`. El supervisor y las releases v4/v6 quedan como evidencia histórica.
+- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar la comparación estructurada de los archivos exportados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad está comprobado como evidencia histórica en el Galaxy v7; la release actualmente instalada es `versionCode=12`, cuyo smoke test no generó nuevos datos remotos. El supervisor y las releases v4/v6 quedan como evidencia histórica.
 - **Abierto — decisión de seguridad antes de datos sensibles:** `007_storage_photo_bucket.sql` deja `topofield-photos` público y los DTO conservan `publicUrl`. La API limita quién descubre las filas, pero no puede revocar un enlace directo ya conocido. Antes de incorporar fotos sensibles de terceros hay que aceptar explícitamente ese riesgo o migrar a bucket privado con URLs de lectura firmadas; no se cambia de forma unilateral porque afecta migraciones, API y móvil.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 

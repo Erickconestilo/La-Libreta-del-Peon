@@ -208,6 +208,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 |---|---|---|---|---|
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir acciones directas desde Parte diario para continuar la ronda y abrir el parte de zona | cerrado (`npm run verify:local` terminó con backend `114/114`, móvil `23 suites / 118 tests`, tooling `13/13`, `docs:check` con `44 documentos` sin errores ni avisos y `git diff --check` sin salida. Se actualizó `apps/mobile/app/daily-report.tsx`; la release local v11 se generó e instaló después. No se tocaron Supabase, Render, EAS, Play Store ni el cambio previo de `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Convertir el patrón semanal del control Excel en una vista de trabajo por días dentro del Parte diario | cerrado (`getJourneyWorkWeek` agrupa las rondas reales de lunes a viernes, conserva asignaciones fuera de esa semana y respeta `executionOrder`; la regresión pasa con `9` tests. `npm run verify:local` terminó con backend `114/114`, móvil `23 suites / 119 tests`, tooling `13/13`, `docs:check` con `44 documentos` sin errores ni avisos y `git diff --check` sin salida. La release local v12 se generó e instaló en el Galaxy. No se tocaron Supabase, Render, EAS, Play Store ni el cambio previo de `apps/mobile/package.json`.) |
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar cifras y versión activa en documentación después de instalar v12 | cerrado (`documentation-governance`: se alinearon los estados vivos de `MEMORIA.md`, `ROADMAP.md`, `NEXT_CHAT_HANDOFF.md` y `PILOT_READINESS_CHECKLIST.md` con móvil `119/119` y Galaxy `versionCode=12`; v7 quedó explícitamente como evidencia histórica. `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se tocó código, Supabase, Render, EAS, Play Store ni `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Preparar e instalar release local versionCode 10 con el resumen de trabajo del parte diario | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 6m 59s`; la APK arm64 terminó con `BUILD SUCCESSFUL in 1m 17s`; `adb install -r` devolvió `Success`. `dumpsys package` confirmó `versionCode=10`, `versionName=1.0.0`, `firstInstallTime=2026-08-07 10:49:51` y `lastUpdateTime=2026-09-13 11:52:50`. La firma AAB/APK es `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `apksigner verify --verbose` devuelve `Verifies` con V2 `true`; `apkanalyzer` confirma `com.ciudadanoinusual.topofield`. El smoke test por `adb shell monkey` lanzó la app y `uiautomator dump` mostró `LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...` y las pestañas `Obras`, `Mapas`, `Bitácora`, `Guías` y `Perfil`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Integrar el resumen de trabajo asignado en el parte diario sin mezclarlo con la lectura metrológica | cerrado (`Parte diario` reutiliza los contadores de `Mi jornada` por obra y muestra `Hechos`, `En curso`, `Pendientes` y `Por revisar`; el helper `getJourneyWorkSummary` tiene regresión dedicada. `npm run verify:local` terminó con backend `114/114`, móvil `23 suites / 118 tests`, tooling `13/13`, `docs:check` con `44 documentos` sin errores ni avisos y `git diff --check` sin salida. No se tocaron Supabase, Render, EAS, Play Store ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Preparar release local versionCode 9 con el resumen separado de trabajo y lectura | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 25s`; AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, APK arm64 en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`; `keytool` y `apksigner` confirman `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `apksigner verify --verbose` devuelve `Verifies` con V2 `true`; `apkanalyzer` confirma `com.ciudadanoinusual.topofield`, `versionCode=9`, `versionName=1.0.0`. `adb devices -l` devolvió solo `List of devices attached`, sin Galaxy, por lo que no se instaló.)` |
@@ -507,25 +508,26 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `114/114`
-tests; móvil pasa `23` suites y `117/117` tests; tooling mantiene `13/13` y
-`docs:check` revisa `44` documentos sin avisos. La release Android
-`versionCode=7`, firmada con `CN=TopoField Android Release`, fue instalada y
-validada históricamente en el Galaxy. Esa evidencia demostró lectura y foto
-offline, reinicio, reconexión automática y unicidad en Supabase; también se
-validó la lista de rondas desde caché tras arranque en frío sin red. La v7
-verificó además que CSV y XLSX se generan y abren el selector nativo, con
-respuestas autenticadas `200` registradas por Render. Siguen abiertos el
-cierre definitivo con umbrales autorizados, la ejecución de la comparación
-estructurada sobre los archivos exportados, la jornada observada y las
-entrevistas. El verificador local de CSV/XLSX ya está disponible mediante
-`npm run verify:export-artifacts`, pero todavía no se le han entregado dos
-binarios accesibles de una misma descarga real. Render está
-vivo en el commit `df224f9`, equivalente limpio del arreglo de scope de
-exportación. La auditoría de procedencia del
-13-09-2026 detectó además que la historia alcanzable conserva objetos de la
-etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
- distintos; el runtime actual está neutralizado y la purga completa sigue sin
- presentarse como cerrada.
+tests; móvil pasa `23` suites y `119/119` tests; tooling mantiene `13/13` y
+`docs:check` revisa `44` documentos sin avisos. La release Android activa
+`versionCode=12`, firmada con `CN=TopoField Android Release`, fue instalada y
+verificada en el Galaxy. Su smoke test recuperó una ronda cacheada, mostró la
+vista semanal de trabajo y mantuvo bloqueado el cierre con puntos pendientes;
+no se hicieron nuevas lecturas, fotos ni cambios remotos. La evidencia física
+completa de lectura y foto offline, reinicio, reconexión automática y unicidad
+en Supabase corresponde a la release histórica v7 y no debe atribuirse a v12
+sin repetirla. También queda como evidencia histórica que v7 generó CSV/XLSX
+y abrió el selector nativo con respuestas autenticadas `200` registradas por
+Render. Siguen abiertos el cierre definitivo con umbrales autorizados, la
+comparación estructurada de dos archivos exportados reales, la jornada
+observada y las entrevistas. El verificador local de CSV/XLSX está disponible
+mediante `npm run verify:export-artifacts`, pero todavía no se le han entregado
+dos binarios accesibles de una misma descarga real. Render está vivo en el
+commit `df224f9`, equivalente limpio del arreglo de scope de exportación. La
+auditoría de procedencia del 13-09-2026 detectó además que la historia
+alcanzable conserva objetos de la etapa anterior de purga, mientras `main` y
+`origin/main` apuntan a historiales distintos; el runtime actual está
+neutralizado y la purga completa sigue sin presentarse como cerrada.
 
 La release local `versionCode=10` también quedó preparada con Gradle y firmada
 como `CN=TopoField Android Release`; la AAB está en
