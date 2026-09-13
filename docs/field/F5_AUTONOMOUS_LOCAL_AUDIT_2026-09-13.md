@@ -246,6 +246,14 @@ se ha desplegado desde esta sesión.
     no un fallo de compilación. Ejecutado desde `apps/mobile`, `npx expo
     install --check` devuelve `Dependencies are up to date` y código `0`.
 
+36. La comprobación remota de solo lectura del 13-09-2026 confirma que Render
+    sigue sirviendo `eb88db922a03b1e01a47f90dba8346542df3f212`: `/api/v1/health`
+    devuelve `HTTP/1.1 200 OK`; las rutas de rondas y `GET /api/v1/me/journey`
+    sin bearer devuelven `HTTP/1.1 401 Unauthorized` con `UNAUTHORIZED`. La
+    petición de `adb devices -l` sigue mostrando solo `List of devices
+    attached`, sin un Galaxy disponible. No se hizo deploy, fetch, pull,
+    migración, cambio de datos ni instalación.
+
 ## Evidencia local
 
 ```text
