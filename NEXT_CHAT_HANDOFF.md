@@ -47,6 +47,15 @@ repositorio bare.
   `apps/mobile/hooks/use-monitoring.ts`, con regresión enfocada `4/4`.
 - El punto continúa `pending` porque la lectura llegó con estado `draft` y no
   existe umbral vigente; por tanto no se ha falseado el cierre como completo.
+- Desde la misma ronda se creó un parte `partial` con `pending_point_count=1`;
+  la UI mostró `Parte recibido por el servidor. El supervisor podrá
+  consultarlo.` y la consulta de solo lectura verificó una única fila con
+  `client_request_id` propio.
+- `Compartir CSV` y `Compartir Excel` se probaron desde el resumen de la ronda.
+  Ambos mostraron `No se pudo completar la operación. Reintenta en unos
+  segundos.` y no abrieron la hoja de compartir. No hubo código HTTP visible,
+  así que la exportación queda sin validar hasta repetirla contra un Render
+  actualizado.
 - La conectividad se restauró y `ping` a Render devolvió `0% packet loss`.
 - Render público sigue observado en `eb88db9`; no se hizo deploy, migración,
   fetch, pull ni push en esta validación.
