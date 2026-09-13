@@ -43,9 +43,10 @@ se ha desplegado desde esta sesión.
    prisma legacy sin `project_id` cuando no contradice la obra de su estación.
    La regresión vive en `apps/backend/src/models/prisms.model.test.ts`.
 7. Las consultas de visitas de montaje exigen además que la obra de la visita
-   coincida con la obra de su estación, incluso antes de aplicar la migración
-   027. El contrato backend de exportación quedó alineado con los instrumentos
-   y lados definidos en `shared/types.ts`, incluyendo los protocolos F7.
+   coincida con la obra de su estación, y que cada evidencia corresponda a la
+   misma estación de la visita, incluso antes de aplicar la migración 027. El
+   contrato backend de exportación quedó alineado con los instrumentos y lados
+   definidos en `shared/types.ts`, incluyendo los protocolos F7.
 8. La revisión defensiva detectó que los enlaces internos de monitoring no
    expresaban siempre la relación `ronda -> punto de control -> lectura`. Detalle,
    histórico, contexto de adjunto y exportación ahora exigen que esas relaciones
@@ -221,8 +222,8 @@ se ha desplegado desde esta sesión.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 101
-ℹ pass 101
+ℹ tests 102
+ℹ pass 102
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total

@@ -67,7 +67,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
   queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `101/101`.
+  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `102/102`.
 - `f5de61d` y la continuación local endurecen la idempotencia de adjuntos: el
   endpoint usa bloqueo transaccional por lectura/ruta y `ON CONFLICT DO NOTHING`
   sin depender todavía de la migración 028. La migración 028 sigue pendiente
@@ -250,7 +250,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
-  tiene `101/101` tests; móvil TypeScript sale sin errores y Jest tiene `22`
+  tiene `102/102` tests; móvil TypeScript sale sin errores y Jest tiene `22`
   suites y `97` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 39 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
