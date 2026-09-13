@@ -59,7 +59,11 @@ Expo y exige una salida con `metadata.json` y assets.
 
 `npm run verify:remote:public` comprueba solo el contrato público de Render:
 salud `200` y `401 UNAUTHORIZED` en rondas y `Mi jornada` sin bearer. No usa
-credenciales ni modifica el servicio.
+credenciales ni modifica el servicio. Cuando la migración 029 esté desplegada,
+se puede añadir temporalmente `$env:TOPOFIELD_ROUND_POINT_ID = '<uuid de punto
+autorizado>'` para comprobar también que
+`GET /round-points/:roundPointId/execution-events` responde `401` sin bearer;
+después se elimina con `Remove-Item Env:TOPOFIELD_ROUND_POINT_ID`.
 
 Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 
