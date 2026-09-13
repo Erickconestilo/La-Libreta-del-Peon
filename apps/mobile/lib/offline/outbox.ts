@@ -56,16 +56,27 @@ function rowToItem(row: OutboxRow): OutboxItem {
     sessionId: row.session_id,
     entityType: row.entity_type as OfflineQueueEntityType,
     operation: row.operation as 'insert' | 'update' | 'delete',
-    payload: JSON.parse(row.payload),
+    payload: parseJsonRecord(row.payload),
     status: row.status as OfflineQueueStatus,
     createdAt: row.created_at,
     syncedAt: row.synced_at,
     lastSyncAttemptAt: row.last_sync_attempt_at,
     retryCount: row.retry_count,
     errorMessage: row.error_message,
-    conflictData: row.conflict_data ? JSON.parse(row.conflict_data) : null,
+    conflictData: row.conflict_data ? parseJsonRecord(row.conflict_data) : null,
   };
 }
+
+const parseJsonRecord = (value: string): Record<string, unknown> => {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+};
 
 /**
  * Enqueue a new item for sync

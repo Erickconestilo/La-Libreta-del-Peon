@@ -34,6 +34,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   hasta tener contrato, permisos y prueba de concurrencia.
 - El outbox tampoco persiste ya el error completo de un conflicto `409`:
   conserva únicamente estado y código técnico validado.
+- El lector del outbox tolera JSON local corrupto y mantiene visible el item
+  para diagnóstico; no descarta ni reinterpreta sus datos como válidos.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`

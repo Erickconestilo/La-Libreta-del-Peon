@@ -160,6 +160,12 @@ se ha desplegado desde esta sesión.
     `status` y un código técnico con formato validado; la regresión de
     `sync-engine.test.ts` confirma que cuerpos y tokens no entran en
     `conflictData`.
+25. El lector del outbox asumía que `payload` y `conflict_data` siempre eran
+    JSON válido; una corrupción local podía abortar la consulta completa de
+    diagnósticos. El parseo ahora es tolerante y devuelve un registro vacío,
+    dejando el item visible para que el sincronizador lo clasifique como error
+    en vez de ocultar toda la cola. La regresión está en
+    `apps/mobile/lib/offline/__tests__/outbox.test.ts`.
 
 ## Evidencia local
 

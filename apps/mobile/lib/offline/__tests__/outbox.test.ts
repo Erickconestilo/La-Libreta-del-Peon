@@ -319,6 +319,25 @@ describe('Outbox API', () => {
       expect(conflicts[0].status).toBe('conflict');
       expect(conflicts[0].conflictData).toEqual(conflictData);
     });
+
+    it('tolera conflict_data local corrupto sin ocultar el diagnóstico', () => {
+      outbox.enqueue({
+        id: 'test-id',
+        clientRequestId: 'req-1',
+        entityType: 'station_message',
+        operation: 'insert',
+        payload: {},
+      });
+
+      const db = getDatabase();
+      db.runSync('UPDATE outbox SET status = ?, conflict_data = ? WHERE id = ?', [
+        'conflict',
+        '{not-json',
+        'test-id'
+      ]);
+
+      expect(outbox.getConflicts()[0].conflictData).toEqual({});
+    });
   });
 
   describe('retryItem', () => {
