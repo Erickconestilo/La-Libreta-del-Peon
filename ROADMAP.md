@@ -81,7 +81,9 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias, prismas, estaciones y visitas de montaje con referencias cruzadas. También
 deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
-  local: `114/114` tests. El contrato backend de exportación está alineado con
+local: `120/120` tests en la batería integrada de work-execution 029; la cifra
+anterior de `114/114` queda como evidencia histórica previa a este hardening.
+El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
   para integridad de tenant, con regresión local. La reconciliación de prismas
   también exige ahora la igualdad de `project_id` entre observación, prisma y
@@ -181,6 +183,42 @@ Galaxy.
 La migración 029 preparada también incluye índices únicos auxiliares y claves
 foráneas compuestas para mantener la relación `evento -> punto -> ronda ->
 obra` a nivel de PostgreSQL, además del scope defensivo en el modelo.
+
+El hardening local de 13-09-2026 cierra el riesgo de publicar el backend nuevo
+contra una base sin 029: el backend dispone de un probe explícito de capacidad,
+`/api/v1/readiness` devuelve `503` si la tabla falta o el esquema está
+incompleto y `apps/backend/render.yaml` usa esa ruta como health gate de
+despliegue. Detalle de ronda, `Mi jornada` y exportación pueden seguir leyendo
+datos legacy sin consultar una tabla inexistente; las rutas de execution events
+fallan de forma controlada con `503`, no mediante `500` dispersos. El replay
+del mismo `client_request_id` solo es idempotente cuando el contenido y el
+contexto coinciden; reutilizarlo con otra acción devuelve `409`.
+
+El móvil también queda local-first de forma explícita: conserva un único
+`clientRequestId`, distingue resultado operativo de entrega y no llama
+`Recibido servidor` a un cambio que solo vive en SQLite/outbox. Red, timeout y
+`5xx` son reintentables con límite; `409` queda como conflicto y `404` de un
+backend anterior se muestra como `Backend pendiente`, sin bucle automático.
+
+La compuerta se probó además contra PostgreSQL local real en un contenedor
+efímero con fixture mínimo: antes de 029 el probe devolvió
+`migration_missing`; tras aplicar 029 devolvió `ready`; una segunda aplicación
+fue idempotente; las FK compuestas, el UNIQUE de `client_request_id` y RLS
+deny-all se comportaron como se esperaba. El backend local respondió readiness
+`200` con 029 y `503` al retirar la tabla. Esto no equivale a ejecutar toda la
+cadena de migraciones en Supabase ni a un despliegue real.
+
+La observación remota histórica sigue siendo hasta 026, con 027, 028 y 029
+pendientes. 027/028 no son requisitos funcionales de 029, pero el runner de
+migraciones aplica todos los pendientes en orden; por tanto, una autorización
+de 029 **no debe interpretarse automáticamente** como autorización para aplicar
+027 y 028. El runbook exacto y el rollback no destructivo están en
+[`WORK_EXECUTION_CONTRACT.md`](docs/field/WORK_EXECUTION_CONTRACT.md).
+
+La batería integrada de cierre de esta misión pasó con backend `120/120`,
+móvil `23` suites y `130/130`, TypeScript móvil sin errores, tooling `14/14`,
+`docs:check` sobre `44` documentos y `git diff --check` limpio. No se ejecutó
+ninguna operación remota ni prueba física nueva en Galaxy.
 
 Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y

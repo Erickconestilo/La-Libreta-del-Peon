@@ -12,10 +12,14 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `114/114` tests con la batería local.
-- [x] Móvil pasa TypeScript, `23` suites y `119/119` tests.
-- [x] Tooling local pasa `13/13` tests; `verify:local` termina con
-  `verify local completed successfully`.
+- [x] Backend compila y pasa `120/120` tests en la batería integrada final de
+  la misión work-execution 029.
+- [x] Móvil pasa TypeScript, `23` suites y `130/130` tests; la batería cubre
+  además los estados de entrega local, conflicto, reintento y backend
+  incompatible.
+- [x] Tooling local incluye una compuerta pública de readiness: el verificador
+  exige `/health=200`, `/readiness=200` con work-execution disponible y falla
+  cerrado ante `503 migration_missing`; `npm run test:tooling` pasa `14/14`.
 - [x] `docs:check` revisa `44 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
@@ -62,12 +66,26 @@ validación en campo:
 - [x] El operario puede declarar por punto `Empezar`, `Hecho`, `No realizado`,
   `Repetir` o `Bloqueado`; los resultados no realizados exigen motivo y el
   guardado offline usa el outbox con idempotencia.
+- [x] La entrega de work-execution se ha endurecido localmente: un resultado
+  puede mostrarse como resultado operativo local, pero solo aparece como
+  `Recibido servidor` tras una sincronización real. `404` de backend antiguo,
+  `409`, `401/403`, red/timeout y `5xx` tienen estados de entrega diferenciados
+  y no se reintentan indefinidamente.
+- [x] Se probó 029 contra PostgreSQL local real en contenedor efímero con un
+  fixture mínimo: probe `migration_missing` antes de 029 y `ready` después,
+  reaplicación idempotente, FK compuestas/UNIQUE/RLS verificados y readiness
+  HTTP `200` con la tabla frente a `503` sin ella. No equivale a probar la
+  cadena completa de migraciones de Supabase.
 - [x] La cabecera de la ronda resume hechos, en curso, pendientes y puntos por
   revisar, y permite continuar con el primer punto accionable respetando el
   orden de la jornada.
-- [ ] Aplicar la migración local `029_monitoring_work_execution_events.sql`,
-  desplegar el endpoint y validar en el Galaxy que el resultado sincronizado
-  aparece para el supervisor sin presentarlo como lectura ni cierre de ronda.
+- [ ] Con autorización explícita, reconciliar primero las migraciones remotas
+  pendientes: la observación histórica llega a 026 y el runner aplicaría
+  también 027/028 antes de 029. Autorizar/revisar cada una por su alcance,
+  aplicar 029, desplegar el backend con `/readiness` como gate y validar en el
+  Galaxy una build que contenga estos commits. Confirmar que el resultado
+  sincronizado aparece para el supervisor sin presentarlo como lectura ni
+  cierre de ronda.
 
 ## Paso 1 - Erick usando datos reales en campo
 

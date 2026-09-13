@@ -43,19 +43,16 @@ contrato está en `docs/field/WORK_EXECUTION_CONTRACT.md`, la migración local e
 `apps/backend/migrations/029_monitoring_work_execution_events.sql` y las rutas
 son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 
-La captura móvil usa el outbox existente y `clientRequestId`, actualiza la
-caché local y conserva separado el resultado declarado de la lectura
-metrológica y del cierre de ronda. Backend pasa `114/114` tests y móvil
-`119/119`; TypeScript móvil y documentación están en verde. El núcleo quedó en
-`6ed9a84`, la entrega de oficina en `8aff703`, el historial móvil en
-`3b5ed4b` y su refresco tras sincronización en `2399de6`. La mejora de
-fluidez de ronda quedó en `2d182a0`: la cabecera resume hechos, en curso,
-pendientes y puntos por revisar, y ofrece continuar con el primer punto
-accionable respetando el orden de la ronda. La migración 029 no se
-ha aplicado en Supabase, por lo que este slice aún no está desplegado en
-Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
-probarlo contra el backend remoto hasta que la migración y el despliegue estén
-autorizados.
+La captura móvil usa el outbox existente y un `clientRequestId` estable, pero
+el hardening más reciente la hace explícitamente local-first: persiste primero
+la acción y separa el resultado operativo de su estado de entrega. `Pendiente
+local`, `Reintento`, `Conflicto` o `Backend pendiente` nunca se presentan como
+`Recibido servidor`; el histórico remoto sigue siendo la evidencia de recepción.
+El bloque anterior (`6ed9a84`, `8aff703`, `3b5ed4b`, `2399de6`, `2d182a0`)
+queda reforzado por `bb22bff` y `6a09c58`. La migración 029 no se ha aplicado
+en Supabase, por lo que este slice aún no está desplegado en Render ni
+instalado/validado físicamente en el Galaxy. La v12 instalada antes de esta
+misión no prueba estos commits.
 
 La lista de puntos incorpora también `Marcar hecho` en una pulsación para el
 caso normal. `Más opciones` abre el formulario de `Empezar`, `No realizado`,
@@ -77,6 +74,27 @@ foráneas compuestas: un evento no puede enlazar una ronda, un punto y una obra
 cruzados aunque se intente escribir directamente en PostgreSQL. La regresión
 estática cubre ambas relaciones; sigue pendiente aplicarla remotamente.
 
+El backend local incorpora desde `1b17380` una capacidad explícita de
+work-execution. Si 029 falta o está incompleta, `/api/v1/readiness` responde
+`503`, las rutas GET/POST de execution-events responden un `503` controlado y
+detalle de ronda, `Mi jornada` y exportación degradan sin consultar la tabla
+ausente. `57ef8fb` cambia el health gate local de Render a `/api/v1/readiness`,
+de modo que `/health` queda como liveness y no puede sustituir la comprobación
+de esquema. `99c212c` amplía el verificador público para exigir readiness `200`
+y fallar cerrado ante `migration_missing`.
+
+El mismo backend endurece la idempotencia: repetir el mismo
+`client_request_id` con el mismo contenido devuelve el evento existente;
+reutilizarlo con actor, contexto o payload distinto devuelve `409`.
+
+Existe evidencia PostgreSQL local real, no solo tests estáticos: en un
+contenedor efímero PostgreSQL 17-compatible con un fixture mínimo, el probe
+devolvió `migration_missing` antes de 029 y `ready` después; reaplicar el SQL
+029 terminó sin error, las FK compuestas rechazaron cruces de obra/ronda/punto,
+el UNIQUE rechazó un UUID duplicado y RLS deny-all ocultó el evento a `anon`.
+El backend local devolvió `/readiness` `200` con 029 y `503` al retirar la tabla.
+No se reprodujo la cadena completa 001–028 ni se tocó Supabase real.
+
 El resumen de la ronda también aparece en `Mi jornada`: hechos, en curso,
 pendientes y por revisar, calculados por el servidor a partir del último evento
 recibido de cada punto. Las cachés antiguas omiten esos contadores hasta
@@ -93,6 +111,20 @@ La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
 `028` y `029` siguen pendientes. El advisor de seguridad mantiene únicamente
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
+
+Antes de cualquier despliegue, revisar el runbook de
+`docs/field/WORK_EXECUTION_CONTRACT.md`. Atención: el runner local de
+migraciones aplica todos los archivos pendientes en orden. Si el remoto sigue
+en 026, ejecutar el runner no significaría «solo 029»: también intentaría 027 y
+028. Esas dos migraciones pertenecen a otros hardenings y necesitan una
+autorización/revisión explícita propia; no deben colarse dentro de una
+autorización genérica de 029.
+
+La batería integrada de cierre local pasó con backend `120/120`, móvil `23`
+suites y `130/130`, TypeScript móvil sin errores, tooling `14/14`,
+`docs:check` sobre `44` documentos y `git diff --check` limpio. El árbol sigue
+conservando fuera de esta misión el cambio previo de `apps/mobile/package.json`
+y las capturas/XML no versionadas; no limpiarlos ni incluirlos en commits.
 
 ## Estado local actual tras instalar v12
 

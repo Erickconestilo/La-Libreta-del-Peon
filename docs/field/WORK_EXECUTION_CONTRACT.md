@@ -36,10 +36,13 @@ seleccionar una única acción por vez:
 - `Repetir`: exige motivo.
 - `Bloqueado`: exige motivo.
 
-La nota de relevo es opcional. La acción se guarda localmente cuando no hay
-red y se encola con `clientRequestId`; al reconectar se sincroniza mediante el
-mismo outbox probado para lecturas y partes. La interfaz dice `Guardado
-localmente` hasta que el servidor recibe el evento.
+La nota de relevo es opcional. La acción se persiste primero en el outbox con
+un `clientRequestId` estable y, si hay red, se intenta entregar inmediatamente;
+al reconectar se reanuda el mismo elemento, sin generar otro UUID. La interfaz
+separa el resultado operativo (`Hecho`, `Bloqueado`, etc.) de su estado de
+entrega (`Pendiente local`, `Reintento pendiente`, `Backend pendiente`,
+`Conflicto`, `Recibido servidor`, etc.). Solo un elemento realmente
+sincronizado puede mostrarse como `Recibido servidor`.
 
 Para el caso normal, la lista de puntos ofrece ahora `Marcar hecho` en la
 misma tarjeta. Es un atajo explícito de una pulsación que crea el mismo evento
@@ -120,6 +123,13 @@ La pantalla del supervisor verá únicamente eventos recibidos por el servidor.
 Un evento en outbox no se presenta como recibido hasta que la sincronización
 termine.
 
+Los errores de entrega tampoco se reinterpretan como éxito. Red, timeout y
+`5xx` conservan el elemento para reintentos acotados; `409` queda en conflicto
+sin reenvío automático; `400/422`, `401`, `403` y errores terminales no entran
+en un bucle. Un `404 Route not found` del backend anterior se presenta como
+`Backend pendiente`: la acción local permanece trazable, pero no se afirma que
+la ruta exista ni que el servidor la haya recibido.
+
 `Mi jornada` puede mostrar, para cada ronda asignada, los contadores del último
 resultado recibido por punto: `hechos`, `en curso`, `pendientes` y `por revisar`.
 El backend calcula cada contador a partir del evento más reciente del punto,
@@ -131,6 +141,12 @@ El operario y el supervisor pueden consultar el historial append-only del
 punto. Las acciones anteriores no se sobrescriben: cada nueva acción añade un
 evento con fecha, autor y contexto, y la interfaz muestra el último estado
 junto con la secuencia recibida.
+
+El replay es idempotente por contenido, no solo por UUID. Repetir exactamente
+el mismo `client_request_id` con el mismo actor, punto, ronda, obra, tipo,
+motivo, notas y `occurred_at` devuelve el evento ya creado. Reutilizar ese UUID
+con un payload o contexto diferente devuelve `409`; no se acepta como replay
+válido un UUID reciclado para otra acción.
 
 El parte de zona aplica la misma precaución de idempotencia a nivel de
 interfaz: después de guardarlo o encolarlo, el botón queda bloqueado hasta que
@@ -166,3 +182,106 @@ trabajos en una fila genérica sin confirmar su evidencia y procedimiento.
 El orden recomendado de captura es: resultado breve, valor/unidad si aplica,
 foto si corresponde, nota y siguiente punto. Los motivos deben ser lenguaje
 de campo comprensible, no códigos internos.
+
+## Compatibilidad de esquema y readiness
+
+La versión de backend que incorpora este contrato comprueba de forma explícita
+la capacidad de `monitoring_work_execution_events`. El probe valida la tabla y
+los elementos mínimos de 029 (columnas, unicidad de `client_request_id`, claves
+compuestas, índices y RLS/política) y publica dos señales distintas:
+
+- `GET /api/v1/health`: liveness del proceso. No garantiza compatibilidad de
+  esquema.
+- `GET /api/v1/readiness`: readiness de despliegue. Devuelve `200` únicamente
+  cuando la capacidad 029 está disponible; devuelve `503` con estado
+  `not_ready` cuando falta la migración o el esquema está incompleto.
+
+`apps/backend/render.yaml` usa `/api/v1/readiness` como `healthCheckPath`, por
+lo que una instancia incompatible no debe superar la compuerta de despliegue.
+Además, si 029 falta, detalle de ronda, `Mi jornada` y exportación degradan de
+forma explícita a ausencia de datos de ejecución sin consultar la tabla que no
+existe. Las rutas GET/POST de `execution-events` fallan de forma controlada con
+`503 WORK_EXECUTION_SCHEMA_UNAVAILABLE`. No se oculta el problema detrás de
+`500` genéricos ni de `try/catch` repartidos.
+
+### Evidencia PostgreSQL local (13-09-2026)
+
+Se ejecutó una prueba real y aislada con PostgreSQL 17 compatible dentro de un
+contenedor efímero, usando un fixture mínimo de las tablas de las que depende
+029; no se usó Supabase real ni una `DATABASE_URL` remota. Resultado:
+
+- antes de 029, el probe real devolvió `migration_missing`;
+- tras aplicar el archivo 029 real, devolvió `ready`;
+- reaplicar 029 con `ON_ERROR_STOP=1` terminó sin error;
+- las FK compuestas rechazaron cruces ronda/obra y punto/ronda;
+- el `UNIQUE(client_request_id)` rechazó un duplicado;
+- con `SET ROLE anon`, la política RLS deny-all devolvió cero eventos visibles;
+- el backend local respondió `/readiness` `200` con la tabla presente y `503`
+  después de retirarla del fixture efímero.
+
+Esta prueba **no** ejecutó toda la cadena 001–028 ni reproduce todos los
+objetos de Supabase. Por tanto, valida 029 y el gate contra PostgreSQL real,
+pero la ejecución ordenada de migraciones sobre el proyecto remoto sigue
+`PENDIENTE` y requiere autorización.
+
+## Runbook de despliegue y rollback — preparado, no ejecutado
+
+Los pasos siguientes son una receta de despliegue controlado. Todo lo que
+modifique Supabase, Render, una cuenta real o el Galaxy requiere autorización
+explícita de Erick en el momento.
+
+1. **Prechecks.** Confirmar commit objetivo, batería local verde, ventana de
+   prueba y estado remoto observado. No publicar backend nuevo si readiness de
+   esquema no puede verificarse.
+2. **Respaldo.** Obtener y verificar un backup/snapshot recuperable de la base
+   antes de cualquier migración. No avanzar si el respaldo no está disponible.
+3. **Migraciones actuales.** Leer `schema_migrations` y reconciliar el estado
+   real. La última observación histórica era hasta 026; 027, 028 y 029 estaban
+   pendientes. 027 (visitas de montaje) y 028 (idempotencia de adjuntos) son
+   cambios distintos de este bloque. El runner del repo aplica pendientes en
+   orden, así que **no** debe ejecutarse suponiendo que aplicará solo 029: si
+   027/028 siguen pendientes, su aplicación conjunta necesita autorización y
+   revisión explícitas.
+4. **Aplicar 029.** Una vez decidido el tratamiento de 027/028, aplicar 029 con
+   el mecanismo autorizado y registrar su versión. No aplicar SQL ad hoc a
+   ciegas ni marcarla manualmente como ejecutada.
+5. **Verificación SQL.** Confirmar tabla, columnas, `UNIQUE(client_request_id)`,
+   índices, FK compuestas ronda/obra y punto/ronda, RLS y política deny-all.
+6. **Desplegar backend.** Solo después del esquema compatible, publicar el
+   commit aprobado. No promover una instancia que falle readiness.
+7. **Health/readiness.** Exigir `/health = 200` y `/readiness = 200` con
+   `workExecution.available=true`. Un `503` detiene el rollout.
+8. **Prueba pública sin credenciales.** Ejecutar el verificador público: debe
+   pasar health/readiness y las rutas protegidas deben responder `401`; con
+   `TOPOFIELD_ROUND_POINT_ID`, `execution-events` también debe existir y
+   responder `401`, no `404`.
+9. **Prueba autenticada.** Con una cuenta autorizada, verificar `/auth/me`, `Mi
+   jornada`, detalle/export de ronda, histórico, creación, replay idéntico del
+   mismo `client_request_id` y rechazo `409` si ese UUID se reutiliza con otro
+   payload. Verificar permisos: supervisor lectura; admin/topógrafo escritura
+   según membresía.
+10. **Build móvil.** La v12 instalada antes de esta misión es evidencia
+    histórica y no demuestra estos cambios. Para validar work-execution debe
+    usarse una build que contenga los commits de esta misión (v12 si se
+    reconstruyera exactamente con ellos o, preferiblemente, un build posterior
+    con versionado inequívoco), sin desinstalar datos locales por defecto.
+11. **E2E offline en Galaxy.** Registrar una acción sin red, confirmar que la
+    UI indica estado local y nunca recepción, reiniciar si forma parte del caso,
+    reconectar, observar replay con el mismo UUID y confirmar finalmente el
+    histórico recibido. Incluir al menos un caso terminal (backend antiguo/
+    conflicto) y uno reintentable (red/`5xx`).
+12. **Rollback.** Si falla antes del backend, detener el rollout. Si 029 ya está
+    aplicada y falla el backend, el rollback preferido es volver al backend
+    anterior y **dejar la tabla aditiva 029 intacta**, preservando eventos. La
+    app se revierte reinstalando la build conocida compatible. Eliminar tabla,
+    constraints o datos es una última medida destructiva: solo con backup,
+    exportación previa de eventos y autorización explícita; nunca como rollback
+    automático.
+
+### Estado de autorización
+
+Completado autónomamente en local: implementación, tests, gate de readiness,
+verificador público y prueba PostgreSQL efímera. Pendiente de autorización:
+backup remoto, cualquier migración 027/028/029, despliegue Render, prueba
+autenticada real, generación/instalación de la build de esta misión y E2E en
+Galaxy. Ninguno de esos pasos remotos o físicos se ejecutó durante esta misión.
