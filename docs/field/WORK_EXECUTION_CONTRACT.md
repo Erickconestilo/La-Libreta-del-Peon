@@ -64,6 +64,11 @@ La pantalla del supervisor verá únicamente eventos recibidos por el servidor.
 Un evento en outbox no se presenta como recibido hasta que la sincronización
 termine.
 
+El operario y el supervisor pueden consultar el historial append-only del
+punto. Las acciones anteriores no se sobrescriben: cada nueva acción añade un
+evento con fecha, autor y contexto, y la interfaz muestra el último estado
+junto con la secuencia recibida.
+
 ## Entrega a oficina
 
 El último evento recibido para cada punto se incluye en el contrato común de

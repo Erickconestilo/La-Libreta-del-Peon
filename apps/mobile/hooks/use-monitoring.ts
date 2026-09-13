@@ -634,6 +634,28 @@ export const useMonitoringRound = (roundId: string | null) => {
   };
 };
 
+export const useWorkExecutionEvents = (roundPointId: string | null) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
+  const query = useQuery({
+    enabled: Boolean(roundPointId && activeSessionId),
+    queryFn: async () => {
+      const response = await apiFetch<ApiEnvelope<WorkExecutionEvent[]>>(
+        `/round-points/${roundPointId}/execution-events`
+      );
+      return response.data;
+    },
+    queryKey: ['work-execution-events', sessionCacheKey, roundPointId],
+    staleTime: 1000 * 15
+  });
+
+  return {
+    ...query,
+    data: query.data ?? [],
+    errorMessage: query.error ? getErrorMessage(query.error, 'No se pudo cargar el historial del trabajo.') : null
+  };
+};
+
 const buildLocalWorkExecutionEvent = ({
   clientRequestId,
   currentUserId,

@@ -48,6 +48,10 @@ Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
 probarlo contra el backend remoto hasta que la migración y el despliegue estén
 autorizados.
 
+La pantalla de resultado también consulta el historial append-only protegido
+del punto, mostrando estado, fecha, motivo y nota de cada acción recibida. No
+confunde una acción pendiente del outbox con recepción del servidor.
+
 ## Estado verificado más reciente (13-09-2026)
 
 - El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.

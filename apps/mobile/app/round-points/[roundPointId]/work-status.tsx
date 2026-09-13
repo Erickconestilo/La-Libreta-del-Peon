@@ -7,10 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { WorkExecutionEventType } from '@shared/types';
 import { StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useCreateWorkExecutionEvent, useMonitoringRound } from '@/hooks/use-monitoring';
+import { useCreateWorkExecutionEvent, useMonitoringRound, useWorkExecutionEvents } from '@/hooks/use-monitoring';
 import { getWriteScreenAccessState } from '@/lib/field-access';
 import {
   getWorkExecutionStatePresentation,
+  getWorkExecutionState,
   requiresWorkExecutionReason,
   WORK_EXECUTION_OPTIONS
 } from '@/lib/work-execution';
@@ -25,6 +26,7 @@ export default function WorkStatusScreen() {
   const { currentUser } = useCurrentSession();
   const { data: round, errorMessage: roundError, isLoading } = useMonitoringRound(roundId ?? null);
   const point = useMemo(() => round?.points.find((item) => item.id === roundPointId), [round?.points, roundPointId]);
+  const { data: events, errorMessage: eventsError, isLoading: eventsLoading } = useWorkExecutionEvents(roundPointId ?? null);
   const accessState = getWriteScreenAccessState(currentUser, round?.projectId, Boolean(round));
   const { errorMessage, isCreating, recordResult } = useCreateWorkExecutionEvent({ roundId: roundId ?? null, roundPointId: roundPointId ?? null });
   const [selectedEvent, setSelectedEvent] = useState<WorkExecutionEventType | null>(null);
@@ -100,6 +102,25 @@ export default function WorkStatusScreen() {
           <TextInput multiline onChangeText={setNotes} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
         </View> : null}
 
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Historial del trabajo</Text>
+          {eventsLoading ? <Text style={styles.body}>Cargando acciones recibidas...</Text> : null}
+          {eventsError ? <Text style={styles.body}>{eventsError}</Text> : null}
+          {!eventsLoading && !eventsError && events.length === 0 ? <Text style={styles.body}>Todavía no hay acciones recibidas para este punto.</Text> : null}
+          {events.map((event) => {
+            const option = WORK_EXECUTION_OPTIONS.find((item) => item.eventType === event.eventType);
+            const presentation = getWorkExecutionStatePresentation(getWorkExecutionState(event));
+            return <View key={event.id} style={styles.historyRow}>
+              <View style={styles.historyCopy}>
+                <View style={styles.historyHeader}><Text style={styles.historyTitle}>{option?.label ?? event.eventType}</Text><StatePill label={presentation.label} tone={presentation.tone} /></View>
+                <Text style={styles.body}>{new Date(event.occurredAt).toLocaleString('es-ES')}</Text>
+                {event.reason ? <Text style={styles.reason}>Motivo: {event.reason}</Text> : null}
+                {event.notes ? <Text style={styles.body}>Nota: {event.notes}</Text> : null}
+              </View>
+            </View>;
+          })}
+        </View>
+
         {feedback ? <View style={styles.feedback}><MaterialIcons color={feedback.includes('servidor') ? colors.accentGreen : colors.amber} name="info" size={20} /><Text style={styles.feedbackText}>{feedback}</Text></View> : null}
         {accessState === 'allowed' && errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar el resultado</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
         {accessState === 'allowed' ? <Pressable disabled={isCreating} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}><MaterialIcons color={colors.background} name="save" size={19} /><Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar resultado'}</Text></Pressable> : null}
@@ -122,6 +143,10 @@ const styles = StyleSheet.create({
   feedback: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.4)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[3] },
   feedbackText: { color: colors.textPrimary, flex: 1, fontSize: 14, fontWeight: '800', lineHeight: 20 },
   hero: { gap: spacing[1], paddingVertical: spacing[2] },
+  historyCopy: { flex: 1, gap: spacing[1] },
+  historyHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing[1], justifyContent: 'space-between' },
+  historyRow: { borderBottomColor: '#2a2f3a', borderBottomWidth: 1, paddingVertical: spacing[2] },
+  historyTitle: { color: colors.textPrimary, flex: 1, fontSize: 15, fontWeight: '900' },
   input: { backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, color: colors.textPrimary, fontSize: typography.fontSizeBody, padding: spacing[2] },
   label: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   multiline: { minHeight: 90, textAlignVertical: 'top' },
@@ -135,6 +160,7 @@ const styles = StyleSheet.create({
   readOnlyCard: { alignItems: 'flex-start', backgroundColor: 'rgba(56, 189, 248, 0.08)', borderColor: 'rgba(56, 189, 248, 0.45)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[2], padding: spacing[3] },
   readOnlyCopy: { flex: 1, gap: spacing[1] },
   readOnlyTitle: { color: '#7dd3fc', fontSize: typography.fontSizeBody, fontWeight: '900' },
+  reason: { color: colors.textPrimary, fontSize: 14, lineHeight: 20 },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingVertical: spacing[2] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '900' },
