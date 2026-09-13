@@ -493,7 +493,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `113/113`
-tests; móvil pasa `23` suites y `114/114` tests; tooling mantiene `13/13` y
+tests; móvil pasa `23` suites y `115/115` tests; tooling mantiene `13/13` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7`, firmada con `CN=TopoField Android Release`, fue instalada y
 validada históricamente en el Galaxy. Esa evidencia demostró lectura y foto
