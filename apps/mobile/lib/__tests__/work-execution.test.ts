@@ -4,6 +4,7 @@ import type { WorkExecutionEvent } from '@shared/types';
 import {
   getWorkExecutionDeliveryPresentation,
   getWorkExecutionDeliveryStatus,
+  getWorkExecutionCurrentStatePresentation,
   getWorkExecutionState,
   getWorkExecutionStatePresentation,
   getWorkExecutionSummary,
@@ -90,6 +91,43 @@ describe('work execution status', () => {
       .toBe('not_found');
     expect(getWorkExecutionDeliveryPresentation(deliveryItem('error', { syncErrorKind: 'backend_incompatible' })).label)
       .toBe('Backend pendiente');
+  });
+
+  it('never presents an unconfirmed completed result as server-confirmed success', () => {
+    const completedState = getWorkExecutionState(event('completed'));
+    const localPending = {
+      ...deliveryItem('pending'),
+      clientRequestId: completedState.lastEvent?.clientRequestId ?? ''
+    };
+    const retrying = {
+      ...deliveryItem('pending', { retryCount: 1 }),
+      clientRequestId: completedState.lastEvent?.clientRequestId ?? ''
+    };
+
+    expect(getWorkExecutionCurrentStatePresentation(completedState, localPending)).toEqual({
+      delivery: expect.objectContaining({ label: 'Pendiente local', tone: 'warning' }),
+      result: { label: 'Hecho (local)', tone: 'warning' },
+      source: 'local'
+    });
+    expect(getWorkExecutionCurrentStatePresentation(completedState, retrying)).toEqual({
+      delivery: expect.objectContaining({ label: 'Reintento pendiente', tone: 'warning' }),
+      result: { label: 'Hecho (local)', tone: 'warning' },
+      source: 'local'
+    });
+  });
+
+  it('restores the normal success presentation only after the matching item is synced', () => {
+    const completedState = getWorkExecutionState(event('completed'));
+    const synced = {
+      ...deliveryItem('synced'),
+      clientRequestId: completedState.lastEvent?.clientRequestId ?? ''
+    };
+
+    expect(getWorkExecutionCurrentStatePresentation(completedState, synced)).toEqual({
+      delivery: null,
+      result: { label: 'Hecho', tone: 'success' },
+      source: 'server'
+    });
   });
 
   it('summarises operational progress without changing metrological status', () => {

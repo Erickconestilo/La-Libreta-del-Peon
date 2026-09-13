@@ -151,6 +151,35 @@ export const getWorkExecutionDeliveryPresentation = (
   item: Pick<OutboxItem, 'status' | 'retryCount' | 'conflictData'>
 ) => WORK_EXECUTION_DELIVERY_PRESENTATION[getWorkExecutionDeliveryStatus(item)];
 
+export const getWorkExecutionCurrentStatePresentation = (
+  state: WorkExecutionState | null | undefined,
+  deliveryItem?: Pick<OutboxItem, 'clientRequestId' | 'status' | 'retryCount' | 'conflictData'> | null
+) => {
+  const statePresentation = getWorkExecutionStatePresentation(state);
+  const localEventId = state?.lastEvent?.clientRequestId ?? null;
+  const deliveryMatchesCurrentEvent = Boolean(
+    localEventId && deliveryItem?.clientRequestId === localEventId
+  );
+
+  if (!deliveryItem || !deliveryMatchesCurrentEvent || deliveryItem.status === 'synced') {
+    return {
+      delivery: null,
+      result: statePresentation,
+      source: 'server' as const
+    };
+  }
+
+  const delivery = getWorkExecutionDeliveryPresentation(deliveryItem);
+  return {
+    delivery,
+    result: {
+      label: `${statePresentation.label} (local)`,
+      tone: delivery.tone === 'success' ? 'warning' as const : delivery.tone
+    },
+    source: 'local' as const
+  };
+};
+
 export type WorkExecutionSummary = Record<WorkExecutionStateStatus, number> & {
   total: number;
 };

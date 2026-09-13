@@ -17,6 +17,7 @@ import { getWriteScreenAccessState } from '@/lib/field-access';
 import {
   getWorkExecutionStatePresentation,
   getWorkExecutionState,
+  getWorkExecutionCurrentStatePresentation,
   getWorkExecutionDeliveryPresentation,
   requiresWorkExecutionReason,
   WORK_EXECUTION_OPTIONS,
@@ -77,7 +78,8 @@ export default function WorkStatusScreen() {
     }
   };
 
-  const currentPresentation = getWorkExecutionStatePresentation(point?.executionState);
+  const latestDeliveryItem = deliveryItems[0] ?? null;
+  const currentPresentation = getWorkExecutionCurrentStatePresentation(point?.executionState, latestDeliveryItem);
   const selectedOption = WORK_EXECUTION_OPTIONS.find((option) => option.eventType === selectedEvent);
   const serverClientRequestIds = useMemo(
     () => new Set(events.map((event) => event.clientRequestId)),
@@ -115,7 +117,16 @@ export default function WorkStatusScreen() {
           <Text style={styles.eyebrow}>Trabajo del punto</Text>
           <Text style={styles.title}>{Array.isArray(params.code) ? params.code[0] : params.code}</Text>
           <Text style={styles.body}>{Array.isArray(params.name) ? params.name[0] : params.name || 'Punto de control'}</Text>
-          <View style={styles.currentState}><Text style={styles.stateLabel}>Estado actual</Text><StatePill label={currentPresentation.label} tone={currentPresentation.tone} /></View>
+          <View style={styles.currentState}>
+            <Text style={styles.stateLabel}>Resultado operativo</Text>
+            <StatePill label={currentPresentation.result.label} tone={currentPresentation.result.tone} />
+            {currentPresentation.delivery ? <StatePill label={currentPresentation.delivery.label} tone={currentPresentation.delivery.tone} /> : null}
+          </View>
+          <Text style={styles.caption}>
+            {currentPresentation.source === 'local'
+              ? 'Este resultado está guardado en el dispositivo. La confirmación del servidor se muestra por separado.'
+              : 'Resultado recibido del servidor.'}
+          </Text>
         </View>
 
         {isLoading && !round ? <View style={styles.card}><Text style={styles.body}>Cargando el punto...</Text></View> : null}
