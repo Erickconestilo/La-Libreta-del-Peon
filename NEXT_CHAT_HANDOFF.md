@@ -28,7 +28,7 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit local: `e1188b0` (`feat(mobile): improve mounting visual memory`). La
+- Último commit local: `d40c343` (`feat(mobile): expand mounting evidence viewer`). La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
@@ -48,7 +48,8 @@ repositorio bare.
   en `apps/mobile/lib/__tests__/mounting-visual.test.ts`.
 - La última mejora añade además una vista ampliada al pulsar una evidencia;
   prioriza `localUri` para registros offline, muestra notas y permite cerrar
-  con un botón accesible. La suite móvil queda en `22` suites y `99` tests.
+  con un botón accesible. La suite móvil queda en `22` suites y `99` tests;
+  la regresión del selector de URI está en `mounting-visual.test.ts`.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de

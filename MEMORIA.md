@@ -577,7 +577,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   apps/mobile/tsconfig.json` terminó con código `0`; Jest móvil devolvió
   `Test Suites: 22 passed, 22 total` y `Tests: 99 passed, 99 total`; no se
   tocaron Supabase, Render, EAS, Play Store, Galaxy ni
-  `apps/mobile/package.json`.
+  `apps/mobile/package.json`. Commit: `d40c343`.
 
 - **2026-09-13 — Croquis fotográfico local mejorado (Codex):** la pantalla de
   visitas de montaje ahora filtra la memoria visual por `Todas`, `Prismas`,
