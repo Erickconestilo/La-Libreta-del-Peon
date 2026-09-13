@@ -17,8 +17,10 @@ test("accepts the expected public health and protected responses", async () => {
       if (url.endsWith("/health")) return response(200, { commit: "test", status: "ok" });
       if (url.endsWith("/readiness")) {
         return response(200, {
+          capabilities: {
+            workExecution: { available: true },
+          },
           status: "ready",
-          workExecution: { available: true },
         });
       }
       return response(401, {
@@ -46,7 +48,10 @@ test("checks the work execution route when a round point is supplied", async () 
       requests.push({ init, url });
       if (url.endsWith("/health")) return response(200, { status: "ok" });
       if (url.endsWith("/readiness")) {
-        return response(200, { status: "ready", workExecution: { available: true } });
+        return response(200, {
+          capabilities: { workExecution: { available: true } },
+          status: "ready",
+        });
       }
       return response(401, { error: { code: "UNAUTHORIZED" } });
     },
@@ -63,7 +68,10 @@ test("fails closed if a protected endpoint regresses to 404", async () => {
       fetchImpl: async (url) => {
         if (url.endsWith("/health")) return response(200, { status: "ok" });
         if (url.endsWith("/readiness")) {
-          return response(200, { status: "ready", workExecution: { available: true } });
+          return response(200, {
+            capabilities: { workExecution: { available: true } },
+            status: "ready",
+          });
         }
         return response(404, { error: { code: "NOT_FOUND" } });
       },
@@ -79,7 +87,10 @@ test("never sends credentials to the public contract verifier", async () => {
       requests.push({ init, url });
       if (url.endsWith("/health")) return response(200, { status: "ok" });
       if (url.endsWith("/readiness")) {
-        return response(200, { status: "ready", workExecution: { available: true } });
+        return response(200, {
+          capabilities: { workExecution: { available: true } },
+          status: "ready",
+        });
       }
       return response(401, { error: { code: "UNAUTHORIZED" } });
     },
@@ -95,13 +106,33 @@ test("fails closed when work execution readiness is unavailable", async () => {
         if (url.endsWith("/health")) return response(200, { status: "ok" });
         if (url.endsWith("/readiness")) {
           return response(503, {
+            capabilities: {
+              workExecution: { available: false, reason: "migration_missing" },
+            },
             status: "not_ready",
-            workExecution: { available: false, reason: "migration_missing" },
           });
         }
         return response(401, { error: { code: "UNAUTHORIZED" } });
       },
     }),
     /readiness unexpected response: HTTP 503/,
+  );
+});
+
+test("rejects the obsolete root-level work execution readiness shape", async () => {
+  await assert.rejects(
+    verifyPublicContract({
+      fetchImpl: async (url) => {
+        if (url.endsWith("/health")) return response(200, { status: "ok" });
+        if (url.endsWith("/readiness")) {
+          return response(200, {
+            status: "ready",
+            workExecution: { available: true },
+          });
+        }
+        return response(401, { error: { code: "UNAUTHORIZED" } });
+      },
+    }),
+    /readiness unexpected response: HTTP 200/,
   );
 });

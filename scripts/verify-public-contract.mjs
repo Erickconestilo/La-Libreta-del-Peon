@@ -51,7 +51,7 @@ export const verifyPublicContract = async ({
     "readiness",
     readiness,
     200,
-    (body) => body?.status === "ready" && body?.workExecution?.available === true,
+    (body) => body?.status === "ready" && body?.capabilities?.workExecution?.available === true,
   );
 
   const rounds = await requestJson(
