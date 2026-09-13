@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff después de commitear el registro de resultados del operario | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida; `git log -1 --oneline` confirmó `6ed9a84 feat(mobile): registrar resultado del trabajo de campo`. Se corrigió la frase obsoleta del handoff y no se tocó el Galaxy, Supabase, Render ni `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Implementar registro explícito del resultado de trabajo por punto de ronda a partir del análisis del control semanal, con soporte offline-first y sin importar datos reales | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `111` tests, `111` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos. La migración `029_monitoring_work_execution_events.sql`, el endpoint protegido, la captura móvil y el outbox quedan implementados solo localmente; no se aplicó la migración, no se desplegó Render y no se instaló una nueva APK en el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar el bundle Android local tras añadir guardado SAF, sin instalarlo | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`; `Export validation: metadata.json=6101 bytes; files=95`. Expo exportó el bundle Android y no dejó procesos retenidos. No se generó APK ni se tocó el Galaxy, Supabase, Render, EAS, Play Store o `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff y checklist con los commits actuales de guardado local de exportaciones | cerrado (`npm run docs:check` devolvió `check-docs: 43 documentos revisados en raíz y docs/` y `Sin errores ni avisos`; `git diff --check` terminó con código `0`. El handoff identifica `979b5b7`, `e3124df` y `9442b08`, y el checklist distingue guardado local de validación física; no se tocó el Galaxy ni ningún servicio remoto.)` |
@@ -742,7 +743,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   y no se ha aplicado en Supabase. Build backend código `0`, `111/111` tests
   backend, TypeScript móvil código `0`, `23` suites/`111` tests móviles,
   `docs:check` con `44` documentos sin avisos. El Galaxy quedó sin cambios y
-  Render no se tocó.
+  Render no se tocó. El slice quedó en el commit local `6ed9a84`.
 
 - **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
   añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin

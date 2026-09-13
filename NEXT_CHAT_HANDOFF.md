@@ -41,7 +41,8 @@ son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 La captura móvil usa el outbox existente y `clientRequestId`, actualiza la
 caché local y conserva separado el resultado declarado de la lectura
 metrológica y del cierre de ronda. Backend y móvil pasan `111/111` tests cada
-uno; TypeScript móvil y documentación están en verde. La migración 029 no se
+uno; TypeScript móvil y documentación están en verde. El slice quedó en el
+commit local `6ed9a84`. La migración 029 no se
 ha aplicado en Supabase, por lo que este slice aún no está desplegado en
 Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
 probarlo contra el backend remoto hasta que la migración y el despliegue estén
@@ -110,7 +111,7 @@ autorizados.
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último arreglo funcional local anterior: `979b5b7` (`fix(mobile): serialize round export actions`), precedido por `e3124df` (protección de APIs SAF por plataforma) y `9442b08` (guardado local de exportaciones). El slice actual de resultado de trabajo aún está sin commit. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `111/111` backend y `111/111` móvil; tooling mantiene `12/12` y `docs:check` revisa `44` documentos sin avisos. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último slice funcional local: `6ed9a84` (`feat(mobile): registrar resultado del trabajo de campo`), precedido por `979b5b7` (`fix(mobile): serialize round export actions`), `e3124df` (protección de APIs SAF por plataforma) y `9442b08` (guardado local de exportaciones). La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `111/111` backend y `111/111` móvil; tooling mantiene `12/12` y `docs:check` revisa `44` documentos sin avisos. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
