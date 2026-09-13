@@ -491,8 +491,14 @@ en v9. `npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in
 - SHA-256: `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`
 - Verificación: `apksigner verify --verbose` devolvió `Verifies`, esquema V2
   `true`, y `apkanalyzer` confirmó el paquete y la versión.
-- Instalación: pendiente; `adb devices -l` devolvió `List of devices attached`
-  sin dispositivos.
+- Instalación: `adb install -r` devolvió `Success`.
+- Dispositivo: `R5CY21X6FLE device`, modelo `SM_S938B`.
+- `dumpsys package`: `versionCode=10`, `versionName=1.0.0`,
+  `firstInstallTime=2026-08-07 10:49:51`,
+  `lastUpdateTime=2026-09-13 11:52:50`.
+- Smoke test: `adb shell monkey` lanzó la app y `uiautomator dump` mostró
+  `LA LIBRETA DEL PEÓN`, `Seleccionar obra`, `Cargando obras...` y las
+  pestañas principales. No se hizo login ni se registraron datos.
 
 ## 22. Proximos pasos posibles
 
