@@ -771,7 +771,8 @@ export const useCreateWorkExecutionEvent = ({
       if (result.mode === 'synced') {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['monitoring-round', cacheKey, roundId] }),
-          queryClient.invalidateQueries({ queryKey: ['my-journey', cacheKey] })
+          queryClient.invalidateQueries({ queryKey: ['my-journey', cacheKey] }),
+          queryClient.invalidateQueries({ queryKey: ['work-execution-events', cacheKey, roundPointId] })
         ]);
       }
       if (result.mode === 'queued' && await hasConnectivity()) {
