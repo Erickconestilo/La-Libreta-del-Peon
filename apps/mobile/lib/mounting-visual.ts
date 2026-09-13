@@ -1,15 +1,23 @@
-import type { MountingEvidence, MountingEvidenceKind, MountingVisit } from '@shared/types';
+import type { MountingEvidence, MountingEvidenceKind, MountingVisit, MountingVisitStatus } from '@shared/types';
 
 export const MOUNTING_PHOTO_SIZE = 132;
 
 export type MountingVisualFilter = 'all' | MountingEvidenceKind;
 export type MountingVisualEvidence = MountingEvidence & { localUri?: string };
+export type MountingVisitStatusFilter = 'all' | MountingVisitStatus;
 
 export const MOUNTING_VISUAL_FILTERS: Array<{ key: MountingVisualFilter; label: string }> = [
   { key: 'all', label: 'Todas' },
   { key: 'prism', label: 'Prismas' },
   { key: 'reference', label: 'Referencias' },
   { key: 'access', label: 'Accesos' }
+];
+
+export const MOUNTING_STATUS_FILTERS: Array<{ key: MountingVisitStatusFilter; label: string }> = [
+  { key: 'all', label: 'Todos los estados' },
+  { key: 'draft', label: 'En curso' },
+  { key: 'completed', label: 'Realizadas' },
+  { key: 'blocked', label: 'No realizables' }
 ];
 
 export const filterMountingVisitsForVisual = <T extends MountingVisit>(
@@ -29,6 +37,11 @@ export const filterMountingVisitsForVisual = <T extends MountingVisit>(
 };
 
 export const getMountingEvidenceUri = (evidence: MountingVisualEvidence) => evidence.localUri ?? evidence.publicUrl;
+
+export const filterMountingVisitsForStatus = <T extends MountingVisit>(
+  visits: T[],
+  filter: MountingVisitStatusFilter
+): T[] => filter === 'all' ? visits : visits.filter((visit) => visit.status === filter);
 
 export const MOUNTING_PHOTO_ANCHORS = [
   { key: 'top-left', label: 'Arriba izquierda', x: 0.2, y: 0.2 },

@@ -278,6 +278,10 @@ se ha desplegado desde esta sesión.
     cerrar mediante un control accesible. No cambia estados ni convierte la
     posición relativa en coordenada.
 
+40. La misma pantalla permite filtrar visitas por estado operativo (`draft`,
+    `completed`, `blocked`) además del tipo de evidencia, manteniendo el orden
+    recibido y sin mutar la caché local.
+
 ## Evidencia local
 
 ```text
@@ -289,7 +293,7 @@ se ha desplegado desde esta sesión.
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total
-Tests:       99 passed, 99 total
+Tests:       100 passed, 100 total
 
 check-docs: 40 documentos revisados en raíz y docs/.
 

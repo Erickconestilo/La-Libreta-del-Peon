@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Añadir filtro operativo por estado a la memoria visual de montaje | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 100 passed, 100 total`; `git diff --check` terminó sin salida. La pantalla filtra por estado sin cambiar el orden ni los datos de visita; no se tocaron servicios remotos ni `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Añadir vista ampliada segura para evidencias del croquis fotográfico | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 99 passed, 99 total`; `git diff --check` terminó sin salida. Las miniaturas ahora abren una vista ampliada que prioriza la imagen local pendiente de sincronización y permite cerrar con un botón accesible; no se tocaron servicios remotos ni `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mejorar localmente la memoria visual de montaje con filtros y croquis fotográfico legible | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `Test Suites: 22 passed, 22 total` y `Tests: 98 passed, 98 total`; `git diff --check` terminó sin salida. Se añadieron filtros por tipo de evidencia y una previsualización mayor para el croquis fotográfico, sin migración remota ni cambios en Supabase, Render, EAS, Play Store, Galaxy o `apps/mobile/package.json`.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer reintentables las políticas RLS de la migración local 027 y cubrirlas con regresión estática | cerrado (`npm run build --workspace apps/backend` terminó con código `0`; `npm test --workspace apps/backend` devolvió `ℹ tests 104`, `ℹ pass 104`, `ℹ fail 0`, incluida `mounting visits migration keeps tenant integrity and deny-all RLS`; `git diff --check` sin salida. Las políticas se crean dentro de guardas `pg_policies` porque PostgreSQL no admite `CREATE POLICY IF NOT EXISTS`. No se aplicó 027 en Supabase ni se tocó ningún servicio remoto.) |
@@ -516,6 +517,11 @@ debe presentar como cerrada.
   aún está pendiente de sincronización y cae a `publicUrl` para registros
   remotos; no altera estados ni contratos. Verificación: TypeScript móvil
   limpio y `22` suites/`99` tests.
+- **Filtro operativo de visitas (13-09-2026):** la memoria visual permite
+  filtrar también por `En curso`, `Realizadas` y `No realizables`, conservando
+  el orden recibido y combinándolo con el filtro de tipo de evidencia. La
+  regresión verifica que el filtrado no muta ni reordena la entrada. Verificación:
+  TypeScript móvil limpio y `22` suites/`100` tests.
 - **Auditoría de dependencia del exportador (24-08-2026):** `exceljs@4.4.0` queda instalado. `npm audit --workspace apps/backend --omit=dev` devuelve 2 vulnerabilidades moderadas transitivas de `uuid`; la corrección disponible exige `npm audit fix --force` y degradaría ExcelJS a `3.4.0`, por lo que queda pendiente revisión explícita antes de producción.
 - **Auditoría actualizada (12-09-2026):** `npm audit --workspace apps/backend --omit=dev` sigue devolviendo exactamente `2 moderate` en `uuid` bajo `exceljs@4.4.0`; la fuente de uso está en la dependencia transitiva y `npm audit fix --force` propone degradar ExcelJS a `3.4.0`. Se aplicó únicamente `npm audit fix` sin `--force` para `morgan` y `qs`; no se cambia el exportador hasta disponer de una actualización compatible y una nueva prueba de paridad.
 - **Auditoría Expo cerrada (12-09-2026):** se actualizaron las 12 dependencias que `npx expo install --check` había detectado para Expo 56, se añadió el plugin nativo de `expo-sqlite` y se regeneró el lockfile en el commit `6d9f31c`. La comprobación posterior devuelve literalmente `Dependencies are up to date`; TypeScript y `17/73` tests móviles siguen verdes. El diff previo de scripts `android/ios` se reaplicó y permanece fuera del commit.
@@ -568,6 +574,15 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Filtro de estado en memoria visual (Codex):** la pantalla de
+  visitas de montaje añade filtros operativos para distinguir trabajo en curso,
+  realizado y no realizable, además del filtro por tipo de evidencia. Se
+  conserva el orden de las visitas y no se cambian estados en SQLite ni en
+  servidor. `npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con
+  código `0`; Jest móvil devolvió `Test Suites: 22 passed, 22 total` y `Tests:
+  100 passed, 100 total`; no se tocaron servicios remotos, Galaxy ni
+  `apps/mobile/package.json`. Commit pendiente de esta documentación.
 
 - **2026-09-13 — Vista ampliada de evidencias del croquis (Codex):** las
   miniaturas de memoria visual de montaje son pulsables y abren un modal de

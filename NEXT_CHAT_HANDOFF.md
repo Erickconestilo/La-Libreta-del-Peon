@@ -50,6 +50,10 @@ repositorio bare.
   prioriza `localUri` para registros offline, muestra notas y permite cerrar
   con un botón accesible. La suite móvil queda en `22` suites y `99` tests;
   la regresión del selector de URI está en `mounting-visual.test.ts`.
+- La memoria visual también permite filtrar por estado (`En curso`, `Realizadas`
+  y `No realizables`) sin mutar ni reordenar las visitas. La regresión cubre la
+  combinación con el filtro de evidencia; la suite móvil queda en `22` suites
+  y `100` tests.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
@@ -326,7 +330,7 @@ repositorio bare.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
   tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
-  suites y `99` tests. La captura de `fissure_witness` marca la foto como
+  suites y `100` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 

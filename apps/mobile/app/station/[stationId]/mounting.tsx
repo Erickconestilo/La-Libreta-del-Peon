@@ -16,8 +16,11 @@ import {
   MOUNTING_VISUAL_FILTERS,
   filterMountingVisitsForVisual,
   getMountingEvidenceUri,
+  filterMountingVisitsForStatus,
+  MOUNTING_STATUS_FILTERS,
   type MountingVisualEvidence,
   type MountingVisualFilter,
+  type MountingVisitStatusFilter,
   type MountingPhotoAnchorKey
 } from '@/lib/mounting-visual';
 import type { MountingEvidenceKind, MountingVisitStatus } from '@shared/types';
@@ -48,12 +51,13 @@ export default function MountingVisitsScreen() {
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
   const [previewEvidence, setPreviewEvidence] = useState<MountingVisualEvidence | null>(null);
   const [visualFilter, setVisualFilter] = useState<MountingVisualFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<MountingVisitStatusFilter>('all');
   const canEdit = canWriteProject(currentUser, station?.projectId);
   const selectedPhotoAnchor = MOUNTING_PHOTO_ANCHORS.find((anchor) => anchor.key === photoAnchorKey) ?? null;
-  const visibleVisits = useMemo(
-    () => filterMountingVisitsForVisual(visits ?? [], visualFilter),
-    [visits, visualFilter]
-  );
+  const visibleVisits = useMemo(() => {
+    const evidenceFiltered = filterMountingVisitsForVisual(visits ?? [], visualFilter);
+    return filterMountingVisitsForStatus(evidenceFiltered, statusFilter);
+  }, [visits, visualFilter, statusFilter]);
 
   const handleCreateVisit = async () => {
     const visit = await createVisit({
@@ -243,6 +247,19 @@ export default function MountingVisitsScreen() {
               style={[styles.chip, visualFilter === filter.key ? styles.chipActive : null]}
             >
               <Text style={[styles.chipText, visualFilter === filter.key ? styles.chipTextActive : null]}>{filter.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <View accessibilityLabel="Filtrar estado de visitas" style={styles.chips}>
+          {MOUNTING_STATUS_FILTERS.map((filter) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: statusFilter === filter.key }}
+              key={filter.key}
+              onPress={() => setStatusFilter(filter.key)}
+              style={[styles.chip, statusFilter === filter.key ? styles.chipActive : null]}
+            >
+              <Text style={[styles.chipText, statusFilter === filter.key ? styles.chipTextActive : null]}>{filter.label}</Text>
             </Pressable>
           ))}
         </View>

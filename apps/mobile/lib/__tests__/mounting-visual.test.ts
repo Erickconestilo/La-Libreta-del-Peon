@@ -3,7 +3,9 @@ import type { MountingVisit } from '@shared/types';
 
 import {
   filterMountingVisitsForVisual,
+  filterMountingVisitsForStatus,
   getMountingEvidenceUri,
+  MOUNTING_STATUS_FILTERS,
   getMountingPhotoMarkerPosition,
   MOUNTING_PHOTO_ANCHORS,
   MOUNTING_PHOTO_SIZE,
@@ -46,5 +48,21 @@ describe('mounting photo visual contract', () => {
   it('prefers the local image while an evidence item is pending sync', () => {
     expect(getMountingEvidenceUri({ localUri: 'file:///pending.jpg', publicUrl: 'https://example.invalid/remote.jpg' } as never)).toBe('file:///pending.jpg');
     expect(getMountingEvidenceUri({ publicUrl: 'https://example.invalid/remote.jpg' } as never)).toBe('https://example.invalid/remote.jpg');
+  });
+
+  it('filters visits by operational status without changing the input order', () => {
+    const visits = [
+      { id: 'visit-draft', status: 'draft', evidence: [] },
+      { id: 'visit-completed', status: 'completed', evidence: [] },
+      { id: 'visit-blocked', status: 'blocked', evidence: [] }
+    ] as unknown as MountingVisit[];
+
+    expect(filterMountingVisitsForStatus(visits, 'all').map((visit) => visit.id)).toEqual([
+      'visit-draft',
+      'visit-completed',
+      'visit-blocked'
+    ]);
+    expect(filterMountingVisitsForStatus(visits, 'blocked').map((visit) => visit.id)).toEqual(['visit-blocked']);
+    expect(MOUNTING_STATUS_FILTERS.map((filter) => filter.key)).toEqual(['all', 'draft', 'completed', 'blocked']);
   });
 });
