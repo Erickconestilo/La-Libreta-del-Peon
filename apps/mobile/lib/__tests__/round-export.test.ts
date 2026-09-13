@@ -1,12 +1,21 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { ApiRequestError } from '../api';
-import { getRoundExportErrorMessage, shareRoundExport, type RoundExportDependencies } from '../round-export';
+import {
+  getRoundExportErrorMessage,
+  saveRoundExport,
+  shareRoundExport,
+  type RoundExportDependencies,
+  type RoundExportSaveDependencies
+} from '../round-export';
 
 const mockDownload = jest.fn<RoundExportDependencies['download']>();
 const mockWriteBase64 = jest.fn<RoundExportDependencies['writeBase64']>();
 const mockIsAvailable = jest.fn<RoundExportDependencies['isAvailable']>();
 const mockShare = jest.fn<RoundExportDependencies['share']>();
+const mockCreateFile = jest.fn<RoundExportSaveDependencies['createFile']>();
+const mockRequestDirectory = jest.fn<RoundExportSaveDependencies['requestDirectory']>();
+const mockSaveWriteBase64 = jest.fn<RoundExportSaveDependencies['writeBase64']>();
 
 const dependencies: RoundExportDependencies = {
   directory: 'file:///cache/',
@@ -14,6 +23,13 @@ const dependencies: RoundExportDependencies = {
   isAvailable: mockIsAvailable,
   share: mockShare,
   writeBase64: mockWriteBase64
+};
+
+const saveDependencies: RoundExportSaveDependencies = {
+  createFile: mockCreateFile,
+  download: mockDownload,
+  requestDirectory: mockRequestDirectory,
+  writeBase64: mockSaveWriteBase64
 };
 
 describe('round export sharing', () => {
@@ -48,6 +64,40 @@ describe('round export sharing', () => {
 
     await expect(shareRoundExport('round-1', 'xlsx', dependencies)).rejects.toThrow('no permite compartir');
     expect(mockWriteBase64).not.toHaveBeenCalled();
+  });
+
+  it('saves an authenticated export through the Android directory picker', async () => {
+    mockDownload.mockResolvedValueOnce({
+      body: new Uint8Array([84, 111, 112, 111]).buffer,
+      contentType: 'text/csv'
+    });
+    mockRequestDirectory.mockResolvedValueOnce({ granted: true, directoryUri: 'content://tree/download' });
+    mockCreateFile.mockResolvedValueOnce('content://file/export.csv');
+
+    const result = await saveRoundExport('round/one', 'csv', saveDependencies);
+
+    expect(mockDownload).toHaveBeenCalledWith('/rounds/round%2Fone/export?format=csv');
+    expect(mockCreateFile).toHaveBeenCalledWith(
+      'content://tree/download',
+      expect.stringMatching(/^topofield-ronda-roundone-.*\.csv$/),
+      'text/csv'
+    );
+    expect(mockSaveWriteBase64).toHaveBeenCalledWith('content://file/export.csv', 'VG9wbw==');
+    expect(result).toEqual({
+      fileName: expect.stringMatching(/^topofield-ronda-roundone-.*\.csv$/),
+      format: 'csv',
+      uri: 'content://file/export.csv'
+    });
+  });
+
+  it('does not create or write a file when the user cancels the directory picker', async () => {
+    mockDownload.mockResolvedValueOnce({ body: new ArrayBuffer(0), contentType: null });
+    mockRequestDirectory.mockResolvedValueOnce({ granted: false });
+
+    await expect(saveRoundExport('round-1', 'xlsx', saveDependencies)).rejects.toThrow('No se seleccionó una carpeta');
+    expect(mockDownload).not.toHaveBeenCalled();
+    expect(mockCreateFile).not.toHaveBeenCalled();
+    expect(mockSaveWriteBase64).not.toHaveBeenCalled();
   });
 
   it('shows safe HTTP diagnostics for an API failure', () => {

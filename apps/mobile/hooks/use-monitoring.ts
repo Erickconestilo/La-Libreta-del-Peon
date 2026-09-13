@@ -41,7 +41,7 @@ import {
   type PreparedPhoto
 } from '@/lib/photo-upload';
 import { createRandomId } from '@/lib/random-id';
-import { getRoundExportErrorMessage, shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
+import { getRoundExportErrorMessage, saveRoundExport, shareRoundExport, type RoundExportFormat } from '@/lib/round-export';
 
 type ApiEnvelope<T> = {
   data: T;
@@ -707,6 +707,24 @@ export const useShareMonitoringRound = (roundId: string | null) => {
     errorMessage: mutation.error ? getRoundExportErrorMessage(mutation.error) : null,
     isSharing: mutation.isPending,
     shareExport: mutation.mutateAsync
+  };
+};
+
+export const useSaveMonitoringRound = (roundId: string | null) => {
+  const mutation = useMutation({
+    mutationFn: async (format: RoundExportFormat) => {
+      if (!roundId) {
+        throw new Error('Falta la ronda para guardar la entrega.');
+      }
+
+      return saveRoundExport(roundId, format);
+    }
+  });
+
+  return {
+    errorMessage: mutation.error ? getRoundExportErrorMessage(mutation.error) : null,
+    isSaving: mutation.isPending,
+    saveExport: mutation.mutateAsync
   };
 };
 

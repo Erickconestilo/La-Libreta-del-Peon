@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatShortDate, RoundStatusPill, StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useMonitoringRound, useShareMonitoringRound, useWorkCompletionReports } from '@/hooks/use-monitoring';
+import { useMonitoringRound, useSaveMonitoringRound, useShareMonitoringRound, useWorkCompletionReports } from '@/hooks/use-monitoring';
 import { canWriteProject } from '@/lib/field-access';
 import { colors, spacing, typography } from '@/src/theme';
 
@@ -19,7 +19,9 @@ export default function MonitoringRoundSummaryScreen() {
   const { cachedAt, data: round, errorMessage, isOfflineCache, isLoading } = useMonitoringRound(roundId ?? null);
   const { data: reports, errorMessage: reportsError } = useWorkCompletionReports(roundId ?? null);
   const { errorMessage: shareErrorMessage, isSharing, shareExport } = useShareMonitoringRound(roundId ?? null);
+  const { errorMessage: saveErrorMessage, isSaving, saveExport } = useSaveMonitoringRound(roundId ?? null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const points = round?.points ?? [];
   const taken = points.filter((point) => point.status === 'taken').length;
   const pending = points.filter((point) => point.status === 'pending').length;
@@ -31,6 +33,16 @@ export default function MonitoringRoundSummaryScreen() {
     try {
       await shareExport(format);
       setShareMessage('Archivo preparado. Elige WhatsApp, correo u otro canal en la ventana de compartir.');
+    } catch {
+      // El hook expone el motivo debajo del bloque de entrega.
+    }
+  };
+
+  const handleSave = async (format: 'csv' | 'xlsx') => {
+    setSaveMessage(null);
+    try {
+      const result = await saveExport(format);
+      setSaveMessage(`Copia guardada: ${result.fileName}`);
     } catch {
       // El hook expone el motivo debajo del bloque de entrega.
     }
@@ -72,9 +84,17 @@ export default function MonitoringRoundSummaryScreen() {
                 <Pressable disabled={isSharing} onPress={() => void handleShare('csv')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
                 <Pressable disabled={isSharing} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
               </View>
+              <Text style={styles.body}>Guarda una copia en una carpeta del teléfono para revisarla después o pasarla al ordenador.</Text>
+              <View style={styles.shareActions}>
+                <Pressable disabled={isSaving} onPress={() => void handleSave('csv')} style={[styles.shareButton, isSaving ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar CSV</Text></Pressable>
+                <Pressable disabled={isSaving} onPress={() => void handleSave('xlsx')} style={[styles.shareButton, isSaving ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar Excel</Text></Pressable>
+              </View>
               {isSharing ? <Text style={styles.body}>Preparando archivo...</Text> : null}
+              {isSaving ? <Text style={styles.body}>Preparando copia...</Text> : null}
               {shareMessage ? <Text style={styles.success}>{shareMessage}</Text> : null}
+              {saveMessage ? <Text style={styles.success}>{saveMessage}</Text> : null}
               {shareErrorMessage ? <Text style={styles.errorText}>{shareErrorMessage}</Text> : null}
+              {saveErrorMessage ? <Text style={styles.errorText}>{saveErrorMessage}</Text> : null}
             </View>
           ) : (
             <View style={styles.card}>

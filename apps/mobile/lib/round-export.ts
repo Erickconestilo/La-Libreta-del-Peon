@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 
 import { apiDownload, isApiRequestError } from './api';
 import { isNativeSharingAvailable, shareLocalFile } from './native-sharing';
@@ -10,6 +11,13 @@ export type RoundExportDependencies = {
   download: typeof apiDownload;
   isAvailable: () => Promise<boolean>;
   share: (uri: string, options: { dialogTitle: string; mimeType: string }) => Promise<unknown>;
+  writeBase64: (uri: string, contents: string) => Promise<void>;
+};
+
+export type RoundExportSaveDependencies = {
+  createFile: (directoryUri: string, fileName: string, mimeType: string) => Promise<string>;
+  download: typeof apiDownload;
+  requestDirectory: () => Promise<{ directoryUri: string; granted: true } | { granted: false }>;
   writeBase64: (uri: string, contents: string) => Promise<void>;
 };
 
@@ -65,6 +73,26 @@ const getDefaultDependencies = (): RoundExportDependencies => ({
   }
 });
 
+const getDefaultSaveDependencies = (): RoundExportSaveDependencies => ({
+  createFile: FileSystem.StorageAccessFramework.createFileAsync,
+  download: apiDownload,
+  requestDirectory: async () => {
+    if (Platform.OS !== 'android') {
+      return { granted: false };
+    }
+
+    const result = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync(
+      FileSystem.StorageAccessFramework.getUriForDirectoryInRoot('Download')
+    );
+    return result.granted ? { directoryUri: result.directoryUri, granted: true } : { granted: false };
+  },
+  writeBase64: async (uri, contents) => {
+    await FileSystem.StorageAccessFramework.writeAsStringAsync(uri, contents, {
+      encoding: FileSystem.EncodingType.Base64
+    });
+  }
+});
+
 export const shareRoundExport = async (
   roundId: string,
   format: RoundExportFormat,
@@ -87,4 +115,24 @@ export const shareRoundExport = async (
   await dependencies.share(uri, { dialogTitle: 'Compartir entrega de TopoField', mimeType });
 
   return { format, uri };
+};
+
+export const saveRoundExport = async (
+  roundId: string,
+  format: RoundExportFormat,
+  dependencies: RoundExportSaveDependencies = getDefaultSaveDependencies()
+) => {
+  const { mimeType } = exportMetadata[format];
+  const permission = await dependencies.requestDirectory();
+
+  if (!permission.granted) {
+    throw new Error('No se seleccionó una carpeta para guardar el archivo.');
+  }
+
+  const response = await dependencies.download(`/rounds/${encodeURIComponent(roundId)}/export?format=${format}`);
+  const fileName = getRoundExportFileName(roundId, format);
+  const uri = await dependencies.createFile(permission.directoryUri, fileName, mimeType);
+  await dependencies.writeBase64(uri, arrayBufferToBase64(response.body));
+
+  return { fileName, format, uri };
 };

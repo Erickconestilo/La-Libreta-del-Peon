@@ -13,10 +13,10 @@ Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
 - [x] Backend compila y pasa `106/106` tests con `npm run verify:local`.
-- [x] Móvil pasa TypeScript, `22` suites y `104/104` tests.
-- [x] Tooling local pasa `9/9` tests; `verify:local` termina con
+- [x] Móvil pasa TypeScript, `22` suites y `106/106` tests.
+- [x] Tooling local pasa `12/12` tests; `verify:local` termina con
   `verify local completed successfully`.
-- [x] `docs:check` revisa `41 documentos revisados en raíz y docs/` sin errores
+- [x] `docs:check` revisa `43 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
