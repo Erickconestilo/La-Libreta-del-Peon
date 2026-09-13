@@ -74,7 +74,8 @@ const getDefaultDependencies = (): RoundExportDependencies => ({
 });
 
 const getDefaultSaveDependencies = (): RoundExportSaveDependencies => ({
-  createFile: FileSystem.StorageAccessFramework.createFileAsync,
+  createFile: async (directoryUri, fileName, mimeType) =>
+    FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, mimeType),
   download: apiDownload,
   requestDirectory: async () => {
     if (Platform.OS !== 'android') {
