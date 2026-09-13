@@ -66,7 +66,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 13-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=5` se recompiló; el manifiesto y `jarsigner -verify` son correctos. La v4 sí fue instalada y validada históricamente en el Galaxy para la consulta supervisora; la v5 aún no se convirtió a APK universal ni se instaló porque el transporte de la contraseña de bundletool quedó bloqueado y ADB no está disponible. Eso no sustituye el E2E físico.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría y el plan de validación ya están versionados en `docs/field/`; todavía no existe el informe de una jornada real ni se cumple el criterio de salida de la fase. En local, Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=5` se recompiló; el manifiesto, `jarsigner -verify` y la verificación V3 del APK son correctos. La v4 sí fue instalada y validada históricamente en el Galaxy para la consulta supervisora; la v5 ya tiene APK release generada, pero aún no se instaló porque ADB no está disponible. Eso no sustituye el E2E físico.
 
 La auditoría local vigente de 13-09-2026 está en
 `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`. Añade una barrera
@@ -132,8 +132,9 @@ Las migraciones `022_project_membership_access_level.sql`,
 El último despliegue funcional verificado sirve el merge commit
 `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`, que contiene `b0572a0`.
 La fuente y la release móvil local más reciente están preparadas con
-`versionCode=5`; la AAB está firmada y verificada, pero el APK universal todavía
-no se ha generado por el bloqueo de transporte de la contraseña de bundletool.
+`versionCode=5`; la AAB está firmada y verificada y Gradle generó una APK
+release verificable con el mismo certificado. No se usó Bundletool por el
+bloqueo de transporte de su contraseña.
 La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, única obra
@@ -260,7 +261,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — bloqueante de validación:** ejecutar el recorrido offline completo del operador en el Galaxy y validar exportación con datos autorizados. Supervisor y release `versionCode=4` ya están comprobados; la release `versionCode=5` está preparada como AAB pero necesita APK universal e instalación cuando se disponga del dispositivo y de un transporte autorizado de la contraseña del keystore.
+- **Abierto — bloqueante de validación:** ejecutar el recorrido offline completo del operador en el Galaxy y validar exportación con datos autorizados. Supervisor y release `versionCode=4` ya están comprobados; la release `versionCode=5` tiene AAB y APK release verificadas, pero necesita instalación y prueba física cuando se disponga del dispositivo.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo

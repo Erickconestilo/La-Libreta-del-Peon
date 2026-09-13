@@ -33,9 +33,11 @@ se ha desplegado desde esta sesión.
 5. La release local v5 se recompilo despues de alinear Expo 56 y corregir
    fallos reproducibles del outbox. El manifiesto confirma `versionCode=5` y
    el paquete de TopoField. La AAB esta firmada como `CN=TopoField Android
-   Release`; no se convirtio a APK universal porque bundletool no pudo recibir
-   la contraseña del keystore de forma autorizada en esta terminal. No se
-   instalo ni se toco el Galaxy.
+   Release`; Bundletool no se uso porque no pudo recibir la contraseña del
+   keystore de forma autorizada en esta terminal. Gradle genero ademas la APK
+   release `app-release.apk`, y `apksig` confirmo `verified=true`, esquema V3,
+   un firmante y el mismo certificado de release. No se instalo ni se toco el
+   Galaxy.
 6. Los listados de prismas y observaciones por estación descartan una
    referencia cuyo prisma pertenezca a otra obra; se mantiene visible un
    prisma legacy sin `project_id` cuando no contradice la obra de su estación.
@@ -212,12 +214,15 @@ check-docs: 39 documentos revisados en raíz y docs/.
 Sin errores ni avisos.
 
 BUILD SUCCESSFUL in 16m 18s
-bundletool_exit=not-run (terminal policy blocked keystore credential transport;
-interactive mode failed because System.console() was null)
+bundletool_exit=not-run (terminal policy blocked keystore credential transport)
+gradle_apk_exit=0
+javapksig_verified=true; signers=1; scheme=V3
 jarsigner_exit=0
 android:versionCode="5"
 package="com.ciudadanoinusual.topofield"
 Propietario: CN=TopoField Android Release, OU=Mobile, O=TopoField, C=ES
+apk=C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
+apk_bytes=53,403,238
 ```
 
 La verificacion `jarsigner -verify -strict` mantiene el aviso de certificado

@@ -84,13 +84,16 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`,
   `40,134,659` bytes, firmada como `CN=TopoField Android Release`. El
   manifiesto confirma `versionCode=5` y `com.ciudadanoinusual.topofield`;
-  `jarsigner -verify` devuelve código 0. Bundletool no produjo APK universal:
-  el transporte de la contraseña quedó bloqueado por la política de terminal y
-  el modo interactivo no tenía consola. La variante
+  `jarsigner -verify` devuelve código 0. Bundletool no se usó porque el
+  transporte de la contraseña quedó bloqueado por la política de terminal.
+  Gradle generó también
+  `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`,
+  `53,403,238` bytes; `apksig` confirmó `verified=true`, esquema V3 y
+  `CN=TopoField Android Release`. La variante
   `jarsigner -verify -strict` conserva la advertencia esperable del certificado
   local autofirmado, no una validación de Play Store. La v4 fue instalada y
   validada históricamente en el Galaxy para la consulta supervisora; la v5 no
-  se instaló porque todavía no existe APK universal y ADB no está disponible.
+  se instaló porque ADB no está disponible.
 
 ## Estado desplegado
 
