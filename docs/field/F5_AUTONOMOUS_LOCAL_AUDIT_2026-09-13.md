@@ -232,6 +232,13 @@ se ha desplegado desde esta sesión.
     ausente, metadata vacía y exportación válida; así un proceso con código 0
     no se interpreta como artefacto utilizable si la carpeta está incompleta.
 
+34. Se añadió `verify:local` como entrada única para repetir los checks que no
+    necesitan servicios remotos ni hardware: build y tests backend, TypeScript
+    y tests móviles, tooling, documentación y `git diff --check`. La variante
+    `verify:local:pre-apk` añade el export Android. En Windows, el runner usa
+    `cmd.exe` con la citación común del preflight para evitar que los
+    ejecutables `.cmd` fallen antes de iniciar.
+
 ## Evidencia local
 
 ```text
@@ -258,6 +265,8 @@ PRE_APK_METADATA_EXISTS=True
 PRE_APK_METADATA_BYTES=6101
 pre-apk lingering Expo/Metro processes=0
 PRE_APK_RELATED_PROCESSES=0
+
+verify local completed successfully.
 
 npm audit --workspace apps/backend --omit=dev --json:
 moderate=2; high=0; critical=0; total=2

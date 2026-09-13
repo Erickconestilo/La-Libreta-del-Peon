@@ -90,6 +90,10 @@ repositorio bare.
 - `673fc15` versiona el validador de salida Expo y sus seis pruebas de tooling;
   el commit no incluye `apps/mobile/package.json` ni las capturas locales del
   Galaxy.
+- `verify:local` encadena la verificación local completa y
+  `verify:local:pre-apk` añade el export Android con validación de artefactos.
+  La ejecución comprobada de `verify:local` termina con
+  `verify local completed successfully`.
 - El reintento manual del outbox reinicia el ciclo completo, incluido el límite
   de intentos y el backoff. Los fallos automáticos usan una operación separada
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
