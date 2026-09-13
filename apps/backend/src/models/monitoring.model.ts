@@ -826,10 +826,23 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
         p.name AS project_name,
         COUNT(mrp.id)::int AS total_point_count,
         COUNT(mrp.id) FILTER (WHERE mrp.status = 'pending')::int AS pending_point_count,
-        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type = 'completed')::int AS work_completed_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type = 'started')::int AS work_in_progress_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type IS NULL)::int AS work_pending_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type IN ('not_done', 'repeat_required', 'blocked'))::int AS work_review_point_count
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       LEFT JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
       WHERE mr.operator_id = $1
         AND mr.status IN ('draft', 'active')
         ${scope.clause}
@@ -846,7 +859,11 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
     projectCode: row.project_code,
     projectName: row.project_name,
     takenPointCount: Number(row.taken_point_count ?? 0),
-    totalPointCount: Number(row.total_point_count ?? 0)
+    totalPointCount: Number(row.total_point_count ?? 0),
+    workCompletedPointCount: Number(row.work_completed_point_count ?? 0),
+    workInProgressPointCount: Number(row.work_in_progress_point_count ?? 0),
+    workPendingPointCount: Number(row.work_pending_point_count ?? 0),
+    workReviewPointCount: Number(row.work_review_point_count ?? 0)
   }));
 };
 

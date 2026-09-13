@@ -490,6 +490,11 @@ export interface JourneyRound extends MonitoringRound {
   pendingPointCount: number;
   takenPointCount: number;
   totalPointCount: number;
+  /** Optional for compatibility with journey snapshots created before migration 029. */
+  workCompletedPointCount?: number;
+  workInProgressPointCount?: number;
+  workPendingPointCount?: number;
+  workReviewPointCount?: number;
 }
 
 export interface ProjectOperator {

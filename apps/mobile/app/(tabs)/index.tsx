@@ -143,6 +143,7 @@ export default function ProjectsScreen() {
             <>
               <Text style={styles.journeyMeta}>{journey[0].projectName} · {formatShortDate(journey[0].roundDate)}</Text>
               <Text style={styles.journeyProgress}>{journey[0].takenPointCount}/{journey[0].totalPointCount} puntos tomados</Text>
+              {typeof journey[0].workCompletedPointCount === 'number' ? <Text style={styles.journeyProgress}>{journey[0].workCompletedPointCount} hechos · {journey[0].workInProgressPointCount ?? 0} en curso · {(journey[0].workPendingPointCount ?? 0) + (journey[0].workReviewPointCount ?? 0)} por revisar</Text> : null}
               <View style={styles.journeyActions}>
                 <Pressable onPress={() => router.push(`/rounds/${journey[0].id}` as never)} style={styles.journeyPrimaryButton}>
                   <MaterialIcons color={colors.background} name="play-arrow" size={18} />

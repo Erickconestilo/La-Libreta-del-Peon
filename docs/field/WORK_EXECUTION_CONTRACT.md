@@ -71,6 +71,13 @@ La pantalla del supervisor verá únicamente eventos recibidos por el servidor.
 Un evento en outbox no se presenta como recibido hasta que la sincronización
 termine.
 
+`Mi jornada` puede mostrar, para cada ronda asignada, los contadores del último
+resultado recibido por punto: `hechos`, `en curso`, `pendientes` y `por revisar`.
+El backend calcula cada contador a partir del evento más reciente del punto,
+manteniendo la ronda y el punto dentro de la misma obra. Si el móvil recupera
+una caché anterior a este campo, omite el resumen hasta recibir una respuesta
+actualizada; no inventa estados para completar la vista.
+
 El operario y el supervisor pueden consultar el historial append-only del
 punto. Las acciones anteriores no se sobrescriben: cada nueva acción añade un
 evento con fecha, autor y contexto, y la interfaz muestra el último estado

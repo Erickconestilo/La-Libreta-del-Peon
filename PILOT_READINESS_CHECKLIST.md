@@ -12,7 +12,7 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `112/112` tests con la batería local.
+- [x] Backend compila y pasa `113/113` tests con la batería local.
 - [x] Móvil pasa TypeScript, `23` suites y `113/113` tests.
 - [x] Tooling local pasa `12/12` tests; `verify:local` termina con
   `verify local completed successfully`.

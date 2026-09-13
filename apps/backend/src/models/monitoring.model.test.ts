@@ -31,6 +31,25 @@ test('uses projects.id when scoping a projects query', () => {
   assert.deepEqual(scope.params, [['11111111-1111-1111-1111-111111111111']]);
 });
 
+test('journey summarises the latest operational result per point', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const journeySource = modelSource.slice(
+    modelSource.indexOf('export const listMyJourney'),
+    modelSource.indexOf('export const createControlPoint')
+  );
+
+  assert.match(journeySource, /LEFT JOIN LATERAL \([\s\S]*monitoring_work_execution_events/);
+  assert.match(journeySource, /wee\.round_point_id = mrp\.id/);
+  assert.match(journeySource, /ORDER BY wee\.occurred_at DESC, wee\.created_at DESC, wee\.id DESC/);
+  assert.match(journeySource, /work_completed_point_count/);
+  assert.match(journeySource, /work_in_progress_point_count/);
+  assert.match(journeySource, /work_pending_point_count/);
+  assert.match(journeySource, /work_review_point_count/);
+});
+
 test('uses project_id by default for monitoring child tables', () => {
   const scope = buildProjectScopeCondition(
     ['11111111-1111-1111-1111-111111111111'],

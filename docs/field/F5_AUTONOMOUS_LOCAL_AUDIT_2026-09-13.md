@@ -30,6 +30,11 @@ modifica el estado metrológico ni el cierre de la ronda. La regresión cubre el
 conteo por estado y la selección ordenada; la batería actual queda en
 `113/113` tests móviles.
 
+El slice posterior también expone esos cuatro contadores en `Mi jornada` a
+partir del último evento recibido por punto. La consulta mantiene la relación
+ronda-punto-obra y la batería backend local queda en `113/113` tests. La ruta
+requiere la migración local 029; todavía no se ha aplicado ni desplegado.
+
 ## Addendum fisico del 13-09-2026
 
 La prueba posterior uso la release `versionCode=7` instalada en el Galaxy
