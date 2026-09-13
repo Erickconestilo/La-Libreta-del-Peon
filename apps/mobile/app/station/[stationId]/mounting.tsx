@@ -13,6 +13,7 @@ import {
   getMountingPhotoMarkerPosition,
   MOUNTING_PHOTO_ANCHORS,
   MOUNTING_PHOTO_SIZE,
+  MOUNTING_BLOCK_REASON_OPTIONS,
   MOUNTING_VISUAL_FILTERS,
   filterMountingVisitsForVisual,
   getMountingEvidenceUri,
@@ -342,6 +343,19 @@ export default function MountingVisitsScreen() {
               {canEdit && visit.status === 'draft' && blockedVisitId === visit.id ? (
                 <View style={styles.blockedReasonBox}>
                   <Text style={styles.label}>Motivo obligatorio</Text>
+                  <View style={styles.chips}>
+                    {MOUNTING_BLOCK_REASON_OPTIONS.map((reason) => (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: blockedReason === reason }}
+                        key={reason}
+                        onPress={() => setBlockedReason(reason)}
+                        style={[styles.chip, blockedReason === reason ? styles.chipActive : null]}
+                      >
+                        <Text style={[styles.chipText, blockedReason === reason ? styles.chipTextActive : null]}>{reason}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                   <TextInput
                     multiline
                     onChangeText={setBlockedReason}

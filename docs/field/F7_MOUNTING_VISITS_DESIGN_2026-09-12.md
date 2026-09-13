@@ -42,6 +42,9 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 - Marcar una visita como `blocked`/`No realizable` exige un motivo escrito. La
   aplicación conserva las notas anteriores y añade `Motivo de no realización:`;
   el backend rechaza la transición si el motivo llega vacío.
+- La UI ofrece motivos neutros de selección rápida y mantiene un campo libre
+  para excepciones, sin convertirlos en códigos técnicos ni sustituir el
+  procedimiento de campo.
 
 La pantalla de consulta puede mostrar una posición relativa aproximada sobre
 la miniatura mediante una cuadrícula 3x3. Esa posición solo sirve para

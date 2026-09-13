@@ -28,7 +28,7 @@ acceso `Continuar con <código>`, que abre el primer punto accionable sin
 alterar el orden configurado. La selección excluye puntos bloqueados y no
 modifica el estado metrológico ni el cierre de la ronda. La regresión cubre el
 conteo por estado y la selección ordenada; la batería actual queda en
-`116/116` tests móviles.
+`117/117` tests móviles.
 
 El slice posterior también expone esos cuatro contadores en `Mi jornada` a
 partir del último evento recibido por punto. La consulta mantiene la relación
@@ -43,7 +43,7 @@ presenta como verificación de Supabase hasta que la migración se aplique allí
 El bloque local de visitas de montaje exige un motivo cuando el operario marca
 una visita como `No realizable`; la validación backend rechaza notas vacías y
 la UI conserva el contexto anterior. La regresión forma parte de la batería
-backend `114/114` y móvil `116/116`.
+backend `114/114` y móvil `117/117`.
 
 ## Addendum fisico del 13-09-2026
 

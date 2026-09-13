@@ -8,6 +8,7 @@ import {
   getMountingVisitStatusPresentation,
   getMountingEvidenceUri,
   MOUNTING_STATUS_FILTERS,
+  MOUNTING_BLOCK_REASON_OPTIONS,
   getMountingPhotoMarkerPosition,
   MOUNTING_PHOTO_ANCHORS,
   MOUNTING_PHOTO_SIZE,
@@ -79,5 +80,14 @@ describe('mounting photo visual contract', () => {
       'Acceso lateral anotado.\nMotivo de no realización: Valla cerrada.'
     );
     expect(buildMountingBlockedNotes(null, 'Sin visibilidad')).toBe('Motivo de no realización: Sin visibilidad');
+  });
+
+  it('offers neutral quick reasons for a blocked mounting visit', () => {
+    expect(MOUNTING_BLOCK_REASON_OPTIONS).toEqual([
+      'Sin acceso',
+      'Sin visibilidad',
+      'Equipo o sensor dañado',
+      'Condición de campo adversa'
+    ]);
   });
 });

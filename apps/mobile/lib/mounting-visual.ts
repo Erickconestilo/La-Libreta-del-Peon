@@ -25,6 +25,13 @@ export const MOUNTING_STATUS_FILTERS: Array<{ key: MountingVisitStatusFilter; la
   { key: 'blocked', label: 'No realizables' }
 ];
 
+export const MOUNTING_BLOCK_REASON_OPTIONS = [
+  'Sin acceso',
+  'Sin visibilidad',
+  'Equipo o sensor dañado',
+  'Condición de campo adversa'
+] as const;
+
 export const getMountingVisitStatusPresentation = (status: MountingVisitStatus): MountingVisitStatusPresentation => {
   if (status === 'blocked') {
     return { label: 'No realizable', tone: 'danger' };
