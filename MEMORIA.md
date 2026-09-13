@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Continuar con el Galaxy conectado la validación física F5: exportación, cierre operativo y comprobaciones finales sin cambiar servicios remotos | cerrado parcialmente (ADB detectó el Galaxy como `device`, la release v6 sigue instalada y la ronda mantiene el punto pendiente sin umbral; la exportación CSV se reintentó y volvió a mostrar el error genérico, sin evidencia HTTP ni falta de destinos Android. No se tocaron servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Cerrar el E2E físico F5 en Galaxy con release v6: login operador, lectura y foto offline, reinicio, reconexión, unicidad y revisión de cierre | cerrado parcialmente (v6 instalada; lectura y foto offline sobrevivieron al reinicio y sincronizaron una sola vez; se verificó el aviso y la lista de rondas desde caché tras arranque en frío sin red; cierre definitivo, exportación y validación observada siguen pendientes. No se tocaron migraciones ni servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer resiliente el script de build Android ante fallo de limpieza nativa | cerrado (`npm run mobile:build-local-android` ejecutó `expo prebuild --clean`; la limpieza Gradle falló literalmente en `react-native-reanimated:externalNativeBuildCleanRelease` con `ninja: error: manifest 'build.ninja' still dirty after 100 tries`, y el reintento `app:bundleRelease` sin `clean` terminó con `BUILD SUCCESSFUL in 7m 15s`. AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, `40,135,874` bytes; `keytool -printcert -jarfile` confirma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `git diff --check` sin salida. El Galaxy no se tocó y no hubo cambios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar handoff con el fallback de build Android verificado | cerrado (`NEXT_CHAT_HANDOFF.md` documenta `32c177c`, el fallback de `app:bundleRelease` sin `clean`, la AAB v5 de `40,135,874` bytes y la firma `CN=TopoField Android Release`. `npm run docs:check` devolvió `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`; `git diff --check` terminó sin salida. No se tocó el Galaxy ni ningún servicio remoto.)` |
@@ -486,6 +487,17 @@ CSV y Excel se probaron desde el resumen, pero ambos mostraron literalmente
 hoja de compartir. No se atribuye la causa a formato sin un HTTP visible; la
 exportación queda pendiente de repetir contra un Render actualizado.
 
+**Comprobación adicional con el Galaxy conectado (13-09-2026):**
+`adb devices -l` volvió a mostrar `R5CY21X6FLE device`; `dumpsys package`
+confirmó que la aplicación sigue en `versionCode=6` y `versionName=1.0.0`.
+Se reintentó `Compartir CSV` con la sesión y la ronda abiertas: la UI repitió
+`No se pudo completar la operación. Reintenta en unos segundos.` y logcat no
+mostró una request, respuesta HTTP ni stack trace de la aplicación. Android
+sí resolvió destinos `SEND` para `text/csv` y para el MIME de XLSX, por lo que
+no se identifica falta de hoja de compartir como causa demostrada. La ronda
+consultada sigue `active`, su punto sigue `pending` y la consulta de solo
+lectura a Supabase sigue sin umbral vigente; no se modificaron datos remotos.
+
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
   destructiva encontró coincidencias exactas en commits antiguos alcanzables
@@ -618,6 +630,15 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Reintento de exportación con Galaxy conectado (Codex):**
+  `adb devices -l` devolvió el Galaxy como `device` y `dumpsys package` confirmó
+  `versionCode=6`/`versionName=1.0.0`. Desde el resumen de la ronda se reintentó
+  `Compartir CSV`; la UI volvió a mostrar `No se pudo completar la operación.
+  Reintenta en unos segundos.`. Logcat no expuso request, respuesta HTTP ni
+  stack trace. Android resolvió destinos `SEND` para CSV y XLSX, así que no se
+  demostró un problema del sistema de compartir. La ronda sigue `active`, el
+  punto `pending` y sin umbral vigente; no se tocaron servicios remotos.
 
 - **2026-09-13 — Filtro de estado en memoria visual (Codex):** la pantalla de
   visitas de montaje añade filtros operativos para distinguir trabajo en curso,

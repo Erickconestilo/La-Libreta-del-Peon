@@ -56,6 +56,10 @@ repositorio bare.
   segundos.` y no abrieron la hoja de compartir. No hubo código HTTP visible,
   así que la exportación queda sin validar hasta repetirla contra un Render
   actualizado.
+- Con el Galaxy conectado de nuevo, el reintento de `Compartir CSV` reprodujo
+  el mismo mensaje. Logcat no mostró request, respuesta HTTP ni stack trace;
+  Android sí resolvió destinos `SEND` para CSV y XLSX. La causa sigue sin estar
+  demostrada y no se modificó código para ocultarla.
 - La conectividad se restauró y `ping` a Render devolvió `0% packet loss`.
 - Render público sigue observado en `eb88db9`; no se hizo deploy, migración,
   fetch, pull ni push en esta validación.
