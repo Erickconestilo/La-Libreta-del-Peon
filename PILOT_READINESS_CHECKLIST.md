@@ -7,6 +7,29 @@ verificado: 2026-09-13
 
 El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No se trata solo de comprobar que todo funciona: hay que registrar cómo se usa. Usa `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` durante la jornada y convierte después los hallazgos en `docs/field/F5_HALLAZGOS_<fecha>.md` siguiendo la plantilla de `UX_RESEARCH_PLAN.md`.
 
+## Estado local automatizado - 13-09-2026
+
+Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
+validación en campo:
+
+- [x] Backend compila y pasa `103/103` tests con `npm run verify:local`.
+- [x] Móvil pasa TypeScript, `22` suites y `97/97` tests.
+- [x] Tooling local pasa `6/6` tests; `verify:local` termina con
+  `verify local completed successfully`.
+- [x] `docs:check` revisa `40 documentos revisados en raíz y docs/` sin errores
+  ni avisos; `git diff --check` termina sin salida.
+- [x] La release Android v5 está generada localmente, firmada como
+  `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
+  validate` y `apksigner`.
+- [x] La auditoría local cubre autenticación, roles, scope entre obras,
+  adjuntos, idempotencia, caché por sesión, outbox y exportación.
+- [ ] Publicar los hardenings locales posteriores al último commit observado
+  en Render y repetir las comprobaciones autenticadas.
+- [ ] Instalar v5 y ejecutar el E2E físico en el Galaxy; actualmente ADB no
+  detecta ningún dispositivo.
+- [ ] Validar con datos autorizados el parte, cierre, reconexión y paridad
+  CSV/XLSX.
+
 ## Paso 1 - Erick usando datos reales en campo
 
 Comprobaciones técnicas:
