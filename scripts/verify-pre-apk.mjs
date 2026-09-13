@@ -3,6 +3,7 @@ import { rmSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 const rootDir = process.cwd();
+const localOnly = process.argv.includes("--local-only");
 const exportDir = path.join(
   process.env.TEMP || process.env.TMP || "C:\\Users\\guill\\AppData\\Local\\Temp",
   "topofield-export-android-preapk"
@@ -21,13 +22,16 @@ const steps = [
     args: ["tsc", "--noEmit", "--project", "apps/mobile/tsconfig.json"],
     cwd: rootDir,
   },
-  {
+];
+
+if (!localOnly) {
+  steps.push({
     name: "backend permissions verification",
     cmd: "npm",
     args: ["run", "verify:project-memberships", "--workspace", "apps/backend"],
     cwd: rootDir,
-  },
-];
+  });
+}
 
 const run = ({ name, cmd, args, cwd }) => {
   console.log(`\n> ${name}`);
@@ -68,7 +72,7 @@ try {
     cwd: path.join(rootDir, "apps", "mobile"),
   });
 
-  console.log(`\nverify pre-apk completed successfully.\nOutput: ${exportDir}`);
+  console.log(`\nverify pre-apk ${localOnly ? "local-only " : ""}completed successfully.\nOutput: ${exportDir}`);
 } catch (error) {
   console.error("\nverify pre-apk failed:");
   console.error(error?.message ?? error);

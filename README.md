@@ -44,7 +44,10 @@ npx expo export --platform android
 npm run docs:check      # coherencia de la documentación
 ```
 
-`npm run verify:pre-apk` encadena las comprobaciones previas a generar una APK.
+`npm run verify:pre-apk:local` encadena las comprobaciones locales previas a
+generar una APK y no necesita credenciales. `npm run verify:pre-apk` añade el
+chequeo remoto autenticado de membresías; si no hay una contraseña QA en el
+entorno, debe fallar cerrado y no sustituirse por una contraseña inventada.
 
 Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 

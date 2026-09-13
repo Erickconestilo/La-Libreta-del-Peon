@@ -46,6 +46,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `12410aa` prepara la release local v5 y normaliza los dos últimos logs de
   error crudo detectados en Perfil y SQLite; no incluye el cambio previo de
   `apps/mobile/package.json`.
+- `verify:pre-apk:local` permite repetir build backend, TypeScript móvil y
+  export Android sin credenciales; `verify:pre-apk` mantiene además la
+  comprobación remota autenticada y falla cerrado si no existe la contraseña
+  QA.
 - El reintento manual del outbox reinicia el ciclo completo, incluido el límite
   de intentos y el backoff. Los fallos automáticos usan una operación separada
   que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede

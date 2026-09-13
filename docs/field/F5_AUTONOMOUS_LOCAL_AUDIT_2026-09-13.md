@@ -196,6 +196,12 @@ se ha desplegado desde esta sesión.
     por lo que el mensaje, cuerpo HTTP y credenciales no se leen ni se emiten.
     La regresión existente del helper mantiene esa garantía.
 
+30. El preflight de release mezclaba checks locales con la verificación remota
+    de membresías y, sin credenciales QA, no permitía comprobar el resto del
+    proceso. Se añadió `verify:pre-apk:local`; ejecuta build backend,
+    TypeScript móvil y export Android, mientras `verify:pre-apk` conserva el
+    chequeo autenticado y falla cerrado cuando faltan credenciales.
+
 ## Evidencia local
 
 ```text
