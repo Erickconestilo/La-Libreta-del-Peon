@@ -7,7 +7,8 @@ import {
   getWorkExecutionSummary,
   getNextWorkExecutionPointId,
   formatJourneyWorkSummary,
-  requiresWorkExecutionReason
+  requiresWorkExecutionReason,
+  WORK_EXECUTION_REASON_OPTIONS
 } from '../work-execution';
 
 const event = (eventType: WorkExecutionEvent['eventType']): WorkExecutionEvent => ({
@@ -37,6 +38,16 @@ describe('work execution status', () => {
     expect(requiresWorkExecutionReason('not_done')).toBe(true);
     expect(requiresWorkExecutionReason('repeat_required')).toBe(true);
     expect(requiresWorkExecutionReason('blocked')).toBe(true);
+  });
+
+  it('offers neutral field reasons without replacing free-text context', () => {
+    expect(WORK_EXECUTION_REASON_OPTIONS).toEqual([
+      'Sin acceso',
+      'Sin visibilidad',
+      'Equipo o sensor dañado',
+      'Condición de campo adversa',
+      'Lectura dudosa, repetir'
+    ]);
   });
 
   it('presents blocked work as a danger state, never as completed', () => {

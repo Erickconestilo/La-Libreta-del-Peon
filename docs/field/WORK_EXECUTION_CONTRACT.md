@@ -46,6 +46,10 @@ misma tarjeta. Es un atajo explícito de una pulsación que crea el mismo evento
 `completed`, respeta el alcance de la obra y usa el outbox si no hay conexión.
 `Más opciones` conserva el formulario completo para `Empezar`, `No realizado`,
 `Repetir` y `Bloqueado`, donde el motivo aporta información necesaria al relevo.
+Para los tres resultados que exigen motivo, la app ofrece opciones neutras de
+campo como `Sin acceso`, `Sin visibilidad`, `Equipo o sensor dañado`,
+`Condición de campo adversa` y `Lectura dudosa, repetir`; el operario puede
+escribir otro texto cuando ninguna encaja.
 Cuando el evento ya está recibido, la tarjeta muestra `Hecho registrado` y no
 invita a duplicarlo. Si todavía está en el outbox, muestra `Guardado
 localmente`; los puntos cancelados u omitidos no ofrecen el atajo porque no son

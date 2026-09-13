@@ -13,7 +13,8 @@ import {
   getWorkExecutionStatePresentation,
   getWorkExecutionState,
   requiresWorkExecutionReason,
-  WORK_EXECUTION_OPTIONS
+  WORK_EXECUTION_OPTIONS,
+  WORK_EXECUTION_REASON_OPTIONS
 } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
 
@@ -99,7 +100,11 @@ export default function WorkStatusScreen() {
           </View>
           {selectedOption && requiresWorkExecutionReason(selectedOption.eventType) ? <>
             <Text style={styles.label}>Motivo obligatorio</Text>
-            <TextInput onChangeText={setReason} placeholder="Sin acceso, sensor dañado..." placeholderTextColor="#64748b" style={styles.input} value={reason} />
+            <Text style={styles.caption}>Elige una opción rápida o escribe otro motivo.</Text>
+            <View style={styles.reasonOptions}>
+              {WORK_EXECUTION_REASON_OPTIONS.map((option) => <Pressable key={option} onPress={() => { setReason(option); setFeedback(null); }} style={[styles.reasonOption, reason === option ? styles.reasonOptionSelected : null]}><Text style={[styles.reasonOptionText, reason === option ? styles.reasonOptionTextSelected : null]}>{option}</Text></Pressable>)}
+            </View>
+            <TextInput onChangeText={(value) => { setReason(value); setFeedback(null); }} placeholder="Otro motivo" placeholderTextColor="#64748b" style={styles.input} value={reason} />
           </> : null}
           <Text style={styles.label}>Nota para el relevo (opcional)</Text>
           <TextInput multiline onChangeText={setNotes} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
@@ -135,6 +140,7 @@ export default function WorkStatusScreen() {
 
 const styles = StyleSheet.create({
   body: { color: colors.textSecondary, fontSize: typography.fontSizeBody - 1, lineHeight: 21 },
+  caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
   card: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[2], padding: spacing[3] },
   container: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing[2], padding: spacing[3] },
@@ -164,6 +170,11 @@ const styles = StyleSheet.create({
   readOnlyCopy: { flex: 1, gap: spacing[1] },
   readOnlyTitle: { color: '#7dd3fc', fontSize: typography.fontSizeBody, fontWeight: '900' },
   reason: { color: colors.textPrimary, fontSize: 14, lineHeight: 20 },
+  reasonOption: { borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
+  reasonOptionSelected: { borderColor: colors.amber, backgroundColor: 'rgba(245, 158, 11, 0.08)' },
+  reasonOptionText: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
+  reasonOptionTextSelected: { color: colors.amber },
+  reasonOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, paddingVertical: spacing[2] },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },
   sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '900' },

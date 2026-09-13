@@ -19,6 +19,14 @@ export const WORK_EXECUTION_OPTIONS: Array<{
   { eventType: 'blocked', icon: 'flag', label: 'Bloqueado' }
 ];
 
+export const WORK_EXECUTION_REASON_OPTIONS = [
+  'Sin acceso',
+  'Sin visibilidad',
+  'Equipo o sensor dañado',
+  'Condición de campo adversa',
+  'Lectura dudosa, repetir'
+] as const;
+
 export const WORK_EXECUTION_STATUS_PRESENTATION: Record<WorkExecutionStateStatus, { label: string; tone: 'danger' | 'neutral' | 'success' | 'warning' }> = {
   blocked: { label: 'Bloqueado', tone: 'danger' },
   completed: { label: 'Hecho', tone: 'success' },
