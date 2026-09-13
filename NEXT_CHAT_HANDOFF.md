@@ -28,6 +28,11 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
+- Último commit local: `b4f78ce` (`fix(db): make mounting visit constraints retry-safe`). La migración
+  local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
+  cada clave foránea compuesta para tolerar un reintento tras una aplicación
+  parcial; su regresión está incluida en la batería backend. La migración
+  continúa sin aplicar en Supabase.
 - Hardening local más reciente: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de

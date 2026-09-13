@@ -50,7 +50,10 @@ se ha desplegado desde esta sesión.
    coincida con la obra de su estación, y que cada evidencia corresponda a la
    misma estación de la visita, incluso antes de aplicar la migración 027. El
    contrato backend de exportación quedó alineado con los instrumentos y lados
-   definidos en `shared/types.ts`, incluyendo los protocolos F7.
+   definidos en `shared/types.ts`, incluyendo los protocolos F7. La migración
+   027 preparada comprueba `pg_constraint` antes de crear sus dos claves
+   foráneas compuestas, por lo que un reintento tras una aplicación parcial no
+   falla por una restricción ya existente; sigue sin aplicarse remotamente.
 8. La revisión defensiva detectó que los enlaces internos de monitoring no
    expresaban siempre la relación `ronda -> punto de control -> lectura`. Detalle,
    histórico, contexto de adjunto y exportación ahora exigen que esas relaciones
