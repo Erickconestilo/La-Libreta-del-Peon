@@ -48,7 +48,7 @@ repositorio bare.
 - `35fc885` corrige otra relación defensiva de memoria de montaje: las
   evidencias se agregan solo si coinciden simultáneamente `visit_id` y
   `station_id`. La regresión está en `monitoring.model.test.ts`; el backend
-  local queda en `103/103` tests.
+  local queda en `104/104` tests.
 - `a475976` corrige una lectura defensiva adicional: `getStationById` confirma
   primero el scope de la estación y solo después consulta sus lecturas
   asociadas. La regresión evita volver a ejecutar la carga de historial antes
@@ -118,12 +118,12 @@ repositorio bare.
   todos esos commits.
 - Después se añadieron `35fc885` (scope de evidencia por estación), `a475976`
   (scope previo a historial) y `f8ee24f`
-  (documentación y evidencia local `103/103`). No se tocaron servicios
+  (documentación y evidencia local `104/104`). No se tocaron servicios
   remotos ni el Galaxy.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
   queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `103/103`.
+  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `104/104`.
 - `f5de61d` y la continuación local endurecen la idempotencia de adjuntos: el
   endpoint usa bloqueo transaccional por lectura/ruta y `ON CONFLICT DO NOTHING`
   sin depender todavía de la migración 028. La migración 028 sigue pendiente
@@ -311,7 +311,7 @@ repositorio bare.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
-  tiene `103/103` tests; móvil TypeScript sale sin errores y Jest tiene `22`
+  tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
   suites y `97` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
