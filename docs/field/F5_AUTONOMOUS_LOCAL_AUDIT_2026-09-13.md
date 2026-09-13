@@ -239,6 +239,13 @@ se ha desplegado desde esta sesión.
     `cmd.exe` con la citación común del preflight para evitar que los
     ejecutables `.cmd` fallen antes de iniciar.
 
+35. La reauditoría posterior no encontró cambios en la superficie de
+    dependencias: `npm audit --workspace apps/backend --omit=dev --json`
+    mantiene `2 moderate`, `0 high` y `0 critical`, por la cadena transitiva
+    `exceljs -> uuid@8.3.2`; su código de salida no cero refleja esos avisos,
+    no un fallo de compilación. Ejecutado desde `apps/mobile`, `npx expo
+    install --check` devuelve `Dependencies are up to date` y código `0`.
+
 ## Evidencia local
 
 ```text
