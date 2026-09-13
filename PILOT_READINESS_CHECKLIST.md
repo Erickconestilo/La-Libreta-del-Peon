@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # Checklist de Piloto
@@ -44,3 +44,15 @@ Observación de uso (esto es lo que cierra F5, no lo anterior):
 - [ ] Establecer quien revoca cuentas, reasigna membresias y responde ante perdida de un dispositivo.
 - [ ] Dar al supervisor una cuenta individual con membresías `read`; comprobar que consulta obra, fotos, incidencias, lecturas y partes, pero recibe `403` al escribir, adjuntar, exportar o cambiar la planificación.
 - [ ] Repetir la jornada desde dos cuentas sin compartir credenciales y verificar que ningún dato local pendiente se muestra como recibido al supervisor.
+
+
+## Estado adicional verificado el 13-09-2026
+
+- [x] Render sirve `df224f9`; `/health` responde `200` y las rutas protegidas sin token responden `401`.
+- [x] El Galaxy con release `versionCode=7` generó y abrió CSV y XLSX desde la misma ronda; Render registró ambos `200`.
+- [ ] Comparar estructuradamente el CSV y el XLSX descargados y confirmar el formato que consume el flujo de oficina.
+- [ ] Ejecutar la jornada observada y las cinco a ocho conversaciones profesionales requeridas para cerrar F5.
+
+### Exportación autenticada posterior al despliegue
+
+La causa del `500` fue un parámetro de scope enviado a la segunda consulta sin interpolar el filtro SQL. Se corrigió con regresión, se publicó mediante PR #19/#20 y se verificó en el Galaxy. La generación y apertura en Android no sustituye la comparación de contenidos ni la validación del flujo de oficina.
