@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-24
+verificado: 2026-09-13
 -->
 
 # PRODUCT_STRATEGY.md — Estrategia de Producto TopoField
@@ -131,7 +131,8 @@ guardada localmente no se muestra al supervisor como recibida hasta sincronizar.
 - Apertura externa de ubicación.
 - Guía de campo útil y rápida.
 - Bitácora/incidencia cuando aporte continuidad operativa.
-- Roles claros `admin`, `topografo`, `visitante`.
+- Roles claros `admin`, `topografo`, `supervisor` y `visitante`, con el
+  supervisor limitado a consulta por membresía activa.
 - Base suficiente para trabajar Android primero.
 - Backend MVP de auscultación:
   - rondas;

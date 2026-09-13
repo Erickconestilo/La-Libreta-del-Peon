@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: field-plan
-verificado: 2026-09-12
+verificado: 2026-09-13
 -->
 
 # TopoField Operativo: Reactivación 2026-09-12
@@ -24,8 +24,9 @@ observada y entrevistas con profesionales.
 ## Implementado localmente en este bloque
 
 - Permiso de obra `read/write` derivado de la membresía activa. Se mantienen
-  `admin`, `topografo` y `visitante`; `supervisor` es un rol global autenticado
-  de consulta, siempre limitado por membresías activas de solo lectura.
+  `admin`, `topografo`, `supervisor` y `visitante`; `supervisor` es un rol
+  global autenticado de consulta, siempre limitado por membresías activas de
+  solo lectura.
 - El backend y el móvil separan consultar de modificar. El backend valida el
   proyecto real del recurso y no confía en un `projectId` inventado por el
   cliente.
