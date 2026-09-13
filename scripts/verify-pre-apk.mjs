@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { rmSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
+import { validateExpoExportOutput } from "./export-output.mjs";
 import { buildWindowsCommandLine } from "./windows-command.mjs";
 
 const rootDir = process.cwd();
@@ -79,7 +80,11 @@ try {
     cwd: path.join(rootDir, "apps", "mobile"),
   });
 
+  const outputSummary = validateExpoExportOutput(exportDir);
   console.log(`\nverify pre-apk ${localOnly ? "local-only " : ""}completed successfully.\nOutput: ${exportDir}`);
+  console.log(
+    `Export validation: metadata.json=${outputSummary.metadataBytes} bytes; files=${outputSummary.fileCount}`,
+  );
 } catch (error) {
   console.error("\nverify pre-apk failed:");
   console.error(error?.message ?? error);

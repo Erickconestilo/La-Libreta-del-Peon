@@ -226,6 +226,12 @@ se ha desplegado desde esta sesión.
     solo se ejecuta después de confirmar que la estación pasó el filtro de
     tenant; la regresión está en `monitoring.model.test.ts`.
 
+33. El preflight Android local ahora valida la salida de Expo después de que
+    el proceso termina: exige un `metadata.json` no vacío y al menos un
+    archivo adicional de la exportación. La comprobación aislada cubre salida
+    ausente, metadata vacía y exportación válida; así un proceso con código 0
+    no se interpreta como artefacto utilizable si la carpeta está incompleta.
+
 ## Evidencia local
 
 ```text
@@ -246,8 +252,12 @@ Sin errores ni avisos.
 Dependencies are up to date
 verify:pre-apk:local: completed successfully
 pre-apk output directory=C:\Users\guill\AppData\Local\Temp\topofield-export-android-preapk
-pre-apk output files include metadata.json (6101 bytes) and Android assets
+Export validation: metadata.json=6101 bytes; files=95
+PRE_APK_COMMAND_EXIT=0
+PRE_APK_METADATA_EXISTS=True
+PRE_APK_METADATA_BYTES=6101
 pre-apk lingering Expo/Metro processes=0
+PRE_APK_RELATED_PROCESSES=0
 
 npm audit --workspace apps/backend --omit=dev --json:
 moderate=2; high=0; critical=0; total=2
