@@ -172,6 +172,13 @@ se ha desplegado desde esta sesión.
     código, request ID y tipo de error. La regresión
     `safe-error-log.test.ts` confirma que mensajes con contraseñas y cuerpos
     simulados no aparecen en la salida.
+27. El reintento manual del outbox devolvía un item a `pending`, pero conservaba
+    el contador y el backoff del ciclo anterior. Tras alcanzar el máximo de
+    intentos, el botón `Reintentar` podía fallar de nuevo inmediatamente. Ahora
+    `retryItem` reinicia el ciclo manual completo, mientras que los fallos
+    automáticos usan `markPendingForRetry` y conservan el estado necesario para
+    backoff. La regresión simula un item agotado y verifica `retryCount = 0`,
+    fechas nulas y ausencia de estado de sincronización anterior.
 
 ## Evidencia local
 
@@ -184,7 +191,7 @@ se ha desplegado desde esta sesión.
 ℹ fail 0
 
 Test Suites: 21 passed, 21 total
-Tests:       91 passed, 91 total
+Tests:       92 passed, 92 total
 
 check-docs: 39 documentos revisados en raíz y docs/.
 

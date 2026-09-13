@@ -29,6 +29,9 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Última mejora local de operación: el Perfil lista errores y conflictos del
   outbox por sesión; solo los errores admiten reintento y los conflictos quedan
   como revisión necesaria sin exponer payloads ni reintentar a ciegas.
+- `423649d` separa el reintento manual del automático: el botón reinicia el
+  ciclo completo, mientras que un fallo transitorio conserva contador y fecha
+  para respetar el backoff.
 - La especificación offline está alineada con esa capacidad: la resolución
   `Usar mío`/`Usar servidor`/`Descartar` queda explícitamente fuera del MVP
   hasta tener contrato, permisos y prueba de concurrencia.
@@ -38,6 +41,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   para diagnóstico; no descarta ni reinterpreta sus datos como válidos.
 - La observabilidad móvil usa `formatSafeErrorForLog`: no imprime mensajes de
   error ni cuerpos HTTP, solo metadatos operativos validados.
+- El reintento manual del outbox reinicia el ciclo completo, incluido el límite
+  de intentos y el backoff. Los fallos automáticos usan una operación separada
+  que conserva `retry_count` y `last_sync_attempt_at`, por lo que no se puede
+  saltar el backoff ni dejar inutilizado el botón de reintento tras agotar el
+  límite.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
@@ -205,7 +213,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `21` suites y
-  `91` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `92` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 

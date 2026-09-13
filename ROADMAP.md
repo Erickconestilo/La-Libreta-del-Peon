@@ -89,6 +89,9 @@ sin una obra única; no forma parte del runtime del servicio.
 El diagnóstico local del outbox también distingue ahora errores reintentables
 de conflictos que requieren revisión manual; el Perfil no reenvía conflictos
 automáticamente ni muestra sus payloads.
+El reintento manual reinicia el ciclo de backoff y límite de intentos, mientras
+que los fallos automáticos conservan esos metadatos para que el sincronizador
+no pierda su control de reintentos (`423649d`).
 El Galaxy, la
 exportación con datos autorizados y la validación observada siguen siendo
 compuertas externas.
