@@ -27,6 +27,7 @@ export default function MonitoringRoundSummaryScreen() {
   const pending = points.filter((point) => point.status === 'pending').length;
   const skipped = points.filter((point) => point.status === 'skipped' || point.status === 'cancelled').length;
   const canExport = canWriteProject(currentUser, round?.projectId);
+  const isExportBusy = isSharing || isSaving;
 
   const handleShare = async (format: 'csv' | 'xlsx') => {
     setShareMessage(null);
@@ -81,13 +82,13 @@ export default function MonitoringRoundSummaryScreen() {
               <Text style={styles.sectionTitle}>Entrega manual</Text>
               <Text style={styles.body}>Prepara el mismo contenido de la ronda en CSV o Excel. La app no lo envía automáticamente ni lo marca como revisado.</Text>
               <View style={styles.shareActions}>
-                <Pressable disabled={isSharing} onPress={() => void handleShare('csv')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
-                <Pressable disabled={isSharing} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isSharing ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
+                <Pressable disabled={isExportBusy} onPress={() => void handleShare('csv')} style={[styles.shareButton, isExportBusy ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="table-view" size={18} /><Text style={styles.shareButtonText}>Compartir CSV</Text></Pressable>
+                <Pressable disabled={isExportBusy} onPress={() => void handleShare('xlsx')} style={[styles.shareButton, isExportBusy ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="grid-on" size={18} /><Text style={styles.shareButtonText}>Compartir Excel</Text></Pressable>
               </View>
               <Text style={styles.body}>Guarda una copia en una carpeta del teléfono para revisarla después o pasarla al ordenador.</Text>
               <View style={styles.shareActions}>
-                <Pressable disabled={isSaving} onPress={() => void handleSave('csv')} style={[styles.shareButton, isSaving ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar CSV</Text></Pressable>
-                <Pressable disabled={isSaving} onPress={() => void handleSave('xlsx')} style={[styles.shareButton, isSaving ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar Excel</Text></Pressable>
+                <Pressable disabled={isExportBusy} onPress={() => void handleSave('csv')} style={[styles.shareButton, isExportBusy ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar CSV</Text></Pressable>
+                <Pressable disabled={isExportBusy} onPress={() => void handleSave('xlsx')} style={[styles.shareButton, isExportBusy ? styles.disabled : null]}><MaterialIcons color={colors.textPrimary} name="save-alt" size={18} /><Text style={styles.shareButtonText}>Guardar Excel</Text></Pressable>
               </View>
               {isSharing ? <Text style={styles.body}>Preparando archivo...</Text> : null}
               {isSaving ? <Text style={styles.body}>Preparando copia...</Text> : null}
