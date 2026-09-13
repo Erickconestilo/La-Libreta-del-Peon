@@ -258,14 +258,22 @@ se ha desplegado desde esta sesión.
     attached`, sin un Galaxy disponible. No se hizo deploy, fetch, pull,
     migración, cambio de datos ni instalación.
 
+37. El runner local de migraciones queda serializado con `pg_advisory_lock`
+    sobre un único `PoolClient`, que conserva la misma conexión durante la
+    lectura de `schema_migrations`, cada transacción y el `unlock`. La
+    regresión `migration runner serializes executions on one PostgreSQL client`
+    evita volver a liberar la conexión mientras el bloqueo sigue asociado a
+    ella. Esto solo protege ejecuciones locales autorizadas; no aplica ninguna
+    migración remota ni cambia la política de Supabase.
+
 ## Evidencia local
 
 ```text
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 103
-ℹ pass 103
+ℹ tests 104
+ℹ pass 104
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total
