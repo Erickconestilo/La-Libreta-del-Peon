@@ -582,7 +582,7 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   servidor. `npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con
   código `0`; Jest móvil devolvió `Test Suites: 22 passed, 22 total` y `Tests:
   100 passed, 100 total`; no se tocaron servicios remotos, Galaxy ni
-  `apps/mobile/package.json`. Commit pendiente de esta documentación.
+  `apps/mobile/package.json`. Commit: `530a041`.
 
 - **2026-09-13 — Vista ampliada de evidencias del croquis (Codex):** las
   miniaturas de memoria visual de montaje son pulsables y abren un modal de

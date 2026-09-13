@@ -28,7 +28,7 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit local: `d40c343` (`feat(mobile): expand mounting evidence viewer`). La
+- Último commit local: `530a041` (`feat(mobile): filter mounting visits by status`). La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
