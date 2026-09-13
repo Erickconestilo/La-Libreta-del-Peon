@@ -77,6 +77,8 @@ repositorio bare.
   regresiones para rutas con espacios y metacaracteres. La ejecución actual
   devuelve `PRE_APK_EXIT=0`, crea `metadata.json` y deja cero procesos
   Expo/Metro relacionados.
+- La regresión queda disponible como `npm run test:tooling` y no depende de
+  credenciales, Expo ni un dispositivo físico.
 - `verify:pre-apk:local` permite repetir build backend, TypeScript móvil y
   export Android sin credenciales; `verify:pre-apk` mantiene además la
   comprobación remota autenticada y falla cerrado si no existe la contraseña

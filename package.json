@@ -13,6 +13,7 @@
     "backend:build": "npm run build --workspace apps/backend",
     "verify:pre-apk": "node scripts/verify-pre-apk.mjs",
     "verify:pre-apk:local": "node scripts/verify-pre-apk.mjs --local-only",
+    "test:tooling": "node --test scripts/windows-command.test.mjs",
     "docs:check": "node scripts/check-docs.mjs"
   }
 }
