@@ -75,13 +75,13 @@ repositorio bare.
   fila congelada y filas normalizadas idénticas. Falta ejecutarla con los dos
   binarios de una misma descarga real, porque el selector nativo del Galaxy no
   los dejó accesibles en almacenamiento público.
-- Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado en ese commit con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. La batería actual, tras añadir el verificador, queda en `106/106` backend y `104/104` móvil. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
-  forma parte de la batería backend `105/105`. La
+  forma parte de la batería backend actual `106/106`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS
@@ -285,11 +285,13 @@ repositorio bare.
 
 ## Trabajo pendiente prioritario
 
-1. Publicar el arreglo de scope de exportación mediante PR y verificar Render.
-2. Validar CSV/XLSX de la misma ronda real y el bloqueo de exportación para
-   `read`; la paridad local ya está cubierta por
-   `round-export-parity.test.ts`.
-3. Registrar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos.
+1. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
+   los dos archivos de una misma ronda real; la generación autenticada ya
+   responde `200` y la prueba local cubre la paridad del contrato.
+2. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
+   exportación para una membresía `read`.
+3. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos
+   como evidencia del recorrido repetido.
 4. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 5. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.

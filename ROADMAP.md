@@ -117,7 +117,7 @@ regla desde `f90c995`: `assertProjectWriteAccess` exige el nivel `write` explíc
 del mapa efectivo y devuelve `PROJECT_ACCESS_REQUIRED` si el mapa falta; este
 commit aún debe publicarse antes de considerarlo activo en Render.
 
-El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. Falta ejecutar el recorrido completo de operador offline con una jornada autorizada.
+El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. El recorrido de operador offline quedó verificado en la release v7 con lectura, foto, reinicio, reconexión y unicidad; siguen pendientes el cierre positivo con umbral autorizado, la paridad estructurada de archivos y la observación de uso.
 
 El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. La auditoría local posterior reforzó la integridad ronda-punto-lectura-adjunto y dejó preparada `028_reading_attachment_idempotency.sql`, aún sin aplicar.
 
@@ -151,9 +151,9 @@ La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, única obra
 la obra QA autorizada, rondas, punto, histórico y evidencia visibles; la UI muestra
-consulta sin escritura. La siguiente puerta es validar con la cuenta operador
-el recorrido de preparación, captura offline, parte parcial, cierre,
-reconexión sin duplicados y exportación manual.
+consulta sin escritura. La siguiente puerta es repetir con datos autorizados
+el cierre positivo, guardar los artefactos CSV/XLSX en una ubicación legible y
+ejecutar el verificador estructurado; la observación de uso permanece aparte.
 
 El rol global `supervisor` está implementado en `026_supervisor_role.sql` y en
 la app móvil: consulta acotada por membresía, sin Mi jornada ni controles de
@@ -162,7 +162,9 @@ Supabase, Render reconoce el rol y la cuenta `supervisor-piloto@topofield.local`
 tiene una única membresía activa `read` en `campus-nord`. En Galaxy se
 confirmaron el perfil `Supervisor`, la obra autorizada, la consulta de ronda,
 el histórico y una evidencia, además de la persistencia de sesión tras
-reinicio. La validación del operador offline sigue pendiente.
+reinicio. La primera validación del operador offline quedó cerrada en la
+release v7; la repetición con cierre positivo y exportaciones estructuradas
+sigue pendiente.
 
 El 12-09-2026 se corrigió una deriva local de seguridad: la caché de listas y
 snapshots de rondas ahora usa la sesión técnica además de la obra/ronda. La
