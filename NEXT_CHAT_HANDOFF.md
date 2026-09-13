@@ -203,7 +203,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior a la auditoría: backend compila y tiene
   `99/99` tests; móvil TypeScript sale sin errores y Jest tiene `20` suites y
-  `88` tests. La captura de `fissure_witness` marca la foto como obligatoria y
+  `89` tests. La captura de `fissure_witness` marca la foto como obligatoria y
   no envía una unidad ficticia. `docs:check` revisa 39 documentos sin avisos y
   `npx expo install --check` devuelve `Dependencies are up to date`.
 
