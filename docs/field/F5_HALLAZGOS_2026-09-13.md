@@ -37,6 +37,26 @@ la APK release no depurable para comparar filas estructuradas. La exportación
 está validada a nivel de HTTP, generación y selector, no todavía a nivel de
 paridad de contenido real.
 
+## Matriz de cierre de F5
+
+| Criterio | Estado actual | Evidencia o compuerta |
+|---|---|---|
+| Login, obra, ronda y consulta técnica | Verificado | Release v7 en Galaxy; Render `df224f9`; rutas protegidas sin sesión `401`. |
+| Lectura y foto offline, reinicio y reconexión | Verificado | Una lectura y un adjunto únicos en Supabase para el mismo `client_request_id`; log de outbox `2/2 synced`. |
+| Arranque en frío sin red | Verificado | La ronda se recuperó desde caché y la UI mostró `Rondas sin actualizar`. |
+| Parte parcial idempotente | Verificado | Parte `partial` con un único `client_request_id` y un punto pendiente. |
+| Cierre con punto pendiente | Verificado | La UI mantiene el bloqueo; no se falsea el 100 %. |
+| Cierre definitivo positivo | Pendiente autorizado | Requiere un umbral vigente y datos de campaña autorizados; no se inventa una lectura para cerrar la ronda. |
+| CSV/XLSX a nivel HTTP y selector | Verificado | Render registró ambos endpoints con `200` y Android abrió el selector nativo. |
+| Paridad estructurada CSV/XLSX | Pendiente técnico | La APK release no es depurable y Android no dejó los temporales en almacenamiento extraíble; la regresión local sí cubre el contrato común. |
+| Error/crash reciente del dispositivo | Sin hallazgos | `adb logcat` no mostró `FATAL EXCEPTION`, `AndroidRuntime` ni errores de React Native en la muestra revisada. |
+| Jornada observada y entrevistas | Pendiente humano | Requiere observar al operador y conversar con 5-8 profesionales; no se puede simular con tests. |
+| Segundo usuario y dispositivo | Pendiente humano | Requiere una cuenta individual, una obra autorizada y otro dispositivo. |
+
+Este cuadro es el estado de cierre vigente a 13-09-2026. Una prueba local o una
+respuesta `200` no convierte por sí sola una función en validación de campo ni
+demuestra la paridad de dos archivos que no se han podido leer.
+
 ## Entorno
 
 - Dispositivo: Samsung Galaxy `SM-S938B`, serial ADB `R5CY21X6FLE`.
