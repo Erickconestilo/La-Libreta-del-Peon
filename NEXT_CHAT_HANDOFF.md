@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-12
+verificado: 2026-09-13
 rol: handoff
 -->
 
@@ -87,3 +87,12 @@ git diff --check
 git status --short
 adb devices -l
 ```
+
+
+## Estado verificado adicional (13-09-2026)
+
+- El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.
+- La release arm64 `versionCode=7` sigue instalada.
+- Render está `live` en `df224f9b7226c8aa5899a5e889898663b4642016`; `/health` devuelve `200`, y `/api/v1/me/journey` y rondas sin token devuelven `401`.
+- Tras el despliegue, CSV y XLSX generaron archivos y abrieron el selector nativo; Render registró ambos exports con `200`.
+- La corrección de exportación se publicó mediante PR #19/#20. La comparación estructurada de archivos, el cierre con umbral autorizado y la observación humana siguen siendo compuertas de F5.
