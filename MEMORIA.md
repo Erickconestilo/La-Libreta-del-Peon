@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Verificar en solo lectura el contrato público de Render después del cierre local autónomo | cerrado (`curl.exe -sS -i https://la-libreta-del-peon-1.onrender.com/api/v1/health` devolvió `HTTP/1.1 200 OK` y `{"commit":"eb88db922a03b1e01a47f90dba8346542df3f212","status":"ok"}`; las rutas de rondas y `GET /api/v1/me/journey` sin token devolvieron `HTTP/1.1 401 Unauthorized` con `UNAUTHORIZED`. No se usaron credenciales ni se modificó Render.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Repetir la verificación local completa y preflight Android después de reconciliar la procedencia histórica | cerrado (backend build código `0`; backend `103/103`; TypeScript móvil código `0`; móvil `22` suites y `97` tests; `npm audit --workspace apps/backend --omit=dev --json` mantiene `2 moderate`, `0 high`, `0 critical`. `verify:pre-apk:local` inició build backend, TypeScript móvil y `expo export android`, cargó `.env` y generó la salida en `C:\Users\guill\AppData\Local\Temp\topofield-export-android-preapk`, pero dejó procesos Expo/Metro activos; se detuvieron los PIDs iniciados por esta comprobación. `docs:check` revisó `40 documentos` sin errores ni avisos; `git diff --check` sin salida. No se tocó ningún servicio remoto ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Auditar de forma no destructiva las referencias activas y la purga histórica antes de continuar el cierre autónomo local | cerrado (`git branch --merged` confirmó que las ocho ramas históricas ya no existen como refs locales; la rama de trabajo mantiene el runtime neutralizado, pero la búsqueda histórica exacta detectó coincidencias en commits antiguos alcanzables y `origin/main` sigue siendo una referencia distinta. `git fsck --full` terminó con código `0` y enumeró objetos `dangling`; `docs:check` revisó `40 documentos` sin errores ni avisos; `git diff --check` sin salida. No se ejecutaron `filter-repo`, borrado de refs, `git gc`, `fetch`, `pull` ni `push`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar documentos vivos con el modelo de roles vigente y el supervisor de solo lectura | cerrado (`PRODUCT_STRATEGY.md`, `PILOT_READINESS_CHECKLIST.md` y `docs/field/TOPOFIELD_OPERATIONAL_REACTIVATION_2026-09-12.md` ya incluyen el rol `supervisor` y sus límites de consulta por membresía; se actualizaron las fechas de verificación de los documentos tocados. `npm run docs:check` y `git diff --check` pasan. No se modificó código ni ningún servicio remoto.)` |
@@ -523,6 +524,13 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Contrato público de Render verificado en solo lectura (Codex):**
+  `/api/v1/health` devolvió literalmente `HTTP/1.1 200 OK` y
+  `{"commit":"eb88db922a03b1e01a47f90dba8346542df3f212","status":"ok"}`.
+  Las rutas de rondas y `GET /api/v1/me/journey` sin bearer devolvieron
+  `HTTP/1.1 401 Unauthorized` con `UNAUTHORIZED`. No se usaron credenciales,
+  no se desplegó y no se modificó ningún servicio remoto.
 
 - **2026-09-13 — Verificación autónoma final y preflight Android (Codex):**
   backend build código `0`, `103/103` tests; TypeScript móvil código `0`,
