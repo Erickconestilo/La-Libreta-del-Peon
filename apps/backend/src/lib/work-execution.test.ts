@@ -35,6 +35,12 @@ test('work execution migration is append-only, idempotent and tenant-scoped', ()
   assert.match(migration, /client_request_id UUID NOT NULL UNIQUE/);
   assert.match(migration, /event_type IN \('started', 'completed', 'not_done', 'repeat_required', 'blocked'\)/);
   assert.match(migration, /length\(trim\(coalesce\(reason, ''\)\)\) > 0/);
+  assert.match(migration, /CREATE UNIQUE INDEX IF NOT EXISTS idx_monitoring_rounds_id_project/);
+  assert.match(migration, /CREATE UNIQUE INDEX IF NOT EXISTS idx_monitoring_round_points_id_round/);
+  assert.match(migration, /monitoring_work_execution_events_round_project_fkey/);
+  assert.match(migration, /FOREIGN KEY \(round_id, project_id\)\s+REFERENCES monitoring_rounds\(id, project_id\)/);
+  assert.match(migration, /monitoring_work_execution_events_point_round_fkey/);
+  assert.match(migration, /FOREIGN KEY \(round_point_id, round_id\)\s+REFERENCES monitoring_round_points\(id, round_id\)/);
   assert.match(migration, /ALTER TABLE monitoring_work_execution_events ENABLE ROW LEVEL SECURITY/);
   assert.match(migration, /CREATE POLICY "legacy deny all" ON monitoring_work_execution_events/);
 });

@@ -57,7 +57,10 @@ crea `monitoring_work_execution_events` con:
 El backend exige que ronda, punto de ronda, punto de control y obra coincidan,
 y aplica el alcance del actor autenticado antes de leer o escribir. Los roles
 de consulta pueden obtener el histórico; solo `admin` y `topografo` pueden
-registrar eventos. La migración no se ha aplicado en Supabase.
+registrar eventos. La migración no se ha aplicado en Supabase. Además de la
+validación en el modelo, la migración preparada crea claves foráneas
+compuestas para impedir que un evento relacione una ronda, un punto y una obra
+diferentes aunque la escritura se haga directamente en PostgreSQL.
 
 ## Estados que no se deben mezclar
 

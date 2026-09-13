@@ -35,6 +35,11 @@ partir del último evento recibido por punto. La consulta mantiene la relación
 ronda-punto-obra y la batería backend local queda en `113/113` tests. La ruta
 requiere la migración local 029; todavía no se ha aplicado ni desplegado.
 
+La misma migración fue endurecida con claves foráneas compuestas para que
+PostgreSQL mantenga esa relación ronda-punto-obra incluso fuera de las rutas
+de la aplicación. La prueba se limita a inspección estática del SQL y no se
+presenta como verificación de Supabase hasta que la migración se aplique allí.
+
 ## Addendum fisico del 13-09-2026
 
 La prueba posterior uso la release `versionCode=7` instalada en el Galaxy

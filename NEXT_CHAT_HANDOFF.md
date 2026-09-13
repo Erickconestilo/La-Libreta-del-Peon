@@ -52,6 +52,11 @@ Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
 probarlo contra el backend remoto hasta que la migración y el despliegue estén
 autorizados.
 
+La migración local 029 fue endurecida con índices únicos auxiliares y claves
+foráneas compuestas: un evento no puede enlazar una ronda, un punto y una obra
+cruzados aunque se intente escribir directamente en PostgreSQL. La regresión
+estática cubre ambas relaciones; sigue pendiente aplicarla remotamente.
+
 El resumen de la ronda también aparece en `Mi jornada`: hechos, en curso,
 pendientes y por revisar, calculados por el servidor a partir del último evento
 recibido de cada punto. Las cachés antiguas omiten esos contadores hasta

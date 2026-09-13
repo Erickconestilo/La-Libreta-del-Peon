@@ -26,6 +26,45 @@ CREATE INDEX IF NOT EXISTS idx_monitoring_work_execution_events_point_time
 CREATE INDEX IF NOT EXISTS idx_monitoring_work_execution_events_project_time
   ON monitoring_work_execution_events(project_id, occurred_at DESC);
 
+-- Refuerza la relación lógica que también exige el backend: un resultado no
+-- puede apuntar a una ronda, punto o proyecto cruzados aunque se escriba SQL
+-- directamente. Los índices únicos son necesarios para las claves compuestas.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_monitoring_rounds_id_project
+  ON monitoring_rounds(id, project_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_monitoring_round_points_id_round
+  ON monitoring_round_points(id, round_id);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'monitoring_work_execution_events_round_project_fkey'
+      AND conrelid = 'monitoring_work_execution_events'::regclass
+  ) THEN
+    ALTER TABLE monitoring_work_execution_events
+      ADD CONSTRAINT monitoring_work_execution_events_round_project_fkey
+      FOREIGN KEY (round_id, project_id)
+      REFERENCES monitoring_rounds(id, project_id)
+      ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'monitoring_work_execution_events_point_round_fkey'
+      AND conrelid = 'monitoring_work_execution_events'::regclass
+  ) THEN
+    ALTER TABLE monitoring_work_execution_events
+      ADD CONSTRAINT monitoring_work_execution_events_point_round_fkey
+      FOREIGN KEY (round_point_id, round_id)
+      REFERENCES monitoring_round_points(id, round_id)
+      ON DELETE CASCADE;
+  END IF;
+END;
+$$;
+
 ALTER TABLE monitoring_work_execution_events ENABLE ROW LEVEL SECURITY;
 
 DO $$

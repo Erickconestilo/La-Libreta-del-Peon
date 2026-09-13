@@ -166,6 +166,10 @@ La migración 029 no se ha aplicado en Supabase y este bloque no se considera
 desplegado hasta aplicarla, publicar el backend y repetir la comprobación en el
 Galaxy.
 
+La migración 029 preparada también incluye índices únicos auxiliares y claves
+foráneas compuestas para mantener la relación `evento -> punto -> ronda ->
+obra` a nivel de PostgreSQL, además del scope defensivo en el modelo.
+
 Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
