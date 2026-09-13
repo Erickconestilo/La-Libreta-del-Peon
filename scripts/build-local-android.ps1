@@ -33,7 +33,35 @@ try {
   & $signingScript -AndroidAppBuildGradlePath (Join-Path $shortRoot "apps\mobile\android\app\build.gradle")
   Push-Location (Join-Path $shortRoot "apps\mobile\android")
   try {
-    .\gradlew.bat clean app:bundleRelease --no-daemon --no-parallel --max-workers=1 -PreactNativeArchitectures=arm64-v8a
+    $gradleArguments = @(
+      '--no-daemon',
+      '--no-parallel',
+      '--max-workers=1',
+      '-PreactNativeArchitectures=arm64-v8a'
+    )
+
+    # Algunas versiones de react-native-reanimated pueden dejar build.ninja
+    # inconsistente durante clean. La release sigue siendo reproducible sin
+    # limpiar el árbol generado; solo se usa esa vía como fallback del mismo
+    # comando y se propaga el error si ambos intentos fallan.
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+      & .\gradlew.bat clean app:bundleRelease @gradleArguments
+      $cleanExitCode = $LASTEXITCODE
+
+      if ($cleanExitCode -ne 0) {
+        Write-Warning "Gradle clean fallo con codigo $cleanExitCode; se reintenta bundleRelease sin clean."
+        & .\gradlew.bat app:bundleRelease @gradleArguments
+        $incrementalExitCode = $LASTEXITCODE
+        if ($incrementalExitCode -ne 0) {
+          throw "Gradle bundleRelease fallo tambien sin clean (codigo $incrementalExitCode)."
+        }
+      }
+    }
+    finally {
+      $ErrorActionPreference = $previousErrorActionPreference
+    }
   }
   finally {
     Pop-Location
