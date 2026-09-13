@@ -68,6 +68,15 @@ test('work execution migration is append-only, idempotent and tenant-scoped', ()
   assert.match(migration, /CREATE POLICY "legacy deny all" ON monitoring_work_execution_events/);
 });
 
+test('deployment health gate uses schema-aware readiness instead of liveness', () => {
+  const renderConfig = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8');
+  const appSource = readFileSync(resolve(process.cwd(), 'src/app.ts'), 'utf8');
+
+  assert.match(renderConfig, /healthCheckPath:\s*\/api\/v1\/readiness/);
+  assert.match(appSource, /app\.get\('\/api\/v1\/readiness'/);
+  assert.match(appSource, /response\.status\(workExecution\.available \? 200 : 503\)/);
+});
+
 test('work execution capability reports migration 029 missing without throwing', () => {
   const capability = evaluateWorkExecutionCapability(
     {
