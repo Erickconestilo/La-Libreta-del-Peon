@@ -151,6 +151,12 @@ queda protegida por obra y rol. La captura móvil usa SQLite/outbox e
 idempotencia; `Hecho` no cambia por sí solo el estado metrológico ni permite
 cerrar una ronda con lecturas pendientes.
 
+Para reducir pasos en campo, cada tarjeta ofrece además `Marcar hecho` en una
+pulsación. El atajo crea el mismo evento `completed`, muestra `Hecho
+registrado` cuando llega a la caché recibida y deja `Más opciones` para
+resultados que necesitan motivo. No se copian filas reales del Excel ni se
+simula todavía una ocurrencia distinta por cada día de la semana.
+
 La cabecera de la ronda resume ahora el trabajo declarado por estado y ofrece
 `Continuar con <código>` para abrir el primer punto accionable en el orden de
 la jornada. Los puntos bloqueados se cuentan como `por revisar` y nunca se

@@ -52,6 +52,12 @@ Render ni instalado/validado en el Galaxy. No ejecutar una release nueva ni
 probarlo contra el backend remoto hasta que la migración y el despliegue estén
 autorizados.
 
+La lista de puntos incorpora también `Marcar hecho` en una pulsación para el
+caso normal. `Más opciones` abre el formulario de `Empezar`, `No realizado`,
+`Repetir` y `Bloqueado` con motivo. El atajo usa la misma mutación, outbox e
+idempotencia; queda pendiente validarlo en el Galaxy cuando ADB detecte el
+dispositivo y la migración 029 esté desplegada.
+
 La migración local 029 fue endurecida con índices únicos auxiliares y claves
 foráneas compuestas: un evento no puede enlazar una ronda, un punto y una obra
 cruzados aunque se intente escribir directamente en PostgreSQL. La regresión
