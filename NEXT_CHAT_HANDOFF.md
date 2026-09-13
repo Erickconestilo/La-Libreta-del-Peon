@@ -67,7 +67,11 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
   queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `100/100`.
+  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `101/101`.
+- `f5de61d` y la continuación local endurecen la idempotencia de adjuntos: el
+  endpoint usa bloqueo transaccional por lectura/ruta y `ON CONFLICT DO NOTHING`
+  sin depender todavía de la migración 028. La migración 028 sigue pendiente
+  en remoto como garantía de base de datos.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`

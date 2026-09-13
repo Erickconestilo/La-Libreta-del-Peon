@@ -53,11 +53,13 @@ se ha desplegado desde esta sesión.
    con el de la ronda. Esto evita exponer o mezclar datos si una escritura
    directa deja una referencia cruzada en PostgreSQL.
 9. La deduplicación de adjuntos de lectura tenía una ventana de carrera entre
-   su consulta previa y el `INSERT`. La migración local preparada
-   `028_reading_attachment_idempotency.sql` añade un índice único por
-   `reading_id, storage_path` y falla deliberadamente si existen duplicados
-   históricos; la API usa `ON CONFLICT DO NOTHING`. No se ha aplicado a
-   Supabase ni se han borrado filas.
+   su consulta previa y el `INSERT`, y el `ON CONFLICT` con columnas concretas
+   fallaba si se desplegaba antes del índice de `028`. La API serializa ahora
+   cada par lectura/ruta con `pg_advisory_xact_lock`, reconsulta tras un
+   conflicto y usa `ON CONFLICT DO NOTHING` sin una inferencia de índice. La
+   migración local preparada `028_reading_attachment_idempotency.sql` añade
+   además el índice único permanente y falla deliberadamente si existen
+   duplicados históricos. No se ha aplicado a Supabase ni se han borrado filas.
 10. El deep link de `Parte de zona` podía mostrar el formulario a una cuenta
     supervisora o con membresía `read`, aunque el backend ya rechazaba la
     escritura. La pantalla ahora resuelve `allowed`, `loading` o `read-only`
@@ -208,8 +210,8 @@ se ha desplegado desde esta sesión.
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 99
-ℹ pass 99
+ℹ tests 101
+ℹ pass 101
 ℹ fail 0
 
 Test Suites: 21 passed, 21 total
