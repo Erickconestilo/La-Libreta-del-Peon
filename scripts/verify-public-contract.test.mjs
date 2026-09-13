@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { verifyPublicContract } from "./verify-public-contract.mjs";
+
+const response = (status, body) => ({
+  status,
+  text: async () => JSON.stringify(body),
+});
+
+test("accepts the expected public health and protected responses", async () => {
+  const requests = [];
+  const result = await verifyPublicContract({
+    baseUrl: "https://example.test/api/v1/",
+    fetchImpl: async (url, init) => {
+      requests.push({ init, url });
+      if (url.endsWith("/health")) return response(200, { commit: "test", status: "ok" });
+      return response(401, {
+        data: null,
+        error: { code: "UNAUTHORIZED", message: "Authentication required" },
+      });
+    },
+  });
+
+  assert.equal(result.health.status, 200);
+  assert.equal(result.rounds.status, 401);
+  assert.equal(result.journey.status, 401);
+  assert.equal(requests.length, 3);
+  assert.ok(requests.every(({ init }) => init.headers.Accept === "application/json"));
+  assert.ok(requests.every(({ init }) => !("Authorization" in init.headers)));
+});
+
+test("fails closed if a protected endpoint regresses to 404", async () => {
+  await assert.rejects(
+    verifyPublicContract({
+      fetchImpl: async (url) => {
+        if (url.endsWith("/health")) return response(200, { status: "ok" });
+        return response(404, { error: { code: "NOT_FOUND" } });
+      },
+    }),
+    /project rounds without bearer unexpected response: HTTP 404/,
+  );
+});
+
+test("never sends credentials to the public contract verifier", async () => {
+  const requests = [];
+  await verifyPublicContract({
+    fetchImpl: async (url, init) => {
+      requests.push({ init, url });
+      return url.endsWith("/health")
+        ? response(200, { status: "ok" })
+        : response(401, { error: { code: "UNAUTHORIZED" } });
+    },
+  });
+
+  assert.ok(requests.every(({ init }) => Object.keys(init.headers).every((key) => key !== "Authorization")));
+});

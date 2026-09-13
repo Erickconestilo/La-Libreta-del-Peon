@@ -57,6 +57,10 @@ preflight, incluidas rutas con espacios y metacaracteres.
 credenciales remotas; `npm run verify:local:pre-apk` añade el preflight de
 Expo y exige una salida con `metadata.json` y assets.
 
+`npm run verify:remote:public` comprueba solo el contrato público de Render:
+salud `200` y `401 UNAUTHORIZED` en rondas y `Mi jornada` sin bearer. No usa
+credenciales ni modifica el servicio.
+
 Backend público configurado en móvil: `https://la-libreta-del-peon-1.onrender.com/api/v1`.
 
 ## Funcionalidad implementada
