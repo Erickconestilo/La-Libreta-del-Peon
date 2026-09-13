@@ -68,6 +68,19 @@ export type JourneyWorkSummary = {
   total: number;
 };
 
+export type JourneyWeekDay = {
+  date: string;
+  label: string;
+  rounds: JourneyRound[];
+};
+
+export type JourneyWorkWeek = {
+  startDate: string;
+  endDate: string;
+  days: JourneyWeekDay[];
+  outsideWeek: JourneyRound[];
+};
+
 export const getWorkExecutionSummary = (
   points: Array<Pick<MonitoringRoundPoint, 'executionState'>>
 ): WorkExecutionSummary => {
@@ -113,6 +126,62 @@ export const getJourneyWorkSummary = (
     total: summary.total + completed + inProgress + pending + review
   };
 }, { completed: 0, inProgress: 0, pending: 0, review: 0, total: 0 });
+
+const WEEKDAY_LABELS = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
+
+const toDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const sortJourneyRounds = (left: JourneyRound, right: JourneyRound) => (
+  left.executionOrder - right.executionOrder ||
+  left.createdAt.localeCompare(right.createdAt) ||
+  left.id.localeCompare(right.id)
+);
+
+/** Groups assigned rounds into the five working days shown in the field workbook. */
+export const getJourneyWorkWeek = (
+  rounds: JourneyRound[],
+  referenceDate = new Date()
+): JourneyWorkWeek => {
+  const localDate = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate(), 12);
+  const dayFromMonday = (localDate.getDay() + 6) % 7;
+  const monday = new Date(localDate);
+  monday.setDate(localDate.getDate() - dayFromMonday);
+  const days = WEEKDAY_LABELS.map((label, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return { date: toDateKey(date), label, rounds: [] as JourneyRound[] };
+  });
+  const knownDates = new Map(days.map((day, index) => [day.date, index]));
+  const outsideWeek: JourneyRound[] = [];
+
+  for (const round of rounds) {
+    const roundDate = round.roundDate.slice(0, 10);
+    const dayIndex = knownDates.get(roundDate);
+    if (dayIndex === undefined) {
+      outsideWeek.push(round);
+      continue;
+    }
+
+    days[dayIndex].rounds.push(round);
+  }
+
+  for (const day of days) {
+    day.rounds.sort(sortJourneyRounds);
+  }
+  outsideWeek.sort((left, right) => left.roundDate.localeCompare(right.roundDate) || sortJourneyRounds(left, right));
+
+  return {
+    days,
+    endDate: days[days.length - 1].date,
+    outsideWeek,
+    startDate: days[0].date
+  };
+};
 
 /** Keeps the round order while prioritising work that can still be continued. */
 export const getNextWorkExecutionPointId = (

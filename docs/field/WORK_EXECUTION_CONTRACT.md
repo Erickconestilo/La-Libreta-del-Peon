@@ -61,6 +61,14 @@ hechos, en curso, pendientes y por revisar sin crear una segunda lista de
 tareas. Este resumen no cambia el estado de las lecturas ni sustituye el
 cierre controlado de la ronda.
 
+El mismo parte incluye `Semana operativa`: agrupa las rondas asignadas reales
+de lunes a viernes, ordenadas por fecha y `executionOrder`, y permite abrir cada
+ronda directamente. Las asignaciones de otras fechas se mantienen visibles en
+`Otras fechas` para no ocultar trabajo. Es una vista de planificación y
+progreso sobre rondas existentes, no una recurrencia semanal inventada ni una
+confirmación de que el servidor recibió cambios que siguen pendientes en el
+outbox.
+
 Después de guardar o encolar una acción, el formulario limpia la selección,
 el motivo y la nota. Así el operario no puede reenviar accidentalmente la
 misma acción con otro `clientRequestId`; para registrar un cambio real debe

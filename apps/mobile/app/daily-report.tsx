@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Incident, ProjectSummary, StationMessage } from '@shared/types';
+import type { Incident, JourneyRound, ProjectSummary, StationMessage } from '@shared/types';
 
 import { dailyChecklistItems, useDailyChecklist } from '@/hooks/use-daily-checklist';
 import { useRecentIncidents } from '@/hooks/use-incidents';
@@ -14,8 +14,9 @@ import { useStations } from '@/hooks/use-stations';
 import { useMyJourney } from '@/hooks/use-monitoring';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { getStationDisplayName } from '@/lib/station-display';
-import { getJourneyWorkSummary } from '@/lib/work-execution';
+import { formatJourneyWorkSummary, getJourneyWorkSummary, getJourneyWorkWeek } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
+import { formatShortDate, RoundStatusPill } from '@/components/monitoring-ui';
 
 type ProjectFilter = ProjectSummary | null;
 
@@ -122,6 +123,7 @@ export default function DailyReportScreen() {
   const assignedRounds = (journeyQuery.data ?? []).filter((round) => round.projectId === resolvedProjectId);
   const firstAssignedRound = assignedRounds[0] ?? null;
   const assignedWork = getJourneyWorkSummary(assignedRounds);
+  const assignedWorkWeek = getJourneyWorkWeek(assignedRounds);
   const stationPhotoCount = projectStations.filter((station) => Boolean(station.photoUrl)).length;
   const isChecklistComplete = checklist.completedCount === checklist.totalCount;
   const canCloseDay = isChecklistComplete && openIncidents === 0;
@@ -201,6 +203,33 @@ export default function DailyReportScreen() {
               </View>
             ) : null}
           </>
+        ) : null}
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderCopy}>
+            <Text style={styles.sectionTitle}>Semana operativa</Text>
+            <Text style={styles.body}>{formatShortDate(assignedWorkWeek.startDate)} - {formatShortDate(assignedWorkWeek.endDate)}</Text>
+          </View>
+          <MaterialIcons color={colors.accentGreen} name="date-range" size={22} />
+        </View>
+        <Text style={styles.caption}>Vista semanal del trabajo asignado. Cada ronda conserva su orden administrativo y su estado real.</Text>
+        {assignedWorkWeek.days.map((day) => (
+          <View key={day.date} style={styles.weekDayBlock}>
+            <View style={styles.weekDayHeader}>
+              <Text style={styles.weekDayLabel}>{day.label}</Text>
+              <Text style={styles.weekDayDate}>{formatShortDate(day.date)}</Text>
+            </View>
+            {day.rounds.length === 0 ? <Text style={styles.weekDayEmpty}>Sin ronda asignada</Text> : null}
+            {day.rounds.map((round) => <JourneyWeekRow key={round.id} onPress={() => router.push(`/rounds/${round.id}` as never)} round={round} />)}
+          </View>
+        ))}
+        {assignedWorkWeek.outsideWeek.length > 0 ? (
+          <View style={styles.outsideWeekBlock}>
+            <Text style={styles.weekDayLabel}>OTRAS FECHAS</Text>
+            {assignedWorkWeek.outsideWeek.map((round) => <JourneyWeekRow key={round.id} onPress={() => router.push(`/rounds/${round.id}` as never)} round={round} />)}
+          </View>
         ) : null}
       </View>
 
@@ -303,6 +332,21 @@ const WorkSummary = ({ label, tone, value }: { label: string; tone: string; valu
   </View>
 );
 
+const JourneyWeekRow = ({ onPress, round }: { onPress: () => void; round: JourneyRound }) => (
+  <Pressable accessibilityRole="button" onPress={onPress} style={styles.weekRoundRow}>
+    <View style={styles.weekRoundCopy}>
+      <Text style={styles.weekRoundTitle}>{round.name}</Text>
+      <Text style={styles.weekRoundMeta}>
+        {typeof round.workCompletedPointCount === 'number'
+          ? formatJourneyWorkSummary(round)
+          : `${round.takenPointCount}/${round.totalPointCount} puntos tomados`}
+      </Text>
+    </View>
+    <RoundStatusPill status={round.status} />
+    <MaterialIcons color={colors.textSecondary} name="chevron-right" size={20} />
+  </Pressable>
+);
+
 const buildPendingCloseMessage = (openIncidents: number, pendingChecklistItems: number) => {
   const parts: string[] = [];
 
@@ -380,6 +424,60 @@ const styles = StyleSheet.create({
   assignedSecondaryText: {
     color: colors.textPrimary,
     fontSize: 13,
+    fontWeight: '800'
+  },
+  outsideWeekBlock: {
+    borderColor: '#2a2f3a',
+    borderTopWidth: 1,
+    gap: spacing[1],
+    paddingTop: spacing[2]
+  },
+  weekDayBlock: {
+    gap: spacing[1]
+  },
+  weekDayDate: {
+    color: colors.textSecondary,
+    fontSize: 12
+  },
+  weekDayEmpty: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    paddingVertical: spacing[1]
+  },
+  weekDayHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  weekDayLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.4
+  },
+  weekRoundCopy: {
+    flex: 1,
+    gap: 2
+  },
+  weekRoundMeta: {
+    color: colors.textSecondary,
+    fontSize: 12
+  },
+  weekRoundRow: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderColor: '#2a2f3a',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[1],
+    minHeight: 52,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1]
+  },
+  weekRoundTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
     fontWeight: '800'
   },
   caption: {

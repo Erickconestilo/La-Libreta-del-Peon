@@ -8,6 +8,7 @@ import {
   getNextWorkExecutionPointId,
   formatJourneyWorkSummary,
   getJourneyWorkSummary,
+  getJourneyWorkWeek,
   requiresWorkExecutionReason,
   WORK_EXECUTION_REASON_OPTIONS
 } from '../work-execution';
@@ -104,5 +105,39 @@ describe('work execution status', () => {
       { workCompletedPointCount: 2, workInProgressPointCount: 1, workPendingPointCount: 3, workReviewPointCount: 1 },
       { workCompletedPointCount: 1, workInProgressPointCount: 0, workPendingPointCount: 2, workReviewPointCount: 0 }
     ])).toEqual({ completed: 3, inProgress: 1, pending: 5, review: 1, total: 10 });
+  });
+
+  it('groups assigned rounds into the working week without losing other dates', () => {
+    const base = {
+      createdAt: '2026-09-01T08:00:00.000Z',
+      executionOrder: 0,
+      fieldConditions: null,
+      id: 'round',
+      instrumentSerial: null,
+      operatorId: 'operator-1',
+      pendingPointCount: 1,
+      projectCode: 'PROJECT',
+      projectId: 'project-1',
+      projectName: 'Obra',
+      createdBy: 'admin-1',
+      name: 'Ronda',
+      status: 'active' as const,
+      takenPointCount: 0,
+      totalPointCount: 1,
+      roundDate: '2026-09-14',
+      updatedAt: '2026-09-01T08:00:00.000Z'
+    };
+    const week = getJourneyWorkWeek([
+      { ...base, id: 'friday', name: 'Viernes', roundDate: '2026-09-18', executionOrder: 1 },
+      { ...base, id: 'monday', name: 'Lunes', roundDate: '2026-09-14', executionOrder: 2 },
+      { ...base, id: 'saturday', name: 'Fuera', roundDate: '2026-09-19' }
+    ], new Date(2026, 8, 16, 12));
+
+    expect(week.startDate).toBe('2026-09-14');
+    expect(week.endDate).toBe('2026-09-18');
+    expect(week.days[0].label).toBe('LUNES');
+    expect(week.days[0].rounds.map((round) => round.id)).toEqual(['monday']);
+    expect(week.days[4].rounds.map((round) => round.id)).toEqual(['friday']);
+    expect(week.outsideWeek.map((round) => round.id)).toEqual(['saturday']);
   });
 });
