@@ -135,7 +135,7 @@ export default function MonitoringRoundDetailScreen() {
                   {item.executionState?.lastEvent?.reason ? <Text numberOfLines={2} style={styles.reason}>Motivo: {item.executionState.lastEvent.reason}</Text> : null}
                   {item.notes ? <Text numberOfLines={2} style={styles.body}>{item.notes}</Text> : null}
                 </Pressable>
-                {canEdit ? <View style={styles.actionRow}>
+                {canEdit && item.status !== 'cancelled' && item.status !== 'skipped' ? <View style={styles.actionRow}>
                   <QuickCompleteButton currentStatus={item.executionState?.status ?? 'pending'} roundId={round?.id ?? ''} roundPointId={item.id} />
                   <Pressable onPress={() => router.push({ pathname: '/round-points/[roundPointId]/work-status', params: { code: item.controlPointCode, name: item.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: item.id } } as never)} style={[styles.resultButton, styles.moreButton]}>
                     <MaterialIcons color={colors.textPrimary} name="more-horiz" size={18} />
@@ -169,7 +169,8 @@ function QuickCompleteButton({
   const [feedback, setFeedback] = useState<string | null>(null);
 
   if (currentStatus === 'completed') {
-    return <View style={styles.quickDone}><MaterialIcons color={colors.accentGreen} name="check-circle" size={18} /><Text style={styles.quickDoneText}>Hecho registrado</Text></View>;
+    const label = feedback ?? 'Hecho registrado';
+    return <View style={[styles.quickDone, feedback === 'Guardado localmente' ? styles.quickPending : null]}><MaterialIcons color={feedback === 'Guardado localmente' ? colors.amber : colors.accentGreen} name={feedback === 'Guardado localmente' ? 'cloud-upload' : 'check-circle'} size={18} /><Text style={[styles.quickDoneText, feedback === 'Guardado localmente' ? styles.quickPendingText : null]}>{label}</Text></View>;
   }
 
   const handlePress = async () => {
@@ -238,4 +239,6 @@ const styles = StyleSheet.create({
   quickDone: { alignItems: 'center', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.4)', borderRadius: 8, borderWidth: 1, flex: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', minHeight: 44, paddingHorizontal: spacing[1] },
   quickDoneText: { color: colors.accentGreen, fontSize: 13, fontWeight: '900' },
   quickError: { color: colors.red, fontSize: 11, lineHeight: 15 },
+  quickPending: { backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.4)' },
+  quickPendingText: { color: colors.amber },
 });

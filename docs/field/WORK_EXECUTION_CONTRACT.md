@@ -47,7 +47,9 @@ misma tarjeta. Es un atajo explícito de una pulsación que crea el mismo evento
 `Más opciones` conserva el formulario completo para `Empezar`, `No realizado`,
 `Repetir` y `Bloqueado`, donde el motivo aporta información necesaria al relevo.
 Cuando el evento ya está recibido, la tarjeta muestra `Hecho registrado` y no
-invita a duplicarlo.
+invita a duplicarlo. Si todavía está en el outbox, muestra `Guardado
+localmente`; los puntos cancelados u omitidos no ofrecen el atajo porque no son
+trabajo accionable.
 
 Después de guardar o encolar una acción, el formulario limpia la selección,
 el motivo y la nota. Así el operario no puede reenviar accidentalmente la
