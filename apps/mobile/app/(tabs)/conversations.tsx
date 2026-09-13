@@ -12,6 +12,7 @@ import { useProjects } from '@/hooks/use-projects';
 import { useRecentStationMessages } from '@/hooks/use-station-messages';
 import { useStations } from '@/hooks/use-stations';
 import { getStationDisplayName } from '@/lib/station-display';
+import { WeeklyWorkPlanner } from '@/components/weekly-work-planner';
 import { colors, spacing, typography } from '@/src/theme';
 
 type BitacoraTag =
@@ -25,6 +26,7 @@ type BitacoraTag =
   | 'Urgente';
 
 type BitacoraScope = 'all' | 'open' | 'today' | 'week';
+type BitacoraView = 'week' | 'activity';
 
 type BitacoraScopeOption = {
   key: BitacoraScope;
@@ -66,6 +68,7 @@ export default function BitacoraScreen() {
   const { currentUser } = useCurrentSession();
   const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo' || currentUser?.role === 'supervisor';
   const canOpenDailyReport = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
+  const canEditWeeklyWork = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const projectsQuery = useProjects();
   const stationsQuery = useStations();
   const incidentsQuery = useRecentIncidents(canUseTeamTools);
@@ -74,15 +77,17 @@ export default function BitacoraScreen() {
   const [selectedScope, setSelectedScope] = useState<BitacoraScope>('all');
   const [selectedTags, setSelectedTags] = useState<BitacoraTag[]>(['Incidencia', 'Mensaje', 'Nota', 'Propuesta']);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedView, setSelectedView] = useState<BitacoraView>('week');
 
   const projects = projectsQuery.data ?? [];
+  const resolvedProjectId = selectedView === 'week' ? selectedProjectId ?? projects[0]?.id ?? null : selectedProjectId;
   const selectedProject = useMemo<ProjectSummary | null>(() => {
-    if (!selectedProjectId) {
+    if (!resolvedProjectId) {
       return null;
     }
 
-    return projects.find((project) => project.id === selectedProjectId) ?? null;
-  }, [projects, selectedProjectId]);
+    return projects.find((project) => project.id === resolvedProjectId) ?? null;
+  }, [projects, resolvedProjectId]);
 
   const stationById = useMemo(() => {
     return new Map((stationsQuery.data ?? []).map((station) => [station.id, station]));
@@ -287,17 +292,36 @@ export default function BitacoraScreen() {
   return (
     <FlatList
       contentContainerStyle={[styles.content, { paddingBottom: 112 + insets.bottom }]}
-      data={filteredEntries}
+      data={selectedView === 'activity' ? filteredEntries : []}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.eyebrow}>Bitácora</Text>
           <Text style={styles.heroTitle}>Bitácora</Text>
           <Text style={styles.headerBody}>
-            Notas, incidencias y mensajes con fecha y hora{selectedProject ? ` · ${selectedProject.name}` : ''}.
+            Plan semanal y actividad de campo{selectedProject ? ` · ${selectedProject.name}` : ''}.
           </Text>
 
-          {openIncidentCount > 0 ? (
+          <View style={styles.viewSwitch}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSelectedView('week')}
+              style={[styles.viewSwitchButton, selectedView === 'week' ? styles.viewSwitchButtonSelected : null]}
+            >
+              <MaterialIcons color={selectedView === 'week' ? colors.background : colors.textSecondary} name="view-week" size={17} />
+              <Text style={[styles.viewSwitchText, selectedView === 'week' ? styles.viewSwitchTextSelected : null]}>Semana</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSelectedView('activity')}
+              style={[styles.viewSwitchButton, selectedView === 'activity' ? styles.viewSwitchButtonSelected : null]}
+            >
+              <MaterialIcons color={selectedView === 'activity' ? colors.background : colors.textSecondary} name="forum" size={17} />
+              <Text style={[styles.viewSwitchText, selectedView === 'activity' ? styles.viewSwitchTextSelected : null]}>Actividad</Text>
+            </Pressable>
+          </View>
+
+          {selectedView === 'activity' && openIncidentCount > 0 ? (
             <View style={styles.alertCard}>
               <MaterialIcons color={colors.red} name="campaign" size={16} />
               <Text style={styles.alertText}>Incidencias abiertas: {openIncidentCount}</Text>
@@ -313,60 +337,70 @@ export default function BitacoraScreen() {
 
           <Text style={styles.sectionLabel}>Obra</Text>
           <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>
-            <Pressable
-              onPress={() => setSelectedProjectId(null)}
-              style={[styles.scopePill, selectedProjectId === null ? styles.scopePillSelected : null]}
-            >
-              <Text style={[styles.scopePillText, selectedProjectId === null ? styles.scopePillTextSelected : null]}>
-                Todas
-              </Text>
-            </Pressable>
+            {selectedView === 'activity' ? (
+              <Pressable
+                onPress={() => setSelectedProjectId(null)}
+                style={[styles.scopePill, selectedProjectId === null ? styles.scopePillSelected : null]}
+              >
+                <Text style={[styles.scopePillText, selectedProjectId === null ? styles.scopePillTextSelected : null]}>
+                  Todas
+                </Text>
+              </Pressable>
+            ) : null}
             {projects.map((project) => (
               <Pressable
                 key={project.id}
                 onPress={() => setSelectedProjectId(project.id)}
-                style={[styles.scopePill, selectedProjectId === project.id ? styles.scopePillSelected : null]}
+                style={[styles.scopePill, resolvedProjectId === project.id ? styles.scopePillSelected : null]}
               >
-                <Text style={[styles.scopePillText, selectedProjectId === project.id ? styles.scopePillTextSelected : null]}>
+                <Text style={[styles.scopePillText, resolvedProjectId === project.id ? styles.scopePillTextSelected : null]}>
                   {project.name}
                 </Text>
               </Pressable>
             ))}
           </ScrollView>
 
-          <Text style={styles.sectionLabel}>Vista</Text>
-          <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>
-            {scopeOptions.map((scope) => (
-              <Pressable
-                key={scope.key}
-                onPress={() => toggleScope(scope.key)}
-                style={[styles.scopePill, selectedScope === scope.key ? styles.scopePillSelected : null]}
-              >
-                <Text style={[styles.scopePillText, selectedScope === scope.key ? styles.scopePillTextSelected : null]}>
-                  {scope.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          {selectedView === 'week' ? (
+            <WeeklyWorkPlanner canEdit={canEditWeeklyWork} projectId={resolvedProjectId} />
+          ) : (
+            <>
+              <Text style={styles.sectionLabel}>Vista</Text>
+              <ScrollView contentContainerStyle={styles.scopes} horizontal showsHorizontalScrollIndicator={false}>
+                {scopeOptions.map((scope) => (
+                  <Pressable
+                    key={scope.key}
+                    onPress={() => toggleScope(scope.key)}
+                    style={[styles.scopePill, selectedScope === scope.key ? styles.scopePillSelected : null]}
+                  >
+                    <Text style={[styles.scopePillText, selectedScope === scope.key ? styles.scopePillTextSelected : null]}>
+                      {scope.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
 
-          <Text style={styles.sectionLabel}>Etiquetas</Text>
-          <ScrollView contentContainerStyle={styles.tags} horizontal showsHorizontalScrollIndicator={false}>
-            {availableTags.map((tag) => {
-              const selected = selectedTags.includes(tag);
-              return (
-                <Pressable key={tag} onPress={() => toggleTag(tag)} style={[styles.tag, selected ? styles.tagSelected : null]}>
-                  <Text style={[styles.tagText, selected ? styles.tagTextSelected : null]}>{tag}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+              <Text style={styles.sectionLabel}>Etiquetas</Text>
+              <ScrollView contentContainerStyle={styles.tags} horizontal showsHorizontalScrollIndicator={false}>
+                {availableTags.map((tag) => {
+                  const selected = selectedTags.includes(tag);
+                  return (
+                    <Pressable key={tag} onPress={() => toggleTag(tag)} style={[styles.tag, selected ? styles.tagSelected : null]}>
+                      <Text style={[styles.tagText, selected ? styles.tagTextSelected : null]}>{tag}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </>
+          )}
         </View>
       }
       ListEmptyComponent={
-        <View style={styles.card}>
-          <Text style={styles.title}>{isLoading ? 'Cargando bitácora' : 'Sin entradas'}</Text>
-          <Text style={styles.body}>{errorMessage ?? 'Aún no hay entradas para esta vista.'}</Text>
-        </View>
+        selectedView === 'activity' ? (
+          <View style={styles.card}>
+            <Text style={styles.title}>{isLoading ? 'Cargando bitácora' : 'Sin entradas'}</Text>
+            <Text style={styles.body}>{errorMessage ?? 'Aún no hay entradas para esta vista.'}</Text>
+          </View>
+        ) : null
       }
       onRefresh={handleRefresh}
       refreshing={isRefreshing}
@@ -704,6 +738,36 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   tagTextSelected: {
+    color: colors.background
+  },
+  viewSwitch: {
+    backgroundColor: '#111722',
+    borderColor: '#2a2f3a',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4
+  },
+  viewSwitchButton: {
+    alignItems: 'center',
+    borderRadius: 7,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: spacing[2]
+  },
+  viewSwitchButtonSelected: {
+    backgroundColor: colors.accentGreen
+  },
+  viewSwitchText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  viewSwitchTextSelected: {
     color: colors.background
   },
   title: {

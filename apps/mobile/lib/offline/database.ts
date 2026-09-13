@@ -51,6 +51,7 @@ export async function applyMigrations(): Promise<void> {
     { version: 6 },
     { version: 7 },
     { version: 8 },
+    { version: 9 },
   ];
 
   // Apply pending migrations
@@ -90,6 +91,10 @@ export async function applyMigrations(): Promise<void> {
 
         if (migration.version === 8) {
           executeMigration008(db);
+        }
+
+        if (migration.version === 9) {
+          executeMigration009(db);
         }
 
         console.log(`[SQLite] Migration ${migration.version} applied successfully`);
@@ -300,6 +305,26 @@ function executeMigration008(db: SQLiteDatabase): void {
     );
 
     INSERT OR IGNORE INTO schema_version (version) VALUES (8);
+  `);
+}
+
+/**
+ * Última planificación semanal recibida del servidor. Se separa por sesión,
+ * obra y lunes de la semana para que una cuenta no vea la planificación de
+ * otra y para poder consultar el plan de campo sin cobertura.
+ */
+function executeMigration009(db: SQLiteDatabase): void {
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS weekly_work_cache (
+      cache_key TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      week_start TEXT NOT NULL,
+      items_json TEXT NOT NULL,
+      cached_at TEXT NOT NULL,
+      PRIMARY KEY (cache_key, project_id, week_start)
+    );
+
+    INSERT OR IGNORE INTO schema_version (version) VALUES (9);
   `);
 }
 

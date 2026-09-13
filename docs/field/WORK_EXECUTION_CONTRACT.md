@@ -20,9 +20,14 @@ ver lo previsto, pero sus casillas no explican si una visita se completó, se
 repitió, quedó bloqueada o si el dato y la foto llegaron al servidor. TopoField
 incorpora esa necesidad sin copiar nombres ni filas del libro.
 
-TopoField reutiliza `monitoring_rounds` y `monitoring_round_points` como el
-trabajo asignado. No se crea un segundo gestor de tareas. Cada punto puede
-recibir eventos operativos append-only, separados de la lectura metrológica.
+Para **ejecución real**, TopoField reutiliza `monitoring_rounds` y
+`monitoring_round_points` como el trabajo asignado: no se crea un segundo gestor
+editable que sustituya esos eventos. Cada punto puede recibir eventos operativos
+append-only, separados de la lectura metrológica.
+
+La **planificación semanal editable de Bitácora** es un dominio distinto y se
+documenta en `docs/field/WEEKLY_WORK_PLANNING.md`. Sus estados expresan el plan y
+no convierten una tarea planificada en un evento de ejecución confirmado.
 
 ## Flujo móvil
 

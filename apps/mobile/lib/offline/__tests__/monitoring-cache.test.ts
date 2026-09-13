@@ -101,7 +101,7 @@ describe('monitoring cache', () => {
 
   it('invalidates unscoped legacy cache rows during migration', async () => {
     const db = getDatabase();
-    db.runSync('DELETE FROM schema_version WHERE version IN (5, 6, 7, 8)');
+    db.runSync('DELETE FROM schema_version WHERE version >= 5');
     db.execSync('DROP TABLE outbox');
     db.execSync(`
       CREATE TABLE outbox (
