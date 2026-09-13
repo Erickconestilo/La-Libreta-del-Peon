@@ -216,14 +216,21 @@ se ha desplegado desde esta sesión.
     decidirlo, no deben cargarse fotografías sensibles de terceros en el piloto
     ni compartirse enlaces de Storage fuera de los usuarios autorizados.
 
+32. `getStationById` lanzaba en paralelo la consulta de la estación y la de
+    `station_readings`. Aunque el controlador no devolvía la respuesta cuando
+    la estación quedaba fuera del scope, el servicio podía leer previamente
+    datos asociados de una obra no autorizada. Ahora la consulta de lecturas
+    solo se ejecuta después de confirmar que la estación pasó el filtro de
+    tenant; la regresión está en `monitoring.model.test.ts`.
+
 ## Evidencia local
 
 ```text
 > @topofield/backend@1.0.0 build
 > tsc -p tsconfig.json
 
-ℹ tests 102
-ℹ pass 102
+ℹ tests 103
+ℹ pass 103
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total

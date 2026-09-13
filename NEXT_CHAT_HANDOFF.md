@@ -26,7 +26,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `35fc885` corrige otra relación defensiva de memoria de montaje: las
   evidencias se agregan solo si coinciden simultáneamente `visit_id` y
   `station_id`. La regresión está en `monitoring.model.test.ts`; el backend
-  local queda en `102/102` tests.
+  local queda en `103/103` tests.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Última corrección local: `c709fab` elimina una sustitución de nombre
@@ -69,12 +69,12 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   despliegue. El cambio previo de `apps/mobile/package.json` sigue fuera de
   todos esos commits.
 - Después se añadieron `35fc885` (scope de evidencia por estación) y `f8ee24f`
-  (documentación y evidencia local `102/102`). No se tocaron servicios
+  (documentación y evidencia local `103/103`). No se tocaron servicios
   remotos ni el Galaxy.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
   queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `102/102`.
+  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `103/103`.
 - `f5de61d` y la continuación local endurecen la idempotencia de adjuntos: el
   endpoint usa bloqueo transaccional por lectura/ruta y `ON CONFLICT DO NOTHING`
   sin depender todavía de la migración 028. La migración 028 sigue pendiente
@@ -257,7 +257,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
-  tiene `102/102` tests; móvil TypeScript sale sin errores y Jest tiene `22`
+  tiene `103/103` tests; móvil TypeScript sale sin errores y Jest tiene `22`
   suites y `97` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 39 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
