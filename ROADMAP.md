@@ -25,7 +25,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E técnico offline del operador verificado en Galaxy v6; cierre/exportación con ronda real, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E offline y exportación autenticada verificados en Galaxy v7; cierre con umbral, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación y paridad local CSV/XLSX implementados; validación con datos de campo pendiente | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa; migración 027 preparada, no aplicada, y pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. F5 no tiene un bloqueo técnico local abierto, pero permanece abierta por la validación física y observada de campo; los cambios locales posteriores todavía no están desplegados.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. F5 no tiene un bloqueo técnico local abierto: el arreglo de scope de exportación está publicado en Render como `df224f9`. Permanece abierta por el cierre con umbral autorizado, la comparación estructurada de CSV/XLSX y la validación observada de campo.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -66,7 +66,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 13-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=7` está instalada en el Galaxy. La prueba física real con modo avión visible demostró lectura y foto guardadas en SQLite, reinicio sin pérdida, sincronización automática de dos elementos y unicidad de una lectura y un adjunto en Supabase. La v7 añade diagnóstico seguro para el fallo reproducido de exportación. La consulta de datos confirmó que Render devolvía `500` porque su segunda consulta de exportación enviaba el parámetro de scope sin interpolar el filtro SQL; la corrección local tiene regresión y aún debe publicarse. La v7 además recupera la lista de rondas desde caché después de un arranque en frío sin red, mostrando `Rondas sin actualizar`. El cierre definitivo sigue correctamente bloqueado porque la lectura de prueba está en `draft` sin umbral vigente. El intento universal anterior falló en `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100 tries`; la APK arm64 es la variante validada para el Galaxy. Esto no sustituye la validación observada ni la exportación con datos de oficina.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=7` está instalada en el Galaxy. La prueba física real con modo avión visible demostró lectura y foto guardadas en SQLite, reinicio sin pérdida, sincronización automática de dos elementos y unicidad de una lectura y un adjunto en Supabase. La v7 añade diagnóstico seguro para el fallo reproducido de exportación. El `500` de exportación por scope quedó corregido, publicado en Render como `df224f9` y verificado de nuevo desde el Galaxy: CSV y XLSX generaron archivos y abrieron el selector nativo, con respuestas `200` registradas por Render. La v7 además recupera la lista de rondas desde caché después de un arranque en frío sin red, mostrando `Rondas sin actualizar`. El cierre definitivo sigue correctamente bloqueado porque la lectura de prueba está en `draft` sin umbral vigente. El intento universal anterior falló en `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100 tries`; la APK arm64 es la variante validada para el Galaxy. Esto no sustituye la comparación estructurada de exportaciones, la validación observada ni las conversaciones profesionales.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -86,10 +86,10 @@ deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
   para integridad de tenant, con regresión local. La reconciliación de prismas
   también exige ahora la igualdad de `project_id` entre observación, prisma y
   estación; la regresión local está incluida en los `104/104` tests. La migración
-  027 sigue sin aplicarse en
-Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
-observado el 13-09-2026 sirviendo `eb88db9`, que es anterior a los hardenings
-locales posteriores y debe volver a verificarse tras una publicación remota.
+  027 sigue sin aplicarse en Supabase. Los hardenings de exportación se
+publicaron mediante PR #19/#20; Render quedó verificado el 13-09-2026 en
+`df224f9`. La memoria visual y la migración 027 continúan solo en la rama local
+y siguen requiriendo su propia decisión de despliegue.
 La auditoría de límites de proyecto también revisó el código ejecutable del
 móvil y backend: no quedan nombres de obras ni referencias TopoTask/ARGOS en
 las fuentes activas. Los restos localizados están confinados a scripts de

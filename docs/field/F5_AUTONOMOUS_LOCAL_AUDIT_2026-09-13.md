@@ -427,12 +427,22 @@ La revisión del código y la consulta equivalente de solo lectura en Supabase
 aislaron la causa: `getMonitoringRoundExportRows` enviaba el parámetro de
 scope del actor a su segundo `SELECT`, pero no interpolaba `${scope.clause}`.
 Para un topógrafo con membresía el backend recibía más parámetros que los
-placeholders SQL y devolvía `500`. La corrección local añade el filtro al
-segundo `SELECT`; una regresión exige el scope tanto en la consulta de
-existencia como en la de datos. El arreglo aún no está desplegado, por lo que
-la exportación autenticada queda pendiente de repetir tras la publicación.
+placeholders SQL y devolvía `500`. La corrección añadió el filtro al segundo
+`SELECT`; una regresión exige el scope tanto en la consulta de existencia como
+en la de datos. La PR #19 se fusionó como `d2635c6`, su build falló por imports
+omitidos en la regresión y la PR #20 publicó la corrección como `df224f9`.
+Render quedó `live` y el Galaxy volvió a ejecutar ambos formatos: CSV generó
+`topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789278874558.csv` y
+XLSX generó
+`topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789278900825.xlsx`;
+ambos abrieron el selector nativo y Render registró respuestas `200` con
+request IDs `75f841da-81dd-49f0-820b-895397b2015b` y
+`247d163c-d381-4ded-af68-dc27627418b9`. La comparación estructurada de los
+archivos y el formato de oficina siguen pendientes.
 
 ## Criterio de lectura
 
-El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma
-estabilidad de campo hasta disponer de evidencia del dispositivo y de uso real.
+El bloque local y la publicación de exportación están endurecidos y
+verificados. F5 sigue abierta: no se afirma estabilidad completa hasta
+comparar los dos archivos, cerrar el recorrido con umbral autorizado y
+disponer de evidencia de una jornada observada y de entrevistas profesionales.

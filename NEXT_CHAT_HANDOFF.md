@@ -60,11 +60,15 @@ repositorio bare.
   /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv 500`.
   La causa quedó aislada en el backend local: la segunda consulta de
   exportación pasaba el parámetro de scope sin interpolar `${scope.clause}`.
-  Se corrigió con regresión; aún falta publicar el arreglo y repetir CSV/XLSX.
+  Se corrigió con regresión, se publicó por PR #19/#20 y se repitió en el
+  Galaxy: CSV y XLSX generaron archivos y Render registró ambos `200`.
 - La conectividad se restauró y `ping` a Render devolvió `0% packet loss`.
-- Render público sigue observado en `eb88db9`; el arreglo de exportación aún no
-  está desplegado. En esta validación no se hizo migración ni cambio de datos.
-- Último commit funcional local: `a86fa4e` (`fix(backend): seed complete generic project catalog`). Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- Render quedó publicado en `df224f9b7226c8aa5899a5e889898663b4642016` mediante
+  el deploy `dep-daj3kenqj5pc73at1n50` (`live`). `/api/v1/health` devolvió
+  `HTTP/1.1 200 OK` con ese commit y las rutas protegidas sin token devuelven
+  `401 Unauthorized`. En esta validación no se hizo migración ni cambio de
+  datos.
+- Último arreglo funcional local: `bf796b3` (`fix(export): enforce scope and preserve diagnostics`), validado con backend `105/105` y móvil `104/104`; su equivalente limpio está publicado en `main` mediante el merge `df224f9`. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
@@ -89,7 +93,7 @@ repositorio bare.
 - La memoria visual también permite filtrar por estado (`En curso`, `Realizadas`
   y `No realizables`) sin mutar ni reordenar las visitas. La regresión cubre la
   combinación con el filtro de evidencia; la suite móvil queda en `22` suites
-  y `101` tests.
+  y `104` tests.
 - La creación de una obra nueva siembra ahora las tres zonas ficticias del
   catálogo de ejemplo, incluida `Zona Centro`/`EJ-C-001`, alineada con
   `data/generic-project-code-catalog.csv`; el backend lo cubre con regresión.
@@ -377,7 +381,7 @@ repositorio bare.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
   tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
-  suites y `101` tests. La captura de `fissure_witness` marca la foto como
+  suites y `104` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 
