@@ -34,6 +34,11 @@ red y se encola con `clientRequestId`; al reconectar se sincroniza mediante el
 mismo outbox probado para lecturas y partes. La interfaz dice `Guardado
 localmente` hasta que el servidor recibe el evento.
 
+Después de guardar o encolar una acción, el formulario limpia la selección,
+el motivo y la nota. Así el operario no puede reenviar accidentalmente la
+misma acción con otro `clientRequestId`; para registrar un cambio real debe
+seleccionar de nuevo la acción correspondiente.
+
 En la cabecera de la ronda, el operario ve un resumen separado del estado
 metrológico: puntos `hechos`, `en curso`, `pendientes` y `por revisar`. El
 botón `Continuar con <código>` abre el primer punto accionable respetando el

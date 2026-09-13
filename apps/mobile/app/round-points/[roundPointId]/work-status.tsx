@@ -56,6 +56,9 @@ export default function WorkStatusScreen() {
           ? 'Resultado guardado localmente. Se enviará al recuperar conexión.'
           : 'Resultado recibido por el servidor.'
       );
+      setSelectedEvent(null);
+      setReason('');
+      setNotes('');
     } catch {
       // El hook expone el diagnóstico seguro debajo del formulario.
     }
