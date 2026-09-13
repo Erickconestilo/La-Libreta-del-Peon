@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Verificar el bundle Android local tras limpiar el formulario de resultado del operario | cerrado (`npm run verify:pre-apk:local` terminó con `verify pre-apk local-only completed successfully`, `metadata.json=6101 bytes` y `files=95`; no se instaló la APK ni se tocaron Supabase, Render o el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Evitar reenvíos operativos accidentales después de guardar un resultado | cerrado (`npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites y `114/114` tests; `npm run docs:check` revisó `44` documentos sin errores ni avisos; `git diff --check` sin salida. Tras guardar o encolar, la pantalla limpia selección, motivo y nota; no se tocó el Galaxy ni servicios remotos.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Acotar la exposición efectiva del aviso uuid transitivo sin aplicar un downgrade rompiente | cerrado (`npm ls uuid --workspace apps/backend --all` confirmó `exceljs@4.4.0 -> uuid@8.3.2`; la búsqueda no encontró importaciones directas ni uso de UUID v3/v5/v6 con buffers controlados por usuario; `git diff --check` terminó sin salida y `docs:check` revisó `44` documentos sin avisos. No se aplicó `npm audit fix --force`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reauditar vulnerabilidades de producción del backend sin aplicar cambios rompientes | cerrado (`npm audit --workspace apps/backend --omit=dev` devolvió `2 moderate`, `0 high`, `0 critical`, por `uuid` transitivo de `exceljs`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se usó `--force`.)` |
@@ -758,6 +759,13 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Bundle Android del formulario de resultado verificado
+  (Codex):** `npm run verify:pre-apk:local` terminó con
+  `verify pre-apk local-only completed successfully`; Expo cargó `.env`,
+  generó `metadata.json=6101 bytes` y `files=95`. El cambio de limpieza del
+  formulario entra en el bundle; no se instaló la APK ni se tocaron Supabase,
+  Render o el Galaxy.
 
 - **2026-09-13 — Alcance efectivo del aviso `uuid` acotado (Codex):**
   `npm ls uuid --workspace apps/backend --all` confirma únicamente la cadena
