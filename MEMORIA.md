@@ -206,6 +206,8 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Añadir a la bitácora la comprobación pública de exportación tras recuperar conectividad del Galaxy | cerrado (la entrada de §12 registra el `401 Unauthorized` literal, mantiene el commit remoto observado y deja pendiente la comprobación autenticada.) |
+| 2026-09-13 | Codex | codex/f5-field-stability | Registrar la verificación pública de la ruta de exportación después del reintento en el Galaxy | cerrado (la ruta pública respondió `401 Unauthorized` con `UNAUTHORIZED`, el health remoto continuó en `eb88db9` y no se modificó ningún servicio remoto.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Continuar con el Galaxy conectado la validación física F5: exportación, cierre operativo y comprobaciones finales sin cambiar servicios remotos | cerrado parcialmente (ADB detectó el Galaxy como `device`, la release v6 sigue instalada y la ronda mantiene el punto pendiente sin umbral; la exportación CSV se reintentó y volvió a mostrar el error genérico, sin evidencia HTTP ni falta de destinos Android. No se tocaron servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Cerrar el E2E físico F5 en Galaxy con release v6: login operador, lectura y foto offline, reinicio, reconexión, unicidad y revisión de cierre | cerrado parcialmente (v6 instalada; lectura y foto offline sobrevivieron al reinicio y sincronizaron una sola vez; se verificó el aviso y la lista de rondas desde caché tras arranque en frío sin red; cierre definitivo, exportación y validación observada siguen pendientes. No se tocaron migraciones ni servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Hacer resiliente el script de build Android ante fallo de limpieza nativa | cerrado (`npm run mobile:build-local-android` ejecutó `expo prebuild --clean`; la limpieza Gradle falló literalmente en `react-native-reanimated:externalNativeBuildCleanRelease` con `ninja: error: manifest 'build.ninja' still dirty after 100 tries`, y el reintento `app:bundleRelease` sin `clean` terminó con `BUILD SUCCESSFUL in 7m 15s`. AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, `40,135,874` bytes; `keytool -printcert -jarfile` confirma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `git diff --check` sin salida. El Galaxy no se tocó y no hubo cambios remotos.)` |
@@ -498,6 +500,13 @@ no se identifica falta de hoja de compartir como causa demostrada. La ronda
 consultada sigue `active`, su punto sigue `pending` y la consulta de solo
 lectura a Supabase sigue sin umbral vigente; no se modificaron datos remotos.
 
+La comprobación pública posterior de
+`GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv`
+devolvió literalmente `HTTP/1.1 401 Unauthorized` con
+`{"data":null,"error":{"code":"UNAUTHORIZED","message":"Authentication required"}}`;
+Render seguía en `eb88db922a03b1e01a47f90dba8346542df3f212`. Esto verifica la
+existencia de la ruta protegida, no el resultado autenticado.
+
 **Ahora (bloquea piloto real o es fricción activa):**
 - **Auditoría de purga histórica reabierta (13-09-2026):** la comprobación no
   destructiva encontró coincidencias exactas en commits antiguos alcanzables
@@ -630,6 +639,14 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Verificación pública de exportación tras reconexión (Codex):**
+  `GET /api/v1/rounds/db3a59e3-3756-4d95-9890-f026379f33db/export?format=csv`
+  devolvió literalmente `HTTP/1.1 401 Unauthorized` y
+  `{"data":null,"error":{"code":"UNAUTHORIZED","message":"Authentication required"}}`;
+  `/api/v1/health` seguía en el commit `eb88db9`. La ruta protegida existe,
+  pero falta comprobarla con sesión autenticada; no se modificó Render ni
+  Supabase.
 
 - **2026-09-13 — Reintento de exportación con Galaxy conectado (Codex):**
   `adb devices -l` devolvió el Galaxy como `device` y `dumpsys package` confirmó
