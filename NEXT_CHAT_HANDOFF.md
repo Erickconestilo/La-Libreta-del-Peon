@@ -14,7 +14,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Hardening local más reciente: `35fc885`, junto con `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
+- Hardening local más reciente: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
   escritura y exigen en backend el mapa efectivo para cualquier escritura de
@@ -27,6 +27,10 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   evidencias se agregan solo si coinciden simultáneamente `visit_id` y
   `station_id`. La regresión está en `monitoring.model.test.ts`; el backend
   local queda en `103/103` tests.
+- `a475976` corrige una lectura defensiva adicional: `getStationById` confirma
+  primero el scope de la estación y solo después consulta sus lecturas
+  asociadas. La regresión evita volver a ejecutar la carga de historial antes
+  de la autorización de tenant.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Última corrección local: `c709fab` elimina una sustitución de nombre
@@ -68,7 +72,8 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   actualizan handoff, evidencia de APK, documentación de piloto y estado de
   despliegue. El cambio previo de `apps/mobile/package.json` sigue fuera de
   todos esos commits.
-- Después se añadieron `35fc885` (scope de evidencia por estación) y `f8ee24f`
+- Después se añadieron `35fc885` (scope de evidencia por estación), `a475976`
+  (scope previo a historial) y `f8ee24f`
   (documentación y evidencia local `103/103`). No se tocaron servicios
   remotos ni el Galaxy.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
