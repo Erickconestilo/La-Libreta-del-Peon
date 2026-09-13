@@ -77,7 +77,7 @@ deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
   para integridad de tenant, con regresión local. La reconciliación de prismas
   también exige ahora la igualdad de `project_id` entre observación, prisma y
-  estación; la regresión local está incluida en los `100/100` tests. La migración
+  estación; la regresión local está incluida en los `101/101` tests. La migración
   027 sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
 observado el 13-09-2026 sirviendo `eb88db9`, que es anterior a los hardenings
