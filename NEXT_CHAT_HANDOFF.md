@@ -28,7 +28,7 @@ repositorio bare.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Último commit local: `a7481fa` (`docs: record serialized migration audit`). La
+- Último commit local: `e1188b0` (`feat(mobile): improve mounting visual memory`). La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
@@ -41,6 +41,11 @@ repositorio bare.
   para tolerar un reintento tras una aplicación parcial; su regresión está
   incluida en la batería backend. La migración
   continúa sin aplicar en Supabase.
+- La mejora más reciente de memoria visual añade filtros por tipo de evidencia
+  y previsualización de `132px` en la pantalla de visitas de montaje. La
+  proyección mantiene la posición relativa solo como anotación de imagen, sin
+  convertirla en coordenada, orientación o precisión métrica; la regresión está
+  en `apps/mobile/lib/__tests__/mounting-visual.test.ts`.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de

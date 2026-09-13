@@ -562,6 +562,17 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
 
+- **2026-09-13 — Croquis fotográfico local mejorado (Codex):** la pantalla de
+  visitas de montaje ahora filtra la memoria visual por `Todas`, `Prismas`,
+  `Referencias` y `Accesos`, conserva solo las evidencias del filtro activo y
+  muestra una previsualización de `132px`. La posición relativa sigue siendo
+  una anotación sobre la imagen, no una coordenada, orientación ni precisión
+  métrica. `npx tsc --noEmit --project apps/mobile/tsconfig.json` terminó con
+  código `0`; Jest móvil devolvió `22` suites y `98/98` tests; `npm run
+  verify:local` terminó con `verify local completed successfully`; no se
+  tocaron Supabase, Render, EAS, Play Store, Galaxy ni
+  `apps/mobile/package.json`. Commit: `e1188b0`.
+
 - **2026-09-13 — Regresión del preflight Android aislada (Codex):** se extrajo
   la citación de comandos Windows a `scripts/windows-command.mjs` y se cubrió
   con `scripts/windows-command.test.mjs`. La suite devolvió `ℹ tests 3`,
