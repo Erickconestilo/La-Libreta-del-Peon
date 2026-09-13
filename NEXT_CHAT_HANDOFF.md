@@ -117,7 +117,7 @@ autorizados.
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
-  forma parte de la batería backend actual `106/106`. La
+  forma parte de la batería backend actual `111/111`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS

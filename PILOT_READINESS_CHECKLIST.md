@@ -16,7 +16,7 @@ validación en campo:
 - [x] Móvil pasa TypeScript, `23` suites y `111/111` tests.
 - [x] Tooling local pasa `12/12` tests; `verify:local` termina con
   `verify local completed successfully`.
-- [x] `docs:check` revisa `43 documentos revisados en raíz y docs/` sin errores
+- [x] `docs:check` revisa `44 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
