@@ -7,6 +7,7 @@ import {
   getWorkExecutionSummary,
   getNextWorkExecutionPointId,
   formatJourneyWorkSummary,
+  getJourneyWorkSummary,
   requiresWorkExecutionReason,
   WORK_EXECUTION_REASON_OPTIONS
 } from '../work-execution';
@@ -96,5 +97,12 @@ describe('work execution status', () => {
       workPendingPointCount: 3,
       workReviewPointCount: 4
     })).toBe('2 hechos · 1 en curso · 3 pendientes · 4 por revisar');
+  });
+
+  it('aggregates assigned work for the daily report', () => {
+    expect(getJourneyWorkSummary([
+      { workCompletedPointCount: 2, workInProgressPointCount: 1, workPendingPointCount: 3, workReviewPointCount: 1 },
+      { workCompletedPointCount: 1, workInProgressPointCount: 0, workPendingPointCount: 2, workReviewPointCount: 0 }
+    ])).toEqual({ completed: 3, inProgress: 1, pending: 5, review: 1, total: 10 });
   });
 });

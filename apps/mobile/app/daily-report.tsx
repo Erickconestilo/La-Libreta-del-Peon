@@ -10,8 +10,10 @@ import { useRecentIncidents } from '@/hooks/use-incidents';
 import { useProjects } from '@/hooks/use-projects';
 import { useRecentStationMessages } from '@/hooks/use-station-messages';
 import { useStations } from '@/hooks/use-stations';
+import { useMyJourney } from '@/hooks/use-monitoring';
 import { useCurrentSession } from '@/hooks/use-auth';
 import { getStationDisplayName } from '@/lib/station-display';
+import { getJourneyWorkSummary } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
 
 type ProjectFilter = ProjectSummary | null;
@@ -40,6 +42,7 @@ export default function DailyReportScreen() {
   const stationsQuery = useStations();
   const incidentsQuery = useRecentIncidents(canUseTeamTools);
   const messagesQuery = useRecentStationMessages(canUseTeamTools);
+  const journeyQuery = useMyJourney();
   const projects = projectsQuery.data ?? [];
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projects[0]?.id ?? null);
   const resolvedProjectId = selectedProjectId ?? projects[0]?.id ?? null;
@@ -114,11 +117,13 @@ export default function DailyReportScreen() {
   const resolvedIncidents = dailyEvents.filter((event) => event.kind === 'Incidencia' && event.status === 'resolved').length;
   const noteCount = dailyEvents.filter((event) => event.kind === 'Nota').length;
   const messageCount = dailyEvents.filter((event) => event.kind === 'Mensaje').length;
+  const assignedRounds = (journeyQuery.data ?? []).filter((round) => round.projectId === resolvedProjectId);
+  const assignedWork = getJourneyWorkSummary(assignedRounds);
   const stationPhotoCount = projectStations.filter((station) => Boolean(station.photoUrl)).length;
   const isChecklistComplete = checklist.completedCount === checklist.totalCount;
   const canCloseDay = isChecklistComplete && openIncidents === 0;
-  const isLoading = projectsQuery.isLoading || stationsQuery.isLoading || incidentsQuery.isLoading || messagesQuery.isLoading;
-  const errorMessage = projectsQuery.errorMessage ?? stationsQuery.errorMessage ?? incidentsQuery.errorMessage ?? messagesQuery.errorMessage;
+  const isLoading = projectsQuery.isLoading || stationsQuery.isLoading || incidentsQuery.isLoading || messagesQuery.isLoading || journeyQuery.isLoading;
+  const errorMessage = projectsQuery.errorMessage ?? stationsQuery.errorMessage ?? incidentsQuery.errorMessage ?? messagesQuery.errorMessage ?? journeyQuery.errorMessage;
 
   if (!canUseTeamTools) {
     return (
@@ -158,6 +163,28 @@ export default function DailyReportScreen() {
         <Metric icon="report-problem" label="Abiertas" value={`${openIncidents}`} tone={openIncidents > 0 ? colors.red : colors.accentGreen} />
         <Metric icon="photo-camera" label="Con foto" value={`${stationPhotoCount}`} />
         <Metric icon="checklist" label="Checklist" value={`${checklist.completedCount}/${checklist.totalCount}`} />
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderCopy}>
+            <Text style={styles.sectionTitle}>Mi trabajo asignado</Text>
+            <Text style={styles.body}>{assignedRounds.length} ronda{assignedRounds.length === 1 ? '' : 's'} en esta obra</Text>
+          </View>
+          <MaterialIcons color={colors.accentGreen} name="assignment-turned-in" size={22} />
+        </View>
+        {assignedRounds.length === 0 ? <Text style={styles.body}>No tienes rondas asignadas para esta obra.</Text> : null}
+        {assignedRounds.length > 0 ? (
+          <>
+            <View style={styles.workSummaryRow}>
+              <WorkSummary label="Hechos" value={assignedWork.completed} tone={colors.accentGreen} />
+              <WorkSummary label="En curso" value={assignedWork.inProgress} tone={colors.amber} />
+              <WorkSummary label="Pendientes" value={assignedWork.pending} tone={colors.textSecondary} />
+              <WorkSummary label="Por revisar" value={assignedWork.review} tone={colors.red} />
+            </View>
+            <Text style={styles.caption}>Este resumen indica el trabajo declarado por el operario. Las lecturas y el cierre de ronda siguen sus propias reglas.</Text>
+          </>
+        ) : null}
       </View>
 
       <View style={[styles.statusCard, canCloseDay ? styles.statusCardReady : styles.statusCardPending]}>
@@ -252,6 +279,13 @@ const SummaryPill = ({ label, value }: { label: string; value: number }) => (
   </View>
 );
 
+const WorkSummary = ({ label, tone, value }: { label: string; tone: string; value: number }) => (
+  <View style={styles.workSummaryItem}>
+    <Text style={[styles.workSummaryValue, { color: tone }]}>{value}</Text>
+    <Text style={styles.workSummaryLabel}>{label}</Text>
+  </View>
+);
+
 const buildPendingCloseMessage = (openIncidents: number, pendingChecklistItems: number) => {
   const parts: string[] = [];
 
@@ -296,6 +330,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 20
+  },
+  caption: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 17
   },
   card: {
     backgroundColor: colors.card,
@@ -441,6 +480,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizeTitle,
     fontWeight: '900'
   },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  sectionHeaderCopy: {
+    flex: 1,
+    gap: spacing[1]
+  },
   statusBody: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -494,6 +542,22 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 18,
     fontWeight: '900'
+  },
+  workSummaryItem: {
+    flex: 1,
+    gap: 2
+  },
+  workSummaryLabel: {
+    color: colors.textSecondary,
+    fontSize: 11
+  },
+  workSummaryRow: {
+    flexDirection: 'row',
+    gap: spacing[2]
+  },
+  workSummaryValue: {
+    fontSize: 20,
+    fontWeight: '800'
   },
   title: {
     color: colors.textPrimary,

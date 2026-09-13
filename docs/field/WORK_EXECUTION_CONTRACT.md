@@ -55,6 +55,12 @@ invita a duplicarlo. Si todavía está en el outbox, muestra `Guardado
 localmente`; los puntos cancelados u omitidos no ofrecen el atajo porque no son
 trabajo accionable.
 
+El `Parte diario` reutiliza esos mismos contadores para mostrar el trabajo
+asignado a la obra seleccionada. Así el operario tiene una lectura rápida de
+hechos, en curso, pendientes y por revisar sin crear una segunda lista de
+tareas. Este resumen no cambia el estado de las lecturas ni sustituye el
+cierre controlado de la ronda.
+
 Después de guardar o encolar una acción, el formulario limpia la selección,
 el motivo y la nota. Así el operario no puede reenviar accidentalmente la
 misma acción con otro `clientRequestId`; para registrar un cambio real debe

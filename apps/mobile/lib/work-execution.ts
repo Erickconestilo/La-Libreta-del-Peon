@@ -60,6 +60,14 @@ export type WorkExecutionSummary = Record<WorkExecutionStateStatus, number> & {
   total: number;
 };
 
+export type JourneyWorkSummary = {
+  completed: number;
+  inProgress: number;
+  pending: number;
+  review: number;
+  total: number;
+};
+
 export const getWorkExecutionSummary = (
   points: Array<Pick<MonitoringRoundPoint, 'executionState'>>
 ): WorkExecutionSummary => {
@@ -88,6 +96,23 @@ export const formatJourneyWorkSummary = (
   `${round.workPendingPointCount ?? 0} pendientes`,
   `${round.workReviewPointCount ?? 0} por revisar`
 ].join(' · ');
+
+export const getJourneyWorkSummary = (
+  rounds: Array<Pick<JourneyRound, 'workCompletedPointCount' | 'workInProgressPointCount' | 'workPendingPointCount' | 'workReviewPointCount'>>
+): JourneyWorkSummary => rounds.reduce<JourneyWorkSummary>((summary, round) => {
+  const completed = round.workCompletedPointCount ?? 0;
+  const inProgress = round.workInProgressPointCount ?? 0;
+  const pending = round.workPendingPointCount ?? 0;
+  const review = round.workReviewPointCount ?? 0;
+
+  return {
+    completed: summary.completed + completed,
+    inProgress: summary.inProgress + inProgress,
+    pending: summary.pending + pending,
+    review: summary.review + review,
+    total: summary.total + completed + inProgress + pending + review
+  };
+}, { completed: 0, inProgress: 0, pending: 0, review: 0, total: 0 });
 
 /** Keeps the round order while prioritising work that can still be continued. */
 export const getNextWorkExecutionPointId = (
