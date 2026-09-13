@@ -23,7 +23,15 @@ import type {
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
 import { formatSafeErrorForLog } from '@/lib/safe-error-log';
-import { enqueue, enqueueMany, getPendingCount, getRoundOutboxItems, type EnqueueParams } from '@/lib/offline/outbox';
+import {
+  enqueue,
+  enqueueMany,
+  getOutboxItemByClientRequestId,
+  getPendingCount,
+  getRoundOutboxItems,
+  getWorkExecutionOutboxItems,
+  type EnqueueParams
+} from '@/lib/offline/outbox';
 import {
   getCachedMonitoringRoundList,
   getMonitoringRoundSnapshot,
@@ -388,26 +396,6 @@ const createWorkCompletionReportRequest = async ({
   return response.data;
 };
 
-const createWorkExecutionEventRequest = async ({
-  clientRequestId,
-  input,
-  roundPointId
-}: {
-  clientRequestId: string;
-  input: CreateWorkExecutionEventInput;
-  roundPointId: string;
-}) => {
-  const response = await apiFetch<ApiEnvelope<WorkExecutionEvent>>(`/round-points/${roundPointId}/execution-events`, {
-    body: JSON.stringify({
-      ...input,
-      clientRequestId,
-      occurredAt: input.occurredAt ?? new Date().toISOString()
-    }),
-    method: 'POST'
-  });
-  return response.data;
-};
-
 const createInstrumentReadingRequest = async ({
   clientRequestId,
   input,
@@ -656,6 +644,33 @@ export const useWorkExecutionEvents = (roundPointId: string | null) => {
   };
 };
 
+export const useWorkExecutionDeliveryItems = ({
+  roundId,
+  roundPointId
+}: {
+  roundId: string | null;
+  roundPointId: string | null;
+}) => {
+  const { activeSessionId } = useCurrentSession();
+  const sessionCacheKey = getSessionCacheKey(activeSessionId);
+  const query = useQuery({
+    enabled: Boolean(roundId && roundPointId && activeSessionId),
+    queryFn: () => getWorkExecutionOutboxItems(
+      roundId as string,
+      roundPointId as string,
+      activeSessionId ?? undefined
+    ),
+    queryKey: ['work-execution-delivery', sessionCacheKey, roundId, roundPointId],
+    refetchInterval: 2000,
+    staleTime: 0
+  });
+
+  return {
+    ...query,
+    data: query.data ?? []
+  };
+};
+
 const buildLocalWorkExecutionEvent = ({
   clientRequestId,
   currentUserId,
@@ -714,15 +729,6 @@ export const useCreateWorkExecutionEvent = ({
       const projectId = round?.projectId;
       if (!projectId) throw new Error('No se conoce la obra del punto. Recarga la ronda e inténtalo de nuevo.');
 
-      if (await hasConnectivity()) {
-        try {
-          const event = await createWorkExecutionEventRequest({ clientRequestId, input, roundPointId });
-          return { event, mode: 'synced' as const };
-        } catch (error) {
-          if (!shouldQueueReadingAfterError(error)) throw error;
-        }
-      }
-
       const event = buildLocalWorkExecutionEvent({
         clientRequestId,
         currentUserId: currentUser.id,
@@ -742,16 +748,27 @@ export const useCreateWorkExecutionEvent = ({
           notes: input.notes,
           occurredAt: event.occurredAt,
           eventType: input.eventType,
+          projectId,
           reason: input.reason,
           roundId,
           roundPointId
         }
       });
-      return { event, mode: 'queued' as const };
+
+      if (await hasConnectivity()) {
+        await flushOutbox(syncOutboxItem, activeSessionId);
+      }
+
+      const deliveryItem = getOutboxItemByClientRequestId(clientRequestId, activeSessionId);
+      if (!deliveryItem) throw new Error('No se pudo comprobar el estado local del resultado.');
+      return { deliveryItem, event, mode: deliveryItem.status === 'synced' ? 'synced' as const : 'queued' as const };
     },
     onSuccess: async (result) => {
       if (!roundId || !roundPointId || !activeSessionId) return;
       applyCachedWorkExecutionEvent(cacheKey, roundId, roundPointId, result.event);
+      await queryClient.invalidateQueries({
+        queryKey: ['work-execution-delivery', cacheKey, roundId, roundPointId]
+      });
       queryClient.setQueryData<{ round?: MonitoringRoundDetail }>([
         'monitoring-round',
         cacheKey,
@@ -774,9 +791,6 @@ export const useCreateWorkExecutionEvent = ({
           queryClient.invalidateQueries({ queryKey: ['my-journey', cacheKey] }),
           queryClient.invalidateQueries({ queryKey: ['work-execution-events', cacheKey, roundPointId] })
         ]);
-      }
-      if (result.mode === 'queued' && await hasConnectivity()) {
-        void flushOutbox(syncOutboxItem, activeSessionId);
       }
     }
   });

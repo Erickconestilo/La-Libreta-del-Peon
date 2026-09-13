@@ -2,6 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import type { WorkExecutionEvent } from '@shared/types';
 
 import {
+  getWorkExecutionDeliveryPresentation,
+  getWorkExecutionDeliveryStatus,
   getWorkExecutionState,
   getWorkExecutionStatePresentation,
   getWorkExecutionSummary,
@@ -12,6 +14,7 @@ import {
   requiresWorkExecutionReason,
   WORK_EXECUTION_REASON_OPTIONS
 } from '../work-execution';
+import type { OutboxItem } from '../offline/outbox';
 
 const event = (eventType: WorkExecutionEvent['eventType']): WorkExecutionEvent => ({
   clientRequestId: '11111111-1111-4111-8111-111111111111',
@@ -25,6 +28,15 @@ const event = (eventType: WorkExecutionEvent['eventType']): WorkExecutionEvent =
   recordedBy: '44444444-4444-4444-8444-444444444444',
   roundId: '55555555-5555-4555-8555-555555555555',
   roundPointId: '66666666-6666-4666-8666-666666666666'
+});
+
+const deliveryItem = (
+  status: OutboxItem['status'],
+  options: { retryCount?: number; syncErrorKind?: string } = {}
+): Pick<OutboxItem, 'status' | 'retryCount' | 'conflictData'> => ({
+  conflictData: options.syncErrorKind ? { syncErrorKind: options.syncErrorKind } : null,
+  retryCount: options.retryCount ?? 0,
+  status
 });
 
 describe('work execution status', () => {
@@ -57,6 +69,27 @@ describe('work execution status', () => {
       label: 'Bloqueado',
       tone: 'danger'
     });
+  });
+
+  it('distinguishes local, retrying, received and conflict delivery states', () => {
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('pending'))).toBe('local_pending');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('pending', { retryCount: 1 }))).toBe('retryable_error');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('syncing'))).toBe('sending');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('synced'))).toBe('received');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('conflict'))).toBe('conflict');
+  });
+
+  it('keeps terminal backend/auth failures distinct from a server receipt', () => {
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('error', { syncErrorKind: 'backend_incompatible' })))
+      .toBe('backend_incompatible');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('error', { syncErrorKind: 'unauthorized' })))
+      .toBe('unauthorized');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('error', { syncErrorKind: 'forbidden' })))
+      .toBe('forbidden');
+    expect(getWorkExecutionDeliveryStatus(deliveryItem('error', { syncErrorKind: 'not_found' })))
+      .toBe('not_found');
+    expect(getWorkExecutionDeliveryPresentation(deliveryItem('error', { syncErrorKind: 'backend_incompatible' })).label)
+      .toBe('Backend pendiente');
   });
 
   it('summarises operational progress without changing metrological status', () => {

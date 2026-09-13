@@ -6,6 +6,8 @@ import type {
   MonitoringRoundPoint,
   JourneyRound
 } from '@shared/types';
+import type { OutboxItem } from './offline/outbox';
+import type { SyncErrorKind } from './offline/sync-engine';
 
 export const WORK_EXECUTION_OPTIONS: Array<{
   eventType: WorkExecutionEventType;
@@ -55,6 +57,99 @@ export const getWorkExecutionState = (event: WorkExecutionEvent | null): WorkExe
 export const getWorkExecutionStatePresentation = (state?: WorkExecutionState | null) => (
   WORK_EXECUTION_STATUS_PRESENTATION[state?.status ?? 'pending']
 );
+
+export type WorkExecutionDeliveryStatus =
+  | 'local_pending'
+  | 'sending'
+  | 'retryable_error'
+  | 'received'
+  | 'conflict'
+  | 'backend_incompatible'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not_found'
+  | 'error';
+
+export const WORK_EXECUTION_DELIVERY_PRESENTATION: Record<WorkExecutionDeliveryStatus, {
+  detail: string;
+  label: string;
+  tone: 'danger' | 'neutral' | 'success' | 'warning';
+}> = {
+  backend_incompatible: {
+    detail: 'La app conserva el resultado, pero esta versión del servidor todavía no publica la ruta necesaria.',
+    label: 'Backend pendiente',
+    tone: 'danger'
+  },
+  conflict: {
+    detail: 'El servidor detectó un conflicto. No se reintentará automáticamente.',
+    label: 'Conflicto',
+    tone: 'danger'
+  },
+  error: {
+    detail: 'El resultado sigue guardado en el dispositivo y necesita revisión antes de reenviarse.',
+    label: 'Error de envío',
+    tone: 'danger'
+  },
+  forbidden: {
+    detail: 'El servidor rechazó el envío por permisos. El resultado local no cuenta como recibido.',
+    label: 'Sin permiso',
+    tone: 'danger'
+  },
+  local_pending: {
+    detail: 'Guardado en este dispositivo. Aún no existe confirmación del servidor.',
+    label: 'Pendiente local',
+    tone: 'warning'
+  },
+  not_found: {
+    detail: 'El servidor no encontró el recurso de destino. El resultado local necesita revisión.',
+    label: 'Destino no encontrado',
+    tone: 'danger'
+  },
+  received: {
+    detail: 'El servidor confirmó la recepción de esta acción.',
+    label: 'Recibido servidor',
+    tone: 'success'
+  },
+  retryable_error: {
+    detail: 'El último envío falló de forma transitoria. Se reintentará con espera progresiva.',
+    label: 'Reintento pendiente',
+    tone: 'warning'
+  },
+  sending: {
+    detail: 'Enviando el resultado conservado localmente.',
+    label: 'Enviando',
+    tone: 'neutral'
+  },
+  unauthorized: {
+    detail: 'La sesión del servidor no acepta el envío. El resultado local no cuenta como recibido.',
+    label: 'Sesión requerida',
+    tone: 'danger'
+  }
+};
+
+const getPersistedSyncErrorKind = (item: Pick<OutboxItem, 'conflictData'>): SyncErrorKind | null => {
+  const kind = item.conflictData?.syncErrorKind;
+  return typeof kind === 'string' ? kind as SyncErrorKind : null;
+};
+
+export const getWorkExecutionDeliveryStatus = (
+  item: Pick<OutboxItem, 'status' | 'retryCount' | 'conflictData'>
+): WorkExecutionDeliveryStatus => {
+  if (item.status === 'synced') return 'received';
+  if (item.status === 'conflict') return 'conflict';
+  if (item.status === 'syncing') return 'sending';
+  if (item.status === 'pending') return item.retryCount > 0 ? 'retryable_error' : 'local_pending';
+
+  const kind = getPersistedSyncErrorKind(item);
+  if (kind === 'backend_incompatible' || kind === 'unauthorized' || kind === 'forbidden' || kind === 'not_found') {
+    return kind;
+  }
+  return 'error';
+};
+
+export const getWorkExecutionDeliveryPresentation = (
+  item: Pick<OutboxItem, 'status' | 'retryCount' | 'conflictData'>
+) => WORK_EXECUTION_DELIVERY_PRESENTATION[getWorkExecutionDeliveryStatus(item)];
 
 export type WorkExecutionSummary = Record<WorkExecutionStateStatus, number> & {
   total: number;

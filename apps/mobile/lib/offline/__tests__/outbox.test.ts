@@ -181,6 +181,52 @@ describe('Outbox API', () => {
     });
   });
 
+  describe('work execution lookup', () => {
+    it('scopes delivery rows by session, round and point while retaining synced confirmation', () => {
+      const basePayload = {
+        eventType: 'completed',
+        kind: 'work_execution_event',
+        projectId: 'project-a',
+        roundId: 'round-a',
+        roundPointId: 'point-a'
+      };
+      outbox.enqueue({
+        id: 'work-a',
+        clientRequestId: 'work-request-a',
+        entityType: 'medicion',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: basePayload
+      });
+      outbox.enqueue({
+        id: 'work-b',
+        clientRequestId: 'work-request-b',
+        entityType: 'medicion',
+        operation: 'insert',
+        sessionId: 'session:b',
+        payload: basePayload
+      });
+      outbox.enqueue({
+        id: 'other-point',
+        clientRequestId: 'work-request-c',
+        entityType: 'medicion',
+        operation: 'insert',
+        sessionId: 'session:a',
+        payload: { ...basePayload, roundPointId: 'point-b' }
+      });
+
+      outbox.markSynced('work-a', 'session:a');
+
+      expect(outbox.getWorkExecutionOutboxItems('round-a', 'point-a', 'session:a').map((item) => item.id))
+        .toEqual(['work-a']);
+      expect(outbox.getWorkExecutionOutboxItems('round-a', 'point-a', 'session:a')[0].status).toBe('synced');
+      expect(outbox.getWorkExecutionOutboxItems('round-a', 'point-a', 'session:b').map((item) => item.id))
+        .toEqual(['work-b']);
+      expect(outbox.getOutboxItemByClientRequestId('work-request-b', 'session:a')).toBeNull();
+      expect(outbox.getOutboxItemByClientRequestId('work-request-b', 'session:b')?.id).toBe('work-b');
+    });
+  });
+
   it('aísla en cuarentena las filas creadas por una versión anterior sin sesión', async () => {
     const db = getDatabase();
     db.runSync('DELETE FROM schema_version');
@@ -317,6 +363,22 @@ describe('Outbox API', () => {
       expect(error).toContain('[oculto]');
       expect(error).not.toContain('secret-token');
       expect(error).not.toContain('eyJhbGciOiJ9');
+    });
+
+    it('persiste un diagnóstico estructurado seguro para errores terminales', () => {
+      outbox.enqueue({
+        id: 'terminal-id',
+        clientRequestId: 'terminal-request',
+        entityType: 'medicion',
+        operation: 'insert',
+        payload: { kind: 'work_execution_event' }
+      });
+
+      outbox.markError('terminal-id', 'Función pendiente de publicar.', undefined, {
+        syncErrorKind: 'backend_incompatible'
+      });
+
+      expect(outbox.getErrors()[0].conflictData).toEqual({ syncErrorKind: 'backend_incompatible' });
     });
   });
 

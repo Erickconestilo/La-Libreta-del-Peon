@@ -1,17 +1,23 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WorkExecutionEventType } from '@shared/types';
 import { StatePill } from '@/components/monitoring-ui';
 import { useCurrentSession } from '@/hooks/use-auth';
-import { useCreateWorkExecutionEvent, useMonitoringRound, useWorkExecutionEvents } from '@/hooks/use-monitoring';
+import {
+  useCreateWorkExecutionEvent,
+  useMonitoringRound,
+  useWorkExecutionDeliveryItems,
+  useWorkExecutionEvents
+} from '@/hooks/use-monitoring';
 import { getWriteScreenAccessState } from '@/lib/field-access';
 import {
   getWorkExecutionStatePresentation,
   getWorkExecutionState,
+  getWorkExecutionDeliveryPresentation,
   requiresWorkExecutionReason,
   WORK_EXECUTION_OPTIONS,
   WORK_EXECUTION_REASON_OPTIONS
@@ -27,7 +33,16 @@ export default function WorkStatusScreen() {
   const { currentUser } = useCurrentSession();
   const { data: round, errorMessage: roundError, isLoading } = useMonitoringRound(roundId ?? null);
   const point = useMemo(() => round?.points.find((item) => item.id === roundPointId), [round?.points, roundPointId]);
-  const { data: events, errorMessage: eventsError, isLoading: eventsLoading } = useWorkExecutionEvents(roundPointId ?? null);
+  const {
+    data: events,
+    errorMessage: eventsError,
+    isLoading: eventsLoading,
+    refetch: refetchEvents
+  } = useWorkExecutionEvents(roundPointId ?? null);
+  const { data: deliveryItems } = useWorkExecutionDeliveryItems({
+    roundId: roundId ?? null,
+    roundPointId: roundPointId ?? null
+  });
   const accessState = getWriteScreenAccessState(currentUser, round?.projectId, Boolean(round));
   const { errorMessage, isCreating, recordResult } = useCreateWorkExecutionEvent({ roundId: roundId ?? null, roundPointId: roundPointId ?? null });
   const [selectedEvent, setSelectedEvent] = useState<WorkExecutionEventType | null>(null);
@@ -52,11 +67,8 @@ export default function WorkStatusScreen() {
         notes: notes.trim() || null,
         reason: reason.trim() || null
       });
-      setFeedback(
-        result.mode === 'queued'
-          ? 'Resultado guardado localmente. Se enviará al recuperar conexión.'
-          : 'Resultado recibido por el servidor.'
-      );
+      const delivery = getWorkExecutionDeliveryPresentation(result.deliveryItem);
+      setFeedback(`${delivery.label}. ${delivery.detail}`);
       setSelectedEvent(null);
       setReason('');
       setNotes('');
@@ -67,6 +79,29 @@ export default function WorkStatusScreen() {
 
   const currentPresentation = getWorkExecutionStatePresentation(point?.executionState);
   const selectedOption = WORK_EXECUTION_OPTIONS.find((option) => option.eventType === selectedEvent);
+  const serverClientRequestIds = useMemo(
+    () => new Set(events.map((event) => event.clientRequestId)),
+    [events]
+  );
+  const visibleDeliveryItems = useMemo(
+    () => deliveryItems.filter((item) => item.status !== 'synced' || !serverClientRequestIds.has(item.clientRequestId)),
+    [deliveryItems, serverClientRequestIds]
+  );
+  const syncedDeliveryKey = useMemo(
+    () => deliveryItems
+      .filter((item) => item.status === 'synced' && !serverClientRequestIds.has(item.clientRequestId))
+      .map((item) => item.clientRequestId)
+      .sort()
+      .join('|'),
+    [deliveryItems, serverClientRequestIds]
+  );
+  const lastHistoryRefreshKey = useRef('');
+
+  useEffect(() => {
+    if (!syncedDeliveryKey || syncedDeliveryKey === lastHistoryRefreshKey.current) return;
+    lastHistoryRefreshKey.current = syncedDeliveryKey;
+    void refetchEvents();
+  }, [refetchEvents, syncedDeliveryKey]);
 
   return (
     <>
@@ -110,6 +145,26 @@ export default function WorkStatusScreen() {
           <TextInput multiline onChangeText={setNotes} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
         </View> : null}
 
+        {visibleDeliveryItems.length > 0 ? <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Estado de envío</Text>
+          <Text style={styles.body}>Estas acciones existen en este dispositivo. Solo “Recibido servidor” confirma que llegaron al backend.</Text>
+          {visibleDeliveryItems.map((item) => {
+            const eventType = item.payload.eventType as WorkExecutionEventType | undefined;
+            const option = WORK_EXECUTION_OPTIONS.find((candidate) => candidate.eventType === eventType);
+            const presentation = getWorkExecutionDeliveryPresentation(item);
+            return <View key={item.id} style={styles.historyRow}>
+              <View style={styles.historyCopy}>
+                <View style={styles.historyHeader}>
+                  <Text style={styles.historyTitle}>{option?.label ?? 'Resultado local'}</Text>
+                  <StatePill label={presentation.label} tone={presentation.tone} />
+                </View>
+                <Text style={styles.body}>{presentation.detail}</Text>
+                {typeof item.payload.reason === 'string' && item.payload.reason ? <Text style={styles.reason}>Motivo: {item.payload.reason}</Text> : null}
+              </View>
+            </View>;
+          })}
+        </View> : null}
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Historial del trabajo</Text>
           {eventsLoading ? <Text style={styles.body}>Cargando acciones recibidas...</Text> : null}
@@ -129,7 +184,7 @@ export default function WorkStatusScreen() {
           })}
         </View>
 
-        {feedback ? <View style={styles.feedback}><MaterialIcons color={feedback.includes('servidor') ? colors.accentGreen : colors.amber} name="info" size={20} /><Text style={styles.feedbackText}>{feedback}</Text></View> : null}
+        {feedback ? <View style={styles.feedback}><MaterialIcons color={feedback.startsWith('Recibido servidor') ? colors.accentGreen : colors.amber} name="info" size={20} /><Text style={styles.feedbackText}>{feedback}</Text></View> : null}
         {accessState === 'allowed' && errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar el resultado</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
         {accessState === 'allowed' ? <Pressable disabled={isCreating} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}><MaterialIcons color={colors.background} name="save" size={19} /><Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar resultado'}</Text></Pressable> : null}
         <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver al punto</Text></Pressable>

@@ -211,6 +211,49 @@ export function getRoundOutboxItems(roundId: string, sessionId?: string): Outbox
 }
 
 /**
+ * Work-execution rows are kept after sync so the UI can bridge the gap between
+ * a local action and the next server-history refresh without inventing a
+ * server confirmation. Session + round + point scoping prevents another
+ * account or work package from leaking into the current point.
+ */
+export function getWorkExecutionOutboxItems(
+  roundId: string,
+  roundPointId: string,
+  sessionId?: string
+): OutboxItem[] {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return [];
+
+  const rows = getDatabase().getAllSync<OutboxRow>(
+    `SELECT * FROM outbox
+     WHERE session_id = ?
+       AND entity_type = 'medicion'
+     ORDER BY created_at DESC, rowid DESC`,
+    [scopedSessionId]
+  );
+
+  return rows
+    .map(rowToItem)
+    .filter((item) => (
+      item.payload.kind === 'work_execution_event' &&
+      item.payload.roundId === roundId &&
+      item.payload.roundPointId === roundPointId
+    ));
+}
+
+export function getOutboxItemByClientRequestId(clientRequestId: string, sessionId?: string): OutboxItem | null {
+  const scopedSessionId = normalizeOutboxSessionId(sessionId);
+  if (!scopedSessionId) return null;
+
+  const row = getDatabase().getFirstSync<OutboxRow>(
+    'SELECT * FROM outbox WHERE client_request_id = ? AND session_id = ?',
+    [clientRequestId, scopedSessionId]
+  );
+
+  return row ? rowToItem(row) : null;
+}
+
+/**
  * Mark item as syncing (before sync attempt)
  */
 export function markSyncing(id: string, sessionId?: string): void {
@@ -271,7 +314,12 @@ export function markSynced(id: string, sessionId?: string): void {
 /**
  * Mark item as error (after failed sync)
  */
-export function markError(id: string, errorMessage: string, sessionId?: string): void {
+export function markError(
+  id: string,
+  errorMessage: string,
+  sessionId?: string,
+  diagnosticData: Record<string, unknown> | null = null
+): void {
   const scopedSessionId = normalizeOutboxSessionId(sessionId);
   if (!scopedSessionId) return;
 
@@ -280,9 +328,9 @@ export function markError(id: string, errorMessage: string, sessionId?: string):
 
   db.runSync(
     `UPDATE outbox
-     SET status = 'error', error_message = ?
+     SET status = 'error', error_message = ?, conflict_data = ?
      WHERE id = ? AND session_id = ?`,
-    [safeErrorMessage, id, scopedSessionId]
+    [safeErrorMessage, diagnosticData ? JSON.stringify(diagnosticData) : null, id, scopedSessionId]
   );
 }
 

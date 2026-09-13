@@ -255,7 +255,7 @@ async function syncItem(
     );
 
     // Clasificar el error
-    const errorType = classifyError(error);
+    const errorType = classifySyncError(error);
 
     switch (errorType) {
       case 'conflict':
@@ -266,8 +266,17 @@ async function syncItem(
 
       case 'validation':
         // 422 Validation error: no retry automático
-        markError(item.id, error.message || 'Validation error', sessionId);
+        markError(item.id, error.message || 'Validation error', sessionId, { syncErrorKind: errorType });
         console.warn(`[SyncEngine] Validation error for item ${item.id}`);
+        break;
+
+      case 'backend_incompatible':
+      case 'unauthorized':
+      case 'forbidden':
+      case 'not_found':
+        // HTTP terminal: queda visible para intervención/manual retry, sin bucle automático.
+        markError(item.id, error.message || 'Sync rejected', sessionId, { syncErrorKind: errorType });
+        console.warn(`[SyncEngine] Terminal ${errorType} for item ${item.id}`);
         break;
 
       case 'network':
@@ -279,7 +288,7 @@ async function syncItem(
 
       default:
         // Error desconocido: marcar como error sin retry
-        markError(item.id, error.message || 'Unknown error', sessionId);
+        markError(item.id, error.message || 'Unknown error', sessionId, { syncErrorKind: errorType });
         console.error(`[SyncEngine] Unknown error for item ${item.id}`);
     }
 
@@ -290,11 +299,39 @@ async function syncItem(
 /**
  * Clasificar tipo de error para decidir estrategia de retry
  */
-function classifyError(error: { message?: string; status?: number; code?: string }): 'network' | 'server' | 'conflict' | 'validation' | 'unknown' {
+export type SyncErrorKind =
+  | 'network'
+  | 'server'
+  | 'conflict'
+  | 'validation'
+  | 'backend_incompatible'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not_found'
+  | 'unknown';
+
+export function classifySyncError(error: {
+  message?: string;
+  rawMessage?: string | null;
+  status?: number;
+  code?: string;
+}): SyncErrorKind {
   // Error HTTP con status
   if (error.status) {
     if (error.status === 409) return 'conflict';
     if (error.status === 422 || error.status === 400) return 'validation';
+    if (error.status === 401) return 'unauthorized';
+    if (error.status === 403) return 'forbidden';
+    if (error.status === 404) {
+      if (
+        error.code === 'ROUTE_NOT_FOUND' ||
+        error.rawMessage?.toLowerCase().includes('route not found') ||
+        error.message?.includes('Función pendiente de publicar')
+      ) {
+        return 'backend_incompatible';
+      }
+      return 'not_found';
+    }
     if (error.status >= 500) return 'server';
   }
 

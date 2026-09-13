@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/api';
 import { deletePreparedPhoto, uploadPreparedPhotoToSignedUrl } from '@/lib/photo-upload';
 import { getDatabase, closeDatabase, applyMigrations } from '../database';
 import * as outbox from '../outbox';
-import { flushOutbox, hasConnectivity, stopSyncEngine } from '../sync-engine';
+import { classifySyncError, flushOutbox, hasConnectivity, stopSyncEngine } from '../sync-engine';
 import { syncOutboxItem } from '../sync-handlers';
 import type { OutboxItem } from '../outbox';
 
@@ -225,6 +225,48 @@ describe('Sync Engine', () => {
       expect(errors).toHaveLength(1);
       expect(errors[0].id).toBe('test-1');
       expect(errors[0].errorMessage).toContain('Validation');
+    });
+
+    it.each<[number, 'unauthorized' | 'forbidden' | 'not_found']>([
+      [401, 'unauthorized'],
+      [403, 'forbidden'],
+      [404, 'not_found']
+    ])('detiene sin retry automático un HTTP %s como %s', async (status, expectedKind) => {
+      outbox.enqueue({
+        id: `terminal-${status}`,
+        clientRequestId: `terminal-request-${status}`,
+        entityType: 'medicion',
+        operation: 'insert',
+        payload: { kind: 'work_execution_event' }
+      });
+      const terminalError = new Error(`HTTP ${status}`);
+      (terminalError as any).status = status;
+      const callback = jest.fn<(item: OutboxItem) => Promise<void>>().mockRejectedValue(terminalError);
+
+      expect(await flushOutbox(callback)).toBe(0);
+      expect(outbox.getPending()).toHaveLength(0);
+      expect(outbox.getErrors()[0].conflictData).toEqual({ syncErrorKind: expectedKind });
+    });
+
+    it('marca una 404 de ruta ausente como backend incompatible y no la reintenta en bucle', async () => {
+      outbox.enqueue({
+        id: 'missing-route',
+        clientRequestId: 'missing-route-request',
+        entityType: 'medicion',
+        operation: 'insert',
+        payload: { kind: 'work_execution_event' }
+      });
+      const routeError = new Error('Función pendiente de publicar. Vuelve a intentarlo más tarde.');
+      (routeError as any).status = 404;
+      (routeError as any).rawMessage = 'Route not found: POST /round-points/x/execution-events';
+      const callback = jest.fn<(item: OutboxItem) => Promise<void>>().mockRejectedValue(routeError);
+
+      expect(await flushOutbox(callback)).toBe(0);
+      expect(outbox.getPending()).toHaveLength(0);
+      expect(outbox.getErrors()[0].conflictData).toEqual({ syncErrorKind: 'backend_incompatible' });
+
+      await flushOutbox(callback);
+      expect(callback).toHaveBeenCalledTimes(1);
     });
 
     it('debe sincronizar múltiples items en orden', async () => {
@@ -520,6 +562,18 @@ describe('Sync Engine', () => {
           payload: {},
         });
       }).toThrow();
+    });
+  });
+
+  describe('classifySyncError', () => {
+    it('separa timeout y 5xx reintentables de rechazos terminales', () => {
+      expect(classifySyncError({ code: 'ETIMEDOUT', message: 'timeout' })).toBe('network');
+      expect(classifySyncError({ status: 503 })).toBe('server');
+      expect(classifySyncError({ status: 409 })).toBe('conflict');
+      expect(classifySyncError({ status: 401 })).toBe('unauthorized');
+      expect(classifySyncError({ status: 403 })).toBe('forbidden');
+      expect(classifySyncError({ status: 404, rawMessage: 'Route not found: POST /x' })).toBe('backend_incompatible');
+      expect(classifySyncError({ status: 404, rawMessage: 'Point not found' })).toBe('not_found');
     });
   });
 });
