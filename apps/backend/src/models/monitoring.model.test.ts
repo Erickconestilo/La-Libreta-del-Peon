@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { AppError } from '../lib/app-error.js';
 import {
@@ -76,7 +79,6 @@ test('terminal rounds cannot be changed', () => {
     (error: unknown) => error instanceof AppError && error.code === 'ROUND_TERMINAL'
   );
 });
-
 
 test('round export applies the actor project scope to its data query', () => {
   const modelSource = readFileSync(
