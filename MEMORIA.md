@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Preparar release local versionCode 9 con el resumen separado de trabajo y lectura | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 25s`; AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`, APK arm64 en `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`; `keytool` y `apksigner` confirman `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `apksigner verify --verbose` devuelve `Verifies` con V2 `true`; `apkanalyzer` confirma `com.ciudadanoinusual.topofield`, `versionCode=9`, `versionName=1.0.0`. `adb devices -l` devolvió solo `List of devices attached`, sin Galaxy, por lo que no se instaló.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Mostrar en el parte la diferencia entre trabajo declarado y lectura metrológica pendiente | cerrado (`apps/mobile/app/rounds/[roundId]/completion.tsx` muestra por separado `Lectura: x/y puntos con estado final` y el resumen `hechos · en curso · pendientes · por revisar`; `npm run verify:local` terminó con backend `114/114`, móvil `23 suites / 117 tests`, tooling `13/13`, `docs:check` con `44 documentos` sin avisos y `git diff --check` sin salida.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar referencias históricas de release y estado actual de la herramienta Android | cerrado (`rg` separó las referencias históricas de v4-v7 de la v8 preparada; `npm run docs:check` devolvió `44 documentos revisados`, `Sin errores ni avisos`; `git diff --check` sin salida.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Preparar release local versionCode 8 para diferenciar los cambios de trabajo operativo | cerrado (`npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 49s`; AAB en `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`; `versionCode=8`; firma `CN=TopoField Android Release`, SHA-256 `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`. La limpieza inicial de Ninja falló y el script reintentó sin `clean`; `adb devices -l` siguió sin dispositivos, por lo que no se instaló.)` |
@@ -522,13 +523,15 @@ etapa anterior de purga, mientras `main` y `origin/main` apuntan a historiales
  distintos; el runtime actual está neutralizado y la purga completa sigue sin
  presentarse como cerrada.
 
-La release local `versionCode=8` también quedó preparada con Gradle y firmada
+La release local `versionCode=9` también quedó preparada con Gradle y firmada
 como `CN=TopoField Android Release`; la AAB está en
-`C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`.
-No se instaló porque la comprobación ADB más reciente de esta sesión devolvió literalmente
-`error: no devices/emulators found` y `List of devices attached` sin filas.
-La v7 sigue siendo la última versión físicamente validada; la v8 no se debe
-presentar como instalada hasta que Windows vuelva a detectar el Galaxy.
+`C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`
+y la APK arm64 en
+`C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+La APK pasó `apksigner verify --verbose` con `Verifies` y firma V2 válida.
+No se instaló porque `adb devices -l` devolvió `List of devices attached` sin
+filas. La v7 sigue siendo la última versión físicamente validada; la v9 no se
+debe presentar como instalada hasta que Windows vuelva a detectar el Galaxy.
 
 El hardening local `f90c995` añade fallo cerrado cuando una sesión de topógrafo
 carece del mapa de membresías, pero la comparación remota verificó que no es
@@ -542,7 +545,7 @@ migración 029 y su despliegue estén disponibles.
 
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
-falla. Esto permite producir la AAB v8 sin borrar manualmente artefactos
+falla. Esto permite producir la AAB v9 sin borrar manualmente artefactos
 generados; no cambia el criterio de instalación ni sustituye la validación
   física en el Galaxy.
 
@@ -800,6 +803,20 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   La comprobación literal posterior devolvió `List of devices attached` sin
   filas y `adb.exe: no devices/emulators found`; no se instaló ni se modificó
   el Galaxy.
+
+- **2026-09-13 — Release local v9 preparada, no instalada (Codex):**
+  `npm run mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 25s`
+  tras el reintento incremental del script porque la limpieza de Ninja de
+  `react-native-reanimated` falló con `manifest 'build.ninja' still dirty
+  after 100 tries`. La AAB quedó en
+  `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`
+  y la APK arm64 en
+  `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`.
+  `keytool` y `apksigner` confirman `CN=TopoField Android Release`, SHA-256
+  `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`; `apksigner verify --verbose` devuelve
+  `Verifies` con V2 `true`, y `apkanalyzer` confirma el paquete esperado y
+  `versionCode=9`. `adb devices -l` devolvió solo `List of devices attached`,
+  sin Galaxy; no se instaló ni se modificó el dispositivo.
 
 - **2026-09-13 — Bundle Android del formulario de resultado verificado
   (Codex):** `npm run verify:pre-apk:local` terminó con

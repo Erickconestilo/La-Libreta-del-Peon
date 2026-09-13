@@ -450,6 +450,25 @@ terminó con `BUILD SUCCESSFUL in 8m 49s` después de que el script reintentara
 - Instalación: pendiente; `adb devices -l` devolvió `List of devices attached`
   sin dispositivos y `adb.exe: no devices/emulators found`.
 
+## 21b. Preparación local v9 (13-09-2026)
+
+La release local `versionCode=9` incorpora la separación visual entre trabajo
+declarado por el operario y lectura metrológica pendiente. `npm run
+mobile:build-local-android` terminó con `BUILD SUCCESSFUL in 8m 25s` después de
+que el script reintentara `bundleRelease` sin `clean` por el fallo de Ninja
+`manifest 'build.ninja' still dirty after 100 tries`.
+
+- AAB: `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`
+- APK arm64: `C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk`
+- Paquete: `com.ciudadanoinusual.topofield`
+- `versionCode`: `9`; `versionName`: `1.0.0`
+- Firma: `CN=TopoField Android Release`
+- SHA-256: `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`
+- Verificación: `apksigner verify --verbose` devolvió `Verifies`, esquema V2
+  `true`, y `apkanalyzer` confirmó el paquete y la versión.
+- Instalación: pendiente; `adb devices -l` devolvió `List of devices attached`
+  sin dispositivos.
+
 ## 22. Proximos pasos posibles
 
 ### Opcion A - actualizar la APK local en el Galaxy
