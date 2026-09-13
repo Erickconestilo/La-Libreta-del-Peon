@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,6 +35,18 @@ export default function WorkCompletionScreen() {
   const [pendingReasons, setPendingReasons] = useState('');
   const [notes, setNotes] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (pendingPointCount > 0) {
+      setStatus((current) => current === 'completed' ? 'partial' : current);
+    }
+  }, [pendingPointCount]);
+
+  const startEditing = () => {
+    setSaved(false);
+    setFeedback(null);
+  };
 
   const handleSubmit = async () => {
     if (status === 'completed' && pendingPointCount > 0) {
@@ -57,6 +69,7 @@ export default function WorkCompletionScreen() {
           ? 'Parte guardado en este dispositivo. Se enviará al recuperar conexión.'
           : 'Parte recibido por el servidor. El supervisor podrá consultarlo.'
       );
+      setSaved(true);
     } catch {
       // El hook expone el motivo debajo del formulario.
     }
@@ -91,26 +104,26 @@ export default function WorkCompletionScreen() {
         ) : null}
         {writeScreenState === 'allowed' ? <View style={styles.card}>
           <Text style={styles.label}>Zona o tramo trabajado</Text>
-          <TextInput onChangeText={setZoneLabel} placeholder="Ej. Zona de acceso norte" placeholderTextColor="#64748b" style={styles.input} value={zoneLabel} />
+          <TextInput onChangeText={(value) => { startEditing(); setZoneLabel(value); }} placeholder="Ej. Zona de acceso norte" placeholderTextColor="#64748b" style={styles.input} value={zoneLabel} />
           <Text style={styles.label}>Resultado de la visita</Text>
           <View style={styles.chips}>
             {STATUS_OPTIONS.map((option) => (
-              <ChoiceChip key={option.value} label={option.label} onPress={() => setStatus(option.value)} selected={status === option.value} />
+              <ChoiceChip key={option.value} label={option.label} onPress={() => { startEditing(); setStatus(option.value); }} selected={status === option.value} />
             ))}
           </View>
           {pendingPointCount > 0 ? <Text style={styles.warningText}>Hay {pendingPointCount} punto{pendingPointCount === 1 ? '' : 's'} pendiente{pendingPointCount === 1 ? '' : 's'}; un parte completado está bloqueado.</Text> : null}
           <Text style={styles.label}>Motivos pendientes, uno por línea</Text>
-          <TextInput multiline onChangeText={setPendingReasons} placeholder="Sin acceso\nSensor dañado" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={pendingReasons} />
+          <TextInput multiline onChangeText={(value) => { startEditing(); setPendingReasons(value); }} placeholder="Sin acceso\nSensor dañado" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={pendingReasons} />
           <Text style={styles.label}>Notas para el relevo</Text>
-          <TextInput multiline onChangeText={setNotes} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
+          <TextInput multiline onChangeText={(value) => { startEditing(); setNotes(value); }} placeholder="Qué debe saber el supervisor o el siguiente turno" placeholderTextColor="#64748b" style={[styles.input, styles.multiline]} value={notes} />
         </View> : null}
 
         {writeScreenState === 'allowed' ? <>
           {feedback ? <View style={styles.success}><MaterialIcons color={colors.accentGreen} name="check-circle" size={20} /><Text style={styles.successText}>{feedback}</Text></View> : null}
           {errorMessage ? <View style={styles.error}><Text style={styles.errorTitle}>No se pudo guardar el parte</Text><Text style={styles.body}>{errorMessage}</Text></View> : null}
-          <Pressable disabled={isCreating || !zoneLabel.trim()} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating ? styles.disabled : null]}>
+          <Pressable disabled={isCreating || saved || !zoneLabel.trim()} onPress={() => void handleSubmit()} style={[styles.primaryButton, isCreating || saved ? styles.disabled : null]}>
             <MaterialIcons color={colors.background} name="assignment-turned-in" size={19} />
-            <Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : 'Guardar parte'}</Text>
+            <Text style={styles.primaryButtonText}>{isCreating ? 'Guardando...' : saved ? 'Parte guardado' : 'Guardar parte'}</Text>
           </Pressable>
         </> : null}
         <Pressable onPress={() => router.back()} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Volver a la ronda</Text></Pressable>

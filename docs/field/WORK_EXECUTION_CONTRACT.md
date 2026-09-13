@@ -91,6 +91,11 @@ punto. Las acciones anteriores no se sobrescriben: cada nueva acción añade un
 evento con fecha, autor y contexto, y la interfaz muestra el último estado
 junto con la secuencia recibida.
 
+El parte de zona aplica la misma precaución de idempotencia a nivel de
+interfaz: después de guardarlo o encolarlo, el botón queda bloqueado hasta que
+el operario modifique explícitamente el borrador o vuelva a la ronda. Así no
+se crean partes repetidos con nuevos UUID por una pulsación posterior.
+
 ## Entrega a oficina
 
 El último evento recibido para cada punto se incluye en el contrato común de
