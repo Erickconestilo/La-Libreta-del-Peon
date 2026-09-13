@@ -4,6 +4,8 @@ import type { WorkExecutionEvent } from '@shared/types';
 import {
   getWorkExecutionState,
   getWorkExecutionStatePresentation,
+  getWorkExecutionSummary,
+  getNextWorkExecutionPointId,
   requiresWorkExecutionReason
 } from '../work-execution';
 
@@ -41,5 +43,37 @@ describe('work execution status', () => {
       label: 'Bloqueado',
       tone: 'danger'
     });
+  });
+
+  it('summarises operational progress without changing metrological status', () => {
+    const summary = getWorkExecutionSummary([
+      {},
+      { executionState: getWorkExecutionState(event('started')) },
+      { executionState: getWorkExecutionState(event('completed')) },
+      { executionState: getWorkExecutionState(event('blocked')) }
+    ]);
+
+    expect(summary).toEqual({
+      blocked: 1,
+      completed: 1,
+      in_progress: 1,
+      not_done: 0,
+      pending: 1,
+      repeat_required: 0,
+      total: 4
+    });
+  });
+
+  it('keeps the configured order when selecting the next actionable point', () => {
+    expect(getNextWorkExecutionPointId([
+      { id: 'blocked-first', executionState: getWorkExecutionState(event('blocked')) },
+      { id: 'repeat-second', executionState: getWorkExecutionState(event('repeat_required')) },
+      { id: 'completed-third', executionState: getWorkExecutionState(event('completed')) }
+    ])).toBe('repeat-second');
+
+    expect(getNextWorkExecutionPointId([
+      { id: 'completed-only', executionState: getWorkExecutionState(event('completed')) },
+      { id: 'blocked-only', executionState: getWorkExecutionState(event('blocked')) }
+    ])).toBeNull();
   });
 });

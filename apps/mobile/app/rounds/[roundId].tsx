@@ -15,7 +15,7 @@ import {
 } from '@/hooks/use-monitoring';
 import { getRoundOutboxItems } from '@/lib/offline/outbox';
 import { canWriteProject } from '@/lib/field-access';
-import { getWorkExecutionStatePresentation } from '@/lib/work-execution';
+import { getNextWorkExecutionPointId, getWorkExecutionStatePresentation, getWorkExecutionSummary } from '@/lib/work-execution';
 import { colors, spacing, typography } from '@/src/theme';
 
 const pointStatus = {
@@ -40,6 +40,9 @@ export default function MonitoringRoundDetailScreen() {
   const points = round?.points ?? [];
   const pending = points.filter((item) => item.status === 'pending').length;
   const taken = points.filter((item) => item.status === 'taken').length;
+  const workSummary = getWorkExecutionSummary(points);
+  const nextWorkPointId = getNextWorkExecutionPointId(points);
+  const nextWorkPoint = points.find((item) => item.id === nextWorkPointId);
   const localPending = roundId ? getRoundOutboxItems(roundId, activeSessionId ?? undefined).length : 0;
   const canClose = Boolean(round && round.status === 'active' && pending === 0 && localPending === 0);
 
@@ -73,6 +76,15 @@ export default function MonitoringRoundDetailScreen() {
           <View style={styles.header}>
             <View style={styles.titleRow}><View><Text style={styles.title}>{round.name}</Text><Text style={styles.body}>{formatShortDate(round.roundDate)}</Text></View><RoundStatusPill status={round.status} /></View>
             <View style={styles.summary}><SummaryItem label="Pendientes" value={pending} /><SummaryItem label="Tomados" value={taken} /><SummaryItem label="Total" value={points.length} /></View>
+            <View style={styles.workSummary}>
+              <Text style={styles.workSummaryTitle}>Trabajo declarado</Text>
+              <Text style={styles.body}>{workSummary.completed} hechos · {workSummary.in_progress} en curso · {workSummary.pending} pendientes · {workSummary.repeat_required + workSummary.not_done + workSummary.blocked} por revisar</Text>
+              {canEdit && nextWorkPoint ? <Pressable onPress={() => router.push({ pathname: '/round-points/[roundPointId]/work-status', params: { code: nextWorkPoint.controlPointCode, name: nextWorkPoint.controlPointName ?? '', roundId: round?.id ?? '', roundPointId: nextWorkPoint.id } } as never)} style={styles.nextButton}>
+                <MaterialIcons color={colors.background} name="arrow-forward" size={18} />
+                <Text style={styles.nextButtonText}>Continuar con {nextWorkPoint.controlPointCode}</Text>
+              </Pressable> : null}
+              {canEdit && !nextWorkPoint && workSummary.blocked > 0 ? <Text style={styles.warningText}>No hay otro punto accionable. Revisa los puntos bloqueados.</Text> : null}
+            </View>
             <Text style={styles.body}>{round.instrumentSerial ? `Serie ${round.instrumentSerial}` : 'Serie de instrumento sin indicar'}{round.fieldConditions ? ` · Condición ${round.fieldConditions}` : ''}</Text>
             {isOfflineCache ? <Text style={styles.warningText}>Ronda sin actualizar. Última copia: {cachedAt ?? 'fecha desconocida'}.</Text> : null}
             {assignmentConflict ? <Text style={styles.warningText}>La asignación de esta ronda cambió mientras había datos locales pendientes. No se borró nada; revisa la planificación antes de sincronizar.</Text> : null}
@@ -155,6 +167,8 @@ const styles = StyleSheet.create({
   header: { gap: spacing[2], padding: spacing[3] },
   list: { gap: spacing[2], padding: spacing[3] },
   meta: { color: colors.accentGreen, fontSize: 13, fontWeight: '800' },
+  nextButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.accentGreen, borderRadius: 8, flexDirection: 'row', gap: spacing[1], paddingHorizontal: spacing[2], paddingVertical: spacing[2] },
+  nextButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
   pointCard: { backgroundColor: colors.card, borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[3] },
   pointMain: { gap: spacing[1] },
   pointCode: { color: colors.textPrimary, fontSize: typography.fontSizeTitle, fontWeight: '900' },
@@ -174,5 +188,7 @@ const styles = StyleSheet.create({
   summaryValue: { color: colors.textPrimary, fontSize: typography.fontSizeTitle, fontWeight: '900' },
   title: { color: colors.textPrimary, fontSize: 25, fontWeight: '900' },
   titleRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  workSummary: { backgroundColor: '#151922', borderColor: '#2a2f3a', borderRadius: 8, borderWidth: 1, gap: spacing[1], padding: spacing[2] },
+  workSummaryTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900' },
   warningText: { color: colors.amber, fontSize: 13, fontWeight: '700', lineHeight: 20 },
 });

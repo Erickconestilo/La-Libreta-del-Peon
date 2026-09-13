@@ -2,7 +2,8 @@ import type {
   WorkExecutionEvent,
   WorkExecutionEventType,
   WorkExecutionState,
-  WorkExecutionStateStatus
+  WorkExecutionStateStatus,
+  MonitoringRoundPoint
 } from '@shared/types';
 
 export const WORK_EXECUTION_OPTIONS: Array<{
@@ -45,3 +46,35 @@ export const getWorkExecutionState = (event: WorkExecutionEvent | null): WorkExe
 export const getWorkExecutionStatePresentation = (state?: WorkExecutionState | null) => (
   WORK_EXECUTION_STATUS_PRESENTATION[state?.status ?? 'pending']
 );
+
+export type WorkExecutionSummary = Record<WorkExecutionStateStatus, number> & {
+  total: number;
+};
+
+export const getWorkExecutionSummary = (
+  points: Array<Pick<MonitoringRoundPoint, 'executionState'>>
+): WorkExecutionSummary => {
+  const summary: WorkExecutionSummary = {
+    blocked: 0,
+    completed: 0,
+    in_progress: 0,
+    not_done: 0,
+    pending: 0,
+    repeat_required: 0,
+    total: points.length
+  };
+
+  for (const point of points) {
+    summary[point.executionState?.status ?? 'pending'] += 1;
+  }
+
+  return summary;
+};
+
+/** Keeps the round order while prioritising work that can still be continued. */
+export const getNextWorkExecutionPointId = (
+  points: Array<Pick<MonitoringRoundPoint, 'id' | 'executionState'>>
+) => points.find((point) => {
+  const status = point.executionState?.status ?? 'pending';
+  return status !== 'completed' && status !== 'blocked';
+})?.id ?? null;

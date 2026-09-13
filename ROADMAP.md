@@ -151,6 +151,11 @@ queda protegida por obra y rol. La captura móvil usa SQLite/outbox e
 idempotencia; `Hecho` no cambia por sí solo el estado metrológico ni permite
 cerrar una ronda con lecturas pendientes.
 
+La cabecera de la ronda resume ahora el trabajo declarado por estado y ofrece
+`Continuar con <código>` para abrir el primer punto accionable en el orden de
+la jornada. Los puntos bloqueados se cuentan como `por revisar` y nunca se
+presentan como completados ni como siguiente acción automática.
+
 La migración 029 no se ha aplicado en Supabase y este bloque no se considera
 desplegado hasta aplicarla, publicar el backend y repetir la comprobación en el
 Galaxy.

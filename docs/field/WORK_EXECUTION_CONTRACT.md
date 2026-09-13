@@ -34,6 +34,13 @@ red y se encola con `clientRequestId`; al reconectar se sincroniza mediante el
 mismo outbox probado para lecturas y partes. La interfaz dice `Guardado
 localmente` hasta que el servidor recibe el evento.
 
+En la cabecera de la ronda, el operario ve un resumen separado del estado
+metrológico: puntos `hechos`, `en curso`, `pendientes` y `por revisar`. El
+botón `Continuar con <código>` abre el primer punto accionable respetando el
+orden de `monitoring_round_points.sort_order`; un punto `bloqueado` no se
+presenta como siguiente trabajo. Esto reduce navegación manual sin convertir
+un resultado operativo en una lectura válida ni en un cierre de ronda.
+
 ## Contrato de datos
 
 La migración preparada `apps/backend/migrations/029_monitoring_work_execution_events.sql`
