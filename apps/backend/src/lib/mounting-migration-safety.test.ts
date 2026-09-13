@@ -15,8 +15,17 @@ test('mounting visits migration keeps tenant integrity and deny-all RLS', () => 
   assert.match(sql, /CREATE UNIQUE INDEX IF NOT EXISTS idx_stations_id_project_id/);
   assert.match(sql, /station_mounting_visits_station_project_fk/);
   assert.match(sql, /FOREIGN KEY \(station_id, project_id\)/);
+  assert.match(
+    sql,
+    /FROM pg_constraint[\s\S]*conname = 'station_mounting_visits_station_project_fk'[\s\S]*conrelid = 'public\.station_mounting_visits'::regclass/
+  );
   assert.match(sql, /mounting_visit_evidence_visit_station_fk/);
   assert.match(sql, /FOREIGN KEY \(visit_id, station_id\)/);
+  assert.match(
+    sql,
+    /FROM pg_constraint[\s\S]*conname = 'mounting_visit_evidence_visit_station_fk'[\s\S]*conrelid = 'public\.mounting_visit_evidence'::regclass/
+  );
+  assert.equal((sql.match(/DO \$\$/g) ?? []).length, 2);
   assert.match(sql, /ALTER TABLE station_mounting_visits ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /ALTER TABLE mounting_visit_evidence ENABLE ROW LEVEL SECURITY/);
   assert.equal(sql.includes('Campus Nord'), false);

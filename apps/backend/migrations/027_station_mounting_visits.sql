@@ -22,11 +22,22 @@ CREATE TABLE IF NOT EXISTS station_mounting_visits (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE station_mounting_visits
-  ADD CONSTRAINT station_mounting_visits_station_project_fk
-  FOREIGN KEY (station_id, project_id)
-  REFERENCES stations(id, project_id)
-  ON DELETE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'station_mounting_visits_station_project_fk'
+      AND conrelid = 'public.station_mounting_visits'::regclass
+  ) THEN
+    ALTER TABLE station_mounting_visits
+      ADD CONSTRAINT station_mounting_visits_station_project_fk
+      FOREIGN KEY (station_id, project_id)
+      REFERENCES stations(id, project_id)
+      ON DELETE CASCADE;
+  END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS mounting_visit_evidence (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -50,11 +61,22 @@ CREATE TABLE IF NOT EXISTS mounting_visit_evidence (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_station_mounting_visits_id_station_id
   ON station_mounting_visits(id, station_id);
 
-ALTER TABLE mounting_visit_evidence
-  ADD CONSTRAINT mounting_visit_evidence_visit_station_fk
-  FOREIGN KEY (visit_id, station_id)
-  REFERENCES station_mounting_visits(id, station_id)
-  ON DELETE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'mounting_visit_evidence_visit_station_fk'
+      AND conrelid = 'public.mounting_visit_evidence'::regclass
+  ) THEN
+    ALTER TABLE mounting_visit_evidence
+      ADD CONSTRAINT mounting_visit_evidence_visit_station_fk
+      FOREIGN KEY (visit_id, station_id)
+      REFERENCES station_mounting_visits(id, station_id)
+      ON DELETE CASCADE;
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_station_mounting_visits_station_date
   ON station_mounting_visits(station_id, visited_at DESC);
