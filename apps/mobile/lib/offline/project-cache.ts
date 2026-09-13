@@ -1,6 +1,7 @@
 import type { ProjectSummary } from '@shared/types';
 
 import { getDatabase } from './database';
+import { formatSafeErrorForLog } from '../safe-error-log';
 
 type ProjectCacheRow = {
   cached_at: string;
@@ -72,6 +73,6 @@ export function saveProjectList(cacheKey: string, projects: ProjectSummary[]): v
       [cacheKey, JSON.stringify(projects)]
     );
   } catch (error) {
-    console.warn('[ProjectCache] Unable to persist project list:', error);
+    console.warn('[ProjectCache] Unable to persist project list', formatSafeErrorForLog(error));
   }
 }

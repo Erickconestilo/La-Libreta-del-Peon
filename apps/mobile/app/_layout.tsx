@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/components/useColorScheme';
 import { getPendingStationVisualPhoto } from '@/lib/pending-station-visual-photo';
 import { queryClient } from '@/lib/query-client';
+import { formatSafeErrorForLog } from '@/lib/safe-error-log';
 import { SessionProvider, useSession } from '@/src/session/session-provider';
 import { applyMigrations } from '@/lib/offline/database';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
@@ -53,7 +54,7 @@ export default function RootLayout() {
         console.log('[App] Offline database initialized');
       } catch (err) {
         setIsOfflineDatabaseReady(false);
-        console.error('[App] Failed to initialize offline database:', err);
+        console.error('[App] Failed to initialize offline database', formatSafeErrorForLog(err));
       }
     })();
   }, []);

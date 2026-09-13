@@ -20,6 +20,7 @@ import type {
 } from '@shared/types';
 
 import { apiFetch, isApiRequestError } from '@/lib/api';
+import { formatSafeErrorForLog } from '@/lib/safe-error-log';
 import { enqueue, enqueueMany, getPendingCount, getRoundOutboxItems, type EnqueueParams } from '@/lib/offline/outbox';
 import {
   getCachedMonitoringRoundList,
@@ -911,7 +912,7 @@ export const useCreateInstrumentReading = ({
               });
               await deletePreparedPhoto(persistentPhoto);
             } catch (error) {
-              console.warn('[useCreateInstrumentReading] Photo sync failed, enqueueing:', error);
+              console.warn('[useCreateInstrumentReading] Photo sync failed, enqueueing', formatSafeErrorForLog(error));
               enqueueReadingAttachment(attachment, attachmentClientRequestId, activeSessionId);
               return { mode: 'synced', photoPending: true, response };
             }
@@ -923,7 +924,7 @@ export const useCreateInstrumentReading = ({
             await deletePreparedPhoto(persistentPhoto);
             throw error;
           }
-          console.warn('[useCreateInstrumentReading] Direct sync failed, enqueueing:', error);
+          console.warn('[useCreateInstrumentReading] Direct sync failed, enqueueing', formatSafeErrorForLog(error));
         }
       }
 

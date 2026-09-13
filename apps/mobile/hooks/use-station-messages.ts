@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateStationMessageInput, StationMessage } from '@shared/types';
 
 import { apiFetch } from '@/lib/api';
+import { formatSafeErrorForLog } from '@/lib/safe-error-log';
 import { enqueue, getPendingCount } from '@/lib/offline/outbox';
 import { syncOutboxItem } from '@/lib/offline/sync-handlers';
 import { flushOutbox, hasConnectivity } from '@/lib/offline/sync-engine';
@@ -107,7 +108,7 @@ export const useCreateStationMessage = (stationId: string | null) => {
           return await createStationMessage({ input, stationId });
         } catch (err) {
           // Si falla, encolar en outbox como fallback
-          console.warn('[useCreateStationMessage] Direct sync failed, enqueueing:', err);
+          console.warn('[useCreateStationMessage] Direct sync failed, enqueueing', formatSafeErrorForLog(err));
         }
       }
 

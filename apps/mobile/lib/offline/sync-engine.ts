@@ -20,6 +20,7 @@ import {
   retryItem
 } from './outbox';
 import type { OutboxItem } from './outbox';
+import { formatSafeErrorForLog } from '../safe-error-log';
 
 // Configuración de retry
 const RETRY_DELAYS = [
@@ -86,7 +87,7 @@ export async function hasConnectivity(): Promise<boolean> {
     const networkState = await Network.getNetworkStateAsync();
     return networkState.isConnected === true && networkState.isInternetReachable === true;
   } catch (err) {
-    console.error('[SyncEngine] Failed to check connectivity:', err);
+    console.error('[SyncEngine] Failed to check connectivity', formatSafeErrorForLog(err));
     return false;
   }
 }
@@ -248,9 +249,8 @@ async function syncItem(
     const error = err as { code?: string; message?: string; rawMessage?: string | null; status?: number };
 
     console.error(
-      `[SyncEngine] Failed to sync item ${item.id} ` +
-      `(status=${error.status ?? 'unknown'} code=${error.code ?? 'unknown'} ` +
-      `message=${error.rawMessage ?? error.message ?? 'unknown'})`
+      `[SyncEngine] Failed to sync item ${item.id}`,
+      formatSafeErrorForLog(error)
     );
 
     // Clasificar el error
