@@ -52,8 +52,9 @@ se ha desplegado desde esta sesión.
    contrato backend de exportación quedó alineado con los instrumentos y lados
    definidos en `shared/types.ts`, incluyendo los protocolos F7. La migración
    027 preparada comprueba `pg_constraint` antes de crear sus dos claves
-   foráneas compuestas, por lo que un reintento tras una aplicación parcial no
-   falla por una restricción ya existente; sigue sin aplicarse remotamente.
+   foráneas compuestas y `pg_policies` antes de crear sus políticas RLS, por lo
+   que un reintento tras una aplicación parcial no falla por objetos ya
+   existentes; sigue sin aplicarse remotamente.
 8. La revisión defensiva detectó que los enlaces internos de monitoring no
    expresaban siempre la relación `ronda -> punto de control -> lectura`. Detalle,
    histórico, contexto de adjunto y exportación ahora exigen que esas relaciones

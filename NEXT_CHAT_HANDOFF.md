@@ -37,8 +37,9 @@ repositorio bare.
   forma parte de la batería backend `104/104`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
-  cada clave foránea compuesta para tolerar un reintento tras una aplicación
-  parcial; su regresión está incluida en la batería backend. La migración
+  cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS
+  para tolerar un reintento tras una aplicación parcial; su regresión está
+  incluida en la batería backend. La migración
   continúa sin aplicar en Supabase.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la

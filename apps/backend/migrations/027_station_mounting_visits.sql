@@ -93,14 +93,40 @@ CREATE INDEX IF NOT EXISTS idx_mounting_visit_evidence_station
 ALTER TABLE station_mounting_visits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mounting_visit_evidence ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "legacy deny all" ON station_mounting_visits
-  FOR ALL
-  TO anon, authenticated
-  USING (false)
-  WITH CHECK (false);
+-- PostgreSQL no admite CREATE POLICY IF NOT EXISTS; las guardas permiten
+-- reintentar la migración después de una aplicación parcial.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'station_mounting_visits'
+      AND policyname = 'legacy deny all'
+  ) THEN
+    CREATE POLICY "legacy deny all" ON station_mounting_visits
+      FOR ALL
+      TO anon, authenticated
+      USING (false)
+      WITH CHECK (false);
+  END IF;
+END
+$$;
 
-CREATE POLICY "legacy deny all" ON mounting_visit_evidence
-  FOR ALL
-  TO anon, authenticated
-  USING (false)
-  WITH CHECK (false);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'mounting_visit_evidence'
+      AND policyname = 'legacy deny all'
+  ) THEN
+    CREATE POLICY "legacy deny all" ON mounting_visit_evidence
+      FOR ALL
+      TO anon, authenticated
+      USING (false)
+      WITH CHECK (false);
+  END IF;
+END
+$$;
