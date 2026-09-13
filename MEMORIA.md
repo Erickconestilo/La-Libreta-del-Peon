@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Corregir la cifra activa de documentos en MEMORIA §12a | cerrado (`npm run docs:check` devolvió `check-docs: 40 documentos revisados en raíz y docs/.` y `Sin errores ni avisos.`; `git diff --check` terminó sin salida y código `0`. Solo se actualizó la cifra activa de `39` a `40`; se conservaron las cifras históricas.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Verificar en solo lectura el contrato actual de Render y la compuerta ADB | cerrado (`curl.exe --max-time 45 -sS -i https://la-libreta-del-peon-1.onrender.com/api/v1/health` devolvió `HTTP/1.1 200 OK` y `{"commit":"eb88db922a03b1e01a47f90dba8346542df3f212","status":"ok"}`; las rutas de rondas y `GET /api/v1/me/journey` devolvieron `HTTP/1.1 401 Unauthorized` con `UNAUTHORIZED`; `adb devices -l` devolvió solo `List of devices attached`. No se hizo deploy, fetch, pull, migración, cambio de datos ni instalación.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reauditar dependencias backend y comprobar compatibilidad Expo después del tooling local | cerrado (`npm audit --workspace apps/backend --omit=dev --json` devolvió `AUDIT_EXIT=1` por los avisos existentes y reportó `AUDIT_MODERATE=2`, `AUDIT_HIGH=0`, `AUDIT_CRITICAL=0`; no se aplicó `npm audit fix --force`. Desde `apps/mobile`, `npx expo install --check` devolvió `Dependencies are up to date` y `EXPO_CHECK_EXIT=0`. No se actualizaron paquetes ni se tocaron servicios remotos.) |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar la fila histórica abierta de F5 en §9 con la evidencia actual | cerrado parcialmente (la fila del 24-08 queda cerrada como parcial: implementación local verificada, pero E2E físico, piloto multiusuario y entrevistas siguen pendientes. `npm run docs:check` devolvió `40 documentos revisados en raíz y docs/` sin errores ni avisos; `git diff --check` sin salida; la búsqueda de filas `abierto` queda vacía.) |
@@ -413,7 +414,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
 **Estado consolidado al 13-09-2026:** el backend local compila y pasa `103/103`
-tests; móvil pasa `22` suites y `97/97` tests; `docs:check` revisa `39`
+tests; móvil pasa `22` suites y `97/97` tests; `docs:check` revisa `40`
 documentos sin avisos; la release Android `versionCode=5` está preparada
 localmente como AAB y APK firmadas, pero no está instalada porque ADB no
 detecta el Galaxy. Render sigue vivo, aunque la última observación pública
