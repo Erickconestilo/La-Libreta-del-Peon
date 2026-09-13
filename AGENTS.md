@@ -16,6 +16,17 @@ Consulta y sigue como fuente principal, **en este orden**:
 
 **Documentos archivados:** `docs/archive/` contiene historial congelado (informes E2E, inventarios de fase, auditorías fechadas, planes superados). Se leen como evidencia, no se actualizan, y no se citan como estado actual.
 
+## Modelo De Roles Vigente
+
+El contrato actual reconoce cuatro roles globales:
+
+- `admin`: administra el producto y tiene acceso global según las rutas protegidas.
+- `topografo`: ejecuta y registra trabajo únicamente en obras con membresía activa y permiso efectivo `write`.
+- `supervisor`: consulta únicamente obras con membresía activa; no puede escribir aunque su membresía indique `write` y no usa `Mi jornada` como operador.
+- `visitante`: conserva el acceso público o permitido de solo lectura y queda fuera de las rutas de auscultación protegidas.
+
+El rol global no sustituye el scope de obra: el backend debe derivar el `projectId` del recurso y comprobar la membresía efectiva antes de autorizar. La app móvil aplica la misma restricción como primera barrera, pero la autorización definitiva siempre pertenece al backend.
+
 Nota técnica:
 - Expo ha cambiado entre versiones, así que antes de aplicar cambios sensibles de framework conviene revisar la documentación oficial de la versión exacta usada en el proyecto.
 
