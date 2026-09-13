@@ -206,6 +206,7 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reauditar vulnerabilidades de producción del backend sin aplicar cambios rompientes | cerrado (`npm audit --workspace apps/backend --omit=dev` devolvió `2 moderate`, `0 high`, `0 critical`, por `uuid` transitivo de `exceljs`; `npm run docs:check` revisó `44` documentos sin errores ni avisos y `git diff --check` terminó sin salida. No se usó `--force`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar la cifra activa de tooling tras añadir el verificador público de estados | cerrado (`npm run verify:local` terminó con backend `113/113`, móvil `23` suites y `114/114`, tooling `13/13`, `docs:check` con `44` documentos sin errores ni avisos y `git diff --check` sin salida. Se conservaron las cifras históricas.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Documentar en README la verificación opcional del endpoint de estados de trabajo | cerrado (`npm run docs:check` devolvió `check-docs: 44 documentos revisados en raíz y docs/` y `Sin errores ni avisos`; `git diff --check` sin salida. No se modificaron servicios remotos ni el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Extender el verificador público al endpoint de estados de trabajo sin credenciales | cerrado (`node --check scripts/verify-public-contract.mjs` terminó con código `0`; `node --test scripts/verify-public-contract.test.mjs` devolvió `ℹ tests 4`, `ℹ pass 4`, `ℹ fail 0`; `npm run verify:remote:public` mantuvo `PUBLIC_HEALTH_STATUS=200`, `PUBLIC_ROUNDS_STATUS=401` y `PUBLIC_JOURNEY_STATUS=401`; `git diff --check` sin salida. El chequeo nuevo es opcional mediante `TOPOFIELD_ROUND_POINT_ID`; no se modificó Render ni Supabase.)` |
@@ -755,6 +756,13 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
 **Evidencia de que está terminado:** ese archivo existe con al menos los 6 escenarios mínimos de Fase 4 de `PLAN.md` cubiertos y un top de fricciones priorizado.
 
 ## 12. Bitácora de avances (una línea por hito, con contexto)
+
+- **2026-09-13 — Reauditoría de dependencias de producción (Codex):**
+  `npm audit --workspace apps/backend --omit=dev` mantiene `2 moderate`, `0`
+  altas y `0` críticas. El único aviso es `uuid <11.1.1` transitivo de
+  `exceljs`; npm solo ofrece resolverlo con `npm audit fix --force`, que
+  instalaría `exceljs@3.4.0` y supone un cambio rompiente. No se aplicó
+  `--force` ni se modificó el árbol de dependencias.
 
 - **2026-09-13 — Verificador público ampliado al endpoint de estados de trabajo
   (Codex):** `scripts/verify-public-contract.mjs` acepta opcionalmente
