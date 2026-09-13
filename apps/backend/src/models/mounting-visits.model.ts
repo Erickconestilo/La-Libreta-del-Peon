@@ -12,8 +12,10 @@ type Scope = {
 };
 
 const MOUNTING_VISIT_TENANT_CONDITION = 's.project_id = v.project_id';
+const MOUNTING_EVIDENCE_RELATION_CONDITION = 'e.visit_id = v.id AND e.station_id = v.station_id';
 
 export const buildMountingVisitTenantCondition = () => MOUNTING_VISIT_TENANT_CONDITION;
+export const buildMountingEvidenceRelationCondition = () => MOUNTING_EVIDENCE_RELATION_CONDITION;
 
 type MountingEvidenceKind = 'general' | 'prism' | 'reference' | 'access' | 'other';
 type MountingVisitStatus = 'draft' | 'completed' | 'blocked';
@@ -137,7 +139,7 @@ const visitSelect = `
     ) AS evidence
   FROM station_mounting_visits v
   INNER JOIN stations s ON s.id = v.station_id AND ${MOUNTING_VISIT_TENANT_CONDITION}
-  LEFT JOIN mounting_visit_evidence e ON e.visit_id = v.id
+  LEFT JOIN mounting_visit_evidence e ON ${MOUNTING_EVIDENCE_RELATION_CONDITION}
 `;
 
 export const listMountingVisits = async (stationId: string, projectScope: string[] | null = null) => {

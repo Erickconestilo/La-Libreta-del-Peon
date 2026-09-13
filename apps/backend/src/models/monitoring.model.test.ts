@@ -14,6 +14,7 @@ import {
   toIsoTimestamp
 } from './monitoring.model.js';
 import {
+  buildMountingEvidenceRelationCondition,
   buildMountingVisitStationScope,
   buildMountingVisitTenantCondition
 } from './mounting-visits.model.js';
@@ -98,6 +99,13 @@ test('mounting visits use the station project as their tenant scope', () => {
 
 test('mounting visit queries require the visit and station to share the same project', () => {
   assert.equal(buildMountingVisitTenantCondition(), 's.project_id = v.project_id');
+});
+
+test('mounting visit queries reject evidence from a different station', () => {
+  assert.equal(
+    buildMountingEvidenceRelationCondition(),
+    'e.visit_id = v.id AND e.station_id = v.station_id'
+  );
 });
 
 test('monitoring reads require the round point and control point to share a tenant', () => {
