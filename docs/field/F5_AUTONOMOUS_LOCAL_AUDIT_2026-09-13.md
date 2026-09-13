@@ -233,6 +233,18 @@ check-docs: 39 documentos revisados en raíz y docs/.
 
 Sin errores ni avisos.
 
+Dependencies are up to date
+verify:pre-apk:local: completed successfully
+pre-apk output=C:\Users\guill\AppData\Local\Temp\topofield-export-android-preapk
+
+npm audit --workspace apps/backend --omit=dev --json:
+moderate=2; high=0; critical=0; total=2
+transitive dependency: exceljs -> uuid@8.3.2
+available fix would downgrade exceljs to 3.4.0; no --force fix applied
+
+adb devices -l:
+List of devices attached
+
 BUILD SUCCESSFUL in 16m 18s
 bundletool_exit=not-run (terminal policy blocked keystore credential transport)
 gradle_apk_exit=0
