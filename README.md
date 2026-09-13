@@ -26,12 +26,12 @@ Aplicación móvil de campo para equipos pequeños de topografía y auscultació
 Resumen; el detalle por fase está en [ROADMAP.md](./ROADMAP.md).
 
 - Motor offline ampliado localmente: outbox SQLite, caché separada por sesión, recuperación tras reinicio, borradores de lectura y sincronización idempotente por `client_request_id`.
-- MVP de auscultación implementado: rondas, puntos de control, lecturas, umbrales, histórico, fotos y exportación CSV/XLSX. El recorrido de operador con foto offline requiere todavía una repetición física válida.
+- MVP de auscultación implementado: rondas, puntos de control, lecturas, umbrales, histórico, fotos y exportación CSV/XLSX. El recorrido físico v6 de operador con lectura y foto offline, reinicio, reconexión y unicidad ya está verificado una vez; siguen pendientes cierre definitivo, exportación con oficina y observación real.
 - Último backend funcional verificado en Render durante F5: commit `6a1b19f`; la comprobación pública más reciente del servicio (13-09-2026) devolvió `eb88db9`, anterior a los hardenings locales posteriores. El endpoint público de salud responde y las rutas protegidas responden `401` sin sesión; la rama contiene mejoras locales aún no desplegadas.
 - Aislamiento multi-tenant auditado por familia de endpoint; RLS activo en las 24 tablas del proyecto. El rol `supervisor` consulta por membresía `read` y no escribe.
 - La autorización de escritura falla cerrada en móvil y backend: una sesión `topografo` necesita `projectAccess[projectId] = "write"`; el mapa ausente no habilita controles ni mutaciones.
-- Release Android `versionCode=5` preparada localmente como AAB y APK firmadas con `CN=TopoField Android Release`; la v4 es la última instalada históricamente en el Galaxy y ADB debe volver a detectar el dispositivo para instalar v5 y repetir el E2E.
-- **F5 continúa abierta:** faltan la repetición offline en Galaxy, validación de exportación con datos reales, observación de campo y conversaciones con profesionales.
+- Release Android `versionCode=6` instalada en el Galaxy como APK arm64 y firmada con `CN=TopoField Android Release`; la AAB/APK están preparadas localmente y el runbook conserva el fallback de Gradle sin `clean`.
+- **F5 continúa abierta:** faltan cierre definitivo con umbral autorizado, validación de exportación con datos reales, observación de campo y conversaciones con profesionales.
 
 ## Verificación local
 

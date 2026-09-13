@@ -423,22 +423,24 @@ Cubierto por `.gitignore` (`.env`), igual que el keystore de firma — nunca se 
 ## 21. Estado final real (verificado 13-09-2026)
 
 - Build Android local gratuita: resuelta
-- APK local v5: generada y firmada correctamente para `arm64-v8a`
-- AAB local v5: generada y validada con Bundletool
+- APK local v6: generada y firmada correctamente para `arm64-v8a`
+- AAB local v6: generada y validada con Bundletool
 - Firma verificada: `CN=TopoField Android Release`
 - Package: `com.ciudadanoinusual.topofield`
-- `versionCode`: `5`
-- Galaxy: no detectable por ADB en la última comprobación; instalación y E2E
-  físico siguen pendientes
+- `versionCode`: `6`
+- Galaxy: detectable como `R5CY21X6FLE device`; `adb install -r` devolvió
+  `Success` y la validación física v6 de lectura/foto offline, reinicio,
+  reconexión y unicidad quedó documentada en
+  `docs/field/F5_HALLAZGOS_2026-09-13.md`
 - La configuración de firma está fuera del repo en
   `%USERPROFILE%\.topofield\android\topofield-release.properties`; el keystore
   y las contraseñas no se versionan
 
 ## 22. Proximos pasos posibles
 
-### Opcion A - instalar la APK local cuando ADB detecte el Galaxy
+### Opcion A - actualizar la APK local en el Galaxy
 
-Intentar primero una actualización sobre la instalación existente. La APK v5 usa
+Intentar primero una actualización sobre la instalación existente. La APK v6 usa
 la firma de release de TopoField; `adb install -r` conserva la sesión y la caché
 offline si la firma y el `applicationId` coinciden:
 

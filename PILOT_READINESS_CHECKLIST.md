@@ -13,21 +13,25 @@ Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
 - [x] Backend compila y pasa `104/104` tests con `npm run verify:local`.
-- [x] Móvil pasa TypeScript, `22` suites y `101/101` tests.
+- [x] Móvil pasa TypeScript, `22` suites y `102/102` tests.
 - [x] Tooling local pasa `9/9` tests; `verify:local` termina con
   `verify local completed successfully`.
 - [x] `docs:check` revisa `40 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
-- [x] La release Android v5 está generada localmente, firmada como
+- [x] La release Android v6 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
   validate` y `apksigner`.
+- [x] La APK arm64 v6 está instalada en el Galaxy; `adb install -r` devolvió
+  `Success` y `dumpsys package` confirmó `versionCode=6` y
+  `lastUpdateTime=2026-09-13 06:58:15`.
 - [x] La auditoría local cubre autenticación, roles, scope entre obras,
   adjuntos, idempotencia, caché por sesión, outbox y exportación.
 - [ ] Publicar los hardenings locales posteriores al último commit observado
   en Render y repetir las comprobaciones autenticadas.
-- [ ] Instalar v5 y ejecutar el E2E físico en el Galaxy; actualmente ADB no
-  detecta ningún dispositivo.
-- [ ] Validar con datos autorizados el parte, cierre, reconexión y paridad
+- [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
+  reinicio, reconexión y sincronización única; Supabase verificó una lectura y
+  un adjunto para el mismo `client_request_id`.
+- [ ] Validar con datos autorizados el parte, cierre definitivo y paridad
   CSV/XLSX.
 
 ## Paso 1 - Erick usando datos reales en campo
