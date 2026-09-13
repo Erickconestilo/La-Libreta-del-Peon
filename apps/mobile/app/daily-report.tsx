@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,6 +37,7 @@ const todayKey = () => {
 
 export default function DailyReportScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { currentUser } = useCurrentSession();
   const canUseTeamTools = currentUser?.role === 'admin' || currentUser?.role === 'topografo';
   const projectsQuery = useProjects();
@@ -118,6 +120,7 @@ export default function DailyReportScreen() {
   const noteCount = dailyEvents.filter((event) => event.kind === 'Nota').length;
   const messageCount = dailyEvents.filter((event) => event.kind === 'Mensaje').length;
   const assignedRounds = (journeyQuery.data ?? []).filter((round) => round.projectId === resolvedProjectId);
+  const firstAssignedRound = assignedRounds[0] ?? null;
   const assignedWork = getJourneyWorkSummary(assignedRounds);
   const stationPhotoCount = projectStations.filter((station) => Boolean(station.photoUrl)).length;
   const isChecklistComplete = checklist.completedCount === checklist.totalCount;
@@ -183,6 +186,20 @@ export default function DailyReportScreen() {
               <WorkSummary label="Por revisar" value={assignedWork.review} tone={colors.red} />
             </View>
             <Text style={styles.caption}>Este resumen indica el trabajo declarado por el operario. Las lecturas y el cierre de ronda siguen sus propias reglas.</Text>
+            {firstAssignedRound ? (
+              <View style={styles.assignedActions}>
+                <Pressable onPress={() => router.push(`/rounds/${firstAssignedRound.id}` as never)} style={styles.assignedPrimaryButton}>
+                  <MaterialIcons color={colors.background} name="play-arrow" size={18} />
+                  <Text style={styles.assignedPrimaryText}>Continuar ronda</Text>
+                </Pressable>
+                {firstAssignedRound.status === 'active' ? (
+                  <Pressable onPress={() => router.push(`/rounds/${firstAssignedRound.id}/completion` as never)} style={styles.assignedSecondaryButton}>
+                    <MaterialIcons color={colors.textPrimary} name="assignment-turned-in" size={18} />
+                    <Text style={styles.assignedSecondaryText}>Parte de zona</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
           </>
         ) : null}
       </View>
@@ -330,6 +347,40 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 20
+  },
+  assignedActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2]
+  },
+  assignedPrimaryButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accentGreen,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: spacing[1],
+    minHeight: 42,
+    paddingHorizontal: spacing[2]
+  },
+  assignedPrimaryText: {
+    color: colors.background,
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  assignedSecondaryButton: {
+    alignItems: 'center',
+    borderColor: '#48505f',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing[1],
+    minHeight: 42,
+    paddingHorizontal: spacing[2]
+  },
+  assignedSecondaryText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '800'
   },
   caption: {
     color: colors.textSecondary,
