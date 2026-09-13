@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+  verificado: 2026-09-13
 -->
 
 # LOCAL_ANDROID_BUILD_RUNBOOK.md
@@ -298,6 +298,10 @@ cd C:\tf\apps\mobile\android
 Resultado:
 
 - `BUILD SUCCESSFUL`
+- El script versionado `scripts/build-local-android.ps1` usa `JDK 17`, la ruta corta
+  `C:\tf` y limita la release al ABI `arm64-v8a`, que es el ABI del Galaxy
+  objetivo. No se debe interpretar esta salida como una build universal para
+  todos los dispositivos Android.
 
 APK generada:
 
@@ -349,15 +353,19 @@ Intento de instalar encima:
 adb install -r "C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
 ```
 
-Resultado:
+Resultado historico:
 
-- error `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
+- Una build antigua produjo `INSTALL_FAILED_UPDATE_INCOMPATIBLE` al intentar
+  actualizar una instalación firmada por EAS. Ese resultado no describe la
+  release local v5 actual: la v5 está firmada con la clave local
+  `CN=TopoField Android Release`.
 
-Interpretacion:
+Regla actual:
 
-- la APK local esta firmada con otra clave
-- la APK instalada desde EAS usa la keystore remota de Expo
-- por eso Android no permite actualizar una encima de la otra
+- Antes de instalar, comparar la huella de la APK con la instalación existente.
+- Si coincide, usar `adb install -r` para conservar sesión y datos locales.
+- Si no coincide, no desinstalar automáticamente: la desinstalación borra la
+  sesión y la caché offline y requiere una decisión explícita.
 
 ## 19. Intento de usar EAS local con la firma remota
 
@@ -412,30 +420,33 @@ EXPO_PUBLIC_GUEST_PUBLIC_TOKEN=<mismo valor que GUEST_PUBLIC_TOKEN en el backend
 
 Cubierto por `.gitignore` (`.env`), igual que el keystore de firma — nunca se commitea. Plantilla de referencia en `apps/mobile/.env.example` (apunta a `localhost`, válido solo para desarrollo local con backend en tu máquina, no para un release real).
 
-## 21. Estado final real
+## 21. Estado final real (verificado 13-09-2026)
 
 - Build Android local gratuita: resuelta
-- APK local: generada correctamente
-- Instalacion sobre la app EAS existente: bloqueada por firma distinta
-- Keystore local encontrada:
-  - solo `apps/mobile/android/app/debug.keystore`
-- Keystore remota de EAS:
-  - no quedo disponible localmente durante esta sesion
+- APK local v5: generada y firmada correctamente para `arm64-v8a`
+- AAB local v5: generada y validada con Bundletool
+- Firma verificada: `CN=TopoField Android Release`
+- Package: `com.ciudadanoinusual.topofield`
+- `versionCode`: `5`
+- Galaxy: no detectable por ADB en la última comprobación; instalación y E2E
+  físico siguen pendientes
+- La configuración de firma está fuera del repo en
+  `%USERPROFILE%\.topofield\android\topofield-release.properties`; el keystore
+  y las contraseñas no se versionan
 
 ## 22. Proximos pasos posibles
 
-### Opcion A - instalar la APK local ya mismo
+### Opcion A - instalar la APK local cuando ADB detecte el Galaxy
 
 Desinstalar la app actual del Galaxy y luego instalar la nueva:
 
 ```powershell
-adb uninstall com.ciudadanoinusual.topofield
-adb install "C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
+adb devices -l
+adb install -r "C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
 ```
 
-Coste:
-
-- se pierde la instalacion actual y su sesion local
+Si aparece `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, detenerse y no ejecutar
+`adb uninstall` sin confirmar antes la pérdida de sesión y caché offline.
 
 ### Opcion B - mantener actualizacion sin desinstalar
 
