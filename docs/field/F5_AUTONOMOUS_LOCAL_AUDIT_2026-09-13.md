@@ -273,6 +273,11 @@ se ha desplegado desde esta sesión.
     interpretar la posición relativa como coordenada o orientación. Es una
     mejora local de UX; la migración `027` continúa sin aplicación remota.
 
+39. Las miniaturas de esa memoria visual abren una vista ampliada que prioriza
+    `localUri` durante la sincronización pendiente, muestra notas y permite
+    cerrar mediante un control accesible. No cambia estados ni convierte la
+    posición relativa en coordenada.
+
 ## Evidencia local
 
 ```text
@@ -284,7 +289,7 @@ se ha desplegado desde esta sesión.
 ℹ fail 0
 
 Test Suites: 22 passed, 22 total
-Tests:       98 passed, 98 total
+Tests:       99 passed, 99 total
 
 check-docs: 40 documentos revisados en raíz y docs/.
 

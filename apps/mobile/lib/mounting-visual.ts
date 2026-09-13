@@ -1,8 +1,9 @@
-import type { MountingEvidenceKind, MountingVisit } from '@shared/types';
+import type { MountingEvidence, MountingEvidenceKind, MountingVisit } from '@shared/types';
 
 export const MOUNTING_PHOTO_SIZE = 132;
 
 export type MountingVisualFilter = 'all' | MountingEvidenceKind;
+export type MountingVisualEvidence = MountingEvidence & { localUri?: string };
 
 export const MOUNTING_VISUAL_FILTERS: Array<{ key: MountingVisualFilter; label: string }> = [
   { key: 'all', label: 'Todas' },
@@ -26,6 +27,8 @@ export const filterMountingVisitsForVisual = <T extends MountingVisit>(
       evidence: visit.evidence.filter((evidence) => evidence.kind === filter)
     })) as T[];
 };
+
+export const getMountingEvidenceUri = (evidence: MountingVisualEvidence) => evidence.localUri ?? evidence.publicUrl;
 
 export const MOUNTING_PHOTO_ANCHORS = [
   { key: 'top-left', label: 'Arriba izquierda', x: 0.2, y: 0.2 },

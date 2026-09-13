@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCurrentSession } from '@/hooks/use-auth';
@@ -15,6 +15,8 @@ import {
   MOUNTING_PHOTO_SIZE,
   MOUNTING_VISUAL_FILTERS,
   filterMountingVisitsForVisual,
+  getMountingEvidenceUri,
+  type MountingVisualEvidence,
   type MountingVisualFilter,
   type MountingPhotoAnchorKey
 } from '@/lib/mounting-visual';
@@ -44,6 +46,7 @@ export default function MountingVisitsScreen() {
   const [selectedPrismId, setSelectedPrismId] = useState<string | null>(null);
   const [photoAnchorKey, setPhotoAnchorKey] = useState<MountingPhotoAnchorKey | null>(null);
   const [activeVisitId, setActiveVisitId] = useState<string | null>(null);
+  const [previewEvidence, setPreviewEvidence] = useState<MountingVisualEvidence | null>(null);
   const [visualFilter, setVisualFilter] = useState<MountingVisualFilter>('all');
   const canEdit = canWriteProject(currentUser, station?.projectId);
   const selectedPhotoAnchor = MOUNTING_PHOTO_ANCHORS.find((anchor) => anchor.key === photoAnchorKey) ?? null;
@@ -263,9 +266,15 @@ export default function MountingVisitsScreen() {
             {visit.changeSummary ? <Text style={styles.body}><Text style={styles.bold}>Cambio:</Text> {visit.changeSummary}</Text> : null}
             {visit.notes ? <Text style={styles.body}>{visit.notes}</Text> : null}
             {visit.evidence.map((evidence) => (
-              <View key={evidence.id} style={styles.evidence}>
+              <Pressable
+                accessibilityLabel={`Ampliar ${evidence.title ?? 'evidencia de montaje'}`}
+                accessibilityRole="button"
+                key={evidence.id}
+                onPress={() => setPreviewEvidence(evidence)}
+                style={styles.evidence}
+              >
                 <View style={styles.evidenceImageFrame}>
-                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} resizeMode="cover" source={{ uri: evidence.localUri ?? evidence.publicUrl }} style={styles.evidenceImage} />
+                  <Image accessibilityLabel={evidence.title ?? 'Evidencia de montaje'} resizeMode="cover" source={{ uri: getMountingEvidenceUri(evidence) }} style={styles.evidenceImage} />
                   {evidence.positionX !== null && evidence.positionY !== null ? (
                     <View
                       pointerEvents="none"
@@ -283,7 +292,7 @@ export default function MountingVisitsScreen() {
                   <Text style={styles.caption}>{evidence.kind === 'prism' ? 'Prisma' : evidence.kind === 'reference' ? 'Referencia' : evidence.kind === 'access' ? 'Acceso' : 'General'}</Text>
                   {evidence.notes ? <Text style={styles.body}>{evidence.notes}</Text> : null}
                 </View>
-              </View>
+              </Pressable>
             ))}
             {canEdit && visit.status === 'draft' ? (
               <View style={styles.actionRow}>
@@ -300,6 +309,21 @@ export default function MountingVisitsScreen() {
           </View>
         ))}
       </ScrollView>
+      <Modal animationType="fade" onRequestClose={() => setPreviewEvidence(null)} transparent visible={Boolean(previewEvidence)}>
+        <View style={[styles.previewBackdrop, { paddingBottom: insets.bottom, paddingTop: insets.top }]}>
+          <View style={styles.previewHeader}>
+            <View style={styles.previewHeaderCopy}>
+              <Text numberOfLines={1} style={styles.previewTitle}>{previewEvidence?.title ?? 'Evidencia de montaje'}</Text>
+              <Text style={styles.previewCaption}>Vista ampliada · posición orientativa</Text>
+            </View>
+            <Pressable accessibilityLabel="Cerrar vista ampliada" accessibilityRole="button" onPress={() => setPreviewEvidence(null)} style={styles.closeButton}>
+              <MaterialIcons color={colors.textPrimary} name="close" size={24} />
+            </Pressable>
+          </View>
+          {previewEvidence ? <Image accessibilityLabel={previewEvidence.title ?? 'Evidencia de montaje ampliada'} resizeMode="contain" source={{ uri: getMountingEvidenceUri(previewEvidence) }} style={styles.previewImage} /> : null}
+          {previewEvidence?.notes ? <Text style={styles.previewNotes}>{previewEvidence.notes}</Text> : null}
+        </View>
+      </Modal>
     </>
   );
 }
@@ -319,6 +343,7 @@ const styles = StyleSheet.create({
   chipText: { color: colors.textSecondary, fontSize: 12, fontWeight: '800' },
   chipTextActive: { color: colors.accentGreen },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[1] },
+  closeButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, height: 44, justifyContent: 'center', width: 44 },
   container: { backgroundColor: colors.background, flex: 1 },
   content: { gap: spacing[2], padding: spacing[3] },
   disabled: { opacity: 0.55 },
@@ -340,6 +365,13 @@ const styles = StyleSheet.create({
   primaryButton: { alignItems: 'center', backgroundColor: colors.accentGreen, borderRadius: 10, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   primaryButtonText: { color: colors.background, fontSize: 14, fontWeight: '900' },
   prismPicker: { gap: spacing[1] },
+  previewBackdrop: { backgroundColor: 'rgba(7, 9, 13, 0.98)', flex: 1, gap: spacing[2], paddingHorizontal: spacing[3] },
+  previewCaption: { color: colors.textSecondary, fontSize: 12 },
+  previewHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing[2], justifyContent: 'space-between' },
+  previewHeaderCopy: { flex: 1, gap: 3 },
+  previewImage: { flex: 1, width: '100%' },
+  previewNotes: { color: colors.textSecondary, fontSize: 14, lineHeight: 21, paddingBottom: spacing[2] },
+  previewTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '900' },
   readOnlyNotice: { alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.35)', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: spacing[1], padding: spacing[2] },
   secondaryButton: { alignItems: 'center', borderColor: '#2a2f3a', borderRadius: 10, borderWidth: 1, flexDirection: 'row', gap: spacing[1], justifyContent: 'center', paddingVertical: 12 },
   secondaryButtonText: { color: colors.textPrimary, fontSize: 14, fontWeight: '800' },

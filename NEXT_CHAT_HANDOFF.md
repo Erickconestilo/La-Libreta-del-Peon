@@ -46,6 +46,9 @@ repositorio bare.
   proyección mantiene la posición relativa solo como anotación de imagen, sin
   convertirla en coordenada, orientación o precisión métrica; la regresión está
   en `apps/mobile/lib/__tests__/mounting-visual.test.ts`.
+- La última mejora añade además una vista ampliada al pulsar una evidencia;
+  prioriza `localUri` para registros offline, muestra notas y permite cerrar
+  con un botón accesible. La suite móvil queda en `22` suites y `99` tests.
 - Hardening local anterior: `a475976` junto con `35fc885`, `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protege las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
@@ -322,7 +325,7 @@ repositorio bare.
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
 - Verificación local posterior al hardening más reciente: backend compila y
   tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
-  suites y `98` tests. La captura de `fissure_witness` marca la foto como
+  suites y `99` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 
