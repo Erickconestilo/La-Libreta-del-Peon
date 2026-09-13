@@ -33,18 +33,27 @@ if (!localOnly) {
   });
 }
 
+const quoteWindowsCommandArg = (value) => {
+  if (!/[\s&|<>^()"]/.test(value)) {
+    return value;
+  }
+
+  return `"${value.replace(/(\\*)"/g, "$1$1\\\"").replace(/(\\*)$/g, "$1$1")}"`;
+};
+
 const run = ({ name, cmd, args, cwd }) => {
   console.log(`\n> ${name}`);
-  const command = process.platform === "win32"
-    ? "cmd.exe"
-    : cmd;
-  const commandArgs = process.platform === "win32"
-    ? ["/d", "/s", "/c", cmd, ...args]
+  const isWindows = process.platform === "win32";
+  const command = isWindows ? "cmd.exe" : cmd;
+  const commandArgs = isWindows
+    ? ["/d", "/s", "/c", [cmd, ...args].map(quoteWindowsCommandArg).join(" ")]
     : args;
   const result = spawnSync(command, commandArgs, {
     cwd,
     stdio: "inherit",
     encoding: "utf-8",
+    timeout: 15 * 60 * 1000,
+    windowsHide: true,
   });
 
   if (result.error) {
@@ -54,6 +63,10 @@ const run = ({ name, cmd, args, cwd }) => {
   if (result.status !== 0) {
     const code = result.status ?? 1;
     throw new Error(`${name} failed with code ${code}`);
+  }
+
+  if (result.signal) {
+    throw new Error(`${name} stopped by signal ${result.signal}`);
   }
 };
 

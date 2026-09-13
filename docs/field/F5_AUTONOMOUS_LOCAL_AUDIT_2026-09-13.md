@@ -244,9 +244,10 @@ check-docs: 39 documentos revisados en raíz y docs/.
 Sin errores ni avisos.
 
 Dependencies are up to date
-verify:pre-apk:local: started but did not finish cleanly
+verify:pre-apk:local: completed successfully
 pre-apk output directory=C:\Users\guill\AppData\Local\Temp\topofield-export-android-preapk
-pre-apk output files=0 after controlled stop of four Expo/Metro PIDs
+pre-apk output files include metadata.json (6101 bytes) and Android assets
+pre-apk lingering Expo/Metro processes=0
 
 npm audit --workspace apps/backend --omit=dev --json:
 moderate=2; high=0; critical=0; total=2
@@ -329,6 +330,5 @@ mantenimiento específica para actualizar Expo/Metro y volver a auditar el
 
 ## Criterio de lectura
 
-El bloque local esta endurecido y verificable, salvo el wrapper de preflight que
-debe corregirse para cerrar Expo/Metro y dejar una salida comprobable. F5 sigue abierta: no se afirma
+El bloque local esta endurecido y verificable. F5 sigue abierta: no se afirma
 estabilidad de campo hasta disponer de evidencia del dispositivo y de uso real.
