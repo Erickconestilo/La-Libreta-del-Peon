@@ -199,10 +199,21 @@ se ha desplegado desde esta sesión.
     La regresión existente del helper mantiene esa garantía.
 
 30. El preflight de release mezclaba checks locales con la verificación remota
-    de membresías y, sin credenciales QA, no permitía comprobar el resto del
-    proceso. Se añadió `verify:pre-apk:local`; ejecuta build backend,
-    TypeScript móvil y export Android, mientras `verify:pre-apk` conserva el
-    chequeo autenticado y falla cerrado cuando faltan credenciales.
+     de membresías y, sin credenciales QA, no permitía comprobar el resto del
+     proceso. Se añadió `verify:pre-apk:local`; ejecuta build backend,
+     TypeScript móvil y export Android, mientras `verify:pre-apk` conserva el
+     chequeo autenticado y falla cerrado cuando faltan credenciales.
+
+31. La migración `007_storage_photo_bucket.sql` declara el bucket
+    `topofield-photos` como público y los modelos conservan `public_url` en los
+    DTO de estaciones, prismas, visitas y lecturas. La autenticación y el scope
+    protegen el descubrimiento de filas en la API, pero no revocan una URL ya
+    conocida: una persona con ese enlace puede intentar leer el objeto
+    directamente desde Storage. No se cambia localmente a URLs firmadas porque
+    hacerlo exige coordinar una migración del bucket, regenerar URLs en todas
+    las consultas y validar el comportamiento móvil con datos existentes. Hasta
+    decidirlo, no deben cargarse fotografías sensibles de terceros en el piloto
+    ni compartirse enlaces de Storage fuera de los usuarios autorizados.
 
 ## Evidencia local
 
@@ -249,6 +260,10 @@ local de desarrollo controlado, pero no es una validacion de Play Store.
 - Dos jornadas observadas y cinco a ocho entrevistas.
 - Revisar las dos vulnerabilidades moderadas transitivas de `uuid` sin usar
   `npm audit fix --force`, porque la solucion propuesta degrada `exceljs`.
+- Resolver la política de fotos antes de datos sensibles: mantener el bucket
+  público solo con una aceptación explícita del riesgo, o preparar una
+  migración a bucket privado con URLs de lectura firmadas y pruebas de
+  regresión para cada pantalla que muestra imágenes.
 
 La comprobación no destructiva `npm audit fix --workspace apps/backend
 --dry-run --json` confirma que no hay cambios de actualización seguros: el

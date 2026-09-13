@@ -179,9 +179,14 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
   fixture genérico y la evidencia de la release sin confundirlas con el E2E
   físico. La migración local 028 prepara unicidad para adjuntos concurrentes y
   aún no se ha aplicado remotamente.
-- El importador manual MapEst ahora falla cerrado si una estación no mapea a
-  una obra única; la regresión está en
-  `apps/backend/src/scripts/mapest-project-mapping.test.ts`.
+ - El importador manual MapEst ahora falla cerrado si una estación no mapea a
+   una obra única; la regresión está en
+   `apps/backend/src/scripts/mapest-project-mapping.test.ts`.
+ - La migración `007_storage_photo_bucket.sql` mantiene el bucket de fotos como
+   público y los DTO devuelven `publicUrl`. El scope de la API está protegido,
+   pero un enlace conocido puede leerse directamente; antes de usar fotos
+   sensibles hay que decidir entre aceptar ese riesgo o migrar a lecturas
+   firmadas. No se cambió Storage unilateralmente.
 - Los scripts históricos de aplicación de migraciones 016 y 017 pasan ahora
   por `assertWriteAllowed`; la guarda está cubierta en
   `apps/backend/src/scripts/safety.test.ts` y no se ejecutó SQL remoto.
