@@ -225,8 +225,8 @@ se ha desplegado desde esta sesión.
 ℹ pass 101
 ℹ fail 0
 
-Test Suites: 21 passed, 21 total
-Tests:       93 passed, 93 total
+Test Suites: 22 passed, 22 total
+Tests:       97 passed, 97 total
 
 check-docs: 39 documentos revisados en raíz y docs/.
 
