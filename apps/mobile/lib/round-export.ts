@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
-import { apiDownload } from './api';
+import { apiDownload, isApiRequestError } from './api';
 import { isNativeSharingAvailable, shareLocalFile } from './native-sharing';
 
 export type RoundExportFormat = 'csv' | 'xlsx';
@@ -11,6 +11,26 @@ export type RoundExportDependencies = {
   isAvailable: () => Promise<boolean>;
   share: (uri: string, options: { dialogTitle: string; mimeType: string }) => Promise<unknown>;
   writeBase64: (uri: string, contents: string) => Promise<void>;
+};
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Returns only actionable, non-sensitive metadata for a failed export. */
+export const getRoundExportErrorMessage = (error: unknown, fallback = 'No se pudo preparar el archivo.') => {
+  if (!isApiRequestError(error)) {
+    return error instanceof Error ? error.message : fallback;
+  }
+
+  const details = [`HTTP ${error.status}`];
+  if (error.code) {
+    details.push(error.code);
+  }
+
+  if (error.requestId && UUID_PATTERN.test(error.requestId)) {
+    details.push(`Código de soporte: ${error.requestId}`);
+  }
+
+  return `${error.message || fallback} (${details.join(' · ')})`;
 };
 
 const exportMetadata: Record<RoundExportFormat, { extension: string; mimeType: string }> = {
