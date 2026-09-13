@@ -319,8 +319,9 @@ available fix would downgrade exceljs to 3.4.0; no --force fix applied
 adb devices -l:
 List of devices attached
 
-BUILD SUCCESSFUL in 14m 53s
+BUILD SUCCESSFUL in 15m 8s
 bundletool_exit=not-run (terminal policy blocked keystore credential transport)
+gradle_bundle_exit=0
 gradle_apk_exit=0
 apksigner_verified=true; signers=1; scheme=V2
 jarsigner_exit=0
@@ -328,7 +329,7 @@ android:versionCode="5"
 package="com.ciudadanoinusual.topofield"
 Propietario: CN=TopoField Android Release, OU=Mobile, O=TopoField, C=ES
 apk=C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
-apk_bytes=53,403,910
+apk_bytes=53,408,438
 ```
 
 La verificacion `jarsigner -verify -strict` mantiene el aviso de certificado
