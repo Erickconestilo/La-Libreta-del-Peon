@@ -658,6 +658,11 @@ export interface RoundExportRow {
   delta: number | null;
   thresholdStatus: CalculatedThresholdStatus;
   attachmentCount: number;
+  workExecutionStatus: WorkExecutionEventType | null;
+  workExecutionReason: string | null;
+  workExecutionNotes: string | null;
+  workExecutionAt: string | null;
+  workExecutionOperator: string | null;
 }
 
 // =====================================================

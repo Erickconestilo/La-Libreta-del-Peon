@@ -30,6 +30,11 @@ const rows: RoundExportRow[] = [
     unit: 'mm',
     valueNumeric: 12.5,
     valueText: null,
+    workExecutionAt: '2026-09-12T08:20:00.000Z',
+    workExecutionNotes: 'Trabajo completado',
+    workExecutionOperator: 'operator@example.test',
+    workExecutionReason: null,
+    workExecutionStatus: 'completed',
     zone: 'Zona Norte'
   },
   {
@@ -56,6 +61,11 @@ const rows: RoundExportRow[] = [
     unit: null,
     valueNumeric: null,
     valueText: null,
+    workExecutionAt: null,
+    workExecutionNotes: null,
+    workExecutionOperator: null,
+    workExecutionReason: 'Sin acceso',
+    workExecutionStatus: 'blocked',
     zone: 'Zona Sur'
   }
 ];

@@ -138,6 +138,9 @@ test('round export applies the actor project scope to its data query', () => {
     (exportSource.match(/WHERE mr\.id = \$1\s+\$\{scope\.clause\}/g) ?? []).length,
     2
   );
+  assert.match(exportSource, /monitoring_work_execution_events/);
+  assert.match(exportSource, /wee\.round_id = mr\.id/);
+  assert.match(exportSource, /wee\.round_point_id = mrp\.id/);
 });
 
 test('station details validate tenant scope before loading associated readings', () => {

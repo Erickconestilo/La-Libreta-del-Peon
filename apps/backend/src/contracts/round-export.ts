@@ -42,4 +42,9 @@ export interface RoundExportRow {
   delta: number | null;
   thresholdStatus: 'normal' | 'warning' | 'alarm' | 'unknown';
   attachmentCount: number;
+  workExecutionStatus: 'started' | 'completed' | 'not_done' | 'repeat_required' | 'blocked' | null;
+  workExecutionReason: string | null;
+  workExecutionNotes: string | null;
+  workExecutionAt: string | null;
+  workExecutionOperator: string | null;
 }

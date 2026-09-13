@@ -29,17 +29,18 @@ EXPORT_ARTIFACTS_OK csvRows=2 xlsxRows=2 worksheet=Auscultación utf8Bom=true
 
 La ruta se puede sustituir por la ubicación donde se hayan guardado los dos
 archivos. Si faltan argumentos, no existe la hoja `Auscultación`, cambian las
-24 columnas, faltan filas, las filas difieren o el XLSX pierde el filtro y la
+29 columnas, faltan filas, las filas difieren o el XLSX pierde el filtro y la
 cabecera congelada, el comando termina con código distinto de cero.
 
 ## Qué comprueba
 
-- Cabecera y orden de las 24 columnas de `RoundExportRow`.
+- Cabecera y orden de las 29 columnas de `RoundExportRow`, incluidas las cinco
+  columnas del último resultado operativo del operario.
 - CSV con BOM UTF-8.
 - Una fila por lectura y por punto pendiente.
 - Normalización consistente de fechas, números y celdas vacías.
 - Hoja XLSX `Auscultación`.
-- Primera fila congelada y filtro `A1:X1`.
+- Primera fila congelada y filtro `A1:AC1`.
 - Mismo número y contenido normalizado de filas en CSV y XLSX.
 
 ## Límite de la evidencia

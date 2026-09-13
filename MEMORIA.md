@@ -206,6 +206,8 @@ Regla: antes de modificar archivos o commitear, añadir una fila aquí con estad
 
 | Fecha | Agente | Rama | Tarea | Estado |
 |---|---|---|---|---|
+| 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el verificador y handoff de exportación con las columnas de resultado operativo | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `112` tests, `112` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos; `git diff --check` terminó sin salida. El contrato de exportación refleja el último resultado operativo y usa el filtro dinámico `A1:AC1`. La migración 029 sigue sin aplicar y no se tocaron Supabase, Render ni el Galaxy.)` |
+| 2026-09-13 | Codex | codex/f5-field-stability | Llevar el resultado operativo del operario al contrato común de exportación CSV/XLSX | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `112` tests, `112` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos; `git diff --check` terminó sin salida. El contrato añade el estado, motivo, notas, fecha y operador del último resultado recibido; la migración 029 sigue sin aplicar, sin despliegue Render y sin instalación nueva en el Galaxy.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Corregir cifras activas del checklist y del handoff tras el slice de resultados de campo | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida. Se actualizaron las cifras activas a `111/111` tests y `44` documentos; se mantuvieron las cifras históricas donde correspondía. No se tocó el Galaxy, Supabase, Render ni `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Reconciliar el handoff después de commitear el registro de resultados del operario | cerrado (`npm run docs:check` revisó `44` documentos en raíz y `docs/` sin errores ni avisos; `git diff --check` terminó sin salida; `git log -1 --oneline` confirmó `6ed9a84 feat(mobile): registrar resultado del trabajo de campo`. Se corrigió la frase obsoleta del handoff y no se tocó el Galaxy, Supabase, Render ni `apps/mobile/package.json`.)` |
 | 2026-09-13 | Codex | codex/f5-field-stability | Implementar registro explícito del resultado de trabajo por punto de ronda a partir del análisis del control semanal, con soporte offline-first y sin importar datos reales | cerrado (`npm run build --workspace apps/backend` código `0`; `npm test --workspace apps/backend -- --runInBand` devolvió `111` tests, `111` pasados, `0` fallidos; `npx tsc --noEmit --project apps/mobile/tsconfig.json` código `0`; `npm test --workspace apps/mobile -- --runInBand --silent` devolvió `23` suites, `111` tests, `111` pasados; `npm run docs:check` revisó `44` documentos sin errores ni avisos. La migración `029_monitoring_work_execution_events.sql`, el endpoint protegido, la captura móvil y el outbox quedan implementados solo localmente; no se aplicó la migración, no se desplegó Render y no se instaló una nueva APK en el Galaxy.)` |
@@ -459,7 +461,7 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `111/111`
+**Estado consolidado al 13-09-2026:** el backend local compila y pasa `112/112`
 tests; móvil pasa `23` suites y `111/111` tests; tooling mantiene `12/12` y
 `docs:check` revisa `44` documentos sin avisos. La release Android
 `versionCode=7` está instalada en el Galaxy y firmada con
@@ -745,6 +747,18 @@ Erick pidió releer `PLAN.md` (roadmap de producto/UX, fases 1-8, numeración in
   backend, TypeScript móvil código `0`, `23` suites/`111` tests móviles,
   `docs:check` con `44` documentos sin avisos. El Galaxy quedó sin cambios y
   Render no se tocó. El slice quedó en el commit local `6ed9a84`.
+
+- **2026-09-13 — Resultado operativo incorporado a la entrega de oficina
+  (Codex):** `RoundExportRow` y sus generadores CSV/XLSX incluyen ahora el
+  último evento recibido del operario: estado, motivo, notas, fecha y autor.
+  La consulta mantiene una fila por lectura y por punto pendiente, y enlaza el
+  evento únicamente por ronda, punto y obra coincidentes. El rango de filtro
+  XLSX se calcula con letras Excel reales y queda en `A1:AC1`; la regresión
+  cubre columnas después de `Z` y paridad entre ambos formatos. Backend compila
+  con código `0` y pasa `112/112` tests; móvil pasa TypeScript y `23` suites/
+  `111/111` tests; `docs:check` revisa `44` documentos sin avisos. La tabla
+  `monitoring_work_execution_events` de la migración `029` continúa solo local;
+  no se tocó Supabase, Render ni el Galaxy.
 
 - **2026-09-13 — Verificador autenticado de Render preparado (Codex):** se
   añadió `npm run verify:remote:auth`, que exige `TOPOFIELD_AUTH_TOKEN` sin

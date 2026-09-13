@@ -1572,7 +1572,12 @@ export const getMonitoringRoundExportRows = async (
         CASE
           WHEN ir.id IS NULL THEN 0
           ELSE (SELECT COUNT(*)::int FROM reading_attachments ra WHERE ra.reading_id = ir.id)
-        END AS attachment_count
+        END AS attachment_count,
+        work_execution.event_type AS work_execution_status,
+        work_execution.reason AS work_execution_reason,
+        work_execution.notes AS work_execution_notes,
+        work_execution.occurred_at AS work_execution_at,
+        COALESCE(work_execution_user.full_name, work_execution_user.email) AS work_execution_operator
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       INNER JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
@@ -1583,6 +1588,16 @@ export const getMonitoringRoundExportRows = async (
        AND ir.instrument_type = mrp.expected_instrument_type
       LEFT JOIN users measured_user ON measured_user.id = ir.measured_by
       LEFT JOIN users operator_user ON operator_user.id = mr.operator_id
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type, wee.reason, wee.notes, wee.occurred_at, wee.recorded_by
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
+      LEFT JOIN users work_execution_user ON work_execution_user.id = work_execution.recorded_by
       LEFT JOIN LATERAL (
         SELECT prior_reading.value_numeric
         FROM instrument_readings prior_reading
@@ -1652,6 +1667,11 @@ export const getMonitoringRoundExportRows = async (
       unit: row.unit,
       valueNumeric: row.value_numeric === null ? null : Number(row.value_numeric),
       valueText: row.value_text,
+      workExecutionAt: row.work_execution_at ? toIsoTimestamp(row.work_execution_at) : null,
+      workExecutionNotes: row.work_execution_notes,
+      workExecutionOperator: row.work_execution_operator,
+      workExecutionReason: row.work_execution_reason,
+      workExecutionStatus: row.work_execution_status,
       zone: row.zone
     };
   });

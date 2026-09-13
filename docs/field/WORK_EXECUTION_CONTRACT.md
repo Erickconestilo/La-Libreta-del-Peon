@@ -64,6 +64,16 @@ La pantalla del supervisor verá únicamente eventos recibidos por el servidor.
 Un evento en outbox no se presenta como recibido hasta que la sincronización
 termine.
 
+## Entrega a oficina
+
+El último evento recibido para cada punto se incluye en el contrato común de
+exportación CSV/XLSX como `trabajo_estado`, `trabajo_motivo`, `trabajo_notas`,
+`trabajo_fecha` y `trabajo_operador`. También aparece para puntos que todavía no
+tienen lectura, porque declarar que el trabajo no se pudo realizar no equivale
+a inventar una medición. El exportador conserva una fila por lectura; si el
+punto está pendiente y no tiene lecturas, conserva una fila pendiente con el
+resultado operativo que haya llegado al servidor.
+
 ## Reglas de diseño para futuras tareas
 
 El contrato actual cubre trabajos ligados a puntos de auscultación. Para

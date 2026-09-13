@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 
-import { ROUND_EXPORT_COLUMNS } from './round-export.js';
+import { excelColumnName, ROUND_EXPORT_COLUMNS } from './round-export.js';
 import type { RoundExportRow } from '../contracts/round-export.js';
 
 export class ExportArtifactVerificationError extends Error {
@@ -99,7 +99,7 @@ const parseCsvRecords = (input: string): string[][] => {
   return records;
 };
 
-const dateToIso = (value: unknown, key: 'roundDate' | 'measuredAt'): string => {
+const dateToIso = (value: unknown, key: 'roundDate' | 'measuredAt' | 'workExecutionAt'): string => {
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) {
       throw new ExportArtifactVerificationError(`XLSX contiene una fecha inválida en ${key}`);
@@ -120,7 +120,7 @@ const canonicalValue = (key: keyof RoundExportRow, value: unknown): unknown => {
     return null;
   }
 
-  if (key === 'roundDate' || key === 'measuredAt') {
+  if (key === 'roundDate' || key === 'measuredAt' || key === 'workExecutionAt') {
     return dateToIso(value, key);
   }
 
@@ -202,8 +202,9 @@ export const verifyRoundExportArtifacts = async (
   if (worksheet.views[0]?.state !== 'frozen' || worksheet.views[0]?.ySplit !== 1) {
     throw new ExportArtifactVerificationError('XLSX no congela la primera fila');
   }
-  if (readAutoFilterRange(worksheet) !== 'A1:X1') {
-    throw new ExportArtifactVerificationError('XLSX no conserva el filtro A1:X1');
+  const expectedAutoFilterRange = `A1:${excelColumnName(ROUND_EXPORT_COLUMNS.length)}1`;
+  if (readAutoFilterRange(worksheet) !== expectedAutoFilterRange) {
+    throw new ExportArtifactVerificationError(`XLSX no conserva el filtro ${expectedAutoFilterRange}`);
   }
   if (csvRows.length !== xlsxRows.length) {
     throw new ExportArtifactVerificationError(
