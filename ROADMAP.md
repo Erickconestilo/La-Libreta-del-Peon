@@ -73,9 +73,12 @@ La auditoría local vigente de 13-09-2026 está en
 automatizada sobre todos los routers de negocio y corrige la lectura defensiva
 de incidencias, prismas y visitas de montaje con referencias cruzadas. También
 deja el catálogo de ejemplo y sus fixtures sin nomenclatura de cliente. Backend
-  local: `99/99` tests. El contrato backend de exportación está alineado con
+  local: `100/100` tests. El contrato backend de exportación está alineado con
 `shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
-para integridad de tenant, con regresión local; sigue sin aplicarse en
+  para integridad de tenant, con regresión local. La reconciliación de prismas
+  también exige ahora la igualdad de `project_id` entre observación, prisma y
+  estación; la regresión local está incluida en los `100/100` tests. La migración
+  027 sigue sin aplicarse en
 Supabase. Estos últimos cambios siguen solo en la rama local; Render fue
 observado el 13-09-2026 sirviendo `eb88db9`, que es anterior a los hardenings
 locales posteriores y debe volver a verificarse tras una publicación remota.

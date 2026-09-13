@@ -14,11 +14,15 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 ## Estado de la rama
 
 - Rama activa: `codex/f5-field-stability`.
-- Hardening local más reciente: `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protegen las relaciones
+- Hardening local más reciente: `f5de61d`, `f90c995`, `3465cde`, `4562d89` y `ce8bc40`, protegen las relaciones
   internas de ronda, punto de control, lectura y adjuntos, preparan la
   migración 028 para deduplicación concurrente, bloquean los deep links de
   escritura y exigen en backend el mapa efectivo para cualquier escritura de
   topógrafo.
+- `f5de61d` corrige un hueco adicional de tenant en la reconciliación automática
+  de observaciones de prismas: la observación, el prisma y la estación deben
+  compartir `project_id`, y una estación sin proyecto no recibe observaciones.
+  La regresión se ejecuta desde `dist` para evitar falsos verdes del test.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
 - Última corrección local: `c709fab` elimina una sustitución de nombre
@@ -63,7 +67,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
   queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `97` tests.
+  móvil actual pasa `22` suites y `97` tests; el backend actual pasa `100/100`.
 - Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
@@ -177,7 +181,7 @@ solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
 - Los scripts históricos de aplicación de migraciones 016 y 017 pasan ahora
   por `assertWriteAllowed`; la guarda está cubierta en
   `apps/backend/src/scripts/safety.test.ts` y no se ejecutó SQL remoto.
-- La rama local añade `a868867` después del despliegue verificado de Render
+- La rama local añade `f5de61d` después del despliegue verificado de Render
   (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
   remotamente.
 - La plantilla de obra genérica está en
