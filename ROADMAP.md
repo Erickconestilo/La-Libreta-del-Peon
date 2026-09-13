@@ -144,8 +144,9 @@ El último despliegue funcional verificado sirve el merge commit
 `6a1b19fa9384e77797b956b6710af9f7a0ec7ff0`, que contiene `b0572a0`.
 La fuente y la release móvil local más reciente están preparadas con
 `versionCode=5`; la AAB está firmada y verificada y Gradle generó una APK
-release verificable con el mismo certificado. No se usó Bundletool por el
-bloqueo de transporte de su contraseña.
+release verificable con el mismo certificado. `bundletool validate` también
+terminó con código `0`; no se generó un APK universal porque el transporte de
+la contraseña de la clave quedó bloqueado.
 La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, única obra

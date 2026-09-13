@@ -33,10 +33,11 @@ se ha desplegado desde esta sesión.
 5. La release local v5 se recompilo despues de alinear Expo 56 y corregir
    fallos reproducibles del outbox. El manifiesto confirma `versionCode=5` y
    el paquete de TopoField. La AAB esta firmada como `CN=TopoField Android
-   Release`; Bundletool no se uso porque no pudo recibir la contraseña del
-   keystore de forma autorizada en esta terminal. Gradle genero ademas la APK
-   release `app-release.apk`, y `apksigner` confirmo `verified=true`, esquema
-   V2, un firmante y el mismo certificado de release. El ultimo intento de
+   Release`; `bundletool validate` termino con codigo 0. No se genero un APK
+   universal con Bundletool porque no pudo recibir la contraseña del keystore
+   de forma autorizada en esta terminal. Gradle genero ademas la APK release
+   `app-release.apk`, y `apksigner` confirmo `verified=true`, esquema V2, un
+   firmante y el mismo certificado de release. El ultimo intento de
    build universal fallo durante `externalNativeBuildCleanRelease` de
    `react-native-reanimated` con `ninja: error: manifest 'build.ninja' still
    dirty after 100 tries`; la APK arm64 sigue siendo la variante adecuada para
