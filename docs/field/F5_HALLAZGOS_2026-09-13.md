@@ -24,7 +24,7 @@ de exportacion con oficina y un cierre definitivo con umbral autorizado.
 
 ## Recorrido ejecutado
 
-1. Se abrio la obra `Campus Nord`, se consulto la ronda y se preparo la
+1. Se abrio la obra QA autorizada, se consulto la ronda y se preparo la
    jornada sin conexion.
 2. Se activo el modo avion desde la interfaz visible de ajustes rapidos y se
    mantuvo Wi-Fi apagado. No se uso `settings put global airplane_mode_on`.
@@ -108,7 +108,7 @@ un despliegue autorizado y comparar CSV/XLSX estructuralmente.
 
 Antes de cortar la red se cargo la lista de rondas en linea para poblar el
 cache por proyecto. Despues de cerrar y reabrir la app en modo avion, la
-navegacion `Obras -> Campus Nord -> Rondas de auscultacion` mostro literalmente:
+navegacion `Obras -> obra QA autorizada -> Rondas de auscultacion` mostro literalmente:
 
 ```text
 Rondas sin actualizar. Última copia: 2026-09-13T05:00:36.436Z.
