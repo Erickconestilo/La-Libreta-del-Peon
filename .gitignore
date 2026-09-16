@@ -43,3 +43,7 @@ yarn-error.*
 /ios
 /android
 /apps/mobile/android/
+# Capturas y volcados UI de evidencia local (no son entregables)
+/topofield-*.png
+/topofield-*.xml
+/airplane.xml
