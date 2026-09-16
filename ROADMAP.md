@@ -96,6 +96,25 @@ como `CLEAN`/`MERGEABLE` (`4` archivos, `+367/-7`) y se fusionó por squash como
 y el contrato público volvió a pasar con ese SHA exacto y readiness 029+030
 `ready`.
 
+Stage 3 revalidó por separado publicación y contrato remoto. GitHub `main`
+continúa exactamente en `d3bef6ea0988e44524cd7cde8392906dc936e06f`; el
+repositorio no tiene workflows de GitHub Actions (`RUNS=[]` y
+`.github/workflows` ausente), por lo que **no existe un PASS de CI automática**
+que deba confundirse con la regresión local. El tree SHA del candidato probado
+`69e8fd0` y el del squash publicado son idénticos
+(`a56c3e95ce84374e84bd405a906804fdb6d1ce41`). Render muestra
+`dep-dalfq3bbc2fs7381i7vg` como `Live`, commit `d3bef6e`, duración `32,1 s`;
+`/health=200` sirve ese SHA y `/readiness=200` mantiene 029 y 030 `ready`.
+Las rutas `/auth/me`, `Mi jornada`, execution-events y weekly-work existen en
+producción: sin bearer devuelven `401`; con el token guest legítimo `/auth/me`
+devuelve `200` y los tres flujos técnicos `403`, nunca `404`. El contrato con
+cuenta técnica sigue **bloqueado externamente** porque no existe
+`TOPOFIELD_AUTH_TOKEN` en Process/User/Machine ni en las claves del `.env`; no se
+crearon ni resetearon credenciales para fabricar un PASS. `ae3dfce` endurece el
+verificador local para exigir `authProvider=supabase` con rol técnico y comprobar
+también weekly-work; tooling pasa `19/19`. Este tooling no cambia el runtime de
+Render.
+
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
 neutralizado, pero la historia alcanzable todavia conserva objetos de la etapa

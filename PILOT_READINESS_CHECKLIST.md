@@ -17,10 +17,12 @@ validación en campo:
 - [x] Móvil pasa TypeScript, `25` suites y `137/137` tests; la batería cubre
   además los estados de entrega local, conflicto, reintento y backend
   incompatible.
-- [x] Tooling local incluye una compuerta pública de readiness: el verificador
-  exige `/health=200`, `/readiness=200` con work-execution 029 y weekly-work 030
-  disponibles y falla cerrado si cualquiera falta; `npm run test:tooling` pasa
-  `17/17`.
+- [x] Tooling local incluye compuertas pública y autenticada. La pública exige
+  `/health=200`, `/readiness=200` con work-execution 029 y weekly-work 030 y
+  falla cerrado si cualquiera falta. Stage 3 endureció además el verificador
+  autenticado para rechazar un guest como evidencia técnica y comprobar
+  weekly-work cuando se proporciona una obra; `npm run test:tooling` pasa
+  `19/19`.
 - [x] `docs:check` revisa `47 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
@@ -70,6 +72,19 @@ validación en campo:
   `d3bef6ea0988e44524cd7cde8392906dc936e06f` y Render lo auto-desplegó. El
   verificador público posterior confirmó `/health=200` en ese SHA y
   `/readiness=200` con 029+030 `ready`.
+- [x] Reconciliar Stage 3 sin mezclar capas: GitHub `main=d3bef6e...`; no hay
+  GitHub Actions configuradas (`RUNS=[]`, sin `.github/workflows`), así que la
+  regresión `142/142` es evidencia local y no CI. El tree del candidato
+  `69e8fd0` coincide exactamente con el tree del squash publicado. Render muestra
+  `dep-dalfq3bbc2fs7381i7vg` `Live`, commit `d3bef6e`, duración `32,1 s`.
+  `/health=200`, `/readiness=200`; `/auth/me`, `Mi jornada`, execution-events y
+  weekly-work no producen `404`: sin bearer dan `401`; con guest, `/auth/me=200`
+  y los flujos técnicos `403`.
+- [ ] Ejecutar el contrato remoto con una **cuenta técnica legítima**. El
+  comando `npm run verify:remote:auth` sigue fallando cerrado con
+  `TOPOFIELD_AUTH_TOKEN is required and is never printed`; no existe esa variable
+  en Process/User/Machine ni en el `.env`. No sustituir esta prueba por el guest
+  ni crear/resetear credenciales solo para marcar PASS.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.

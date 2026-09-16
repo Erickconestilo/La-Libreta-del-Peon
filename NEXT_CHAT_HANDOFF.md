@@ -159,6 +159,34 @@ pusheó la rama, PR #23 quedó `CLEAN`/`MERGEABLE` con esos cuatro archivos y se
 fusionó por squash. Render auto-desplegó `d3bef6e` (`dep-dalfq3bbc2fs7381i7vg`)
 y el contrato público volvió a pasar con ese SHA exacto.
 
+Stage 3 volvió a reconciliar las capas de evidencia. GitHub `main` permanece en
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`; PR #23 está `MERGED`. No hay CI de
+GitHub Actions en este repo: `gh run list --branch main` devolvió `[]` y
+`.github/workflows` no existe. El tree SHA del PR head probado `69e8fd0` y el
+tree SHA del squash `d3bef6e` coinciden exactamente en
+`a56c3e95ce84374e84bd405a906804fdb6d1ce41`, por lo que la batería local
+`142/142` corresponde al contenido publicado aunque no sea un check de CI.
+Render Dashboard muestra `d3bef6e` como último commit desplegado correctamente,
+estado `Live`, deploy `dep-dalfq3bbc2fs7381i7vg`, duración `32,1 s`.
+
+El contrato público Stage 3 pasó otra vez: `/health=200` con `d3bef6e...`,
+`/readiness=200`, 029+030 `ready`, rondas y jornada `401` sin bearer. Con IDs
+reales de Supabase, `/auth/me`, `/me/journey`, execution-events y weekly-work
+devuelven `401`, no `404`, sin token. El `GUEST_PUBLIC_TOKEN` legítimo confirma
+además `/auth/me=200` como `guest/visitante` y `403` en jornada,
+execution-events y weekly-work; esto valida routing/roles, **no** sustituye una
+cuenta técnica.
+
+No existe `TOPOFIELD_AUTH_TOKEN` en Process/User/Machine ni entre las claves de
+`apps/backend/.env`. Por eso `npm run verify:remote:auth` se detiene literalmente
+en `TOPOFIELD_AUTH_TOKEN is required and is never printed`. No generar ni
+resetear credenciales para forzarlo. Durante esta revisión se detectó además que
+el verificador anterior podía aceptar el guest como evidencia autenticada y no
+incluía weekly-work. `ae3dfce` lo endurece en la rama de trabajo: exige
+`authProvider=supabase` y rol `admin|topografo|supervisor`, incorpora weekly-work
+cuando existe `projectId`, rechaza su `404` y deja tooling `19/19`. Es tooling de
+verificación local; no altera el runtime de Render.
+
 Antes del despliegue, revisar el runbook de
 `docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.
 La divergencia del ledger quedó cerrada, 027–030 ya están aplicadas y el backend
