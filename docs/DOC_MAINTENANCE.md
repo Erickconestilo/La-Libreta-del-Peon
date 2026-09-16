@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-08-02
+verificado: 2026-09-15
 -->
 
 # Mantenimiento de la documentación
@@ -50,6 +50,14 @@ Cuando dos documentos vivos se contradicen, manda el de arriba:
 4. El resto de documentos vivos, cada uno en su dominio (producto, UX, piloto, runbooks).
 
 El chequeo automático falla si aparece un segundo `rol: roadmap`, porque eso es literalmente el problema (1) reapareciendo.
+
+Los documentos de una misión concreta bajo `docs/<mision>/` pueden permanecer
+vivos y contener estado o "siguiente paso" **solo si el alcance local de esa
+misión está explícito en el propio documento**. Son material subordinado: no
+pueden usar `rol: roadmap`, redefinir la fase global, cambiar prioridades del
+producto ni prevalecer sobre `ROADMAP.md`. Mientras sean documentación de una
+misión en curso, tampoco se añaden a la tabla "Por dónde empezar" de
+`README.md` como fuente general de estado.
 
 ## Chequeo automático
 

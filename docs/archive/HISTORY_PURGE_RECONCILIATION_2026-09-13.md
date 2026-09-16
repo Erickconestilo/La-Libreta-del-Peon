@@ -1,8 +1,11 @@
 <!-- doc-status
-estado: vivo
-verificado: 2026-09-13
+estado: archivado
+congelado: 2026-09-15
+superado-por: ROADMAP.md
 rol: audit
 -->
+
+> 🧊 **Documento archivado el 15-09-2026.** Conserva la evidencia puntual de la reconciliación no destructiva; la deuda y sus compuertas vigentes se mantienen en `ROADMAP.md` y `NEXT_CHAT_HANDOFF.md`.
 
 # Reconciliacion de la purga historica
 

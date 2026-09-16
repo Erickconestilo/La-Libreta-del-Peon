@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-13
+  verificado: 2026-09-15
 rol: handoff
 -->
 
@@ -17,8 +17,9 @@ La auditoria local del 13-09-2026 encontro una discrepancia que no debe
 mezclarse con la prueba del Galaxy: el runtime actual de la rama de trabajo
 esta neutralizado, pero la historia alcanzable conserva commits antiguos de la
 etapa de purga. Ademas, `main` y `refs/remotes/origin/main` apuntan a historias
-distintas. La evidencia y los identificadores de objetos estan en
-`docs/field/HISTORY_PURGE_RECONCILIATION_2026-09-13.md`.
+distintas. La evidencia fechada y los identificadores de objetos quedaron
+archivados en `docs/archive/HISTORY_PURGE_RECONCILIATION_2026-09-13.md`; la
+compuerta vigente es la descrita en este handoff y en `ROADMAP.md`.
 
 No ejecutar `filter-repo`, borrar refs, podar objetos, hacer fetch ni publicar
 un `push --force` como parte del cierre autonomo local. Si se retoma esta
@@ -29,10 +30,18 @@ repositorio bare.
 
 - Rama activa: `codex/f5-field-stability`.
 
-La validación física de la v7 es histórica. La comprobación ADB más reciente
-de esta sesión devolvió `error: no devices/emulators found` y no mostró ninguna
-fila bajo `List of devices attached`; no se debe afirmar que el Galaxy está
-conectado ni instalar una build hasta que vuelva a aparecer como `device`.
+La validación física completa de lectura/foto offline de la v7 es histórica.
+La evidencia física más reciente registrada es la instalación de la
+`versionCode=12` el 13-09-2026 (`adb install -r` → `Success`, `dumpsys package`
+→ `versionCode=12`, `lastUpdateTime=2026-09-13 12:32:01`). Esta revisión
+documental del 15-09 no ha ejecutado ADB, así que no debe afirmar que el Galaxy
+esté conectado ahora.
+
+El HEAD local actual (`97e70e4`) añade planificación semanal encima del backend
+`1dec6e9` y requiere `030_project_weekly_work.sql`. La migración 030 sigue solo
+local. Además, `/api/v1/readiness` comprueba hoy únicamente la capacidad de 029;
+por tanto el HEAD no debe desplegarse tal cual hasta que 030 esté reconciliada y
+el readiness cubra también esa dependencia de esquema.
 
 ## Slice implementado después del último estado remoto
 
@@ -44,7 +53,7 @@ contrato está en `docs/field/WORK_EXECUTION_CONTRACT.md`, la migración local e
 son `GET/POST /api/v1/round-points/:roundPointId/execution-events`.
 
 La captura móvil usa el outbox existente y un `clientRequestId` estable, pero
-el hardening más reciente la hace explícitamente local-first: persiste primero
+el hardening de Work Execution la hace explícitamente local-first: persiste primero
 la acción y separa el resultado operativo de su estado de entrega. `Pendiente
 local`, `Reintento`, `Conflicto` o `Backend pendiente` nunca se presentan como
 `Recibido servidor`; el histórico remoto sigue siendo la evidencia de recepción.
@@ -109,31 +118,32 @@ y `GET /api/v1/round-points/<uuid>/execution-events` respondió `404 Route not
 found`. Ese `404` es evidencia del backend remoto anterior, no un fallo de la
 UI local; la tabla y la ruta nuevas deben publicarse juntas.
 
-La consulta de solo lectura a Supabase del 13-09-2026 confirma que el proyecto
-`topofield` tiene aplicadas migraciones hasta `026_supervisor_role`; `027`,
-`028` y `029` siguen pendientes. El advisor de seguridad mantiene únicamente
+La reconciliación local más reciente confirma por objetos que 019–026 están
+aplicadas funcionalmente, aunque `public.schema_migrations` no las registra. El
+dry-run identifica ocho candidatas para registro sin reejecución y no se ha
+usado `--write`. `027`, `028`, `029` y `030` siguen pendientes. El advisor de seguridad mantiene únicamente
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
 Antes de cualquier despliegue, revisar el runbook de
-`docs/field/WORK_EXECUTION_CONTRACT.md`. Atención: el runner local de
-migraciones aplica todos los archivos pendientes en orden. Si el remoto sigue
-en 026, ejecutar el runner no significaría «solo 029»: también intentaría 027 y
-028. Esas dos migraciones pertenecen a otros hardenings y necesitan una
-autorización/revisión explícita propia; no deben colarse dentro de una
-autorización genérica de 029.
+`docs/field/WORK_EXECUTION_CONTRACT.md` y la reconciliación de migraciones. El
+runner local decide qué aplicar únicamente a partir de `public.schema_migrations`;
+como ese ledger todavía no contiene 019–026, no debe usarse contra producción
+hasta completar la reconciliación. 027–030 siguen siendo operaciones separadas
+que requieren su propia revisión y autorización.
 
-**Autorización posterior (13-09-2026):** Erick autorizó expresamente el bloque
+**Registro histórico de autorización (13-09-2026):** Erick autorizó expresamente el bloque
 completo por compuertas: backup remoto; 027 -> 028 -> 029 tras prechecks verdes;
 despliegue/verificación de backend; y después build/instalación/E2E Galaxy si
 todo lo anterior pasa. En la sesión que recibió la autorización, la herramienta
 de ejecución bloqueó antes de ejecutarse incluso la consulta remota de solo
 lectura a `schema_migrations`. No confundir «autorizado» con «ejecutado»: no se
 obtuvo backup nuevo, no se aplicó SQL, no se desplegó Render y no se instaló una
-build nueva en ese intento. El próximo agente debe reanudar exactamente en
-**backup + estado real de migraciones**, sin volver a cambiar Work Execution 029.
+build nueva en ese intento. La instrucción de reanudar desde backup quedó
+superada por la reconciliación y el dry-run posteriores; se conserva aquí como
+evidencia, no como siguiente paso vigente.
 
-**Reanudación verificada posterior (13-09-2026):** el conector de Supabase sí
+**Reanudación verificada posterior (13-09-2026, evidencia histórica):** el conector de Supabase sí
 permitió lectura remota. El proyecto `topofield` está `ACTIVE_HEALTHY` y su
 tracker de Supabase sigue exactamente hasta `026_supervisor_role`; 027/028/029
 no aparecen. El precheck de 028 devolvió cero duplicados por
@@ -149,16 +159,18 @@ genérico porque `public.schema_migrations` solo registra hasta 018 mientras el
 tracker de Supabase registra 019-026; ejecutarlo habría intentado reejecutar
 migraciones ya aplicadas. Una nueva lectura del tracker de Supabase siguió
 mostrando 026 como última migración, por lo que no hay evidencia de que 027 se
-haya aplicado. Reanudar desde una vía oficial capaz de aplicar y registrar
-027->028->029 sin reconciliar a ciegas ambos trackers.
+haya aplicado. Este punto quedó superado como instrucción activa por el dry-run
+posterior de 019–026; no se debe saltar directamente a 027->028->029 mientras
+el ledger propio siga sin reconciliar.
 
-La batería integrada de cierre local pasó con backend `120/120`, móvil `23`
-suites y `130/130`, TypeScript móvil sin errores, tooling `15/15`,
-`docs:check` sobre `44` documentos y `git diff --check` limpio. El árbol sigue
+La verificación local unificada más reciente, ejecutada el 15-09-2026, terminó
+con `verify local completed successfully`: backend `127/127`, móvil `25` suites
+y `137/137`, TypeScript móvil sin errores, tooling `15/15`, `docs:check` sobre
+`47` documentos y `git diff --check` sin errores. El árbol sigue
 conservando fuera de esta misión el cambio previo de `apps/mobile/package.json`
 y las capturas/XML no versionadas; no limpiarlos ni incluirlos en commits.
 
-## Estado local actual tras instalar v12
+## Evidencia local de la v12 instalada (13-09-2026)
 
 La release local `versionCode=12` se generó con
 `npm run mobile:build-local-android` y terminó con `BUILD SUCCESSFUL in 7m
@@ -191,16 +203,16 @@ confunde una acción pendiente del outbox con recepción del servidor.
 Los verificadores aceptan `TOPOFIELD_ROUND_POINT_ID` para comprobar ese
 endpoint cuando 029 esté desplegada: `npm run verify:remote:public` exige
 `401` sin bearer y `npm run verify:remote:auth` acepta `200` o `403` según el
-rol. Ambos solo imprimen códigos y estados, nunca tokens ni cuerpos. En la
-sesión actual `adb devices -l` devolvió el Galaxy como `device`; se instaló la
+rol. Ambos solo imprimen códigos y estados, nunca tokens ni cuerpos. En aquella
+sesión `adb devices -l` devolvió el Galaxy como `device`; se instaló la
 release v12 con `adb install -r` y `dumpsys package` confirmó
 `versionCode=12`. No se hicieron nuevas lecturas, fotos ni cambios remotos.
 
 ## Evidencia histórica verificada en Galaxy (13-09-2026, v7)
 
-- El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` está conectado como `device`.
+- El Galaxy `SM-S938B`/ADB `R5CY21X6FLE` estaba conectado como `device` en esa validación.
 - La release arm64 `versionCode=7` de
-  `com.ciudadanoinusual.topofield` está instalada; `adb install -r` devolvió
+  `com.ciudadanoinusual.topofield` quedó instalada en aquella validación; `adb install -r` devolvió
   `Success` y `dumpsys package` confirmó `lastUpdateTime=2026-09-13 07:39:25`.
   La APK está firmada como `CN=TopoField Android Release`.
 - El E2E físico del operador pasó la parte crítica: lectura `825 mm` y foto
@@ -219,7 +231,7 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   la UI mostró `Parte recibido por el servidor. El supervisor podrá
   consultarlo.` y la consulta de solo lectura verificó una única fila con
   `client_request_id` propio.
-- La release v7 conserva ahora el diagnóstico seguro del fallo de exportación.
+- La release v7 contenía ya el diagnóstico seguro del fallo de exportación.
   Al pulsar `Compartir CSV`, la UI mostró literalmente `No se pudo completar
   la operación. Reintenta en unos segundos. (HTTP 500 · ROUND_EXPORT_FAILED ·
   Código de soporte: cd695cdf-da73-4b94-86eb-dc5bb187a0f2)`.
@@ -260,25 +272,25 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   El selector nativo ofreció destinos de compartir para ambos y no se envió
   ningún archivo. La paridad binaria/estructurada sigue pendiente porque la
   APK release no deja esos temporales accesibles para lectura local.
-- Último slice funcional local: `750153a` (`feat: exigir motivo en visitas no realizables`), precedido por `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería actual queda en `114/114` backend y `119/119` móvil; tooling mantiene `13/13` y `docs:check` revisa `44` documentos sin avisos. La build v12 del Galaxy contiene el slice de semana operativa y su smoke test no generó cambios remotos; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar la build nueva contra Render todavía. La evidencia de E2E offline completo en v7 permanece histórica y separada. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
+- En ese bloque, `750153a` (`feat: exigir motivo en visitas no realizables`) quedó precedido por `137ba89` (`feat(mobile): añadir motivos rápidos de campo`), `10d76d7` (`fix(mobile): distinguir resultado local del recibido`), `ac7a44d` (`feat(mobile): atajo Marcar hecho`) y los slices anteriores de jornada, historial y exportación. La corrección backend equivalente `bf796b3` está publicada en `main` mediante el merge `df224f9`. La batería de aquel momento quedó en `114/114` backend y `119/119` móvil; tooling `13/13` y `docs:check` `44` documentos. La cifra vigente del árbol está en la sección superior de este handoff. La build v12 del Galaxy contiene el slice de semana operativa y su smoke test no generó cambios remotos; la migración 029 sigue sin estar aplicada remotamente, por lo que no se debe usar esa build contra Render para Work Execution. La evidencia de E2E offline completo en v7 permanece histórica y separada. Después de los commits funcionales de la memoria visual se mantiene separada la documentación. La
   secuencia inmediata anterior incluye `f3ad2aa` (runner local serializado),
   `0a36d5e`, `bddf7f9`, `689d356`
   (benchmark de mercado), `0ebe542`, `abbe5b1` y `b4f78ce` (hardening y
   trazabilidad de la migración 027). El runner local mantiene el bloqueo
   advisory y las transacciones en el mismo cliente PostgreSQL; su regresión
-  forma parte de la batería backend actual `114/114`. La
+  formaba parte de la batería backend de aquel momento `114/114`. La
   migración
   local `027_station_mounting_visits.sql` comprueba `pg_constraint` antes de
   cada clave foránea compuesta y `pg_policies` antes de crear sus políticas RLS
   para tolerar un reintento tras una aplicación parcial; su regresión está
   incluida en la batería backend. La migración
   continúa sin aplicar en Supabase.
-- La mejora más reciente de memoria visual añade filtros por tipo de evidencia
+- Una mejora de memoria visual de ese bloque añade filtros por tipo de evidencia
   y previsualización de `132px` en la pantalla de visitas de montaje. La
   proyección mantiene la posición relativa solo como anotación de imagen, sin
   convertirla en coordenada, orientación o precisión métrica; la regresión está
   en `apps/mobile/lib/__tests__/mounting-visual.test.ts`.
-- La última mejora añade además una vista ampliada al pulsar una evidencia;
+- Una mejora posterior añade además una vista ampliada al pulsar una evidencia;
   prioriza `localUri` para registros offline, muestra notas y permite cerrar
   con un botón accesible. La suite móvil queda en `22` suites y `99` tests;
   la regresión del selector de URI está en `mounting-visual.test.ts`.
@@ -308,12 +320,12 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   de la autorización de tenant.
 - Corrección backend relevante: `b0572a0`, preserva el `projectId` real al
   firmar fotos de lecturas.
-- Última corrección local: `c709fab` elimina una sustitución de nombre
+- Corrección local de aquel bloque: `c709fab` elimina una sustitución de nombre
   específica de una obra en la presentación de estaciones; `e3d24e5` deja la
   regresión con datos neutros. El escaneo de fuentes activas no encuentra
   nombres de obras ni referencias TopoTask/ARGOS fuera de scripts y datos
   legacy explícitos.
-- Última mejora local de operación: el Perfil lista errores y conflictos del
+- Mejora local posterior de operación: el Perfil lista errores y conflictos del
   outbox por sesión; solo los errores admiten reintento y los conflictos quedan
   como revisión necesaria sin exponer payloads ni reintentar a ciegas.
 - `423649d` separa el reintento manual del automático: el botón reinicia el
@@ -335,7 +347,7 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   `apps/mobile/package.json`.
 - `aaf1388` corrige la invocación Windows del preflight para que la exportación
   de Expo finalice y no deje procesos retenidos; `d43d06b` añade tres
-  regresiones para rutas con espacios y metacaracteres. La ejecución actual
+  regresiones para rutas con espacios y metacaracteres. Esa ejecución
   devuelve `PRE_APK_EXIT=0`, crea `metadata.json` y deja cero procesos
   Expo/Metro relacionados.
 - La regresión queda disponible como `npm run test:tooling` y no depende de
@@ -380,13 +392,14 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   remotos ni el Galaxy.
 - `42f5727` corrige la apertura automática de `Mi jornada` para que el ciclo
   se reinicie al cambiar de usuario o volver desde modo invitado; la regresión
-  queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. La suite
-  móvil actual pasa `22` suites y `98` tests; el backend actual pasa `104/104`.
+  queda en `apps/mobile/lib/__tests__/journey-navigation.test.ts`. En aquella
+  verificación la suite móvil pasó `22` suites y `98` tests; el backend pasó
+  `104/104`.
 - `f5de61d` y la continuación local endurecen la idempotencia de adjuntos: el
   endpoint usa bloqueo transaccional por lectura/ruta y `ON CONFLICT DO NOTHING`
   sin depender todavía de la migración 028. La migración 028 sigue pendiente
   en remoto como garantía de base de datos.
-- Últimos commits locales de la rama: `18bf48a` (cifras activas de verificación),
+- Secuencia local histórica de ese bloque: `18bf48a` (cifras activas de verificación),
   `84da8c4`/`a5d9c5b` (replay de evidencia de montaje desde `draft`),
   `c983f9e`/`112a858` (estado offline de visitas de montaje), `dc36014`/`a9b1513`
   (idempotencia de evidencias), `d8579ed`/`014b8af` (testigo fotográfico),
@@ -405,7 +418,7 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   alineación).
 - Último commit local antes del hardening de caché: `18dee00` (paridad
   CSV/XLSX y regresión de exportación).
-- Hardening local actual: `ef043b1` (caché de rondas separada por sesión y
+- Hardening local de ese bloque: `ef043b1` (caché de rondas separada por sesión y
   regresión de migración SQLite 005).
 - Hardening local en `1d82a9f`: migración SQLite 006, outbox filtrado por sesión
   y cancelación por generación durante cambios de cuenta; 13 suites y 62 tests
@@ -470,9 +483,13 @@ cuerpos ni credenciales.
 
 ## Estado móvil y Galaxy
 
+- Release activa más reciente demostrada: `versionCode=12`, instalada el
+  13-09-2026 con `adb install -r` y `Success`; `dumpsys package` confirmó
+  `lastUpdateTime=2026-09-13 12:32:01`. Incluye `Semana operativa`, pero no la
+  planificación semanal editable añadida después en `97e70e4`.
 - Release histórica instalada: `versionCode=4`, firmada como `CN=TopoField Android Release`.
 - La consulta supervisora fue validada anteriormente en el Galaxy.
-- La release arm64 `versionCode=7` se instaló el 13-09-2026 con `adb install -r`
+- La release arm64 histórica `versionCode=7` se instaló el 13-09-2026 con `adb install -r`
   y `Success`; `dumpsys package` confirmó `lastUpdateTime=2026-09-13
   07:39:25`.
 - El recorrido de operador con lectura y foto offline quedó verificado una vez:
@@ -480,8 +497,10 @@ cuerpos ni credenciales.
   lectura más un adjunto en Supabase. El arranque en frío offline recuperó
   además la lista de rondas desde caché con aviso de antigüedad.
 - La v7 se generó porque la UI descartaba metadatos accionables de un error API
-  de exportación; el test móvil evita mostrar cuerpos o secretos. No generar
-  otra release salvo que aparezca un nuevo bug móvil reproducible.
+  de exportación; el test móvil evita mostrar cuerpos o secretos. La instrucción
+  histórica de no generar otra release salvo por un bug quedó superada por los
+  cambios posteriores: cualquier build nueva debe corresponder a un backend y
+  esquema explícitamente listos para la funcionalidad que se quiera validar.
 - No automatizar el modo avión con `adb shell settings`; debe activarse desde
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión
@@ -490,25 +509,31 @@ cuerpos ni credenciales.
 
 ## Trabajo pendiente prioritario
 
-1. Ejecutar `npm run verify:remote:auth` con un token QA temporal y los UUID
+1. Completar la reconciliación del ledger 019–026 sin reejecutar sus SQL y
+   mantener 027–030 fuera hasta su autorización; no usar el runner genérico
+   mientras `public.schema_migrations` siga divergente.
+2. Añadir 030 a la compuerta de readiness antes de desplegar el HEAD con
+   `weekly-work`, y verificar esa dependencia contra PostgreSQL/Supabase de forma
+   controlada.
+3. Ejecutar `npm run verify:remote:auth` con un token QA temporal y los UUID
    autorizados, para comprobar `/auth/me`, `Mi jornada` y, si se proporcionan,
    la obra y ronda sin aceptar un `404`.
-2. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
+4. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
    los dos archivos de una misma ronda real; la generación autenticada ya
    responde `200` y la prueba local cubre la paridad del contrato.
-3. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
+5. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
    exportación para una membresía `read`.
-4. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos
+6. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos
    como evidencia del recorrido repetido.
-5. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
-6. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
+7. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
+8. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-7. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
+9. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
    validar en campo la pantalla local de visitas de montaje, incluida cámara,
    Storage, reinicio y reconexión. La captura offline local ya usa caché
    SQLite por sesión y estación más el outbox (migración local 007). Después
    decidir el croquis fotográfico según evidencia y no según una demo.
-8. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
+10. Preparar piloto con segundo usuario/dispositivo y entrevistas de mercado.
 
 ## Cambios locales que no se deben mezclar
 
@@ -517,10 +542,10 @@ cuerpos ni credenciales.
 - El `package-lock.json` incluye la alineación de Expo 56 del commit `6d9f31c`
   además de la actualización segura de `morgan` y `qs`; build y tests backend
   pasan con él.
-- La auditoría actual está archivada en
+- La auditoría de seguridad F5 del 12-09 está archivada en
   `docs/archive/F5_SECURITY_SCOPE_AUDIT_2026-09-12.md`.
-- La auditoría local vigente está en
-  `docs/field/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`; documenta la revisión
+- El informe autónomo local fechado del 13-09 está archivado en
+  `docs/archive/F5_AUTONOMOUS_LOCAL_AUDIT_2026-09-13.md`; documenta la revisión
   de rutas, las correcciones defensivas de incidencias, prismas, visitas de
   montaje y relaciones ronda-punto-lectura, el contrato de exportación F7, el
   fixture genérico y la evidencia de la release sin confundirlas con el E2E
@@ -596,9 +621,9 @@ cuerpos ni credenciales.
   explícito de `Parte de zona` para supervisor/membresía `read`. La verificación
   posterior dejó `18` suites y `80` tests móviles en verde. El mismo contrato
   falla cerrado si una sesión topógrafo no trae aún `projectAccess`.
-- Verificación local posterior al hardening más reciente: backend compila y
-  tiene `104/104` tests; móvil TypeScript sale sin errores y Jest tiene `22`
-  suites y `104` tests. La captura de `fissure_witness` marca la foto como
+- Verificación local posterior a aquel hardening: backend compiló y pasó
+  `104/104` tests; móvil TypeScript salió sin errores y Jest pasó `22` suites y
+  `104` tests. La captura de `fissure_witness` marca la foto como
   obligatoria y no envía una unidad ficticia. `docs:check` revisa 40 documentos
   sin avisos y `npx expo install --check` devuelve `Dependencies are up to date`.
 
@@ -606,12 +631,14 @@ cuerpos ni credenciales.
 
 ```powershell
 cd C:\Users\guill\Documents\Aplicacion_Movil\topofield
+$WT = (Get-Location).Path
+$GD = (Resolve-Path -LiteralPath (((Get-Content -LiteralPath '.git' -Raw).Trim()) -replace '^gitdir:\s*','')).Path
 npm run build --workspace apps/backend
 npm test --workspace apps/backend
 npx tsc --noEmit --project apps/mobile/tsconfig.json
 npm test --workspace apps/mobile
 npm run docs:check
-git diff --check
-git status --short
+git --no-optional-locks --git-dir="$GD" --work-tree="$WT" diff --check
+git --no-optional-locks --git-dir="$GD" --work-tree="$WT" status --short
 adb devices -l
 ```

@@ -1,26 +1,25 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-13
+verificado: 2026-09-15
 -->
 
 # Checklist de Piloto
 
 El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No se trata solo de comprobar que todo funciona: hay que registrar cómo se usa. Usa `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` durante la jornada y convierte después los hallazgos en `docs/field/F5_HALLAZGOS_<fecha>.md` siguiendo la plantilla de `UX_RESEARCH_PLAN.md`.
 
-## Estado local automatizado - 13-09-2026
+## Estado local automatizado - 15-09-2026
 
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `120/120` tests en la batería integrada final de
-  la misión work-execution 029.
-- [x] Móvil pasa TypeScript, `23` suites y `130/130` tests; la batería cubre
+- [x] Backend compila y pasa `127/127` tests en la batería integrada actual.
+- [x] Móvil pasa TypeScript, `25` suites y `137/137` tests; la batería cubre
   además los estados de entrega local, conflicto, reintento y backend
   incompatible.
 - [x] Tooling local incluye una compuerta pública de readiness: el verificador
   exige `/health=200`, `/readiness=200` con work-execution disponible y falla
-  cerrado ante `503 migration_missing`; `npm run test:tooling` pasa `14/14`.
-- [x] `docs:check` revisa `44 documentos revisados en raíz y docs/` sin errores
+  cerrado ante `503 migration_missing`; `npm run test:tooling` pasa `15/15`.
+- [x] `docs:check` revisa `47 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
   `CN=TopoField Android Release` y verificada con `jarsigner`, `bundletool
@@ -79,13 +78,17 @@ validación en campo:
 - [x] La cabecera de la ronda resume hechos, en curso, pendientes y puntos por
   revisar, y permite continuar con el primer punto accionable respetando el
   orden de la jornada.
-- [ ] Con autorización explícita, reconciliar primero las migraciones remotas
-  pendientes: la observación histórica llega a 026 y el runner aplicaría
-  también 027/028 antes de 029. Autorizar/revisar cada una por su alcance,
-  aplicar 029, desplegar el backend con `/readiness` como gate y validar en el
-  Galaxy una build que contenga estos commits. Confirmar que el resultado
-  sincronizado aparece para el supervisor sin presentarlo como lectura ni
-  cierre de ronda.
+- [ ] Completar la reconciliación del ledger antes de usar el runner genérico:
+  el dry-run actual confirma 019–026 aplicadas funcionalmente pero ausentes de
+  `public.schema_migrations`; no se ha usado `--write`. 027, 028, 029 y 030
+  siguen ausentes y requieren revisión/autorización por alcance antes de
+  ejecutarse.
+- [ ] Antes de desplegar el HEAD que incluye planificación semanal, ampliar la
+  compuerta de readiness para que también falle si falta 030. El readiness
+  actual solo prueba `monitoring_work_execution_events`/029, aunque las rutas de
+  `weekly-work` dependen de `project_weekly_work_items`/030. Después, validar el
+  backend y una build correspondiente en Galaxy sin presentar trabajo local
+  como recibido por el servidor.
 
 ## Paso 1 - Erick usando datos reales en campo
 

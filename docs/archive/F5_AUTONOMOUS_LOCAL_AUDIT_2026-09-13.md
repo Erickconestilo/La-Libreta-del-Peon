@@ -1,8 +1,11 @@
 <!-- doc-status
-estado: vivo
-verificado: 2026-09-13
+estado: archivado
+congelado: 2026-09-15
+superado-por: ROADMAP.md
 rol: audit
 -->
+
+> 🧊 **Documento archivado el 15-09-2026.** Se conserva como evidencia puntual de la auditoría del 13-09-2026; el estado vigente de F5 está en `ROADMAP.md` y `NEXT_CHAT_HANDOFF.md`.
 
 # F5: Auditoria Autonoma Local
 

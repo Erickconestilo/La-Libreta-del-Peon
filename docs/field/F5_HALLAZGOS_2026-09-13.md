@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-13
+verificado: 2026-09-15
 rol: field-evidence
 -->
 
@@ -13,11 +13,13 @@ actualizacion posterior con v7. No declara F5 cerrada: aun faltan una jornada
 observada, entrevistas, comparacion estructurada de exportacion con oficina y
 un cierre definitivo con umbral autorizado.
 
-## Actualizacion v7 (13-09-2026)
+## Actualizacion v7 (evidencia del 13-09-2026)
 
-La release actualmente instalada en el mismo Galaxy es `versionCode=7`,
-`versionName=1.0.0`, firmada como `CN=TopoField Android Release`. Render está
-en `df224f9b7226c8aa5899a5e889898663b4642016`. Con la ronda preparada, la UI
+Durante esta evidencia, la release instalada en el Galaxy era `versionCode=7`,
+`versionName=1.0.0`, firmada como `CN=TopoField Android Release`. La última
+release demostrada como instalada posteriormente es `versionCode=12`; esta nota
+no atribuye a v12 el E2E de v7. Render estaba en
+`df224f9b7226c8aa5899a5e889898663b4642016`. Con la ronda preparada, la UI
 mostró `Jornada preparada en este dispositivo. Ya puedes trabajar sin
 conexión.` y el modo avión se activó y desactivó desde Ajustes del sistema.
 La prueba no añadió otra lectura ni otro adjunto porque la unicidad del E2E
@@ -69,15 +71,17 @@ binarios sigue pendiente y se mantiene cubierta localmente por
 | Jornada observada y entrevistas | Pendiente humano | Requiere observar al operador y conversar con 5-8 profesionales; no se puede simular con tests. |
 | Segundo usuario y dispositivo | Pendiente humano | Requiere una cuenta individual, una obra autorizada y otro dispositivo. |
 
-Este cuadro es el estado de cierre vigente a 13-09-2026. Una prueba local o una
-respuesta `200` no convierte por sí sola una función en validación de campo ni
-demuestra la paridad de dos archivos que no se han podido leer.
+Este cuadro sigue siendo la matriz de cierre vigente a 15-09-2026: los criterios
+marcados como verificados se apoyan en la evidencia histórica indicada y los
+pendientes siguen abiertos. La instalación posterior de v12 no convierte por sí
+sola una función en validación de campo ni demuestra la paridad de dos archivos
+que no se han podido leer.
 
 ## Entorno
 
 - Dispositivo: Samsung Galaxy `SM-S938B`, serial ADB `R5CY21X6FLE`.
 - Paquete: `com.ciudadanoinusual.topofield`.
-- Release instalada durante la comprobación actual: `versionCode=7`, `versionName=1.0.0`.
+- Release instalada durante esta comprobación histórica: `versionCode=7`, `versionName=1.0.0`.
 - Firma: `CN=TopoField Android Release`.
 - Red: LTE restaurada despues de la prueba; Wi-Fi apagado durante el corte.
 - Ronda: `E2E-Galaxy-20260731-Atc`.

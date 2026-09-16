@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-13
+verificado: 2026-09-15
 -->
 
 # La Libreta del Peón (TopoField)
@@ -21,16 +21,16 @@ Aplicación móvil de campo para equipos pequeños de topografía y auscultació
 | ¿Cómo se mantiene la documentación al día? | [docs/DOC_MAINTENANCE.md](./docs/DOC_MAINTENANCE.md) |
 | Historial congelado (informes E2E, inventarios, auditorías fechadas) | `docs/archive/` |
 
-## Estado actual (13-09-2026)
+## Estado actual (15-09-2026)
 
 Resumen; el detalle por fase está en [ROADMAP.md](./ROADMAP.md).
 
 - Motor offline ampliado localmente: outbox SQLite, caché separada por sesión, recuperación tras reinicio, borradores de lectura y sincronización idempotente por `client_request_id`.
 - MVP de auscultación implementado: rondas, puntos de control, lecturas, umbrales, histórico, fotos y exportación CSV/XLSX. El recorrido físico v7 de operador con lectura y foto offline, reinicio, reconexión y unicidad está verificado una vez; siguen pendientes cierre definitivo con umbral autorizado, comparación estructurada de archivos y observación real.
-- Último backend funcional verificado en Render durante F5: commit `df224f9`; `/health` responde `200` y las rutas protegidas responden `401` sin sesión. La exportación autenticada CSV/XLSX se verificó desde el Galaxy con `200`; las mejoras locales de memoria visual siguen sin desplegar mientras la migración 027 no se aplique.
-- Aislamiento multi-tenant auditado por familia de endpoint; RLS activo en las 24 tablas del proyecto. El rol `supervisor` consulta por membresía `read` y no escribe.
+- Último backend funcional verificado en Render durante F5: commit `df224f9`; `/health` responde `200` y las rutas protegidas responden `401` sin sesión. La exportación autenticada CSV/XLSX se verificó desde el Galaxy con `200`. El HEAD local actual incorpora cambios posteriores que dependen de las migraciones 027–030; ninguna de esas cuatro está aplicada remotamente y el backend local con planificación semanal no debe presentarse como desplegado.
+- Aislamiento multi-tenant auditado por familia de endpoint; la evidencia de esquema documenta RLS `legacy deny all` en el baseline auditado y en las tablas de monitoring añadidas por 019/020. No se conserva aquí un total fijo de tablas porque el esquema siguió creciendo después de la auditoría que contó 24. El rol `supervisor` consulta por membresía `read` y no escribe.
 - La autorización de escritura falla cerrada en móvil y backend: una sesión `topografo` necesita `projectAccess[projectId] = "write"`; el mapa ausente no habilita controles ni mutaciones.
-- Release Android `versionCode=7` instalada en el Galaxy como APK arm64 y firmada con `CN=TopoField Android Release`; la AAB/APK están preparadas localmente y el runbook conserva el fallback de Gradle sin `clean`.
+- Release Android `versionCode=12` instalada en el Galaxy como APK arm64 y firmada con `CN=TopoField Android Release` (`adb install -r` → `Success`, `lastUpdateTime=2026-09-13 12:32:01`); incorpora `Semana operativa` en el parte diario. La `versionCode=7` queda como evidencia histórica del E2E offline y de la exportación autenticada, no como versión activa. La AAB/APK están preparadas localmente y el runbook conserva el fallback de Gradle sin `clean`.
 - **F5 continúa abierta:** faltan cierre definitivo con umbral autorizado, validación de exportación con datos reales, observación de campo y conversaciones con profesionales.
 
 ## Verificación local
