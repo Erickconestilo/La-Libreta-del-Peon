@@ -458,6 +458,9 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
   `workExecution.available=true` y `weeklyWork.available=true`.
 - `npm run verify:remote:public` terminó correctamente; las rutas protegidas
   sin bearer devolvieron `401 UNAUTHORIZED`.
+- Smokes públicos adicionales confirmaron que las familias nuevas están
+  publicadas: mounting-visits, weekly-work y execution-events devolvieron `401`
+  sin bearer, no `404`.
 - La validación autenticada automatizada sigue bloqueada porque no existe un
   `TOPOFIELD_AUTH_TOKEN` vigente disponible en el entorno/repo; no generar ni
   resetear credenciales solo para satisfacer esa prueba.
@@ -526,9 +529,10 @@ cuerpos ni credenciales.
    autorizados, para comprobar `/auth/me`, `Mi jornada` y, si se proporcionan,
    la obra y ronda sin aceptar un `404`; si no existe token legítimo, mantenerlo
    bloqueado y usar la sesión persistida del Galaxy como evidencia física.
-4. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
-   los dos archivos de una misma ronda real; la generación autenticada ya
-   responde `200` y la prueba local cubre la paridad del contrato.
+4. Repetir desde v13 el guardado SAF de CSV/XLSX y obtener aceptación de
+   oficina. La paridad estructural ya se cerró read-only con una ronda real de
+   Supabase: `EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15
+   worksheet=Auscultación utf8Bom=true`.
 5. Validar con datos autorizados el cierre positivo con umbral y el bloqueo de
    exportación para una membresía `read`.
 6. Conservar respuestas HTTP, logcat y comprobaciones de Supabase sin secretos

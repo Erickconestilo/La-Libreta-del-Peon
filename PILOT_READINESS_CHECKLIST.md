@@ -65,13 +65,19 @@ validación en campo:
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.
-- [ ] Validar con datos autorizados el parte, cierre definitivo y paridad
-  CSV/XLSX.
+- [ ] Validar con datos autorizados el parte y el cierre definitivo. La paridad
+  estructural CSV/XLSX ya se comprobó read-only con la misma ronda real de
+  Supabase: `EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15
+  worksheet=Auscultación utf8Bom=true`; falta repetir el guardado desde v13 y
+  confirmar la aceptación del formato en el flujo de oficina.
 - [x] El Galaxy mostró el diagnóstico seguro del fallo reproducido:
   `HTTP 500`, `ROUND_EXPORT_FAILED` y un código de soporte UUID. La causa del
   500 quedó corregida, desplegada y verificada con CSV/XLSX `200`.
-- [ ] Comparar estructuradamente el CSV y el XLSX descargados de una misma
-  ronda y confirmar el formato que consume el flujo de oficina.
+- [x] Comparar estructuradamente CSV y XLSX de una misma ronda real: la lectura
+  read-only de la ronda `db3a59e3-3756-4d95-9890-f026379f33db` produjo
+  `15/15` filas y el verificador oficial devolvió `EXPORT_ARTIFACTS_OK`.
+  La descarga/guardado SAF desde v13 y la aceptación de oficina permanecen
+  como comprobaciones separadas.
 - [x] El operario puede declarar por punto `Empezar`, `Hecho`, `No realizado`,
   `Repetir` o `Bloqueado`; los resultados no realizados exigen motivo y el
   guardado offline usa el outbox con idempotencia.

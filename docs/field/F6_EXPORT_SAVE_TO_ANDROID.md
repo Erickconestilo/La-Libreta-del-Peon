@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-13
+verificado: 2026-09-16
 rol: field-evidence
 -->
 
@@ -35,9 +35,23 @@ npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>
 ```
 
 El verificador comprueba cabeceras, filas normalizadas, fechas, números,
-filtros, BOM UTF-8 y la primera fila congelada de XLSX. La comparación con
-archivos reales de una misma ronda sigue siendo una validación de campo
-pendiente.
+filtros, BOM UTF-8 y la primera fila congelada de XLSX.
+
+## Validación estructurada con datos reales — 16-09-2026
+
+Sin escribir en Supabase, el backend local leyó la ronda real ya documentada
+`db3a59e3-3756-4d95-9890-f026379f33db` mediante la misma función de dominio que
+usa el endpoint de exportación y generó un CSV y un XLSX fuera del repositorio.
+Ambos contenían `15` filas. El verificador oficial devolvió literalmente:
+
+```text
+EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación utf8Bom=true
+```
+
+Esto cierra la paridad estructural del contrato con datos reales de Supabase.
+No equivale a afirmar que v13 haya guardado esos archivos mediante SAF ni que
+el formato haya sido aceptado por el flujo de oficina: esas dos comprobaciones
+siguen pendientes de dispositivo/persona.
 
 ## Verificación local
 
