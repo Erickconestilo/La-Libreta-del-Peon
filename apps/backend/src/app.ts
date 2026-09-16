@@ -6,6 +6,11 @@ import morgan from 'morgan';
 
 import { authenticateRequest } from './middleware/auth.js';
 import { refreshWorkExecutionCapability, WORK_EXECUTION_MIGRATION } from './lib/work-execution-capability.js';
+import {
+  refreshWeeklyWorkCapability,
+  requiredSchemaCapabilitiesReady,
+  WEEKLY_WORK_MIGRATION
+} from './lib/weekly-work-capability.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
 import { apiRateLimit } from './middleware/rate-limit.js';
@@ -54,24 +59,39 @@ app.get('/api/v1/health', (_request, response) => {
   });
 });
 app.get('/api/v1/readiness', async (_request, response) => {
-  try {
-    const workExecution = await refreshWorkExecutionCapability();
-    response.status(workExecution.available ? 200 : 503).json({
-      capabilities: { workExecution },
-      status: workExecution.available ? 'ready' : 'not_ready'
-    });
-  } catch {
-    response.status(503).json({
-      capabilities: {
-        workExecution: {
-          available: false,
-          migration: WORK_EXECUTION_MIGRATION,
-          reason: 'probe_failed'
-        }
-      },
-      status: 'not_ready'
-    });
-  }
+  const checkedAt = new Date().toISOString();
+  const [workExecutionResult, weeklyWorkResult] = await Promise.allSettled([
+    refreshWorkExecutionCapability(),
+    refreshWeeklyWorkCapability()
+  ]);
+  const workExecutionCapability = workExecutionResult.status === 'fulfilled'
+    ? workExecutionResult.value
+    : {
+        available: false,
+        checkedAt,
+        migration: WORK_EXECUTION_MIGRATION,
+        missingColumns: [],
+        missingRequirements: [],
+        reason: 'probe_failed'
+      };
+  const weeklyWork = weeklyWorkResult.status === 'fulfilled'
+    ? weeklyWorkResult.value
+    : {
+        available: false,
+        checkedAt,
+        migration: WEEKLY_WORK_MIGRATION,
+        missingColumns: [],
+        missingRequirements: [],
+        reason: 'probe_failed'
+      };
+  const workExecution = {
+    available: requiredSchemaCapabilitiesReady(workExecutionCapability, weeklyWork)
+  };
+
+  response.status(workExecution.available ? 200 : 503).json({
+    capabilities: { weeklyWork, workExecution: workExecutionCapability },
+    status: workExecution.available ? 'ready' : 'not_ready'
+  });
 });
 
 app.use('/api/v1', apiRateLimit);

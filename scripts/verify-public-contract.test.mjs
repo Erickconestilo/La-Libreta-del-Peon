@@ -18,6 +18,7 @@ test("accepts the expected public health and protected responses", async () => {
       if (url.endsWith("/readiness")) {
         return response(200, {
           capabilities: {
+            weeklyWork: { available: true },
             workExecution: { available: true },
           },
           status: "ready",
@@ -49,7 +50,7 @@ test("checks the work execution route when a round point is supplied", async () 
       if (url.endsWith("/health")) return response(200, { status: "ok" });
       if (url.endsWith("/readiness")) {
         return response(200, {
-          capabilities: { workExecution: { available: true } },
+          capabilities: { weeklyWork: { available: true }, workExecution: { available: true } },
           status: "ready",
         });
       }
@@ -69,7 +70,7 @@ test("fails closed if a protected endpoint regresses to 404", async () => {
         if (url.endsWith("/health")) return response(200, { status: "ok" });
         if (url.endsWith("/readiness")) {
           return response(200, {
-            capabilities: { workExecution: { available: true } },
+            capabilities: { weeklyWork: { available: true }, workExecution: { available: true } },
             status: "ready",
           });
         }
@@ -88,7 +89,7 @@ test("never sends credentials to the public contract verifier", async () => {
       if (url.endsWith("/health")) return response(200, { status: "ok" });
       if (url.endsWith("/readiness")) {
         return response(200, {
-          capabilities: { workExecution: { available: true } },
+          capabilities: { weeklyWork: { available: true }, workExecution: { available: true } },
           status: "ready",
         });
       }
@@ -107,6 +108,7 @@ test("fails closed when work execution readiness is unavailable", async () => {
         if (url.endsWith("/readiness")) {
           return response(503, {
             capabilities: {
+              weeklyWork: { available: true },
               workExecution: { available: false, reason: "migration_missing" },
             },
             status: "not_ready",
@@ -128,6 +130,45 @@ test("rejects the obsolete root-level work execution readiness shape", async () 
           return response(200, {
             status: "ready",
             workExecution: { available: true },
+          });
+        }
+        return response(401, { error: { code: "UNAUTHORIZED" } });
+      },
+    }),
+    /readiness unexpected response: HTTP 200/,
+  );
+});
+
+test("fails closed when weekly work readiness is unavailable", async () => {
+  await assert.rejects(
+    verifyPublicContract({
+      fetchImpl: async (url) => {
+        if (url.endsWith("/health")) return response(200, { status: "ok" });
+        if (url.endsWith("/readiness")) {
+          return response(503, {
+            capabilities: {
+              weeklyWork: { available: false, reason: "migration_missing" },
+              workExecution: { available: true },
+            },
+            status: "not_ready",
+          });
+        }
+        return response(401, { error: { code: "UNAUTHORIZED" } });
+      },
+    }),
+    /readiness unexpected response: HTTP 503/,
+  );
+});
+
+test("rejects ready response when weekly work capability is omitted", async () => {
+  await assert.rejects(
+    verifyPublicContract({
+      fetchImpl: async (url) => {
+        if (url.endsWith("/health")) return response(200, { status: "ok" });
+        if (url.endsWith("/readiness")) {
+          return response(200, {
+            capabilities: { workExecution: { available: true } },
+            status: "ready",
           });
         }
         return response(401, { error: { code: "UNAUTHORIZED" } });

@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { AppError } from '../lib/app-error.js';
 import { getActorProjectScope, assertProjectAccess, assertProjectWriteAccess } from '../lib/access-control.js';
 import { sendSuccess } from '../lib/api-response.js';
+import { requireWeeklyWorkCapability } from '../lib/weekly-work-capability.js';
 import {
   createWeeklyWorkItem,
   deleteWeeklyWorkItem,
@@ -37,6 +38,7 @@ export const listWeeklyWorkController = async (request: Request, response: Respo
     if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     const projectId = getParam(request, 'projectId');
     assertProjectAccess(request.user, projectId);
+    await requireWeeklyWorkCapability();
     const query = validateWeeklyWorkQuery(request.query);
     const items = await listWeeklyWorkItems(projectId, query.weekStart, getActorProjectScope(request.user));
     sendSuccess(response, items, 200, { weekStart: query.weekStart });
@@ -50,6 +52,7 @@ export const createWeeklyWorkController = async (request: Request, response: Res
     if (!request.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     const projectId = getParam(request, 'projectId');
     assertProjectWriteAccess(request.user, projectId);
+    await requireWeeklyWorkCapability();
     const input = validateCreateWeeklyWorkItemInput(request.body);
     const result = await createWeeklyWorkItem(projectId, input, request.user.id, getActorProjectScope(request.user));
     if (!result) throw new AppError('Project not found', 404, 'PROJECT_NOT_FOUND');
@@ -65,6 +68,7 @@ export const updateWeeklyWorkController = async (request: Request, response: Res
     const projectId = getParam(request, 'projectId');
     const itemId = getParam(request, 'itemId');
     assertProjectWriteAccess(request.user, projectId);
+    await requireWeeklyWorkCapability();
     const input = validateUpdateWeeklyWorkItemInput(request.body);
     const item = await updateWeeklyWorkItem(projectId, itemId, input, getActorProjectScope(request.user));
     if (!item) throw new AppError('Weekly work item not found', 404, 'WEEKLY_WORK_NOT_FOUND');
@@ -80,6 +84,7 @@ export const deleteWeeklyWorkController = async (request: Request, response: Res
     const projectId = getParam(request, 'projectId');
     const itemId = getParam(request, 'itemId');
     assertProjectWriteAccess(request.user, projectId);
+    await requireWeeklyWorkCapability();
     const query = validateDeleteWeeklyWorkItemQuery(request.query);
     const deleted = await deleteWeeklyWorkItem(
       projectId,
