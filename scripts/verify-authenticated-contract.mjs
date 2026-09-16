@@ -17,6 +17,8 @@ const readJsonBody = async (response) => {
 const summarizeBody = (body) => ({
   errorCode: typeof body?.error?.code === "string" ? body.error.code : null,
   dataKind: Array.isArray(body?.data) ? "array" : body?.data === null ? "null" : typeof body?.data,
+  authProvider: typeof body?.data?.user?.authProvider === "string" ? body.data.user.authProvider : null,
+  role: typeof body?.data?.user?.role === "string" ? body.data.user.role : null,
   status: typeof body?.status === "string" ? body.status : null,
 });
 
@@ -39,12 +41,29 @@ const assertAllowedStatus = (name, result, allowedStatuses) => {
   }
 };
 
+const assertTechnicalAuthMe = (result) => {
+  const technicalRoles = new Set(["admin", "topografo", "supervisor"]);
+  if (result.summary.authProvider !== "supabase" || !technicalRoles.has(result.summary.role)) {
+    throw new Error(
+      `auth/me did not resolve a technical Supabase account (${result.summary.authProvider ?? "unknown"}/${result.summary.role ?? "unknown"})`,
+    );
+  }
+};
+
+const currentMondayIsoDate = (now = new Date()) => {
+  const utcDay = now.getUTCDay();
+  const daysSinceMonday = (utcDay + 6) % 7;
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday));
+  return monday.toISOString().slice(0, 10);
+};
+
 export const verifyAuthenticatedContract = async ({
   baseUrl = DEFAULT_BASE_URL,
   token,
   projectId,
   roundId,
   roundPointId,
+  weekStart,
   fetchImpl = globalThis.fetch,
 } = {}) => {
   if (typeof fetchImpl !== "function") {
@@ -60,6 +79,7 @@ export const verifyAuthenticatedContract = async ({
 
   const authMe = await requestJson(fetchImpl, `${root}/auth/me`, token);
   assertAllowedStatus("auth/me", authMe, [200]);
+  assertTechnicalAuthMe(authMe);
 
   const journey = await requestJson(fetchImpl, `${root}/me/journey`, token);
   assertAllowedStatus("personal journey", journey, [200, 403]);
@@ -70,6 +90,15 @@ export const verifyAuthenticatedContract = async ({
     const projectRounds = await requestJson(fetchImpl, `${root}/projects/${encodeURIComponent(projectId)}/rounds`, token);
     assertAllowedStatus("project rounds", projectRounds, [200, 403]);
     result.projectRounds = projectRounds;
+
+    const weeklyWorkWeekStart = weekStart || currentMondayIsoDate();
+    const weeklyWork = await requestJson(
+      fetchImpl,
+      `${root}/projects/${encodeURIComponent(projectId)}/weekly-work?weekStart=${encodeURIComponent(weeklyWorkWeekStart)}`,
+      token,
+    );
+    assertAllowedStatus("weekly work", weeklyWork, [200, 403]);
+    result.weeklyWork = weeklyWork;
   }
 
   if (roundId) {
@@ -106,17 +135,24 @@ if (isMainModule) {
       roundId: process.env.TOPOFIELD_ROUND_ID,
       roundPointId: process.env.TOPOFIELD_ROUND_POINT_ID,
       token: process.env.TOPOFIELD_AUTH_TOKEN,
+      weekStart: process.env.TOPOFIELD_WEEK_START,
     });
 
     console.log(`AUTH_CONTRACT_BASE=${normalizeBaseUrl(baseUrl)}`);
     console.log(`AUTH_HEALTH_STATUS=${result.health.status}`);
     console.log(`AUTH_ME_STATUS=${result.authMe.status}`);
     console.log(`AUTH_ME_ERROR_CODE=${result.authMe.summary.errorCode ?? "none"}`);
+    console.log(`AUTH_ME_PROVIDER=${result.authMe.summary.authProvider ?? "unknown"}`);
+    console.log(`AUTH_ME_ROLE=${result.authMe.summary.role ?? "unknown"}`);
     console.log(`AUTH_JOURNEY_STATUS=${result.journey.status}`);
     console.log(`AUTH_JOURNEY_ERROR_CODE=${result.journey.summary.errorCode ?? "none"}`);
     if (result.projectRounds) {
       console.log(`AUTH_PROJECT_ROUNDS_STATUS=${result.projectRounds.status}`);
       console.log(`AUTH_PROJECT_ROUNDS_ERROR_CODE=${result.projectRounds.summary.errorCode ?? "none"}`);
+    }
+    if (result.weeklyWork) {
+      console.log(`AUTH_WEEKLY_WORK_STATUS=${result.weeklyWork.status}`);
+      console.log(`AUTH_WEEKLY_WORK_ERROR_CODE=${result.weeklyWork.summary.errorCode ?? "none"}`);
     }
     if (result.round) {
       console.log(`AUTH_ROUND_STATUS=${result.round.status}`);
