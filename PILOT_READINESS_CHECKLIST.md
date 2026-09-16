@@ -63,11 +63,13 @@ validación en campo:
   `/readiness` devolvió `200` con 029+030 `ready` y el verificador público pasó.
   La exportación CSV/XLSX `200` desde Galaxy sigue siendo evidencia histórica
   de la v7 y debe repetirse con la release que se valide ahora.
-- [ ] Publicar el hardening semántico de readiness de Stage 2 antes de tratarlo
-  como protección activa en producción. `6a44d75` valida PK, columnas, FKs,
-  índices, CHECKs, RLS y deny-all; el candidato limpio local `69e8fd0` parte de
-  `349967a`, contiene solo cuatro archivos y pasa build + `142/142`. **No se ha
-  pusheado ni desplegado**; Render sigue sirviendo `349967a`.
+- [x] Publicar el hardening semántico de readiness de Stage 2. `6a44d75` valida
+  PK, columnas, FKs, índices, CHECKs, RLS y deny-all; el candidato limpio
+  `69e8fd0` partió de `349967a`, contuvo solo cuatro archivos y pasó build +
+  `142/142`. PR #23 quedó `CLEAN`/`MERGEABLE`, se fusionó por squash como
+  `d3bef6ea0988e44524cd7cde8392906dc936e06f` y Render lo auto-desplegó. El
+  verificador público posterior confirmó `/health=200` en ese SHA y
+  `/readiness=200` con 029+030 `ready`.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.
@@ -106,7 +108,8 @@ validación en campo:
   registrada/verificada.
 - [x] Ampliar la compuerta de readiness a 030: `b6df031` exige 029+030, las rutas
   `weekly-work` fallan con `503` controlado si 030 falta y PostgreSQL 17 efímero
-  pasó UNIQUE/CHECK/RLS. Render sirve el snapshot fusionado como `349967a` y
+  pasó UNIQUE/CHECK/RLS. Render sirve ahora el hardening fusionado como
+  `d3bef6ea0988e44524cd7cde8392906dc936e06f` y
   devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. La build
   v13 correspondiente está preparada; falta únicamente su validación física.
 
@@ -125,7 +128,7 @@ Comprobaciones técnicas:
   sincronización en el dispositivo objetivo; la consulta remota confirmó una
   lectura y un adjunto únicos.
 - [x] **Confirmar que Render publica el commit que se pretende probar**.
-  Render está en `349967a538a3a5e8f4c51245d02511b7ec6cce69`; `/health` y
+  Render está en `d3bef6ea0988e44524cd7cde8392906dc936e06f`; `/health` y
   `/readiness` devolvieron `200`, las rutas públicas protegidas sin token
   devolvieron `401` y el contrato público terminó correctamente.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.

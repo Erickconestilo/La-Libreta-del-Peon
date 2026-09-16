@@ -218,5 +218,17 @@ para comprobar PK, definiciones de columnas, FKs, índices, CHECKs y policy deny
 drift 030, ausencia de PK en cualquiera y error de probe, y `200` solo cuando
 029+030 son íntegros. El probe
 endurecido contra Supabase real, en solo lectura, devuelve ambas capabilities
-`ready`; esto valida el esquema actual, no publica por sí mismo el nuevo código
-en Render.
+`ready`.
+
+## Tarea 6 — publicación del hardening semántico (16-09-2026)
+
+Para no arrastrar la historia divergida se clonó `main=349967a`, se copiaron
+solo los cuatro archivos técnicos modificados por `6a44d75` y se validó el
+snapshot limpio: build PASS y backend `142/142`. El commit candidato `69e8fd0`
+quedó como un único commit sobre `349967a`; PR #23 mostró `CLEAN`, `MERGEABLE`,
+`4` archivos y `+367/-7`, y se fusionó por squash como
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render auto-desplegó ese SHA en
+`dep-dalfq3bbc2fs7381i7vg` con estado `live`. El verificador público posterior
+confirmó `/health=200` con ese commit, `/readiness=200` con 029+030 `ready` y
+`401` en las rutas protegidas sin bearer. No se reejecutó SQL ni se modificó
+Supabase durante esta publicación.

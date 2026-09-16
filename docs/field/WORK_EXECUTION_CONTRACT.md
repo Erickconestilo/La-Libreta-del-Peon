@@ -252,9 +252,11 @@ compuertas y no se presuponen superadas.
    migración; no reejecutar 029 ni marcarla de nuevo a mano.
 5. **Verificación SQL.** Confirmar tabla, columnas, `UNIQUE(client_request_id)`,
    índices, FK compuestas ronda/obra y punto/ronda, RLS y política deny-all.
-6. **Desplegar backend.** **Completado** mediante PR #22; GitHub `main` y Render
-   quedaron en `349967a538a3a5e8f4c51245d02511b7ec6cce69`. No promover una
-   instancia futura que falle readiness.
+6. **Desplegar backend.** **Completado.** PR #22 publicó el rollout 027–030 como
+   `349967a`; la verificación independiente detectó después falsos positivos
+   semánticos del probe y PR #23 publicó el hardening mínimo como
+   `d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render sirve ese SHA. No promover
+   una instancia futura que falle readiness.
 7. **Health/readiness.** **Completado para el rollout actual:** `/health = 200`
    y `/readiness = 200`, con `workExecution.available=true` y
    `weeklyWork.available=true`. Un `503` detiene cualquier rollout futuro.

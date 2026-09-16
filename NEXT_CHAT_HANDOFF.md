@@ -41,11 +41,12 @@ La base local al iniciar Stage 2 era `55de481`; el hardening técnico de readine
 de Stage 2 quedó versionado en `6a44d75` (`fix: harden schema readiness probes`).
 Los cambios documentales posteriores pueden dejar `HEAD` por encima de ese SHA;
 para el valor exacto usar `git rev-parse HEAD`, no una referencia histórica del
-handoff. El backend publicado se obtuvo mediante un snapshot limpio basado en
-GitHub `main`: PR #22 quedó fusionada como
-`349967a538a3a5e8f4c51245d02511b7ec6cce69` y Render auto-desplegó exactamente
-ese SHA. `/health=200`, `/readiness=200`, `workExecution.available=true` y
-`weeklyWork.available=true`; el verificador público terminó correctamente.
+handoff. El backend base se obtuvo mediante el snapshot limpio de PR #22
+(`349967a538a3a5e8f4c51245d02511b7ec6cce69`). Stage 2 publicó después el
+hardening semántico mínimo mediante PR #23, fusionada por squash como
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`; Render auto-desplegó ese SHA y el
+verificador público posterior confirmó `/health=200`, `/readiness=200`,
+`workExecution.available=true` y `weeklyWork.available=true`.
 
 ## Slice implementado después del último estado remoto
 
@@ -62,8 +63,9 @@ la acción y separa el resultado operativo de su estado de entrega. `Pendiente
 local`, `Reintento`, `Conflicto` o `Backend pendiente` nunca se presentan como
 `Recibido servidor`; el histórico remoto sigue siendo la evidencia de recepción.
 El bloque anterior (`6ed9a84`, `8aff703`, `3b5ed4b`, `2399de6`, `2d182a0`)
-queda reforzado por `bb22bff` y `6a09c58`. La migración 029 y las rutas están
-ya desplegadas en Render mediante `349967a`. La v13 correspondiente está
+queda reforzado por `bb22bff` y `6a09c58`. La migración 029 y las rutas quedaron
+desplegadas inicialmente mediante `349967a` y permanecen en el backend actual
+`d3bef6e`. La v13 correspondiente está
 preparada y firmada, pero no instalada/validada físicamente porque ADB no
 detectó el Galaxy. La v12 instalada antes de esta misión no prueba estos commits.
 
@@ -116,7 +118,7 @@ recibido de cada punto. Las cachés antiguas omiten esos contadores hasta
 refrescarse; no se presentan cambios locales como recibidos por el servidor.
 
 Comprobación remota más reciente: Render sirve
-`349967a538a3a5e8f4c51245d02511b7ec6cce69`. `/health` y `/readiness`
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`. `/health` y `/readiness`
 respondieron `200`; readiness informó 029 y 030 `ready`, y el verificador
 público confirmó `401 UNAUTHORIZED` en las rutas protegidas sin bearer. El
 `404` histórico de execution-events bajo `df224f9` queda supersedido.
@@ -141,20 +143,21 @@ los probes 029/030 para validar PK, columnas, FKs, índices, CHECKs, RLS y la
 policy deny-all. La matriz HTTP en PostgreSQL 17 devuelve `503` con ambos
 ausentes, solo 029, solo 030, drift semántico, ausencia de PK o error de probe;
 solo devuelve `200` con 029+030 íntegros. El probe endurecido leyó Supabase real
-en modo read-only y devolvió ambas capabilities `ready`. Ese commit **aún no se
-presenta como desplegado en Render**: el último deploy verificado sigue siendo
-`349967a`.
+en modo read-only y devolvió ambas capabilities `ready`. El hardening fue
+publicado después mediante PR #23 y el último deploy verificado es
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`.
 
 Después de cerrar Stage 2 se preparó un candidato de publicación completamente
 separado de la historia divergida. En
 `C:\Users\guill\Documents\Aplicacion_Movil\topofield-readiness-snapshot-20260916`
-se clonó `main=349967a`, se creó la rama local
+se clonó `main=349967a`, se creó la rama
 `codex/f5-readiness-hardening-20260916` y se copiaron únicamente los cuatro
 archivos técnicos de `6a44d75`. El commit resultante es `69e8fd0` sobre
 `349967a`, con `4 files changed, 367 insertions(+), 7 deletions(-)`. Build PASS y
-backend `142/142` PASS usando el entorno existente solo en memoria. **No se
-pusheó la rama, no se abrió PR y no se disparó Render**; el backend público
-continúa en `349967a`.
+backend `142/142` PASS usando el entorno existente solo en memoria. Después se
+pusheó la rama, PR #23 quedó `CLEAN`/`MERGEABLE` con esos cuatro archivos y se
+fusionó por squash. Render auto-desplegó `d3bef6e` (`dep-dalfq3bbc2fs7381i7vg`)
+y el contrato público volvió a pasar con ese SHA exacto.
 
 Antes del despliegue, revisar el runbook de
 `docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.

@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. GitHub `main` quedó en `349967a538a3a5e8f4c51245d02511b7ec6cce69` mediante PR #22 y Render auto-desplegó exactamente ese commit. `/api/v1/health` devolvió `200` con ese SHA y `/api/v1/readiness` devolvió `200` con `workExecution.available=true` y `weeklyWork.available=true`; el verificador público terminó correctamente. F5 permanece abierta por la validación física de la nueva release, el cierre con umbral autorizado, la verificación de dos archivos reales, la jornada observada y las entrevistas.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. PR #22 publicó primero `349967a538a3a5e8f4c51245d02511b7ec6cce69`; la verificación independiente de Stage 2 detectó después falsos positivos semánticos en readiness y PR #23 publicó el hardening mínimo como `d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render auto-desplegó ese SHA (`dep-dalfq3bbc2fs7381i7vg`), `/api/v1/health` devolvió `200` con el mismo commit y `/api/v1/readiness` devolvió `200` con `workExecution.available=true` y `weeklyWork.available=true`; el verificador público terminó correctamente. F5 permanece abierta por la validación física de v13, el cierre con umbral autorizado, el guardado SAF/aceptación de exportaciones, la jornada observada y las entrevistas.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -66,7 +66,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 16-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `349967a` con readiness 029+030 en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprobó con una ronda real `15/15` filas en CSV/XLSX generados read-only; lo pendiente es repetir el guardado mediante SAF desde v13 y confirmar que el formato sirve al flujo de oficina.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `d3bef6e` con el readiness 029+030 endurecido en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprobó con una ronda real `15/15` filas en CSV/XLSX generados read-only; lo pendiente es repetir el guardado mediante SAF desde v13 y confirmar que el formato sirve al flujo de oficina.
 
 La comprobación local unificada previa a Stage 2 del 16-09-2026 terminó con
 `verify local completed successfully`: backend `139/139`, móvil `25` suites y
@@ -88,12 +88,13 @@ columnas, FKs, índices, CHECKs y deny-all. En PostgreSQL 17 efímero, `/readine
 `503` con ambos esquemas ausentes, solo 029, solo 030, drift semántico de 029,
 drift semántico de 030, ausencia de PK y fallo de probe; devolvió `200` solo con 029+030
 íntegros. El mismo probe endurecido leyó Supabase real en modo read-only y
-devolvió ambas capabilities `ready`. Este hardening es evidencia local de Stage
-2 y **no se presenta como desplegado en Render**. Para aislarlo de la historia
-divergida se preparó además un snapshot local limpio basado exactamente en
-`349967a`: `69e8fd0` contiene solo los cuatro archivos de capability/tests,
-compila y pasa `142/142`. Ese snapshot no se ha pusheado, no tiene PR y no ha
-disparado un deploy.
+devolvió ambas capabilities `ready`. Para aislarlo de la historia divergida se
+preparó un snapshot limpio basado exactamente en `349967a`: `69e8fd0` contiene
+solo los cuatro archivos de capability/tests y pasa `142/142`. PR #23 se revisó
+como `CLEAN`/`MERGEABLE` (`4` archivos, `+367/-7`) y se fusionó por squash como
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`; Render lo desplegó automáticamente
+y el contrato público volvió a pasar con ese SHA exacto y readiness 029+030
+`ready`.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -264,7 +265,7 @@ Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
 El último despliegue funcional verificado sirve el commit
-`349967a538a3a5e8f4c51245d02511b7ec6cce69`; `/health` devuelve ese SHA y
+`d3bef6ea0988e44524cd7cde8392906dc936e06f`; `/health` devuelve ese SHA y
 `/readiness` devuelve `200` con work-execution 029 y weekly-work 030 disponibles.
 La fuente y la release móvil instalada más reciente están en
 `versionCode=12`, firmada y verificada con el certificado local de release.
