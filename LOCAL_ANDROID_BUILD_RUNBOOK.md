@@ -553,6 +553,33 @@ fechas`. Cada fila abre su ronda sin crear recurrencias nuevas.
   pendientes`. El logcat de aplicación no mostró `FATAL EXCEPTION`. No se
   hicieron nuevas lecturas, fotos ni cambios remotos.
 
+## 21f. Preparación local v13 para backend 029+030 (16-09-2026)
+
+La release `versionCode=13` corresponde al cliente que contiene work-execution
+y la planificación semanal editable después de desplegar el backend
+`349967a538a3a5e8f4c51245d02511b7ec6cce69` con readiness 029+030.
+
+- Commit de versionado: `c15e793 chore(mobile): prepare Android release v13`.
+- TypeScript móvil: código `0`.
+- Jest móvil: `25` suites, `137/137` tests.
+- `npm run mobile:build-local-android`: el `clean` reprodujo el problema conocido
+  `ninja: error: manifest 'build.ninja' still dirty after 100 tries`; el fallback
+  versionado ejecutó `bundleRelease` sin `clean` y terminó con
+  `BUILD SUCCESSFUL in 11m 5s`.
+- AAB: `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`
+  (`40.170.854` bytes); `bundletool 1.18.3 validate` terminó con código `0`.
+- Un `app:assembleRelease` posterior no demostró un bug de código: falló por
+  `Filename longer than 260 characters` en codegen/CMake de Windows.
+- Para no modificar fuentes por ese límite del entorno, Bundletool generó desde
+  la AAB una APK universal firmada (`53.598.615` bytes).
+- `apksigner`: `Verifies`; esquema V2 `true`; certificado
+  `CN=TopoField Android Release`; SHA-256
+  `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
+- `aapt2`: `com.ciudadanoinusual.topofield`, `versionCode=13`,
+  `versionName=1.0.0`.
+- Instalación: pendiente. `adb devices -l` devolvió `List of devices attached`
+  sin dispositivos. No se desinstaló ni modificó el Galaxy.
+
 ## 22. Proximos pasos posibles
 
 ### Opcion A - actualizar la APK local en el Galaxy

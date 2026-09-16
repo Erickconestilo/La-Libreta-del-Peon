@@ -27,7 +27,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E offline y exportación autenticada verificados en Galaxy v7; cierre con umbral, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación, compartir/guardado local y verificador estructurado CSV/XLSX implementados; validación con dos archivos de campo pendiente | parte de MEMORIA Fase 4 |
-| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa; migración 027 aplicada y verificada en Supabase el 16-09-2026, pero sus rutas aún no están publicadas/validadas en Galaxy, y pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
+| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice desplegado, validación física pendiente:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa. La migración 027 está aplicada y sus rutas están publicadas en Render desde `349967a`; falta validar en Galaxy cámara/Storage/reinicio/reconexión. Los pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
 
@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El último backend funcional verificado en Render sigue siendo `df224f9`, con el arreglo de scope de exportación publicado. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. El HEAD local `b6df031` añade el gate combinado de readiness 029+030; contra el esquema remoto, el backend local devolvió `/api/v1/readiness = 200` con ambas capacidades `ready`. **Esto todavía no prueba que Render sirva ese HEAD**: el despliegue y la verificación remota siguen pendientes. F5 permanece además abierta por el cierre con umbral autorizado, la verificación de dos archivos reales y la validación observada de campo.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. GitHub `main` quedó en `349967a538a3a5e8f4c51245d02511b7ec6cce69` mediante PR #22 y Render auto-desplegó exactamente ese commit. `/api/v1/health` devolvió `200` con ese SHA y `/api/v1/readiness` devolvió `200` con `workExecution.available=true` y `weeklyWork.available=true`; el verificador público terminó correctamente. F5 permanece abierta por la validación física de la nueva release, el cierre con umbral autorizado, la verificación de dos archivos reales, la jornada observada y las entrevistas.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -66,11 +66,11 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 16-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=12` quedó instalada y verificada en el Galaxy. La evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. La v7 también añadió el diagnóstico seguro del fallo reproducido de exportación; el `500` de scope quedó corregido, publicado en Render como `df224f9` y verificado de nuevo desde el Galaxy: CSV y XLSX generaron archivos y abrieron el selector nativo, con respuestas `200` registradas por Render. La v7 además recuperó la lista de rondas desde caché después de un arranque en frío sin red, mostrando `Rondas sin actualizar`. El cierre definitivo sigue correctamente bloqueado porque la lectura de prueba está en `draft` sin umbral vigente. El intento universal anterior falló en `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100 tries`; la APK arm64 es la variante validada para el Galaxy. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprueba la estructura y paridad de dos archivos concretos; la app también ofrece guardar cada binario mediante SAF para facilitar esa lectura estructurada. La v12 incorpora `Semana operativa` al parte diario, con acceso por día a las rondas reales y bloque `Otras fechas`; está instalada con `adb install -r`, manteniendo datos y sesión. Esta build no sustituye la ejecución autenticada de campo, la validación observada ni las conversaciones profesionales.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `349967a` con readiness 029+030 en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprueba la estructura y paridad de dos archivos concretos; faltan los dos binarios reales de una misma ronda.
 
 La comprobación local unificada del 16-09-2026 terminó con `verify local completed successfully`: backend `139/139`, móvil `25` suites y `137/137`, tooling `17/17`, `docs:check` sobre `47` documentos y `git diff --check` sin errores. Estas cifras prueban el árbol local actual, no el despliegue de Render ni una build nueva en el Galaxy.
 
-Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añade el probe de 030 y hace que `/api/v1/readiness` solo quede `ready` cuando 029 y 030 están disponibles; las rutas weekly-work devuelven `503 WEEKLY_WORK_SCHEMA_UNAVAILABLE` si falta su esquema. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all, y el backend local contra el esquema remoto devolvió readiness `200`. Falta publicar ese backend y validar una build móvil correspondiente; la planificación semanal no cierra F5.
+Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añadió el probe de 030 y el snapshot de despliegue terminó fusionado en `main` como `349967a`; Render sirve ese SHA y readiness exige 029+030. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all. La v13 preparada contiene el cliente de weekly-work, pero falta instalarla y validarla físicamente; la planificación semanal no cierra F5.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -182,9 +182,10 @@ campo.
  tenga esos campos omite el resumen hasta actualizarse; no se mezclan datos
  locales con recepción del servidor.
 
-La migración 029 quedó aplicada y verificada en Supabase el 16-09-2026. Este
-bloque todavía no se considera desplegado: falta publicar el backend `b6df031`
-o un descendiente que conserve el contrato y repetir la comprobación en el Galaxy.
+La migración 029 quedó aplicada y verificada en Supabase el 16-09-2026. El
+contrato backend correspondiente está desplegado en Render mediante `349967a`
+y readiness lo declara disponible; queda pendiente repetir la comprobación en
+el Galaxy con v13.
 
 La migración 029 preparada también incluye índices únicos auxiliares y claves
 foráneas compuestas para mantener la relación `evento -> punto -> ronda ->
@@ -238,8 +239,8 @@ Las migraciones `022_project_membership_access_level.sql`,
 `023_work_completion_reports.sql`, `024_field_instrument_catalog.sql` y
 `026_supervisor_role.sql` están aplicadas en el proyecto Supabase `topofield`.
 El último despliegue funcional verificado sirve el commit
-`df224f9b7226c8aa5899a5e889898663b4642016`, que contiene la corrección de
-exportación y el scope de adjuntos.
+`349967a538a3a5e8f4c51245d02511b7ec6cce69`; `/health` devuelve ese SHA y
+`/readiness` devuelve `200` con work-execution 029 y weekly-work 030 disponibles.
 La fuente y la release móvil instalada más reciente están en
 `versionCode=12`, firmada y verificada con el certificado local de release.
 La AAB/APK arm64 quedó comprobada con Gradle y la instalación física devolvió
@@ -312,8 +313,8 @@ recreación idempotente como `draft`; el estado `completed` o `blocked` se
 aplica después mediante `PATCH`, porque el backend no acepta estados
 terminales en el POST de creación.
 
-Este bloque sigue sin ser validación de campo: aunque la migración ya está
-aplicada, quedan pendientes desplegar el contrato y comprobar en Galaxy cámara,
+Este bloque sigue sin ser validación de campo: la migración y las rutas ya están
+desplegadas en `349967a`, pero queda pendiente comprobar en Galaxy cámara,
 Storage, reinicio y reconexión. Solo después se
 decidirá si los códigos manuales y la posición relativa resuelven una tarea
 repetida antes de ampliar el croquis.
@@ -372,7 +373,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
 - **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar la comparación estructurada de los archivos exportados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad está comprobado como evidencia histórica en el Galaxy v7; la última release demostrada como instalada es `versionCode=12`, cuyo smoke test no generó nuevos datos remotos. El supervisor y las releases v4/v6 quedan como evidencia histórica.
-- **Abierto — decisión de seguridad antes de datos sensibles:** `007_storage_photo_bucket.sql` deja `topofield-photos` público y los DTO conservan `publicUrl`. La API limita quién descubre las filas, pero no puede revocar un enlace directo ya conocido. Antes de incorporar fotos sensibles de terceros hay que aceptar explícitamente ese riesgo o migrar a bucket privado con URLs de lectura firmadas; no se cambia de forma unilateral porque afecta migraciones, API y móvil.
+- **Resuelto como política de seguridad; implementación privada pendiente:** mientras `topofield-photos` siga público, **queda prohibido usar fotos sensibles de terceros**. El piloto solo puede usar imágenes autorizadas y no sensibles y no debe compartir URLs de Storage. Antes de admitir material sensible deberá existir una tarea separada, revisada y autorizada, que migre a bucket privado y URLs de lectura firmadas y valide API+móvil. Esta decisión evita aceptar implícitamente el riesgo actual sin ejecutar unilateralmente un cambio de Storage que podría romper URLs existentes.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 
 ## Cómo se mantiene este archivo

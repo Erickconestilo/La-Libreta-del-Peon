@@ -37,12 +37,12 @@ La evidencia física más reciente registrada es la instalación de la
 documental del 15-09 no ha ejecutado ADB, así que no debe afirmar que el Galaxy
 esté conectado ahora.
 
-El HEAD local actual (`b6df031`) incluye la planificación semanal de `97e70e4`
-y el backend de `1dec6e9`, además del gate combinado de readiness 029+030. La
-migración 030 ya está aplicada en Supabase y el backend local contra el esquema
-remoto devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. Falta
-publicar ese HEAD (o un descendiente revisado) y verificar Render antes de
-atribuirle ese estado al servicio remoto.
+El HEAD local actual es `c15e793`: encima de `3e7f8e7` solo incrementa la
+release móvil a `versionCode=13`. El backend se publicó mediante un snapshot
+limpio basado en GitHub `main`: PR #22 quedó fusionada como
+`349967a538a3a5e8f4c51245d02511b7ec6cce69` y Render auto-desplegó exactamente
+ese SHA. `/health=200`, `/readiness=200`, `workExecution.available=true` y
+`weeklyWork.available=true`; el verificador público terminó correctamente.
 
 ## Slice implementado después del último estado remoto
 
@@ -59,21 +59,20 @@ la acción y separa el resultado operativo de su estado de entrega. `Pendiente
 local`, `Reintento`, `Conflicto` o `Backend pendiente` nunca se presentan como
 `Recibido servidor`; el histórico remoto sigue siendo la evidencia de recepción.
 El bloque anterior (`6ed9a84`, `8aff703`, `3b5ed4b`, `2399de6`, `2d182a0`)
-queda reforzado por `bb22bff` y `6a09c58`. La migración 029 ya está aplicada en
-Supabase, pero este slice aún no está desplegado en Render ni
-instalado/validado físicamente en el Galaxy. La v12 instalada antes de esta
-misión no prueba estos commits.
+queda reforzado por `bb22bff` y `6a09c58`. La migración 029 y las rutas están
+ya desplegadas en Render mediante `349967a`. La v13 correspondiente está
+preparada y firmada, pero no instalada/validada físicamente porque ADB no
+detectó el Galaxy. La v12 instalada antes de esta misión no prueba estos commits.
 
 La lista de puntos incorpora también `Marcar hecho` en una pulsación para el
 caso normal. `Más opciones` abre el formulario de `Empezar`, `No realizado`,
 `Repetir` y `Bloqueado` con motivo. El atajo usa la misma mutación, outbox e
-idempotencia; queda pendiente validarlo en el Galaxy después de publicar el
-backend correspondiente.
+idempotencia; queda pendiente validarlo en el Galaxy con v13.
 
 En visitas de montaje, `No realizable` exige ahora un motivo escrito tanto en
 la pantalla como en la validación backend; las notas previas se conservan y
 se añade una línea de relevo explícita. Este cambio está en `750153a`; la
-migración 027 ya está aplicada, pero las rutas todavía no están desplegadas.
+migración 027 y las rutas ya están desplegadas, pero falta validarlas físicamente.
 
 La pantalla ofrece cuatro motivos neutros de selección rápida (`Sin acceso`,
 `Sin visibilidad`, `Equipo o sensor dañado` y `Condición de campo adversa`),
@@ -113,24 +112,25 @@ pendientes y por revisar, calculados por el servidor a partir del último evento
 recibido de cada punto. Las cachés antiguas omiten esos contadores hasta
 refrescarse; no se presentan cambios locales como recibidos por el servidor.
 
-Comprobación remota más reciente: Render sigue en `df224f9`; `/health`
-respondió `200`, las rutas protegidas existentes sin bearer respondieron `401`
-y `GET /api/v1/round-points/<uuid>/execution-events` respondió `404 Route not
-found`. Ese `404` es evidencia del backend remoto anterior, no un fallo de la
-UI local; la tabla y la ruta nuevas deben publicarse juntas.
+Comprobación remota más reciente: Render sirve
+`349967a538a3a5e8f4c51245d02511b7ec6cce69`. `/health` y `/readiness`
+respondieron `200`; readiness informó 029 y 030 `ready`, y el verificador
+público confirmó `401 UNAUTHORIZED` en las rutas protegidas sin bearer. El
+`404` histórico de execution-events bajo `df224f9` queda supersedido.
 
 La reconciliación del 16-09-2026 registró 019–026 en
 `public.schema_migrations` sin reejecutar sus SQL. Después, con backup fresco
 verificado, 027, 028, 029 y 030 se aplicaron y registraron por separado. Los
 probes locales contra Supabase muestran 029 y 030 `ready`. El advisor de seguridad mantiene únicamente
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
-claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
+claves foráneas sin índice y `40` índices sin uso. El SQL remoto de 027–030 sí
+fue aplicado por gates separados y no debe reejecutarse.
 
 Antes del despliegue, revisar el runbook de
 `docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.
-La divergencia del ledger quedó cerrada y 027–030 ya están aplicadas; la
-compuerta pendiente es ahora publicación/verificación del backend, no repetir
-las migraciones.
+La divergencia del ledger quedó cerrada, 027–030 ya están aplicadas y el backend
+ya está publicado/verificado. La compuerta pendiente es la validación física y
+autenticada del cliente, no repetir migraciones ni despliegue.
 
 **Registro histórico de autorización (13-09-2026):** Erick autorizó expresamente el bloque
 completo por compuertas: backup remoto; 027 -> 028 -> 029 tras prechecks verdes;
@@ -451,15 +451,16 @@ release v12 con `adb install -r` y `dumpsys package` confirmó
 ## Estado desplegado
 
 - Render: `https://la-libreta-del-peon-1.onrender.com`.
-- Último despliegue observado: `/api/v1/health` devolvió `200` y estado `ok`
-  con commit `df224f9b7226c8aa5899a5e889898663b4642016` el 13-09-2026.
-  Las rutas de rondas y `GET /api/v1/me/journey` sin bearer devolvieron
-  `401 UNAUTHORIZED`, nunca `404`.
-- El commit remoto observado (`df224f9`) contiene la corrección de exportación,
-  pero el hardening local `f90c995` (`PROJECT_ACCESS_REQUIRED` cuando falta el
-  mapa de membresías) no es antecesor de ese despliegue. No se debe presentar
-  esa defensa como activa en Render hasta publicar y verificar el commit que la
-  contenga.
+- Último despliegue observado: Render auto-desplegó el snapshot de PR #22 y
+  `/api/v1/health` devolvió `200` con commit
+  `349967a538a3a5e8f4c51245d02511b7ec6cce69`.
+- `/api/v1/readiness` devolvió `200`, `status=ready`,
+  `workExecution.available=true` y `weeklyWork.available=true`.
+- `npm run verify:remote:public` terminó correctamente; las rutas protegidas
+  sin bearer devolvieron `401 UNAUTHORIZED`.
+- La validación autenticada automatizada sigue bloqueada porque no existe un
+  `TOPOFIELD_AUTH_TOKEN` vigente disponible en el entorno/repo; no generar ni
+  resetear credenciales solo para satisfacer esa prueba.
 - No aplicar migraciones ni cambiar Supabase Auth/RLS sin autorización explícita
   en el momento.
 
@@ -487,6 +488,13 @@ cuerpos ni credenciales.
   13-09-2026 con `adb install -r` y `Success`; `dumpsys package` confirmó
   `lastUpdateTime=2026-09-13 12:32:01`. Incluye `Semana operativa`, pero no la
   planificación semanal editable añadida después en `97e70e4`.
+- Release preparada más reciente: `versionCode=13` (`c15e793`). TypeScript y
+  `25` suites/`137` tests pasan. La AAB (`40.170.854` bytes) terminó con
+  `BUILD SUCCESSFUL in 11m 5s`; Bundletool `1.18.3` la validó y produjo una APK
+  universal de `53.598.615` bytes. `apksigner` confirmó V2 y certificado
+  `CN=TopoField Android Release`; `aapt2` confirmó package
+  `com.ciudadanoinusual.topofield`, `versionCode=13`. `adb devices -l` quedó
+  vacío, por lo que esta release no está instalada ni probada en Galaxy.
 - Release histórica instalada: `versionCode=4`, firmada como `CN=TopoField Android Release`.
 - La consulta supervisora fue validada anteriormente en el Galaxy.
 - La release arm64 histórica `versionCode=7` se instaló el 13-09-2026 con `adb install -r`
@@ -505,17 +513,19 @@ cuerpos ni credenciales.
   la interfaz real del dispositivo.
 - La autorización de escritura es fail-closed en móvil y backend: una sesión
   topógrafo sin `projectAccess` no puede escribir aunque conserve `projectIds`.
-  La regresión backend está en `f90c995`; este commit aún no está desplegado.
+  La regresión histórica nació en `f90c995`; su contenido quedó incluido en el
+  snapshot backend fusionado y desplegado como `349967a`.
 
 ## Trabajo pendiente prioritario
 
-1. Publicar el backend que contiene el gate combinado 029+030 y verificar que
-   Render sirve exactamente ese commit o un descendiente revisado.
-2. Exigir `/health=200` y `/readiness=200` con `workExecution` y `weeklyWork`
-   `available=true`; ejecutar el verificador público actualizado.
+1. Reconectar el Galaxy por ADB e instalar v13 con `adb install -r` solo después
+   de confirmar que la firma instalada coincide; no desinstalar automáticamente.
+2. Repetir en v13 el flujo autenticado de work-execution, weekly-work, cambio de
+   cuenta, caché/outbox, visitas de montaje y reconexión.
 3. Ejecutar `npm run verify:remote:auth` con un token QA temporal y los UUID
    autorizados, para comprobar `/auth/me`, `Mi jornada` y, si se proporcionan,
-   la obra y ronda sin aceptar un `404`.
+   la obra y ronda sin aceptar un `404`; si no existe token legítimo, mantenerlo
+   bloqueado y usar la sesión persistida del Galaxy como evidencia física.
 4. Ejecutar `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` con
    los dos archivos de una misma ronda real; la generación autenticada ya
    responde `200` y la prueba local cubre la paridad del contrato.
@@ -526,8 +536,8 @@ cuerpos ni credenciales.
 7. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 8. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-9. Desplegar las rutas ya respaldadas por `027_station_mounting_visits.sql` y
-   validar en campo la pantalla local de visitas de montaje, incluida cámara,
+9. Validar en campo las rutas ya desplegadas de `027_station_mounting_visits.sql`,
+   incluida cámara,
    Storage, reinicio y reconexión. La captura offline local ya usa caché
    SQLite por sesión y estación más el outbox (migración local 007). Después
    decidir el croquis fotográfico según evidencia y no según una demo.

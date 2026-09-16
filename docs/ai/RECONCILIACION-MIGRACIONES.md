@@ -88,10 +88,10 @@ se infiere ese dato.
 | `024_field_instrument_catalog.sql` | Inserta o actualiza cinco códigos en `instrument_types`: `fissure_witness`, `fissure_gauge`, `potentiometer`, `clinometer` y `convergence_tape`; reactiva cada código. | **Aplicada funcionalmente y registrada**; los cinco códigos y sus campos coinciden. | **Sin acción.** | Reejecutar el UPSERT podría sobrescribir una decisión manual futura. |
 | `025_fix_auth_user_trigger_users.sql` | Reemplaza la función `public.handle_new_auth_user()` para insertar en `users`; no crea ni altera el trigger que la invoca. | **Aplicada funcionalmente y registrada**; la función vigente está legítimamente supersedida por 026. | **Sin acción.** | No reejecutarla porque podría degradar el soporte de `supervisor`. |
 | `026_supervisor_role.sql` | Elimina y recrea `users_role_check` incluyendo `supervisor`; reemplaza `handle_new_auth_user()` para aceptar ese rol. | **Aplicada funcionalmente y registrada**; función/trigger/CHECK re-verificados. | **Sin acción.** | Cualquier cambio futuro debe hacerse como migración nueva. |
-| `027_station_mounting_visits.sql` | Índice único auxiliar en `stations`; tablas `station_mounting_visits` y `mounting_visit_evidence`; FKs compuestas tenant; cuatro índices; RLS y políticas guardadas. | **Aplicada y registrada 16-09-2026.** | **Pendiente desplegar/validar las rutas que la usan.** | El rollback preferido ante fallo de backend es conservar este esquema aditivo. |
+| `027_station_mounting_visits.sql` | Índice único auxiliar en `stations`; tablas `station_mounting_visits` y `mounting_visit_evidence`; FKs compuestas tenant; cuatro índices; RLS y políticas guardadas. | **Aplicada y registrada 16-09-2026.** | **Rutas desplegadas en `349967a`; pendiente validación física en Galaxy.** | El rollback preferido ante fallo de cliente/backend es conservar este esquema aditivo. |
 | `028_reading_attachment_idempotency.sql` | Comprueba duplicados por `reading_id` y `storage_path`; crea índice único `idx_reading_attachments_reading_storage`. | **Aplicada y registrada 16-09-2026; cero duplicados.** | **Sin acción de esquema.** | El índice debe permanecer como garantía de concurrencia. |
-| `029_monitoring_work_execution_events.sql` | Crea tabla append-only de eventos; dos índices de consulta; dos índices únicos auxiliares; dos FKs compuestas con guardas; RLS y política `legacy deny all`. | **Aplicada y registrada 16-09-2026; capability `ready`.** | **Pendiente publicar backend y validar contrato/E2E.** | El rollback de backend debe conservar la tabla aditiva. |
-| `030_project_weekly_work.sql` | Crea `project_weekly_work_items` con FKs, checks de estado, versión, borrado lógico y unicidad por creador/request; índice parcial; RLS y política `legacy deny all`. | **Aplicada y registrada 16-09-2026; capability `ready`.** | **Pendiente publicar backend y validar CRUD/build.** | El gate combinado evita promover backend si 029 o 030 dejan de estar listas. |
+| `029_monitoring_work_execution_events.sql` | Crea tabla append-only de eventos; dos índices de consulta; dos índices únicos auxiliares; dos FKs compuestas con guardas; RLS y política `legacy deny all`. | **Aplicada y registrada 16-09-2026; capability `ready`.** | **Backend desplegado y contrato público verde; pendiente contrato autenticado/E2E Galaxy.** | El rollback de backend debe conservar la tabla aditiva. |
+| `030_project_weekly_work.sql` | Crea `project_weekly_work_items` con FKs, checks de estado, versión, borrado lógico y unicidad por creador/request; índice parcial; RLS y política `legacy deny all`. | **Aplicada y registrada 16-09-2026; capability `ready`.** | **Backend desplegado/readiness verde; pendiente CRUD autenticado y v13 en Galaxy.** | El gate combinado evita promover backend si 029 o 030 dejan de estar listas. |
 
 ## Decisión operativa resultante
 
@@ -174,5 +174,8 @@ posterior confirmó: 027 tablas/FK/índices/RLS/policies; 028 índice único
 índices/RLS con `workExecution.available=true`; 030 tabla/15 columnas/UNIQUE/
 índice/checks/RLS con `weeklyWork.available=true`. El backend local contra el
 esquema remoto devolvió `/api/v1/readiness` `200` con ambas capabilities en
-`reason=ready`. Esto no equivale todavía a despliegue de Render ni validación
-física en Galaxy.
+`reason=ready`. Después, PR #22 publicó un snapshot limpio en GitHub `main` y
+Render auto-desplegó `349967a538a3a5e8f4c51245d02511b7ec6cce69`.
+`/health` devolvió ese SHA y `/readiness` devolvió `200` con 029+030 `ready`;
+el contrato público terminó correctamente. La validación autenticada y la
+prueba física en Galaxy siguen fuera de esta misión de esquema.

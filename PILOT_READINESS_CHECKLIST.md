@@ -42,6 +42,12 @@ validación en campo:
   `lastUpdateTime=2026-09-13 12:32:01`. El smoke test recuperó una ronda
   cacheada y mostró el progreso operativo y el cierre bloqueado con pendientes;
   la prueba autenticada de campo sigue pendiente.
+- [x] La release Android v13 quedó preparada para el backend 029+030 ya
+  desplegado: TypeScript y `25` suites/`137` tests pasan; la AAB terminó con
+  `BUILD SUCCESSFUL in 11m 5s`, Bundletool la validó y generó una APK universal
+  de `53.598.615` bytes con `versionCode=13`, firma V2 y certificado
+  `CN=TopoField Android Release`. **No está instalada:** `adb devices -l`
+  devolvió `List of devices attached` sin dispositivos.
 - [x] La APK arm64 v7 quedó instalada históricamente en el Galaxy; `adb install -r`
   devolvió `Success` y `dumpsys package` confirmó `versionCode=7` y
   `lastUpdateTime=2026-09-13 07:39:25`. Se conserva como evidencia de esa
@@ -50,9 +56,12 @@ validación en campo:
   adjuntos, idempotencia, caché por sesión, outbox y exportación.
 - [x] La pantalla de resumen permite guardar CSV/XLSX en una carpeta elegida
   por el usuario mediante SAF, sin envío automático ni escritura al cancelar.
-- [x] Publicar el arreglo de scope de exportación mediante PR #19/#20 y
-  repetir las comprobaciones autenticadas. Render sirve `df224f9` y las
-  exportaciones CSV/XLSX responden `200` desde el Galaxy.
+- [x] Publicar el backend vigente. PR #22 fusionó el snapshot limpio en GitHub
+  `main` y Render auto-desplegó
+  `349967a538a3a5e8f4c51245d02511b7ec6cce69`; `/health` devolvió ese SHA,
+  `/readiness` devolvió `200` con 029+030 `ready` y el verificador público pasó.
+  La exportación CSV/XLSX `200` desde Galaxy sigue siendo evidencia histórica
+  de la v7 y debe repetirse con la release que se valide ahora.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.
@@ -85,9 +94,9 @@ validación en campo:
   registrada/verificada.
 - [x] Ampliar la compuerta de readiness a 030: `b6df031` exige 029+030, las rutas
   `weekly-work` fallan con `503` controlado si 030 falta y PostgreSQL 17 efímero
-  pasó UNIQUE/CHECK/RLS. Contra el esquema remoto ya migrado, el backend local
-  devolvió `/api/v1/readiness = 200` con ambas capabilities `ready`. Falta el
-  despliegue de ese backend y una build correspondiente en Galaxy.
+  pasó UNIQUE/CHECK/RLS. Render sirve el snapshot fusionado como `349967a` y
+  devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. La build
+  v13 correspondiente está preparada; falta únicamente su validación física.
 
 ## Paso 1 - Erick usando datos reales en campo
 
@@ -104,14 +113,18 @@ Comprobaciones técnicas:
   sincronización en el dispositivo objetivo; la consulta remota confirmó una
   lectura y un adjunto únicos.
 - [x] **Confirmar que Render publica el commit que se pretende probar**.
-  Render está en `df224f9`; `/health` devolvió `200`, las rutas protegidas sin
-  token devolvieron `401` y la exportación autenticada CSV/XLSX desde el
-  Galaxy devolvió `200`.
+  Render está en `349967a538a3a5e8f4c51245d02511b7ec6cce69`; `/health` y
+  `/readiness` devolvieron `200`, las rutas públicas protegidas sin token
+  devolvieron `401` y el contrato público terminó correctamente.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
 - [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.
 - [ ] Registrar una captura como testigo fotográfico, una lectura digital y los tres pares del potenciómetro sin cobertura; distinguir guardado local de recibido por servidor.
-- [ ] **Política de fotos:** hasta resolver el bucket público de la migración 007, usar únicamente imágenes autorizadas para el piloto y no compartir URLs de Storage fuera de las cuentas permitidas; decidir bucket privado/URLs firmadas antes de incluir fotos sensibles de terceros.
+- [x] **Política de fotos:** mientras el bucket de la migración 007 siga
+  público, quedan prohibidas las fotos sensibles de terceros. El piloto solo
+  puede usar imágenes autorizadas/no sensibles y no compartir URLs de Storage.
+  Antes de admitir material sensible se exige una tarea separada para bucket
+  privado + URLs firmadas, con validación de API y móvil.
 - [ ] Antes de usar otro instrumento, consultar [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md): una captura provisional no sustituye el procedimiento del equipo ni representa automáticamente pares, perfiles o referencias de carril.
 - [x] Crear un parte parcial de zona y comprobar que no presenta el trabajo
   como 100 % completado si quedan puntos pendientes; el servidor registró

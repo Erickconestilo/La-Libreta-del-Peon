@@ -54,9 +54,12 @@ los SQL de las migraciones.` y `Filas registradas en schema_migrations: 8`.
 
 ## Siguiente paso único
 
-La compuerta de esquema está cerrada. El siguiente paso de esta misión es
-publicar/verificar el backend `b6df031` (o un descendiente revisado) y después
-validar Galaxy; no reejecutar 019–030.
+La misión P0 de esquema y despliegue backend queda cerrada: `019`–`026` están
+reconciliadas en el ledger sin reejecutar SQL, `027`–`030` están aplicadas y
+verificadas, y Render sirve `349967a538a3a5e8f4c51245d02511b7ec6cce69`
+con `/readiness=200` para 029+030. No reejecutar 019–030. La siguiente puerta
+pertenece a F5/ROADMAP: instalar y validar la release móvil correspondiente en
+Galaxy y completar la evidencia humana/operativa pendiente.
 
 ## Validación local de esta tarea
 
