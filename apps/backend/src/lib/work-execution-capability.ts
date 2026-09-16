@@ -32,12 +32,20 @@ export type WorkExecutionCapability = {
 
 type CapabilityProbeRow = {
   client_request_unique: boolean;
+  column_definitions_valid: boolean;
   deny_policy_exists: boolean;
+  event_type_check: boolean;
+  id_primary_key: boolean;
   point_round_fk: boolean;
   point_time_index: boolean;
   present_columns: string[] | null;
+  project_fk: boolean;
   project_time_index: boolean;
+  reason_required_check: boolean;
+  recorded_by_fk: boolean;
   rls_enabled: boolean;
+  round_fk: boolean;
+  round_point_fk: boolean;
   round_project_fk: boolean;
   table_exists: boolean;
 };
@@ -63,6 +71,39 @@ const defaultProbe: CapabilityProbe = async () => {
             AND table_name = 'monitoring_work_execution_events'
           ORDER BY column_name
         ) AS present_columns,
+        NOT EXISTS (
+          SELECT 1
+          FROM (
+            VALUES
+              ('id', 'uuid', 'NO', 'gen_random_uuid()'),
+              ('round_id', 'uuid', 'NO', NULL),
+              ('round_point_id', 'uuid', 'NO', NULL),
+              ('project_id', 'uuid', 'NO', NULL),
+              ('event_type', 'text', 'NO', NULL),
+              ('reason', 'text', 'YES', NULL),
+              ('notes', 'text', 'YES', NULL),
+              ('occurred_at', 'timestamptz', 'NO', 'now()'),
+              ('recorded_by', 'uuid', 'NO', NULL),
+              ('client_request_id', 'uuid', 'NO', NULL),
+              ('created_at', 'timestamptz', 'NO', 'now()')
+          ) AS expected(column_name, udt_name, is_nullable, column_default)
+          LEFT JOIN information_schema.columns actual
+            ON actual.table_schema = 'public'
+           AND actual.table_name = 'monitoring_work_execution_events'
+           AND actual.column_name = expected.column_name
+          WHERE actual.column_name IS NULL
+             OR actual.udt_name <> expected.udt_name
+             OR actual.is_nullable <> expected.is_nullable
+             OR COALESCE(actual.column_default, '') <> COALESCE(expected.column_default, '')
+        ) AS column_definitions_valid,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_pkey'
+            AND constraint_row.contype = 'p'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) = 'PRIMARY KEY (id)'
+        ) AS id_primary_key,
         EXISTS (
           SELECT 1
           FROM pg_constraint constraint_row
@@ -74,16 +115,88 @@ const defaultProbe: CapabilityProbe = async () => {
           SELECT 1
           FROM pg_constraint constraint_row
           WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_event_type_check'
+            AND constraint_row.contype = 'c'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'CHECK (event_type = ANY (ARRAY[''started''::text, ''completed''::text, ''not_done''::text, ''repeat_required''::text, ''blocked''::text]))'
+        ) AS event_type_check,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_check'
+            AND constraint_row.contype = 'c'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'CHECK ((event_type = ANY (ARRAY[''started''::text, ''completed''::text])) OR length(TRIM(BOTH FROM COALESCE(reason, ''''::text))) > 0)'
+        ) AS reason_required_check,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_project_id_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE'
+        ) AS project_fk,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_recorded_by_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (recorded_by) REFERENCES users(id)'
+        ) AS recorded_by_fk,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_round_id_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (round_id) REFERENCES monitoring_rounds(id) ON DELETE CASCADE'
+        ) AS round_fk,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
+            AND constraint_row.conname = 'monitoring_work_execution_events_round_point_id_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (round_point_id) REFERENCES monitoring_round_points(id) ON DELETE CASCADE'
+        ) AS round_point_fk,
+        EXISTS (
+          SELECT 1
+          FROM pg_constraint constraint_row
+          WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
             AND constraint_row.conname = 'monitoring_work_execution_events_round_project_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (round_id, project_id) REFERENCES monitoring_rounds(id, project_id) ON DELETE CASCADE'
         ) AS round_project_fk,
         EXISTS (
           SELECT 1
           FROM pg_constraint constraint_row
           WHERE constraint_row.conrelid = to_regclass('public.monitoring_work_execution_events')
             AND constraint_row.conname = 'monitoring_work_execution_events_point_round_fkey'
+            AND pg_get_constraintdef(constraint_row.oid, TRUE) =
+              'FOREIGN KEY (round_point_id, round_id) REFERENCES monitoring_round_points(id, round_id) ON DELETE CASCADE'
         ) AS point_round_fk,
-        to_regclass('public.idx_monitoring_work_execution_events_point_time') IS NOT NULL AS point_time_index,
-        to_regclass('public.idx_monitoring_work_execution_events_project_time') IS NOT NULL AS project_time_index,
+        EXISTS (
+          SELECT 1
+          FROM pg_index index_row
+          WHERE index_row.indexrelid = to_regclass('public.idx_monitoring_work_execution_events_point_time')
+            AND index_row.indrelid = to_regclass('public.monitoring_work_execution_events')
+            AND index_row.indisunique = FALSE
+            AND index_row.indnkeyatts = 3
+            AND pg_get_indexdef(index_row.indexrelid) =
+              'CREATE INDEX idx_monitoring_work_execution_events_point_time ON public.monitoring_work_execution_events USING btree (round_point_id, occurred_at DESC, created_at DESC)'
+        ) AS point_time_index,
+        EXISTS (
+          SELECT 1
+          FROM pg_index index_row
+          WHERE index_row.indexrelid = to_regclass('public.idx_monitoring_work_execution_events_project_time')
+            AND index_row.indrelid = to_regclass('public.monitoring_work_execution_events')
+            AND index_row.indisunique = FALSE
+            AND index_row.indnkeyatts = 2
+            AND pg_get_indexdef(index_row.indexrelid) =
+              'CREATE INDEX idx_monitoring_work_execution_events_project_time ON public.monitoring_work_execution_events USING btree (project_id, occurred_at DESC)'
+        ) AS project_time_index,
         COALESCE((
           SELECT relation.relrowsecurity
           FROM pg_class relation
@@ -95,18 +208,31 @@ const defaultProbe: CapabilityProbe = async () => {
           WHERE schemaname = 'public'
             AND tablename = 'monitoring_work_execution_events'
             AND policyname = 'legacy deny all'
+            AND cmd = 'ALL'
+            AND cardinality(roles) = 2
+            AND roles::text[] @> ARRAY['anon', 'authenticated']::text[]
+            AND qual = 'false'
+            AND with_check = 'false'
         ) AS deny_policy_exists
     `
   );
 
   return result.rows[0] ?? {
     client_request_unique: false,
+    column_definitions_valid: false,
     deny_policy_exists: false,
+    event_type_check: false,
+    id_primary_key: false,
     point_round_fk: false,
     point_time_index: false,
     present_columns: [],
+    project_fk: false,
     project_time_index: false,
+    reason_required_check: false,
+    recorded_by_fk: false,
     rls_enabled: false,
+    round_fk: false,
+    round_point_fk: false,
     round_project_fk: false,
     table_exists: false
   };
@@ -119,7 +245,15 @@ export const evaluateWorkExecutionCapability = (
   const presentColumns = new Set(row.present_columns ?? []);
   const missingColumns = REQUIRED_COLUMNS.filter((column) => !presentColumns.has(column));
   const requiredChecks: Array<[string, boolean]> = [
+    ['column_definitions', row.column_definitions_valid],
+    ['id_primary_key', row.id_primary_key],
     ['client_request_id_unique', row.client_request_unique],
+    ['event_type_check', row.event_type_check],
+    ['reason_required_check', row.reason_required_check],
+    ['project_fk', row.project_fk],
+    ['recorded_by_fk', row.recorded_by_fk],
+    ['round_fk', row.round_fk],
+    ['round_point_fk', row.round_point_fk],
     ['round_project_fk', row.round_project_fk],
     ['point_round_fk', row.point_round_fk],
     ['point_time_index', row.point_time_index],

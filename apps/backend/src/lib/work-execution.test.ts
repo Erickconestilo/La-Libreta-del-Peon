@@ -22,11 +22,19 @@ import { validateCreateWorkExecutionEventInput } from '../utils/monitoring-valid
 const UUID = '11111111-1111-4111-8111-111111111111';
 const READY_SCHEMA_REQUIREMENTS = {
   client_request_unique: true,
+  column_definitions_valid: true,
   deny_policy_exists: true,
+  event_type_check: true,
+  id_primary_key: true,
   point_round_fk: true,
   point_time_index: true,
+  project_fk: true,
   project_time_index: true,
+  reason_required_check: true,
+  recorded_by_fk: true,
   rls_enabled: true,
+  round_fk: true,
+  round_point_fk: true,
   round_project_fk: true
 };
 
@@ -81,12 +89,20 @@ test('work execution capability reports migration 029 missing without throwing',
   const capability = evaluateWorkExecutionCapability(
     {
       client_request_unique: false,
+      column_definitions_valid: false,
       deny_policy_exists: false,
+      event_type_check: false,
+      id_primary_key: false,
       point_round_fk: false,
       point_time_index: false,
       present_columns: [],
+      project_fk: false,
       project_time_index: false,
+      reason_required_check: false,
+      recorded_by_fk: false,
       rls_enabled: false,
+      round_fk: false,
+      round_point_fk: false,
       round_project_fk: false,
       table_exists: false
     },
@@ -111,7 +127,15 @@ test('work execution capability reports migration 029 missing without throwing',
       'round_point_id'
     ],
     missingRequirements: [
+      'column_definitions',
+      'id_primary_key',
       'client_request_id_unique',
+      'event_type_check',
+      'reason_required_check',
+      'project_fk',
+      'recorded_by_fk',
+      'round_fk',
+      'round_point_fk',
       'round_project_fk',
       'point_round_fk',
       'point_time_index',
@@ -159,6 +183,65 @@ test('work execution capability distinguishes an incomplete schema from a ready 
   assert.equal(ready.available, true);
   assert.equal(ready.reason, 'ready');
   await assert.doesNotReject(() => requireWorkExecutionCapability());
+  resetWorkExecutionCapabilityCacheForTests();
+});
+
+test('work execution capability fails closed when its probe throws', async () => {
+  resetWorkExecutionCapabilityCacheForTests();
+  await assert.rejects(
+    () => refreshWorkExecutionCapability(async () => {
+      throw new Error('probe failed');
+    }),
+    /probe failed/
+  );
+  resetWorkExecutionCapabilityCacheForTests();
+});
+
+test('work execution semantic drift is schema_incomplete even when names still exist', async () => {
+  resetWorkExecutionCapabilityCacheForTests();
+  const policyDrift = await refreshWorkExecutionCapability(async () => ({
+    ...READY_SCHEMA_REQUIREMENTS,
+    deny_policy_exists: false,
+    present_columns: [
+      'client_request_id',
+      'created_at',
+      'event_type',
+      'id',
+      'notes',
+      'occurred_at',
+      'project_id',
+      'reason',
+      'recorded_by',
+      'round_id',
+      'round_point_id'
+    ],
+    table_exists: true
+  }));
+  assert.equal(policyDrift.available, false);
+  assert.equal(policyDrift.reason, 'schema_incomplete');
+  assert.deepEqual(policyDrift.missingRequirements, ['legacy_deny_all_policy']);
+
+  const primaryKeyDrift = await refreshWorkExecutionCapability(async () => ({
+    ...READY_SCHEMA_REQUIREMENTS,
+    id_primary_key: false,
+    present_columns: [
+      'client_request_id',
+      'created_at',
+      'event_type',
+      'id',
+      'notes',
+      'occurred_at',
+      'project_id',
+      'reason',
+      'recorded_by',
+      'round_id',
+      'round_point_id'
+    ],
+    table_exists: true
+  }));
+  assert.equal(primaryKeyDrift.available, false);
+  assert.equal(primaryKeyDrift.reason, 'schema_incomplete');
+  assert.deepEqual(primaryKeyDrift.missingRequirements, ['id_primary_key']);
   resetWorkExecutionCapabilityCacheForTests();
 });
 
