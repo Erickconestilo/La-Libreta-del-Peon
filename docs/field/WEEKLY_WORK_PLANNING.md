@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-13
+  verificado: 2026-09-16
 rol: contrato
 -->
 
@@ -53,4 +53,11 @@ La última semana recibida del servidor se guarda en SQLite (`weekly_work_cache`
 
 ## Estado de despliegue
 
-La migración PostgreSQL 030 está preparada **solo localmente**. No se ha aplicado a Supabase y no se ha desplegado backend ni una nueva build móvil como parte de este cambio.
+La migración PostgreSQL `030_project_weekly_work.sql` quedó aplicada y registrada
+en Supabase el 16-09-2026. El backend que expone estas rutas está publicado en
+Render mediante `349967a538a3a5e8f4c51245d02511b7ec6cce69` y el readiness remoto
+verificado exige conjuntamente 029 y 030. La release móvil `versionCode=13` que
+contiene este cliente está preparada y firmada, pero todavía no se ha instalado
+ni validado físicamente en el Galaxy; tampoco se ha completado el CRUD
+autenticado de QA. Por tanto, despliegue de esquema/backend no equivale a
+validación de campo.

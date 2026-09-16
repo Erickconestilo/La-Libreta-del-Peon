@@ -225,15 +225,18 @@ contenedor efímero, usando un fixture mínimo de las tablas de las que depende
   después de retirarla del fixture efímero.
 
 Esta prueba **no** ejecutó toda la cadena 001–028 ni reproduce todos los
-objetos de Supabase. Por tanto, valida 029 y el gate contra PostgreSQL real,
-pero la ejecución ordenada de migraciones sobre el proyecto remoto sigue
-`PENDIENTE` y requiere autorización.
+objetos de Supabase. Fue la evidencia local previa al rollout. El 16-09-2026
+la secuencia remota quedó ejecutada por compuertas individuales: 019–026 se
+registraron sin reejecutar SQL y 027, 028, 029 y 030 se aplicaron después, una
+por una, con backup/prechecks y verificación posterior. La evidencia vigente
+está en `docs/ai/RECONCILIACION-MIGRACIONES.md` y `MEMORIA.md` §12.
 
-## Runbook de despliegue y rollback — preparado, no ejecutado
+## Runbook de despliegue y rollback — ejecutado hasta backend; físico pendiente
 
-Los pasos siguientes son una receta de despliegue controlado. Todo lo que
-modifique Supabase, Render, una cuenta real o el Galaxy requiere autorización
-explícita de Erick en el momento.
+Los pasos siguientes siguen siendo la receta de referencia. El rollout remoto
+de esquema/backend se ejecutó el 16-09-2026 con la autorización ya registrada;
+las acciones autenticadas y físicas que aún falten mantienen sus propias
+compuertas y no se presuponen superadas.
 
 1. **Prechecks.** Confirmar commit objetivo, batería local verde, ventana de
    prueba y estado remoto observado. No publicar backend nuevo si readiness de
@@ -241,22 +244,22 @@ explícita de Erick en el momento.
 2. **Respaldo.** Obtener y verificar un backup/snapshot recuperable de la base
    antes de cualquier migración. No avanzar si el respaldo no está disponible.
 3. **Migraciones actuales.** Leer `schema_migrations` y reconciliar el estado
-   real. La última observación histórica era hasta 026; 027, 028 y 029 estaban
-   pendientes. 027 (visitas de montaje) y 028 (idempotencia de adjuntos) son
-   cambios distintos de este bloque. El runner del repo aplica pendientes en
-   orden, así que **no** debe ejecutarse suponiendo que aplicará solo 029: si
-   027/028 siguen pendientes, su aplicación conjunta necesita autorización y
-   revisión explícitas.
-4. **Aplicar 029.** Una vez decidido el tratamiento de 027/028, aplicar 029 con
-   el mecanismo autorizado y registrar su versión. No aplicar SQL ad hoc a
-   ciegas ni marcarla manualmente como ejecutada.
+   real. Estado vigente: 019–026 están registradas tras reconciliación ledger-only;
+   027, 028, 029 y 030 están aplicadas y registradas. El runner genérico no debe
+   usarse para “demostrar” ese estado ni para reejecutarlas.
+4. **Aplicar 029.** **Completado 16-09-2026** mediante su compuerta individual,
+   después de 027/028 y antes de 030. Cualquier cambio futuro debe ser una nueva
+   migración; no reejecutar 029 ni marcarla de nuevo a mano.
 5. **Verificación SQL.** Confirmar tabla, columnas, `UNIQUE(client_request_id)`,
    índices, FK compuestas ronda/obra y punto/ronda, RLS y política deny-all.
-6. **Desplegar backend.** Solo después del esquema compatible, publicar el
-   commit aprobado. No promover una instancia que falle readiness.
-7. **Health/readiness.** Exigir `/health = 200` y `/readiness = 200` con
-   `workExecution.available=true`. Un `503` detiene el rollout.
-8. **Prueba pública sin credenciales.** Ejecutar el verificador público: debe
+6. **Desplegar backend.** **Completado** mediante PR #22; GitHub `main` y Render
+   quedaron en `349967a538a3a5e8f4c51245d02511b7ec6cce69`. No promover una
+   instancia futura que falle readiness.
+7. **Health/readiness.** **Completado para el rollout actual:** `/health = 200`
+   y `/readiness = 200`, con `workExecution.available=true` y
+   `weeklyWork.available=true`. Un `503` detiene cualquier rollout futuro.
+8. **Prueba pública sin credenciales.** **Completada** para el backend actual. El
+   verificador público debe
    pasar health/readiness y las rutas protegidas deben responder `401`; con
    `TOPOFIELD_ROUND_POINT_ID`, `execution-events` también debe existir y
    responder `401`, no `404`.
@@ -266,10 +269,9 @@ explícita de Erick en el momento.
    payload. Verificar permisos: supervisor lectura; admin/topógrafo escritura
    según membresía.
 10. **Build móvil.** La v12 instalada antes de esta misión es evidencia
-    histórica y no demuestra estos cambios. Para validar work-execution debe
-    usarse una build que contenga los commits de esta misión (v12 si se
-    reconstruyera exactamente con ellos o, preferiblemente, un build posterior
-    con versionado inequívoco), sin desinstalar datos locales por defecto.
+    histórica y no demuestra estos cambios. La `versionCode=13` que contiene el
+    cliente actual ya está preparada y firmada, pero no instalada; debe usarse
+    para la validación física sin desinstalar datos locales por defecto.
 11. **E2E offline en Galaxy.** Registrar una acción sin red, confirmar que la
     UI indica estado local y nunca recepción, reiniciar si forma parte del caso,
     reconectar, observar replay con el mismo UUID y confirmar finalmente el
@@ -285,16 +287,11 @@ explícita de Erick en el momento.
 
 ### Estado de autorización
 
-Completado autónomamente en local: implementación, tests, gate de readiness,
-verificador público y prueba PostgreSQL efímera. El 13-09-2026 Erick autorizó
-la secuencia de despliegue por compuertas: backup remoto; revisión y aplicación
-de 027 -> 028 -> 029 si los prechecks son verdes; despliegue y verificaciones de
-backend; y, únicamente después, nueva build/instalación y E2E físico en Galaxy.
-
-En la sesión que recibió esa autorización se intentó iniciar la comprobación
-remota de solo lectura de `schema_migrations` usando el stack del backend, pero
-el conector de ejecución bloqueó la operación antes de abrir la consulta. Por
-tanto, la autorización existe pero **backup, migraciones, Render y Galaxy siguen
-sin ejecutarse ni verificarse**. No se debe saltar esa compuerta: el backend
-nuevo no se publica hasta demostrar backup recuperable, estado real de
-migraciones y prechecks de 027/028/029.
+El 13-09-2026 Erick autorizó la secuencia de despliegue por compuertas. El
+16-09-2026 se completaron backup, reconciliación 019–026, aplicación individual
+027 -> 028 -> 029 -> 030, publicación y verificación pública del backend. La
+Stage 2 posterior revalidó el ledger en solo lectura y endureció localmente los
+probes para rechazar drift semántico aunque se conserven nombres de índices o
+políticas; ese hardening posterior no debe confundirse con un nuevo deploy
+hasta que exista evidencia de publicación. Siguen pendientes el contrato
+autenticado legítimo y el E2E físico con v13 en Galaxy.

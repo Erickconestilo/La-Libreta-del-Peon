@@ -68,9 +68,29 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `349967a` con readiness 029+030 en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprueba la estructura y paridad de dos archivos concretos; faltan los dos binarios reales de una misma ronda.
 
-La comprobación local unificada del 16-09-2026 terminó con `verify local completed successfully`: backend `139/139`, móvil `25` suites y `137/137`, tooling `17/17`, `docs:check` sobre `47` documentos y `git diff --check` sin errores. Estas cifras prueban el árbol local actual, no el despliegue de Render ni una build nueva en el Galaxy.
+La comprobación local unificada previa a Stage 2 del 16-09-2026 terminó con
+`verify local completed successfully`: backend `139/139`, móvil `25` suites y
+`137/137`, tooling `17/17`, `docs:check` sobre `47` documentos y
+`git diff --check` sin errores. Tras `6a44d75`, el wrapper `verify:local` fue
+bloqueado por el entorno antes de arrancar y se ejecutaron sus componentes por
+separado: build backend PASS, backend `142/142`, TypeScript móvil PASS, móvil
+`25` suites/`137` tests, tooling `17/17`, `docs:check` sobre `47` documentos y
+`git diff --check` limpio. Estas cifras prueban el árbol local, no el despliegue
+de Render ni una build nueva en el Galaxy.
 
 Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añadió el probe de 030 y el snapshot de despliegue terminó fusionado en `main` como `349967a`; Render sirve ese SHA y readiness exige 029+030. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all. La v13 preparada contiene el cliente de weekly-work, pero falta instalarla y validarla físicamente; la planificación semanal no cierra F5.
+
+La verificación independiente de Stage 2 del 16-09-2026 encontró un falso
+positivo local en los probes: una policy 029 o un índice 030 con el nombre
+esperado pero definición distinta todavía podían aparecer como `ready`. El
+árbol de trabajo se endureció en `6a44d75` para comprobar semántica de PK,
+columnas, FKs, índices, CHECKs y deny-all. En PostgreSQL 17 efímero, `/readiness` devolvió
+`503` con ambos esquemas ausentes, solo 029, solo 030, drift semántico de 029,
+drift semántico de 030, ausencia de PK y fallo de probe; devolvió `200` solo con 029+030
+íntegros. El mismo probe endurecido leyó Supabase real en modo read-only y
+devolvió ambas capabilities `ready`. Este hardening es evidencia local de Stage
+2 y **no se presenta como desplegado en Render** hasta publicar un commit que lo
+contenga.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -232,7 +252,7 @@ Como evidencia histórica del cierre de la misión Work Execution del 13-09-2026
 la batería integrada de aquel momento pasó con backend `120/120`, móvil `23`
 suites y `130/130`, TypeScript móvil sin errores, tooling `14/14`, `docs:check`
 sobre `44` documentos y `git diff --check` limpio. La cifra vigente del árbol
-local está registrada arriba con la verificación del 15-09-2026. No se ejecutó
+local está registrada arriba con la verificación del 16-09-2026. No se ejecutó
 ninguna operación remota ni prueba física nueva en Galaxy durante esa misión.
 
 Las migraciones `022_project_membership_access_level.sql`,

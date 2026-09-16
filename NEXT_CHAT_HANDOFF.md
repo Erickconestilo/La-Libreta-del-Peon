@@ -37,9 +37,12 @@ La evidencia física más reciente registrada es la instalación de la
 documental del 15-09 no ha ejecutado ADB, así que no debe afirmar que el Galaxy
 esté conectado ahora.
 
-El HEAD local actual es `c15e793`: encima de `3e7f8e7` solo incrementa la
-release móvil a `versionCode=13`. El backend se publicó mediante un snapshot
-limpio basado en GitHub `main`: PR #22 quedó fusionada como
+La base local al iniciar Stage 2 era `55de481`; el hardening técnico de readiness
+de Stage 2 quedó versionado en `6a44d75` (`fix: harden schema readiness probes`).
+Los cambios documentales posteriores pueden dejar `HEAD` por encima de ese SHA;
+para el valor exacto usar `git rev-parse HEAD`, no una referencia histórica del
+handoff. El backend publicado se obtuvo mediante un snapshot limpio basado en
+GitHub `main`: PR #22 quedó fusionada como
 `349967a538a3a5e8f4c51245d02511b7ec6cce69` y Render auto-desplegó exactamente
 ese SHA. `/health=200`, `/readiness=200`, `workExecution.available=true` y
 `weeklyWork.available=true`; el verificador público terminó correctamente.
@@ -126,6 +129,22 @@ probes locales contra Supabase muestran 029 y 030 `ready`. El advisor de segurid
 claves foráneas sin índice y `40` índices sin uso. El SQL remoto de 027–030 sí
 fue aplicado por gates separados y no debe reejecutarse.
 
+La Stage 2 independiente volvió a leer el ledger y confirmó que
+`schema_migrations` solo guarda `id`, `filename` y `executed_at`: no existe hash
+persistido. Los SHA-256 registrados en la reconciliación identifican los SQL
+locales, **no** los bytes aplicados remotamente. 019–026 comparten una misma
+marca de registro; 027–030 tienen cuatro marcas posteriores distintas. Los
+gates de 027–030 se sostienen por la evidencia contemporánea del rollout, no por
+inferirlos del timestamp. Durante esta revisión se reprodujeron falsos `ready`
+con policy/índice de nombre correcto y definición alterada. `6a44d75` endurece
+los probes 029/030 para validar PK, columnas, FKs, índices, CHECKs, RLS y la
+policy deny-all. La matriz HTTP en PostgreSQL 17 devuelve `503` con ambos
+ausentes, solo 029, solo 030, drift semántico, ausencia de PK o error de probe;
+solo devuelve `200` con 029+030 íntegros. El probe endurecido leyó Supabase real
+en modo read-only y devolvió ambas capabilities `ready`. Ese commit **aún no se
+presenta como desplegado en Render**: el último deploy verificado sigue siendo
+`349967a`.
+
 Antes del despliegue, revisar el runbook de
 `docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.
 La divergencia del ledger quedó cerrada, 027–030 ya están aplicadas y el backend
@@ -163,10 +182,16 @@ haya aplicado. Este punto quedó superado como instrucción activa por el dry-ru
 posterior de 019–026; no se debe saltar directamente a 027->028->029 mientras
 el ledger propio siga sin reconciliar.
 
-La verificación local unificada más reciente, ejecutada el 15-09-2026, terminó
-con `verify local completed successfully`: backend `127/127`, móvil `25` suites
-y `137/137`, TypeScript móvil sin errores, tooling `15/15`, `docs:check` sobre
-`47` documentos y `git diff --check` sin errores. El árbol sigue
+La verificación local unificada previa a Stage 2, ejecutada el 16-09-2026,
+terminó con `verify local completed successfully`: backend `139/139`, móvil `25`
+suites y `137/137`, TypeScript móvil sin errores, tooling `17/17`, `docs:check`
+sobre `47` documentos y `git diff --check` sin errores. Stage 2 añadió después
+el hardening `6a44d75`. El entorno bloqueó la invocación agregada posterior de
+`verify:local` antes de arrancar, por lo que se ejecutaron exactamente sus
+componentes por separado: build backend PASS, backend `142/142`, TypeScript
+móvil PASS, móvil `25` suites/`137` tests, tooling `17/17`, `docs:check` sobre
+`47` documentos y `git diff --check` limpio. Las pruebas PostgreSQL controladas
+descritas arriba también pasan. El árbol sigue
 conservando fuera de esta misión el cambio previo de `apps/mobile/package.json`
 y las capturas/XML no versionadas; no limpiarlos ni incluirlos en commits.
 
@@ -561,8 +586,8 @@ cuerpos ni credenciales.
   de rutas, las correcciones defensivas de incidencias, prismas, visitas de
   montaje y relaciones ronda-punto-lectura, el contrato de exportación F7, el
   fixture genérico y la evidencia de la release sin confundirlas con el E2E
-  físico. La migración local 028 prepara unicidad para adjuntos concurrentes y
-  aún no se ha aplicado remotamente.
+  físico. La migración 028 que ese informe trataba como pendiente quedó aplicada
+  y verificada el 16-09-2026; el texto archivado sigue siendo evidencia histórica.
  - El importador manual MapEst ahora falla cerrado si una estación no mapea a
    una obra única; la regresión está en
    `apps/backend/src/scripts/mapest-project-mapping.test.ts`.
@@ -574,9 +599,9 @@ cuerpos ni credenciales.
 - Los scripts históricos de aplicación de migraciones 016 y 017 pasan ahora
   por `assertWriteAllowed`; la guarda está cubierta en
   `apps/backend/src/scripts/safety.test.ts` y no se ejecutó SQL remoto.
-- La rama local añade `f5de61d` después del despliegue verificado de Render
-  (`6a1b19f`); la corrección de scope de prismas todavía no se ha publicado
-  remotamente.
+- Los estados de despliegue anteriores a PR #22 que aparecen en documentos
+  históricos quedaron supersedidos por el backend `349967a`; no usarlos como
+  estado remoto actual.
 - La plantilla de obra genérica está en
   `docs/field/GENERIC_PROJECT_TEMPLATE.md` y su fixture CSV en
   `data/generic-project-code-catalog.csv`; ambos usan únicamente códigos y
@@ -607,18 +632,18 @@ cuerpos ni credenciales.
   nativo de `expo-sqlite` está declarado en `apps/mobile/app.json`. El diff
   previo de scripts `android/ios` de `apps/mobile/package.json` permanece sin
   commit.
- - La rama prepara `027_station_mounting_visits.sql`, el contrato de visitas
-  append-only, evidencias fotográficas y la pantalla móvil de `Visitas de
-  montaje`, incluidos los estados de visita `draft`, `completed` y `blocked`.
+ - `027_station_mounting_visits.sql` ya está aplicada y sus rutas están
+  desplegadas; el contrato de visitas append-only, evidencias fotográficas y la
+  pantalla móvil de `Visitas de montaje` incluyen los estados `draft`,
+  `completed` y `blocked`.
   La captura offline local usa SQLite 007, caché por sesión/estación y el
   outbox existente. La posición relativa opcional usa una cuadrícula 3x3 y
   las consultas muestran el título como etiqueta sobre la miniatura, sin
-   afirmar precisión métrica. No se ha aplicado la migración PostgreSQL ni se
-   ha desplegado el endpoint; la validación física y la comprobación de Storage
-   quedan pendientes.
-- La migración local `028_reading_attachment_idempotency.sql` está preparada,
-  con comprobación de duplicados históricos e índice único para carreras de
-  adjuntos; no se ha aplicado remotamente.
+   afirmar precisión métrica. El esquema/backend están publicados; la validación
+   física y la comprobación de Storage quedan pendientes.
+- `028_reading_attachment_idempotency.sql` quedó aplicada y verificada el
+  16-09-2026, con cero duplicados históricos y el índice UNIQUE esperado. No
+  reejecutarla para verificar estado.
 - El reintento offline de evidencias de montaje conserva ahora el
   `clientRequestId` exigido por el backend; la regresión está en
   `apps/mobile/lib/offline/__tests__/sync-handlers.test.ts`.

@@ -179,3 +179,44 @@ Render auto-desplegó `349967a538a3a5e8f4c51245d02511b7ec6cce69`.
 `/health` devolvió ese SHA y `/readiness` devolvió `200` con 029+030 `ready`;
 el contrato público terminó correctamente. La validación autenticada y la
 prueba física en Galaxy siguen fuera de esta misión de esquema.
+
+## Tarea 5 — revalidación independiente de identidad y readiness (16-09-2026)
+
+La tabla `public.schema_migrations` se releyó en modo solo lectura. Sus únicas
+columnas son `id`, `filename` y `executed_at`; **no persiste checksum ni hash**.
+Por ello, los siguientes SHA-256 identifican los ficheros SQL locales actuales,
+pero no deben citarse como checksum remoto ni como prueba criptográfica de los
+bytes ejecutados en Supabase:
+
+| Migración | SHA-256 local |
+|---|---|
+| 019 | `0f0048b64e9f26efc23fdb61beccfe07257afa4261c9cc22e9e2d5f92770828b` |
+| 020 | `d1ebf28c2ac25e4306f5fad36ff8651253e194139defbc88c780cecce0f016be` |
+| 021 | `417b05cd2ca97d6d19c1d3ae6528f72d532647efe9020cb56d1e06074442216b` |
+| 022 | `25188881231dedda4ebb19311afcbf14bb7cc9ae58761eb12b04e083ea31e3e5` |
+| 023 | `2d1d0d40692954bb59279796cd7eed1c957677b9f17608376fadf6e9c794c965` |
+| 024 | `c1bedb57b171bb51f47382d13536d875b03fb87c076b3814a6ff2eed88d8d334` |
+| 025 | `8b8e92fef786fb70ad650b6d46c2e39cb0e6de9abf338c09ce4ce0ce6dab0393` |
+| 026 | `085006421a3fc0e2a0d8544b8d9f90018f2c7bce26d76d8cf51e050676ba8ac4` |
+| 027 | `1a459ef61be6b2d8f36956ba5ff593e9b68b40f9604ba7412965a27b97f22c40` |
+| 028 | `26a3cb531717ef2a1b7e6c2653fd3d83a980d4bd57a1bc302af50feb374f58ff` |
+| 029 | `b2d631a0cfdcba74ebed9319120b71d3533f2e05cacf73ffc8f70122fd956e3a` |
+| 030 | `e2934e59dbd5ec2077efe33accfcec44d720f90242803a8b0d475085609c3e25` |
+
+El ledger muestra 019–026 con una misma marca `executed_at` y 027–030 con cuatro
+marcas posteriores distintas y crecientes. Eso corrobora la reconciliación
+ledger-only seguida por cuatro registros separados; por sí solo no demuestra
+los prechecks. Los prechecks/gates se atribuyen al registro contemporáneo de
+ejecución de la Tarea 4.
+
+La matriz de readiness se repitió contra PostgreSQL 17 efímero sin mutar
+Supabase. Antes del hardening se reprodujeron dos falsos positivos: conservar el
+nombre de la policy 029 cambiando su semántica a allow-all y conservar el nombre
+del índice 030 con columnas distintas. Los probes se endurecieron en `6a44d75`
+para comprobar PK, definiciones de columnas, FKs, índices, CHECKs y policy deny-all. Tras el fix,
+`/readiness` responde `503` para ambos ausentes, 029 solo, 030 solo, drift 029,
+drift 030, ausencia de PK en cualquiera y error de probe, y `200` solo cuando
+029+030 son íntegros. El probe
+endurecido contra Supabase real, en solo lectura, devuelve ambas capabilities
+`ready`; esto valida el esquema actual, no publica por sí mismo el nuevo código
+en Render.
