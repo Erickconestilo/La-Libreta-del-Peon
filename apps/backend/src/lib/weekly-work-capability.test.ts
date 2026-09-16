@@ -33,9 +33,14 @@ const REQUIRED_COLUMNS = [
 
 const READY_REQUIREMENTS = {
   category_check: true,
+  column_definitions_valid: true,
   completed_state_check: true,
+  created_by_fk: true,
   delete_actor_check: true,
+  deleted_by_fk: true,
   deny_policy_exists: true,
+  id_primary_key: true,
+  project_fk: true,
   project_date_index: true,
   rls_enabled: true,
   status_check: true,
@@ -49,9 +54,14 @@ test('weekly work capability reports migration 030 missing without throwing', ()
   const capability = evaluateWeeklyWorkCapability(
     {
       category_check: false,
+      column_definitions_valid: false,
       completed_state_check: false,
+      created_by_fk: false,
       delete_actor_check: false,
+      deleted_by_fk: false,
       deny_policy_exists: false,
+      id_primary_key: false,
+      project_fk: false,
       project_date_index: false,
       present_columns: [],
       rls_enabled: false,
@@ -68,7 +78,7 @@ test('weekly work capability reports migration 030 missing without throwing', ()
   assert.equal(capability.reason, 'migration_missing');
   assert.equal(capability.migration, WEEKLY_WORK_MIGRATION);
   assert.deepEqual(capability.missingColumns, REQUIRED_COLUMNS);
-  assert.equal(capability.missingRequirements.length, 10);
+  assert.equal(capability.missingRequirements.length, 15);
 });
 
 test('weekly work capability distinguishes incomplete and ready schema', async () => {
@@ -118,13 +128,40 @@ test('weekly work capability fails closed when its probe throws', async () => {
   resetWeeklyWorkCapabilityCacheForTests();
 });
 
+test('weekly work semantic drift is schema_incomplete even when object names still exist', async () => {
+  resetWeeklyWorkCapabilityCacheForTests();
+  const indexDrift = await refreshWeeklyWorkCapability(async () => ({
+    ...READY_REQUIREMENTS,
+    present_columns: REQUIRED_COLUMNS,
+    project_date_index: false
+  }));
+  assert.equal(indexDrift.available, false);
+  assert.equal(indexDrift.reason, 'schema_incomplete');
+  assert.deepEqual(indexDrift.missingRequirements, ['project_date_index']);
+
+  const primaryKeyDrift = await refreshWeeklyWorkCapability(async () => ({
+    ...READY_REQUIREMENTS,
+    id_primary_key: false,
+    present_columns: REQUIRED_COLUMNS
+  }));
+  assert.equal(primaryKeyDrift.available, false);
+  assert.equal(primaryKeyDrift.reason, 'schema_incomplete');
+  assert.deepEqual(primaryKeyDrift.missingRequirements, ['id_primary_key']);
+  resetWeeklyWorkCapabilityCacheForTests();
+});
+
 test('weekly work controller returns controlled 503 before querying when 030 is unavailable', async () => {
   resetWeeklyWorkCapabilityCacheForTests();
   await refreshWeeklyWorkCapability(async () => ({
     category_check: false,
+    column_definitions_valid: false,
     completed_state_check: false,
+    created_by_fk: false,
     delete_actor_check: false,
+    deleted_by_fk: false,
     deny_policy_exists: false,
+    id_primary_key: false,
+    project_fk: false,
     project_date_index: false,
     present_columns: [],
     rls_enabled: false,
@@ -186,7 +223,12 @@ test('weekly work controller returns controlled 503 before querying when 030 is 
   assert.ok(Number.isFinite(Date.parse(errorPayload.error.details.checkedAt)));
   assert.deepEqual(errorPayload.error.details.missingColumns, REQUIRED_COLUMNS);
   assert.deepEqual(errorPayload.error.details.missingRequirements, [
+    'column_definitions',
+    'id_primary_key',
     'created_by_client_request_id_unique',
+    'project_fk',
+    'created_by_fk',
+    'deleted_by_fk',
     'project_date_index',
     'rls_enabled',
     'legacy_deny_all_policy',
