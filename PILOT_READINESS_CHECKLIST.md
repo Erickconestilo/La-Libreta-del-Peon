@@ -12,7 +12,8 @@ El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No s
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `139/139` tests en la batería integrada actual.
+- [x] Backend compila y pasa `142/142` tests tras el hardening semántico de
+  readiness de Stage 2.
 - [x] Móvil pasa TypeScript, `25` suites y `137/137` tests; la batería cubre
   además los estados de entrega local, conflicto, reintento y backend
   incompatible.
@@ -62,6 +63,11 @@ validación en campo:
   `/readiness` devolvió `200` con 029+030 `ready` y el verificador público pasó.
   La exportación CSV/XLSX `200` desde Galaxy sigue siendo evidencia histórica
   de la v7 y debe repetirse con la release que se valide ahora.
+- [ ] Publicar el hardening semántico de readiness de Stage 2 antes de tratarlo
+  como protección activa en producción. `6a44d75` valida PK, columnas, FKs,
+  índices, CHECKs, RLS y deny-all; el candidato limpio local `69e8fd0` parte de
+  `349967a`, contiene solo cuatro archivos y pasa build + `142/142`. **No se ha
+  pusheado ni desplegado**; Render sigue sirviendo `349967a`.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.

@@ -145,6 +145,17 @@ en modo read-only y devolvió ambas capabilities `ready`. Ese commit **aún no s
 presenta como desplegado en Render**: el último deploy verificado sigue siendo
 `349967a`.
 
+Después de cerrar Stage 2 se preparó un candidato de publicación completamente
+separado de la historia divergida. En
+`C:\Users\guill\Documents\Aplicacion_Movil\topofield-readiness-snapshot-20260916`
+se clonó `main=349967a`, se creó la rama local
+`codex/f5-readiness-hardening-20260916` y se copiaron únicamente los cuatro
+archivos técnicos de `6a44d75`. El commit resultante es `69e8fd0` sobre
+`349967a`, con `4 files changed, 367 insertions(+), 7 deletions(-)`. Build PASS y
+backend `142/142` PASS usando el entorno existente solo en memoria. **No se
+pusheó la rama, no se abrió PR y no se disparó Render**; el backend público
+continúa en `349967a`.
+
 Antes del despliegue, revisar el runbook de
 `docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.
 La divergencia del ledger quedó cerrada, 027–030 ya están aplicadas y el backend

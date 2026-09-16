@@ -66,7 +66,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 ### Estado de F5 (revisado 16-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `349967a` con readiness 029+030 en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprueba la estructura y paridad de dos archivos concretos; faltan los dos binarios reales de una misma ronda.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `349967a` con readiness 029+030 en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprobó con una ronda real `15/15` filas en CSV/XLSX generados read-only; lo pendiente es repetir el guardado mediante SAF desde v13 y confirmar que el formato sirve al flujo de oficina.
 
 La comprobación local unificada previa a Stage 2 del 16-09-2026 terminó con
 `verify local completed successfully`: backend `139/139`, móvil `25` suites y
@@ -89,8 +89,11 @@ columnas, FKs, índices, CHECKs y deny-all. En PostgreSQL 17 efímero, `/readine
 drift semántico de 030, ausencia de PK y fallo de probe; devolvió `200` solo con 029+030
 íntegros. El mismo probe endurecido leyó Supabase real en modo read-only y
 devolvió ambas capabilities `ready`. Este hardening es evidencia local de Stage
-2 y **no se presenta como desplegado en Render** hasta publicar un commit que lo
-contenga.
+2 y **no se presenta como desplegado en Render**. Para aislarlo de la historia
+divergida se preparó además un snapshot local limpio basado exactamente en
+`349967a`: `69e8fd0` contiene solo los cuatro archivos de capability/tests,
+compila y pasa `142/142`. Ese snapshot no se ha pusheado, no tiene PR y no ha
+disparado un deploy.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -116,8 +119,10 @@ El contrato backend de exportación está alineado con
   estación; la regresión local estaba incluida en la batería de aquel momento,
   `114/114` tests. La migración
   027 quedó aplicada y verificada en Supabase el 16-09-2026. Los hardenings de exportación se
-publicaron mediante PR #19/#20; Render quedó verificado el 13-09-2026 en
-`df224f9`. La memoria visual continúa pendiente de publicación/validación física aunque su esquema 027 ya esté aplicado.
+publicaron mediante PR #19/#20 y el snapshot posterior `349967a` publica también
+las rutas protegidas de visitas de montaje: el smoke público devuelve `401`, no
+`404`, sin bearer. La memoria visual continúa pendiente de **validación física**
+en Galaxy, no de publicación del esquema/API.
 La auditoría de límites de proyecto también revisó el código ejecutable del
 móvil y backend: no quedan nombres de obras ni referencias TopoTask/ARGOS en
 las fuentes activas. Los restos localizados están confinados a scripts de
@@ -142,8 +147,8 @@ sin `projectAccess` todavía no puede mostrar controles de escritura hasta que
 `/auth/me` entregue el mapa efectivo de membresías. La regresión está cubierta
 en `apps/mobile/lib/__tests__/field-access.test.ts`. El backend aplica la misma
 regla desde `f90c995`: `assertProjectWriteAccess` exige el nivel `write` explícito
-del mapa efectivo y devuelve `PROJECT_ACCESS_REQUIRED` si el mapa falta; este
-commit aún debe publicarse antes de considerarlo activo en Render.
+del mapa efectivo y devuelve `PROJECT_ACCESS_REQUIRED` si el mapa falta; ese
+contenido quedó incluido en el snapshot backend fusionado como `349967a`.
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. El recorrido de operador offline quedó verificado en la release v7 con lectura, foto, reinicio, reconexión y unicidad; siguen pendientes el cierre positivo con umbral autorizado, la paridad estructurada de archivos y la observación de uso.
 
