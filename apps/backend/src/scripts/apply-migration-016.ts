@@ -9,6 +9,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { assertWriteAllowed } from './safety.js';
+
 const { Pool } = pg;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +24,7 @@ const pool = new Pool({
 
 async function applyMigration016() {
   console.log('=== APLICANDO MIGRACIÓN 016: unify_profiles_into_users ===\n');
+  assertWriteAllowed('apply-migration-016');
 
   try {
     // Leer archivo de migración

@@ -26,8 +26,26 @@ export const ROUND_EXPORT_COLUMNS = [
   { header: 'estado_lectura', key: 'readingStatus' },
   { header: 'delta', key: 'delta' },
   { header: 'estado_umbral', key: 'thresholdStatus' },
-  { header: 'adjuntos', key: 'attachmentCount' }
+  { header: 'adjuntos', key: 'attachmentCount' },
+  { header: 'trabajo_estado', key: 'workExecutionStatus' },
+  { header: 'trabajo_motivo', key: 'workExecutionReason' },
+  { header: 'trabajo_notas', key: 'workExecutionNotes' },
+  { header: 'trabajo_fecha', key: 'workExecutionAt' },
+  { header: 'trabajo_operador', key: 'workExecutionOperator' }
 ] as const satisfies ReadonlyArray<{ header: string; key: keyof RoundExportRow }>;
+
+export const excelColumnName = (columnNumber: number) => {
+  let remaining = columnNumber;
+  let name = '';
+
+  while (remaining > 0) {
+    const remainder = (remaining - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    remaining = Math.floor((remaining - 1) / 26);
+  }
+
+  return name;
+};
 
 const csvValue = (value: unknown) => {
   if (value === null || value === undefined) {
@@ -61,12 +79,12 @@ export const roundExportRowsToXlsx = async (rows: readonly RoundExportRow[]) => 
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
   worksheet.autoFilter = {
     from: 'A1',
-    to: `${String.fromCharCode(64 + ROUND_EXPORT_COLUMNS.length)}1`
+    to: `${excelColumnName(ROUND_EXPORT_COLUMNS.length)}1`
   };
 
   for (const row of rows) {
     const values = ROUND_EXPORT_COLUMNS.map((column) => {
-      if (column.key === 'roundDate' || column.key === 'measuredAt') {
+      if (column.key === 'roundDate' || column.key === 'measuredAt' || column.key === 'workExecutionAt') {
         return xlsxDate(row[column.key]);
       }
 

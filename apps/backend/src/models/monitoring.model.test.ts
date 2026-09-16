@@ -1,16 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import test from 'node:test';
 
 import { AppError } from '../lib/app-error.js';
 import {
   assertMonitoringRoundStatusTransition,
+  buildMonitoringPointTenantCondition,
   buildProjectScopeCondition,
+  buildReadingPointTenantCondition,
   mapInstrumentReadingContextRow,
   toIsoTimestamp
 } from './monitoring.model.js';
+import {
+  buildMountingEvidenceRelationCondition,
+  buildMountingVisitStationScope,
+  buildMountingVisitTenantCondition
+} from './mounting-visits.model.js';
 
 test('uses projects.id when scoping a projects query', () => {
   const scope = buildProjectScopeCondition(
@@ -22,6 +29,39 @@ test('uses projects.id when scoping a projects query', () => {
 
   assert.equal(scope.clause, 'AND p.id = ANY($9::uuid[])');
   assert.deepEqual(scope.params, [['11111111-1111-1111-1111-111111111111']]);
+});
+
+test('journey summarises the latest operational result per point through the schema capability join', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const journeySource = modelSource.slice(
+    modelSource.indexOf('export const listMyJourney'),
+    modelSource.indexOf('export const createControlPoint')
+  );
+
+  assert.match(journeySource, /buildJourneyWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(journeySource, /\$\{workExecutionJoin\}/);
+  assert.match(journeySource, /work_completed_point_count/);
+  assert.match(journeySource, /work_in_progress_point_count/);
+  assert.match(journeySource, /work_pending_point_count/);
+  assert.match(journeySource, /work_review_point_count/);
+});
+
+test('round detail projects the latest work execution event into executionState', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+  const detailSource = modelSource.slice(
+    modelSource.indexOf('export const getMonitoringRoundDetail'),
+    modelSource.indexOf('export const assertMonitoringRoundStatusTransition')
+  );
+
+  assert.match(detailSource, /execution\.\*/);
+  assert.match(detailSource, /buildRoundPointWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(detailSource, /\$\{workExecutionJoin\}/);
 });
 
 test('uses project_id by default for monitoring child tables', () => {
@@ -80,6 +120,43 @@ test('terminal rounds cannot be changed', () => {
   );
 });
 
+test('mounting visits use the station project as their tenant scope', () => {
+  assert.deepEqual(
+    buildMountingVisitStationScope(['bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'], 2),
+    {
+      clause: 'AND s.project_id = ANY($2::uuid[])',
+      params: [['bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']]
+    }
+  );
+});
+
+test('mounting visit queries require the visit and station to share the same project', () => {
+  assert.equal(buildMountingVisitTenantCondition(), 's.project_id = v.project_id');
+});
+
+test('mounting visit queries reject evidence from a different station', () => {
+  assert.equal(
+    buildMountingEvidenceRelationCondition(),
+    'e.visit_id = v.id AND e.station_id = v.station_id'
+  );
+});
+
+test('monitoring reads require the round point and control point to share a tenant', () => {
+  assert.equal(buildMonitoringPointTenantCondition(), 'cp.project_id = mr.project_id');
+  assert.equal(buildReadingPointTenantCondition(), 'ir.control_point_id = mrp.control_point_id');
+});
+
+test('reading attachment idempotency remains compatible before migration 028', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
+    'utf8'
+  );
+
+  assert.match(modelSource, /pg_advisory_xact_lock\(hashtext\(\$1::text \|\| ':' \|\| \$2::text\)\)/);
+  assert.match(modelSource, /ON CONFLICT DO NOTHING\s+RETURNING \*/);
+  assert.match(modelSource, /READING_ATTACHMENT_INSERT_INCONSISTENT/);
+});
+
 test('round export applies the actor project scope to its data query', () => {
   const modelSource = readFileSync(
     resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/monitoring.model.ts'),
@@ -94,4 +171,18 @@ test('round export applies the actor project scope to its data query', () => {
     (exportSource.match(/WHERE mr\.id = \$1\s+\$\{scope\.clause\}/g) ?? []).length,
     2
   );
+  assert.match(exportSource, /buildExportWorkExecutionJoin\(\(await getWorkExecutionCapability\(\)\)\.available\)/);
+  assert.match(exportSource, /\$\{workExecutionJoin\}/);
+});
+
+test('station details validate tenant scope before loading associated readings', () => {
+  const modelSource = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../src/models/stations.model.ts'),
+    'utf8'
+  );
+
+  assert.match(modelSource, /const stationResult = await pool\.query\(stationQuery/);
+  assert.match(modelSource, /if \(stationResult\.rowCount === 0\) \{\s+return null;\s+\}/);
+  assert.match(modelSource, /const readingsResult = await pool\.query\(readingQuery/);
+  assert.doesNotMatch(modelSource, /Promise\.all\(\[\s+pool\.query\(stationQuery[\s\S]*pool\.query\(readingQuery/);
 });

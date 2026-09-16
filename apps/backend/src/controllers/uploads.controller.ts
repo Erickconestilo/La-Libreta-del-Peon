@@ -5,11 +5,13 @@ import { assertProjectWriteAccess, getActorProjectScope } from '../lib/access-co
 import {
   createPrismPhotoStoragePath,
   createProjectPhotoStoragePath,
+  createMountingVisitPhotoStoragePath,
   createReadingPhotoStoragePath,
   createSignedPhotoUpload,
   createStationPhotoStoragePath
 } from '../lib/photo-storage.js';
-import { getInstrumentReadingById, getInstrumentReadingContext } from '../models/monitoring.model.js';
+import { getInstrumentReadingContext } from '../models/monitoring.model.js';
+import { getMountingVisitById } from '../models/mounting-visits.model.js';
 import { sendSuccess } from '../lib/api-response.js';
 import { getPrismById } from '../models/prisms.model.js';
 import { getProjectById } from '../models/projects.model.js';
@@ -27,7 +29,9 @@ export const createSignedPhotoUploadController = async (request: Request, respon
         ? await getProjectById(input.entityId, projectScope)
         : input.entityType === 'prism'
           ? await getPrismById(input.entityId, projectScope)
-          : await getInstrumentReadingContext(input.entityId, projectScope);
+          : input.entityType === 'reading'
+            ? await getInstrumentReadingContext(input.entityId, projectScope)
+            : await getMountingVisitById(input.entityId, projectScope);
 
     if (!entity) {
       const entityLabel = input.entityType === 'station'
@@ -35,8 +39,10 @@ export const createSignedPhotoUploadController = async (request: Request, respon
         : input.entityType === 'project'
           ? 'Project'
           : input.entityType === 'prism'
-            ? 'Prism'
-            : 'Reading';
+          ? 'Prism'
+            : input.entityType === 'reading'
+              ? 'Reading'
+              : 'Mounting visit';
 
       throw new AppError(
         `${entityLabel} not found`,
@@ -56,8 +62,10 @@ export const createSignedPhotoUploadController = async (request: Request, respon
       : input.entityType === 'project'
         ? createProjectPhotoStoragePath(input.entityId, input.contentType)
         : input.entityType === 'prism'
-          ? createPrismPhotoStoragePath(input.entityId, input.contentType)
-          : createReadingPhotoStoragePath(input.entityId, input.uploadId as string, input.contentType);
+        ? createPrismPhotoStoragePath(input.entityId, input.contentType)
+        : input.entityType === 'reading'
+          ? createReadingPhotoStoragePath(input.entityId, input.uploadId as string, input.contentType)
+          : createMountingVisitPhotoStoragePath(input.entityId, input.uploadId as string, input.contentType);
     const signedUpload = await createSignedPhotoUpload(storagePath);
 
     sendSuccess(response, {

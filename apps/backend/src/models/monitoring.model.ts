@@ -4,12 +4,14 @@ import { pool } from '../db/pool.js';
 import { AppError } from '../lib/app-error.js';
 import { evaluateReadingStatus } from '../lib/monitoring-reading-evaluation.js';
 import { getPublicPhotoUrl } from '../lib/photo-storage.js';
+import { getWorkExecutionCapability, requireWorkExecutionCapability } from '../lib/work-execution-capability.js';
 import type {
   ValidatedCodeCatalogQuery,
   ValidatedCreateControlPointInput,
   ValidatedCreateControlPointThresholdInput,
   ValidatedCreateInstrumentReadingInput,
   ValidatedCreateReadingAttachmentInput,
+  ValidatedCreateWorkExecutionEventInput,
   ValidatedCreateWorkCompletionReportInput,
   ValidatedCreateMonitoringRoundInput,
   ValidatedCreateRoundPointInput,
@@ -23,6 +25,113 @@ import type {
 } from '../utils/monitoring-validation.js';
 import type { RoundExportRow } from '../contracts/round-export.js';
 type WorkCompletionStatus = 'partial' | 'completed' | 'blocked';
+type WorkExecutionEventType = 'started' | 'completed' | 'not_done' | 'repeat_required' | 'blocked';
+type WorkExecutionEvent = {
+  clientRequestId: string;
+  createdAt: string;
+  eventType: WorkExecutionEventType;
+  id: string;
+  notes: string | null;
+  occurredAt: string;
+  projectId: string;
+  reason: string | null;
+  recordedBy: string;
+  roundId: string;
+  roundPointId: string;
+};
+
+const MONITORING_POINT_TENANT_CONDITION = 'cp.project_id = mr.project_id';
+const READING_POINT_TENANT_CONDITION = 'ir.control_point_id = mrp.control_point_id';
+
+export const buildRoundPointWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT
+          wee.client_request_id AS execution_client_request_id,
+          wee.created_at AS execution_created_at,
+          wee.event_type AS execution_event_type,
+          wee.id AS execution_event_id,
+          wee.notes AS execution_notes,
+          wee.occurred_at AS execution_occurred_at,
+          wee.project_id AS execution_project_id,
+          wee.reason AS execution_reason,
+          wee.recorded_by AS execution_recorded_by,
+          wee.round_id AS execution_round_id,
+          wee.round_point_id AS execution_round_point_id
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mrp.round_id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT
+          NULL::uuid AS execution_client_request_id,
+          NULL::timestamptz AS execution_created_at,
+          NULL::text AS execution_event_type,
+          NULL::uuid AS execution_event_id,
+          NULL::text AS execution_notes,
+          NULL::timestamptz AS execution_occurred_at,
+          NULL::uuid AS execution_project_id,
+          NULL::text AS execution_reason,
+          NULL::uuid AS execution_recorded_by,
+          NULL::uuid AS execution_round_id,
+          NULL::uuid AS execution_round_point_id
+        WHERE FALSE
+      ) execution ON TRUE
+    `;
+
+export const buildJourneyWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT NULL::text AS event_type
+        WHERE FALSE
+      ) work_execution ON TRUE
+    `;
+
+export const buildExportWorkExecutionJoin = (available: boolean) =>
+  available
+    ? `
+      LEFT JOIN LATERAL (
+        SELECT wee.event_type, wee.reason, wee.notes, wee.occurred_at, wee.recorded_by
+        FROM monitoring_work_execution_events wee
+        WHERE wee.round_id = mr.id
+          AND wee.round_point_id = mrp.id
+          AND wee.project_id = mr.project_id
+        ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+        LIMIT 1
+      ) work_execution ON TRUE
+    `
+    : `
+      LEFT JOIN LATERAL (
+        SELECT
+          NULL::text AS event_type,
+          NULL::text AS reason,
+          NULL::text AS notes,
+          NULL::timestamptz AS occurred_at,
+          NULL::uuid AS recorded_by
+        WHERE FALSE
+      ) work_execution ON TRUE
+    `;
+
+export const buildMonitoringPointTenantCondition = () => MONITORING_POINT_TENANT_CONDITION;
+export const buildReadingPointTenantCondition = () => READING_POINT_TENANT_CONDITION;
 
 type WorkCompletionReport = {
   clientRequestId: string;
@@ -87,6 +196,50 @@ export const toIsoTimestamp = (value: unknown) => {
   return new Date(String(value)).toISOString();
 };
 
+const mapWorkExecutionEventRow = (row: Record<string, unknown>): WorkExecutionEvent => ({
+  clientRequestId: row.client_request_id as string,
+  createdAt: toIsoTimestamp(row.created_at),
+  eventType: row.event_type as WorkExecutionEventType,
+  id: row.id as string,
+  notes: (row.notes as string | null) ?? null,
+  occurredAt: toIsoTimestamp(row.occurred_at),
+  projectId: row.project_id as string,
+  reason: (row.reason as string | null) ?? null,
+  recordedBy: row.recorded_by as string,
+  roundId: row.round_id as string,
+  roundPointId: row.round_point_id as string
+});
+
+const executionStatusForEvent = (eventType: WorkExecutionEventType) => {
+  if (eventType === 'started') return 'in_progress' as const;
+  if (eventType === 'completed') return 'completed' as const;
+  if (eventType === 'not_done') return 'not_done' as const;
+  if (eventType === 'repeat_required') return 'repeat_required' as const;
+  return 'blocked' as const;
+};
+
+const mapWorkExecutionState = (row: Record<string, unknown>) => {
+  if (typeof row.execution_event_type !== 'string') {
+    return { lastEvent: null, status: 'pending' as const };
+  }
+
+  const event = mapWorkExecutionEventRow({
+    client_request_id: row.execution_client_request_id,
+    created_at: row.execution_created_at,
+    event_type: row.execution_event_type,
+    id: row.execution_event_id,
+    notes: row.execution_notes,
+    occurred_at: row.execution_occurred_at,
+    project_id: row.execution_project_id,
+    reason: row.execution_reason,
+    recorded_by: row.execution_recorded_by,
+    round_id: row.execution_round_id,
+    round_point_id: row.execution_round_point_id
+  });
+
+  return { lastEvent: event, status: executionStatusForEvent(event.eventType) };
+};
+
 const mapRoundPointRow = (row: Record<string, unknown>) => ({
   controlPointId: row.control_point_id,
   createdAt: row.created_at,
@@ -96,7 +249,8 @@ const mapRoundPointRow = (row: Record<string, unknown>) => ({
   roundId: row.round_id,
   sortOrder: row.sort_order,
   status: row.status,
-  updatedAt: row.updated_at
+  updatedAt: row.updated_at,
+  executionState: mapWorkExecutionState(row)
 });
 
 const mapReadingRow = (row: Record<string, unknown>) => ({
@@ -317,6 +471,7 @@ const getRoundPointContext = async (
         mr.project_id
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE mrp.id = $1
       ${scope.clause}
       LIMIT 1
@@ -346,6 +501,7 @@ export const getRoundPointProjectId = async (
       SELECT mr.project_id
       FROM monitoring_round_points mrp
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE mrp.id = $1
       ${scope.clause}
       LIMIT 1
@@ -499,14 +655,19 @@ export const getMonitoringRoundDetail = async (roundId: string, projectScope: st
     return null;
   }
 
+  const workExecutionJoin = buildRoundPointWorkExecutionJoin((await getWorkExecutionCapability()).available);
+
   const pointsResult = await pool.query(
     `
       SELECT
         mrp.*,
         cp.code AS control_point_code,
-        cp.name AS control_point_name
+        cp.name AS control_point_name,
+        execution.*
       FROM monitoring_round_points mrp
-      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
+      ${workExecutionJoin}
       WHERE mrp.round_id = $1
       ORDER BY mrp.sort_order ASC, mrp.created_at ASC
     `,
@@ -728,6 +889,7 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
   const scope = buildProjectScopeCondition(projectScope, 'mr', 2);
   const params: unknown[] = [userId, ...scope.params, query.limit];
   const limitParamIndex = params.length;
+  const workExecutionJoin = buildJourneyWorkExecutionJoin((await getWorkExecutionCapability()).available);
 
   const result = await pool.query(
     `
@@ -737,10 +899,15 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
         p.name AS project_name,
         COUNT(mrp.id)::int AS total_point_count,
         COUNT(mrp.id) FILTER (WHERE mrp.status = 'pending')::int AS pending_point_count,
-        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count
+        COUNT(mrp.id) FILTER (WHERE mrp.status = 'taken')::int AS taken_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type = 'completed')::int AS work_completed_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type = 'started')::int AS work_in_progress_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type IS NULL)::int AS work_pending_point_count,
+        COUNT(mrp.id) FILTER (WHERE work_execution.event_type IN ('not_done', 'repeat_required', 'blocked'))::int AS work_review_point_count
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       LEFT JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
+      ${workExecutionJoin}
       WHERE mr.operator_id = $1
         AND mr.status IN ('draft', 'active')
         ${scope.clause}
@@ -757,7 +924,11 @@ export const listMyJourney = async (userId: string, query: ValidatedJourneyQuery
     projectCode: row.project_code,
     projectName: row.project_name,
     takenPointCount: Number(row.taken_point_count ?? 0),
-    totalPointCount: Number(row.total_point_count ?? 0)
+    totalPointCount: Number(row.total_point_count ?? 0),
+    workCompletedPointCount: Number(row.work_completed_point_count ?? 0),
+    workInProgressPointCount: Number(row.work_in_progress_point_count ?? 0),
+    workPendingPointCount: Number(row.work_pending_point_count ?? 0),
+    workReviewPointCount: Number(row.work_review_point_count ?? 0)
   }));
 };
 
@@ -976,7 +1147,7 @@ export const getReadingHistory = async (
 
   if (query.instrumentType) {
     params.push(query.instrumentType);
-    filters.push(`AND instrument_type = $${params.length}`);
+    filters.push(`AND ir.instrument_type = $${params.length}`);
   }
 
   params.push(query.limit);
@@ -1010,6 +1181,14 @@ export const getReadingHistory = async (
           '[]'::json
         ) AS attachments
       FROM instrument_readings ir
+      INNER JOIN monitoring_round_points mrp
+        ON mrp.id = ir.round_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND cp.id = $1
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.control_point_id = $1
       ${filters.join('\n')}
       ORDER BY ir.measured_at DESC, ir.created_at DESC
@@ -1143,7 +1322,8 @@ export const listWorkCompletionReports = async (
       FROM work_completion_reports wcr
       INNER JOIN monitoring_rounds mr ON mr.id = wcr.round_id
       WHERE wcr.round_id = $1
-      ${scope.clause.replaceAll('mr.', 'wcr.')}
+        AND mr.project_id = wcr.project_id
+      ${scope.clause}
       ORDER BY wcr.reported_at DESC, wcr.id DESC
     `,
     [roundId, ...scope.params]
@@ -1381,6 +1561,10 @@ export const getInstrumentReadingById = async (readingId: string, projectScope: 
       FROM instrument_readings ir
       INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.id = $1
       ${scope.clause}
       LIMIT 1
@@ -1399,6 +1583,10 @@ export const getInstrumentReadingContext = async (readingId: string, projectScop
       FROM instrument_readings ir
       INNER JOIN monitoring_round_points mrp ON mrp.id = ir.round_point_id
       INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = ir.control_point_id
+       AND ${READING_POINT_TENANT_CONDITION}
+       AND ${MONITORING_POINT_TENANT_CONDITION}
       WHERE ir.id = $1
       ${scope.clause}
       LIMIT 1
@@ -1435,6 +1623,8 @@ export const getMonitoringRoundExportRows = async (
     return null;
   }
 
+  const workExecutionJoin = buildExportWorkExecutionJoin((await getWorkExecutionCapability()).available);
+
   const result = await pool.query(
     `
       SELECT
@@ -1466,14 +1656,24 @@ export const getMonitoringRoundExportRows = async (
         CASE
           WHEN ir.id IS NULL THEN 0
           ELSE (SELECT COUNT(*)::int FROM reading_attachments ra WHERE ra.reading_id = ir.id)
-        END AS attachment_count
+        END AS attachment_count,
+        work_execution.event_type AS work_execution_status,
+        work_execution.reason AS work_execution_reason,
+        work_execution.notes AS work_execution_notes,
+        work_execution.occurred_at AS work_execution_at,
+        COALESCE(work_execution_user.full_name, work_execution_user.email) AS work_execution_operator
       FROM monitoring_rounds mr
       INNER JOIN projects p ON p.id = mr.project_id
       INNER JOIN monitoring_round_points mrp ON mrp.round_id = mr.id
-      INNER JOIN control_points cp ON cp.id = mrp.control_point_id
-      LEFT JOIN instrument_readings ir ON ir.round_point_id = mrp.id
+      INNER JOIN control_points cp ON cp.id = mrp.control_point_id AND ${MONITORING_POINT_TENANT_CONDITION}
+      LEFT JOIN instrument_readings ir
+        ON ir.round_point_id = mrp.id
+       AND ir.control_point_id = cp.id
+       AND ir.instrument_type = mrp.expected_instrument_type
       LEFT JOIN users measured_user ON measured_user.id = ir.measured_by
       LEFT JOIN users operator_user ON operator_user.id = mr.operator_id
+      ${workExecutionJoin}
+      LEFT JOIN users work_execution_user ON work_execution_user.id = work_execution.recorded_by
       LEFT JOIN LATERAL (
         SELECT prior_reading.value_numeric
         FROM instrument_readings prior_reading
@@ -1543,6 +1743,11 @@ export const getMonitoringRoundExportRows = async (
       unit: row.unit,
       valueNumeric: row.value_numeric === null ? null : Number(row.value_numeric),
       valueText: row.value_text,
+      workExecutionAt: row.work_execution_at ? toIsoTimestamp(row.work_execution_at) : null,
+      workExecutionNotes: row.work_execution_notes,
+      workExecutionOperator: row.work_execution_operator,
+      workExecutionReason: row.work_execution_reason,
+      workExecutionStatus: row.work_execution_status,
       zone: row.zone
     };
   });
@@ -1580,6 +1785,14 @@ export const createReadingAttachment = async (
       return null;
     }
 
+    // La migración 028 añade la restricción permanente. Este bloqueo de
+    // transacción mantiene el endpoint idempotente también durante un
+    // despliegue gradual en el que el índice aún no exista.
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext($1::text || ':' || $2::text))`,
+      [readingId, input.storagePath]
+    );
+
     const existingResult = await client.query(
       `
         SELECT *
@@ -1608,6 +1821,7 @@ export const createReadingAttachment = async (
           uploaded_by
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT DO NOTHING
         RETURNING *
       `,
       [
@@ -1621,8 +1835,238 @@ export const createReadingAttachment = async (
       ]
     );
 
+    if (result.rowCount === 0) {
+      const concurrentResult = await client.query(
+        `
+          SELECT *
+          FROM reading_attachments
+          WHERE reading_id = $1
+            AND storage_path = $2
+          LIMIT 1
+        `,
+        [readingId, input.storagePath]
+      );
+
+      if (concurrentResult.rows.length > 0) {
+        await client.query('COMMIT');
+        return mapReadingAttachmentRow(concurrentResult.rows[0]);
+      }
+
+      throw new AppError(
+        'Reading attachment insert produced no row',
+        500,
+        'READING_ATTACHMENT_INSERT_INCONSISTENT'
+      );
+    }
+
     await client.query('COMMIT');
     return mapReadingAttachmentRow(result.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const getWorkExecutionContext = async (
+  client: PoolClient,
+  roundPointId: string,
+  projectScope: string[] | null
+) => {
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await client.query(
+    `
+      SELECT
+        mr.id AS round_id,
+        mr.project_id,
+        mrp.id AS round_point_id
+      FROM monitoring_round_points mrp
+      INNER JOIN monitoring_rounds mr ON mr.id = mrp.round_id
+      INNER JOIN control_points cp
+        ON cp.id = mrp.control_point_id
+       AND cp.project_id = mr.project_id
+      WHERE mrp.id = $1
+      ${scope.clause}
+      LIMIT 1
+    `,
+    [roundPointId, ...scope.params]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return {
+    projectId: result.rows[0].project_id as string,
+    roundId: result.rows[0].round_id as string,
+    roundPointId: result.rows[0].round_point_id as string
+  };
+};
+
+const normalizeWorkExecutionText = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+export const isEquivalentWorkExecutionReplay = (
+  existing: Record<string, unknown>,
+  roundPointId: string,
+  context: { projectId: string; roundId: string },
+  input: ValidatedCreateWorkExecutionEventInput,
+  recordedBy: string
+) => {
+  const occurredAtMatches =
+    input.occurredAt === undefined || toIsoTimestamp(existing.occurred_at) === new Date(input.occurredAt).toISOString();
+
+  return (
+    existing.round_point_id === roundPointId &&
+    existing.round_id === context.roundId &&
+    existing.project_id === context.projectId &&
+    existing.event_type === input.eventType &&
+    existing.recorded_by === recordedBy &&
+    normalizeWorkExecutionText(existing.reason) === normalizeWorkExecutionText(input.reason) &&
+    normalizeWorkExecutionText(existing.notes) === normalizeWorkExecutionText(input.notes) &&
+    occurredAtMatches
+  );
+};
+
+export const listWorkExecutionEvents = async (
+  roundPointId: string,
+  projectScope: string[] | null = null
+) => {
+  await requireWorkExecutionCapability();
+  const scope = buildRoundProjectScopeCondition(projectScope, 2);
+  const result = await pool.query(
+    `
+      SELECT wee.*
+      FROM monitoring_work_execution_events wee
+      INNER JOIN monitoring_round_points mrp
+        ON mrp.id = wee.round_point_id
+       AND mrp.round_id = wee.round_id
+      INNER JOIN monitoring_rounds mr
+        ON mr.id = wee.round_id
+       AND mr.project_id = wee.project_id
+      INNER JOIN control_points cp
+        ON cp.id = mrp.control_point_id
+       AND cp.project_id = mr.project_id
+      WHERE wee.round_point_id = $1
+      ${scope.clause}
+      ORDER BY wee.occurred_at DESC, wee.created_at DESC, wee.id DESC
+    `,
+    [roundPointId, ...scope.params]
+  );
+
+  return result.rows.map(mapWorkExecutionEventRow);
+};
+
+export const createWorkExecutionEvent = async (
+  roundPointId: string,
+  input: ValidatedCreateWorkExecutionEventInput,
+  recordedBy: string,
+  projectScope: string[] | null = null
+) => {
+  await requireWorkExecutionCapability();
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const context = await getWorkExecutionContext(client, roundPointId, projectScope);
+
+    if (!context) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const existingResult = await client.query(
+      `
+        SELECT *
+        FROM monitoring_work_execution_events
+        WHERE client_request_id = $1
+        LIMIT 1
+      `,
+      [input.clientRequestId]
+    );
+
+    if ((existingResult.rowCount ?? 0) > 0) {
+      const existing = existingResult.rows[0];
+      if (!isEquivalentWorkExecutionReplay(existing, roundPointId, context, input, recordedBy)) {
+        throw new AppError(
+          'Client request id already used for a different work result',
+          409,
+          'CLIENT_REQUEST_ID_CONFLICT'
+        );
+      }
+
+      await client.query('COMMIT');
+      return { created: false, event: mapWorkExecutionEventRow(existing) };
+    }
+
+    const insertResult = await client.query(
+      `
+        INSERT INTO monitoring_work_execution_events (
+          round_id,
+          round_point_id,
+          project_id,
+          event_type,
+          reason,
+          notes,
+          occurred_at,
+          recorded_by,
+          client_request_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, NOW()), $8, $9)
+        ON CONFLICT (client_request_id) DO NOTHING
+        RETURNING *
+      `,
+      [
+        context.roundId,
+        roundPointId,
+        context.projectId,
+        input.eventType,
+        input.reason?.trim() || null,
+        input.notes?.trim() || null,
+        input.occurredAt ?? null,
+        recordedBy,
+        input.clientRequestId
+      ]
+    );
+
+    if (insertResult.rowCount === 0) {
+      const concurrentResult = await client.query(
+        `
+          SELECT *
+          FROM monitoring_work_execution_events
+          WHERE client_request_id = $1
+          LIMIT 1
+        `,
+        [input.clientRequestId]
+      );
+
+      if (concurrentResult.rowCount === 0) {
+        throw new AppError(
+          'Work execution event insert produced no row',
+          500,
+          'WORK_EXECUTION_EVENT_INSERT_INCONSISTENT'
+        );
+      }
+
+      const concurrent = concurrentResult.rows[0];
+      if (!isEquivalentWorkExecutionReplay(concurrent, roundPointId, context, input, recordedBy)) {
+        throw new AppError(
+          'Client request id already used for a different work result',
+          409,
+          'CLIENT_REQUEST_ID_CONFLICT'
+        );
+      }
+
+      await client.query('COMMIT');
+      return { created: false, event: mapWorkExecutionEventRow(concurrent) };
+    }
+
+    await client.query('COMMIT');
+    return { created: true, event: mapWorkExecutionEventRow(insertResult.rows[0]) };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

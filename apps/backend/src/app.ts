@@ -5,6 +5,12 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 import { authenticateRequest } from './middleware/auth.js';
+import { refreshWorkExecutionCapability, WORK_EXECUTION_MIGRATION } from './lib/work-execution-capability.js';
+import {
+  refreshWeeklyWorkCapability,
+  requiredSchemaCapabilitiesReady,
+  WEEKLY_WORK_MIGRATION
+} from './lib/weekly-work-capability.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.js';
 import { notFoundMiddleware } from './middleware/not-found.js';
 import { apiRateLimit } from './middleware/rate-limit.js';
@@ -50,6 +56,41 @@ app.get('/api/v1/health', (_request, response) => {
   response.status(200).json({
     commit: process.env.RENDER_GIT_COMMIT ?? null,
     status: 'ok'
+  });
+});
+app.get('/api/v1/readiness', async (_request, response) => {
+  const checkedAt = new Date().toISOString();
+  const [workExecutionResult, weeklyWorkResult] = await Promise.allSettled([
+    refreshWorkExecutionCapability(),
+    refreshWeeklyWorkCapability()
+  ]);
+  const workExecutionCapability = workExecutionResult.status === 'fulfilled'
+    ? workExecutionResult.value
+    : {
+        available: false,
+        checkedAt,
+        migration: WORK_EXECUTION_MIGRATION,
+        missingColumns: [],
+        missingRequirements: [],
+        reason: 'probe_failed'
+      };
+  const weeklyWork = weeklyWorkResult.status === 'fulfilled'
+    ? weeklyWorkResult.value
+    : {
+        available: false,
+        checkedAt,
+        migration: WEEKLY_WORK_MIGRATION,
+        missingColumns: [],
+        missingRequirements: [],
+        reason: 'probe_failed'
+      };
+  const workExecution = {
+    available: requiredSchemaCapabilitiesReady(workExecutionCapability, weeklyWork)
+  };
+
+  response.status(workExecution.available ? 200 : 503).json({
+    capabilities: { weeklyWork, workExecution: workExecutionCapability },
+    status: workExecution.available ? 'ready' : 'not_ready'
   });
 });
 

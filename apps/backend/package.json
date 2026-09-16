@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "test": "node --test ./dist/lib/all.test.js",
     "migrate": "tsx src/scripts/run-migrations.ts",
+    "reconcile:migrations": "tsx src/scripts/reconcile-applied-migrations.ts",
     "import:stations": "tsx src/scripts/import-mapest-stations.ts",
     "inspect:topotask-prisms": "tsx src/scripts/legacy/inspect-topotask-monitoring.ts",
     "import:topotask-prisms": "tsx src/scripts/legacy/import-topotask-prisms.ts",

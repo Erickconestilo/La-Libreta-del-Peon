@@ -80,6 +80,26 @@ registro histórico de la decisión original; no debe aplicarse.
 
 ---
 
+## Actualización 2026-09-13: baseline 015 retirado
+
+`015_obras_baseline_retroactive.sql` se conserva en este directorio como
+baseline documental, no como migración ejecutable. El archivo describe el
+modelo legacy `obras`, `campanas`, `jornadas`, `sensores`, `mediciones` y
+`estacionamientos`; no debe ejecutarse en TopoField ni registrarse en
+`schema_migrations`.
+
+La razón es distinta de un fallo de numeración: 015 no representa una
+migración aplicada pendiente de ledger y sus FKs tampoco están ordenadas para
+una base vacía. Mantenerlo en `migrations/` haría que
+`run-migrations.ts` lo tratase como pendiente antes de 019. Al igual que 014,
+se mueve aquí para conservar la evidencia sin inventar un tombstone ni
+modificar el runner.
+
+La migración vigente de rondas es `019_monitoring_rounds.sql`, en el directorio
+superior de `migrations/`.
+
+---
+
 **Última actualización:** 2026-07-26 (descarte original), 30-07-2026 (reactivación)
 **Decisor:** Erick
 **Documentado por:** Claude Code

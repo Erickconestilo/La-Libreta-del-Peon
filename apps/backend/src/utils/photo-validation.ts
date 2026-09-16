@@ -13,11 +13,11 @@ const allowedPhotoContentTypes = ['image/jpeg', 'image/png', 'image/webp'] as co
 const signedPhotoUploadSchema = z.object({
   contentType: z.enum(allowedPhotoContentTypes),
   entityId: z.string().uuid(),
-  entityType: z.enum(['station', 'project', 'prism', 'reading']),
+  entityType: z.enum(['station', 'project', 'prism', 'reading', 'mounting_visit']),
   fileSizeBytes: z.number().int().positive().max(MAX_PHOTO_UPLOAD_BYTES),
   uploadId: z.string().uuid().optional()
 }).superRefine((input, context) => {
-  if (input.entityType === 'reading' && !input.uploadId) {
+  if ((input.entityType === 'reading' || input.entityType === 'mounting_visit') && !input.uploadId) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Reading uploads require uploadId',
@@ -139,6 +139,13 @@ export const isValidPrismPhotoPath = (prismId: string, storagePath: string) => {
 export const isValidReadingPhotoPath = (readingId: string, storagePath: string) => {
   const escapedReadingId = readingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`^readings/${escapedReadingId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
+
+  return pattern.test(storagePath);
+};
+
+export const isValidMountingVisitPhotoPath = (visitId: string, storagePath: string) => {
+  const escapedVisitId = visitId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^mounting-visits/${escapedVisitId}/[0-9a-f-]+\\.(jpg|jpeg|png|webp)$`, 'i');
 
   return pattern.test(storagePath);
 };
