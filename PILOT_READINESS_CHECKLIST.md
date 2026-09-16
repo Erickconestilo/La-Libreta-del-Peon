@@ -1,24 +1,25 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-15
+verificado: 2026-09-16
 -->
 
 # Checklist de Piloto
 
 El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No se trata solo de comprobar que todo funciona: hay que registrar cómo se usa. Usa `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` durante la jornada y convierte después los hallazgos en `docs/field/F5_HALLAZGOS_<fecha>.md` siguiendo la plantilla de `UX_RESEARCH_PLAN.md`.
 
-## Estado local automatizado - 15-09-2026
+## Estado local automatizado - 16-09-2026
 
 Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
 validación en campo:
 
-- [x] Backend compila y pasa `127/127` tests en la batería integrada actual.
+- [x] Backend compila y pasa `139/139` tests en la batería integrada actual.
 - [x] Móvil pasa TypeScript, `25` suites y `137/137` tests; la batería cubre
   además los estados de entrega local, conflicto, reintento y backend
   incompatible.
 - [x] Tooling local incluye una compuerta pública de readiness: el verificador
-  exige `/health=200`, `/readiness=200` con work-execution disponible y falla
-  cerrado ante `503 migration_missing`; `npm run test:tooling` pasa `15/15`.
+  exige `/health=200`, `/readiness=200` con work-execution 029 y weekly-work 030
+  disponibles y falla cerrado si cualquiera falta; `npm run test:tooling` pasa
+  `17/17`.
 - [x] `docs:check` revisa `47 documentos revisados en raíz y docs/` sin errores
   ni avisos; `git diff --check` termina sin salida.
 - [x] La release Android v7 está generada localmente, firmada como
@@ -78,17 +79,15 @@ validación en campo:
 - [x] La cabecera de la ronda resume hechos, en curso, pendientes y puntos por
   revisar, y permite continuar con el primer punto accionable respetando el
   orden de la jornada.
-- [ ] Completar la reconciliación del ledger antes de usar el runner genérico:
-  el dry-run actual confirma 019–026 aplicadas funcionalmente pero ausentes de
-  `public.schema_migrations`; no se ha usado `--write`. 027, 028, 029 y 030
-  siguen ausentes y requieren revisión/autorización por alcance antes de
-  ejecutarse.
-- [ ] Antes de desplegar el HEAD que incluye planificación semanal, ampliar la
-  compuerta de readiness para que también falle si falta 030. El readiness
-  actual solo prueba `monitoring_work_execution_events`/029, aunque las rutas de
-  `weekly-work` dependen de `project_weekly_work_items`/030. Después, validar el
-  backend y una build correspondiente en Galaxy sin presentar trabajo local
-  como recibido por el servidor.
+- [x] Reconciliar el ledger sin reejecutar 019–026: el `--write` autorizado
+  registró 8 filas y la relectura posterior muestra las ocho como `PRESENTE`.
+  Después se aplicaron 027–030 por gates separados y cada una quedó
+  registrada/verificada.
+- [x] Ampliar la compuerta de readiness a 030: `b6df031` exige 029+030, las rutas
+  `weekly-work` fallan con `503` controlado si 030 falta y PostgreSQL 17 efímero
+  pasó UNIQUE/CHECK/RLS. Contra el esquema remoto ya migrado, el backend local
+  devolvió `/api/v1/readiness = 200` con ambas capabilities `ready`. Falta el
+  despliegue de ese backend y una build correspondiente en Galaxy.
 
 ## Paso 1 - Erick usando datos reales en campo
 

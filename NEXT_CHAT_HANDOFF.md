@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-15
+  verificado: 2026-09-16
 rol: handoff
 -->
 
@@ -37,11 +37,12 @@ La evidencia física más reciente registrada es la instalación de la
 documental del 15-09 no ha ejecutado ADB, así que no debe afirmar que el Galaxy
 esté conectado ahora.
 
-El HEAD local actual (`97e70e4`) añade planificación semanal encima del backend
-`1dec6e9` y requiere `030_project_weekly_work.sql`. La migración 030 sigue solo
-local. Además, `/api/v1/readiness` comprueba hoy únicamente la capacidad de 029;
-por tanto el HEAD no debe desplegarse tal cual hasta que 030 esté reconciliada y
-el readiness cubra también esa dependencia de esquema.
+El HEAD local actual (`b6df031`) incluye la planificación semanal de `97e70e4`
+y el backend de `1dec6e9`, además del gate combinado de readiness 029+030. La
+migración 030 ya está aplicada en Supabase y el backend local contra el esquema
+remoto devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. Falta
+publicar ese HEAD (o un descendiente revisado) y verificar Render antes de
+atribuirle ese estado al servicio remoto.
 
 ## Slice implementado después del último estado remoto
 
@@ -58,30 +59,30 @@ la acción y separa el resultado operativo de su estado de entrega. `Pendiente
 local`, `Reintento`, `Conflicto` o `Backend pendiente` nunca se presentan como
 `Recibido servidor`; el histórico remoto sigue siendo la evidencia de recepción.
 El bloque anterior (`6ed9a84`, `8aff703`, `3b5ed4b`, `2399de6`, `2d182a0`)
-queda reforzado por `bb22bff` y `6a09c58`. La migración 029 no se ha aplicado
-en Supabase, por lo que este slice aún no está desplegado en Render ni
+queda reforzado por `bb22bff` y `6a09c58`. La migración 029 ya está aplicada en
+Supabase, pero este slice aún no está desplegado en Render ni
 instalado/validado físicamente en el Galaxy. La v12 instalada antes de esta
 misión no prueba estos commits.
 
 La lista de puntos incorpora también `Marcar hecho` en una pulsación para el
 caso normal. `Más opciones` abre el formulario de `Empezar`, `No realizado`,
 `Repetir` y `Bloqueado` con motivo. El atajo usa la misma mutación, outbox e
-idempotencia; queda pendiente validarlo en el Galaxy cuando ADB detecte el
-dispositivo y la migración 029 esté desplegada.
+idempotencia; queda pendiente validarlo en el Galaxy después de publicar el
+backend correspondiente.
 
 En visitas de montaje, `No realizable` exige ahora un motivo escrito tanto en
 la pantalla como en la validación backend; las notas previas se conservan y
-se añade una línea de relevo explícita. Este cambio está en `750153a` y aún no
-está desplegado porque la migración 027 sigue pendiente.
+se añade una línea de relevo explícita. Este cambio está en `750153a`; la
+migración 027 ya está aplicada, pero las rutas todavía no están desplegadas.
 
 La pantalla ofrece cuatro motivos neutros de selección rápida (`Sin acceso`,
 `Sin visibilidad`, `Equipo o sensor dañado` y `Condición de campo adversa`),
 manteniendo el campo libre para excepciones.
 
-La migración local 029 fue endurecida con índices únicos auxiliares y claves
+La migración 029 fue endurecida con índices únicos auxiliares y claves
 foráneas compuestas: un evento no puede enlazar una ronda, un punto y una obra
 cruzados aunque se intente escribir directamente en PostgreSQL. La regresión
-estática cubre ambas relaciones; sigue pendiente aplicarla remotamente.
+estática cubre ambas relaciones y el esquema remoto ya fue aplicado/verificado.
 
 El backend local incorpora desde `1b17380` una capacidad explícita de
 work-execution. Si 029 falta o está incompleta, `/api/v1/readiness` responde
@@ -118,19 +119,18 @@ y `GET /api/v1/round-points/<uuid>/execution-events` respondió `404 Route not
 found`. Ese `404` es evidencia del backend remoto anterior, no un fallo de la
 UI local; la tabla y la ruta nuevas deben publicarse juntas.
 
-La reconciliación local más reciente confirma por objetos que 019–026 están
-aplicadas funcionalmente, aunque `public.schema_migrations` no las registra. El
-dry-run identifica ocho candidatas para registro sin reejecución y no se ha
-usado `--write`. `027`, `028`, `029` y `030` siguen pendientes. El advisor de seguridad mantiene únicamente
+La reconciliación del 16-09-2026 registró 019–026 en
+`public.schema_migrations` sin reejecutar sus SQL. Después, con backup fresco
+verificado, 027, 028, 029 y 030 se aplicaron y registraron por separado. Los
+probes locales contra Supabase muestran 029 y 030 `ready`. El advisor de seguridad mantiene únicamente
 `auth_leaked_password_protection` en `WARN`; el de rendimiento informa `13`
 claves foráneas sin índice y `40` índices sin uso. No se aplicó SQL remoto.
 
-Antes de cualquier despliegue, revisar el runbook de
-`docs/field/WORK_EXECUTION_CONTRACT.md` y la reconciliación de migraciones. El
-runner local decide qué aplicar únicamente a partir de `public.schema_migrations`;
-como ese ledger todavía no contiene 019–026, no debe usarse contra producción
-hasta completar la reconciliación. 027–030 siguen siendo operaciones separadas
-que requieren su propia revisión y autorización.
+Antes del despliegue, revisar el runbook de
+`docs/field/WORK_EXECUTION_CONTRACT.md` y la evidencia de esta reconciliación.
+La divergencia del ledger quedó cerrada y 027–030 ya están aplicadas; la
+compuerta pendiente es ahora publicación/verificación del backend, no repetir
+las migraciones.
 
 **Registro histórico de autorización (13-09-2026):** Erick autorizó expresamente el bloque
 completo por compuertas: backup remoto; 027 -> 028 -> 029 tras prechecks verdes;
@@ -509,12 +509,10 @@ cuerpos ni credenciales.
 
 ## Trabajo pendiente prioritario
 
-1. Completar la reconciliación del ledger 019–026 sin reejecutar sus SQL y
-   mantener 027–030 fuera hasta su autorización; no usar el runner genérico
-   mientras `public.schema_migrations` siga divergente.
-2. Añadir 030 a la compuerta de readiness antes de desplegar el HEAD con
-   `weekly-work`, y verificar esa dependencia contra PostgreSQL/Supabase de forma
-   controlada.
+1. Publicar el backend que contiene el gate combinado 029+030 y verificar que
+   Render sirve exactamente ese commit o un descendiente revisado.
+2. Exigir `/health=200` y `/readiness=200` con `workExecution` y `weeklyWork`
+   `available=true`; ejecutar el verificador público actualizado.
 3. Ejecutar `npm run verify:remote:auth` con un token QA temporal y los UUID
    autorizados, para comprobar `/auth/me`, `Mi jornada` y, si se proporcionan,
    la obra y ronda sin aceptar un `404`.
@@ -528,7 +526,7 @@ cuerpos ni credenciales.
 7. Corregir solo fallos reproducibles, siempre con regresión y commit separado.
 8. Validar visualmente desde la UI la semilla genérica al crear una obra, sin
    datos de obra real.
-9. Autorizar/aplicar `027_station_mounting_visits.sql` y desplegar sus rutas;
+9. Desplegar las rutas ya respaldadas por `027_station_mounting_visits.sql` y
    validar en campo la pantalla local de visitas de montaje, incluida cámara,
    Storage, reinicio y reconexión. La captura offline local ya usa caché
    SQLite por sesión y estación más el outbox (migración local 007). Después

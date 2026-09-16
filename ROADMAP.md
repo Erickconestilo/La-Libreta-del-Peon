@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-  verificado: 2026-09-15
+  verificado: 2026-09-16
 -->
 
 # ROADMAP.md — TopoField
@@ -27,7 +27,7 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
 | **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E offline y exportación autenticada verificados en Galaxy v7; cierre con umbral, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
 | **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación, compartir/guardado local y verificador estructurado CSV/XLSX implementados; validación con dos archivos de campo pendiente | parte de MEMORIA Fase 4 |
-| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa; migración 027 preparada, no aplicada, y pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
+| **F7** | Instrumentos y evidencias de campo | 🟡 **Slice local ampliado:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa; migración 027 aplicada y verificada en Supabase el 16-09-2026, pero sus rutas aún no están publicadas/validadas en Galaxy, y pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
 
@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El último backend funcional verificado en Render sigue siendo `df224f9`, con el arreglo de scope de exportación publicado. El **HEAD local actual sí tiene una compuerta técnica de despliegue**: el esquema remoto no contiene 027–030, mientras `public.schema_migrations` no registra 019–026 aunque el dry-run de reconciliación confirma sus objetos funcionales. No se ha usado `--write` y el runner genérico no debe ejecutarse hasta reconciliar ese ledger. F5 permanece además abierta por el cierre con umbral autorizado, la verificación de dos archivos reales y la validación observada de campo.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El último backend funcional verificado en Render sigue siendo `df224f9`, con el arreglo de scope de exportación publicado. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. El HEAD local `b6df031` añade el gate combinado de readiness 029+030; contra el esquema remoto, el backend local devolvió `/api/v1/readiness = 200` con ambas capacidades `ready`. **Esto todavía no prueba que Render sirva ese HEAD**: el despliegue y la verificación remota siguen pendientes. F5 permanece además abierta por el cierre con umbral autorizado, la verificación de dos archivos reales y la validación observada de campo.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -64,13 +64,13 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-### Estado de F5 (revisado 15-09-2026)
+### Estado de F5 (revisado 16-09-2026)
 
 F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`) y la release Android `versionCode=12` quedó instalada y verificada en el Galaxy. La evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. La v7 también añadió el diagnóstico seguro del fallo reproducido de exportación; el `500` de scope quedó corregido, publicado en Render como `df224f9` y verificado de nuevo desde el Galaxy: CSV y XLSX generaron archivos y abrieron el selector nativo, con respuestas `200` registradas por Render. La v7 además recuperó la lista de rondas desde caché después de un arranque en frío sin red, mostrando `Rondas sin actualizar`. El cierre definitivo sigue correctamente bloqueado porque la lectura de prueba está en `draft` sin umbral vigente. El intento universal anterior falló en `react-native-reanimated` con `manifest 'build.ninja' still dirty after 100 tries`; la APK arm64 es la variante validada para el Galaxy. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprueba la estructura y paridad de dos archivos concretos; la app también ofrece guardar cada binario mediante SAF para facilitar esa lectura estructurada. La v12 incorpora `Semana operativa` al parte diario, con acceso por día a las rondas reales y bloque `Otras fechas`; está instalada con `adb install -r`, manteniendo datos y sesión. Esta build no sustituye la ejecución autenticada de campo, la validación observada ni las conversaciones profesionales.
 
-La comprobación local unificada del 15-09-2026 terminó con `verify local completed successfully`: backend `127/127`, móvil `25` suites y `137/137`, tooling `15/15`, `docs:check` sobre `47` documentos y `git diff --check` sin errores. Estas cifras prueban el árbol local actual, no Supabase, Render ni una build nueva en el Galaxy.
+La comprobación local unificada del 16-09-2026 terminó con `verify local completed successfully`: backend `139/139`, móvil `25` suites y `137/137`, tooling `17/17`, `docs:check` sobre `47` documentos y `git diff --check` sin errores. Estas cifras prueban el árbol local actual, no el despliegue de Render ni una build nueva en el Galaxy.
 
-Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. Ese bloque sigue **solo local**: 030 no está aplicada en Supabase, no se ha desplegado el backend que la usa ni se ha instalado una nueva build móvil por ese cambio. La planificación semanal no cierra F5 y, antes de desplegar el HEAD actual, su requisito de esquema debe entrar en la compuerta de readiness; hoy `/api/v1/readiness` solo comprueba la capacidad de la migración 029.
+Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añade el probe de 030 y hace que `/api/v1/readiness` solo quede `ready` cuando 029 y 030 están disponibles; las rutas weekly-work devuelven `503 WEEKLY_WORK_SCHEMA_UNAVAILABLE` si falta su esquema. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all, y el backend local contra el esquema remoto devolvió readiness `200`. Falta publicar ese backend y validar una build móvil correspondiente; la planificación semanal no cierra F5.
 
 La comprobacion de procedencia del repositorio se mantiene separada del estado
 funcional de F5. El contenido actual del runtime de la rama de trabajo esta
@@ -90,15 +90,14 @@ auditoría, el backend quedó en `120/120` tests en la batería integrada de
 work-execution 029; la cifra
 anterior de `114/114` queda como evidencia histórica previa a este hardening.
 El contrato backend de exportación está alineado con
-`shared/types.ts` para todos los instrumentos F7. La migración 027 preparada también conserva claves foráneas compuestas
+`shared/types.ts` para todos los instrumentos F7. La migración 027 también conserva claves foráneas compuestas
   para integridad de tenant, con regresión local. La reconciliación de prismas
   también exige ahora la igualdad de `project_id` entre observación, prisma y
   estación; la regresión local estaba incluida en la batería de aquel momento,
   `114/114` tests. La migración
-  027 sigue sin aplicarse en Supabase. Los hardenings de exportación se
+  027 quedó aplicada y verificada en Supabase el 16-09-2026. Los hardenings de exportación se
 publicaron mediante PR #19/#20; Render quedó verificado el 13-09-2026 en
-`df224f9`. La memoria visual y la migración 027 continúan solo en la rama local
-y siguen requiriendo su propia decisión de despliegue.
+`df224f9`. La memoria visual continúa pendiente de publicación/validación física aunque su esquema 027 ya esté aplicado.
 La auditoría de límites de proyecto también revisó el código ejecutable del
 móvil y backend: no quedan nombres de obras ni referencias TopoTask/ARGOS en
 las fuentes activas. Los restos localizados están confinados a scripts de
@@ -128,7 +127,7 @@ commit aún debe publicarse antes de considerarlo activo en Render.
 
 El login técnico del Galaxy ya quedó confirmado con la cuenta topógrafo. El primer bloqueo reproducible de código era de ergonomía y permisos: la pantalla permitía elegir `Sin obra` aunque el backend exige que un topógrafo cree la estación dentro de una obra asignada. El Bloque 1 de F5 corrige esa deriva y añade una pantalla de rondas vacía accionable, con reintento separado del estado "no hay datos". El Bloque 2 añade preparación offline y cierre controlado. En este bloque se aplicaron las migraciones F5, Render quedó actualizado al merge del rol supervisor, se generó, verificó e instaló la release local `versionCode=4` y la cuenta sintética de consulta quedó migrada con membresía `read`; la validación supervisora en Galaxy quedó completada. El arreglo posterior `b0572a0` corrige el scope de la firma de adjuntos y ya está desplegado en Render mediante el merge `6a1b19f`. El recorrido de operador offline quedó verificado en la release v7 con lectura, foto, reinicio, reconexión y unicidad; siguen pendientes el cierre positivo con umbral autorizado, la paridad estructurada de archivos y la observación de uso.
 
-El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. La auditoría local posterior reforzó la integridad ronda-punto-lectura-adjunto y dejó preparada `028_reading_attachment_idempotency.sql`, aún sin aplicar.
+El Bloque 4 añade el contrato compartido de exportación y los endpoints CSV/XLSX con filas pendientes, scope y roles verificados; falta compararlo contra una ronda real y confirmar el formato que consume el flujo de oficina. La auditoría local posterior reforzó la integridad ronda-punto-lectura-adjunto; `028_reading_attachment_idempotency.sql` quedó aplicada el 16-09-2026 tras revalidar cero duplicados y se verificó el índice único `(reading_id, storage_path)`.
 
 ### Reactivación operativa — implementación local 12-09-2026
 
@@ -183,9 +182,9 @@ campo.
  tenga esos campos omite el resumen hasta actualizarse; no se mezclan datos
  locales con recepción del servidor.
 
-La migración 029 no se ha aplicado en Supabase y este bloque no se considera
-desplegado hasta aplicarla, publicar el backend y repetir la comprobación en el
-Galaxy.
+La migración 029 quedó aplicada y verificada en Supabase el 16-09-2026. Este
+bloque todavía no se considera desplegado: falta publicar el backend `b6df031`
+o un descendiente que conserve el contrato y repetir la comprobación en el Galaxy.
 
 La migración 029 preparada también incluye índices únicos auxiliares y claves
 foráneas compuestas para mantener la relación `evento -> punto -> ronda ->
@@ -215,15 +214,14 @@ deny-all se comportaron como se esperaba. El backend local respondió readiness
 `200` con 029 y `503` al retirar la tabla. Esto no equivale a ejecutar toda la
 cadena de migraciones en Supabase ni a un despliegue real.
 
-La reconciliación más reciente distingue el esquema funcional del ledger
-propio del backend: 019–026 están aplicadas funcionalmente, pero
-`public.schema_migrations` no las registra; el dry-run identifica las ocho como
-candidatas para registrar sin reejecutar SQL. 027, 028, 029 y 030 siguen
-ausentes. No se ha usado `--write`. Mientras esa divergencia exista, el runner
-genérico no es una vía segura para producción porque decide qué ejecutar solo a
-partir de ese ledger. Cada migración pendiente conserva además su autorización
-y validación separadas; una autorización de 029 no implica 027, 028 o 030. El
-runbook de Work Execution está en
+La reconciliación del 16-09-2026 cerró la divergencia del ledger: 019–026,
+que ya existían funcionalmente, quedaron registradas en `public.schema_migrations`
+sin reejecutar sus SQL. Después se obtuvo un backup nuevo y se aplicaron 027,
+028, 029 y 030 por transacciones separadas, registrando cada filename solo tras
+ejecutar su SQL. Las verificaciones posteriores confirmaron 027 (tablas/FK/RLS),
+028 (índice único y cero duplicados), 029 (UNIQUE/FK/índices/RLS y capability
+`ready`) y 030 (15 columnas/constraints/UNIQUE/índice/RLS y capability `ready`).
+El runbook de Work Execution está en
 [`WORK_EXECUTION_CONTRACT.md`](docs/field/WORK_EXECUTION_CONTRACT.md). El
 subárbol local `docs/ai/` pertenece a una misión de reconciliación aún no
 integrada en la jerarquía documental y no se adopta aquí como nueva fuente de
@@ -297,9 +295,8 @@ etiqueta al consultar, sin convertirlo en coordenada. Esto permite registrar
 una foto general o de prisma sin sobrescribir visitas anteriores y deja el
 contrato listo para un croquis fotográfico posterior.
 
-La migración `027_station_mounting_visits.sql` está preparada con RLS de
-denegación directa, índices y claves de idempotencia, pero no está aplicada
-en Supabase. La API exige que la estación pertenezca a una obra accesible,
+La migración `027_station_mounting_visits.sql` quedó aplicada en Supabase el
+16-09-2026 con RLS de denegación directa, índices y claves de idempotencia. La API exige que la estación pertenezca a una obra accesible,
 que el actor tenga permiso `write`, que una evidencia use la ruta exacta de
 su visita y que un prisma opcional pertenezca a la misma obra. El supervisor
 puede consultar visitas a través de la ruta protegida, pero no crear visitas
@@ -315,9 +312,9 @@ recreación idempotente como `draft`; el estado `completed` o `blocked` se
 aplica después mediante `PATCH`, porque el backend no acepta estados
 terminales en el POST de creación.
 
-Este bloque es implementación local, no validación de campo: siguen
-pendientes aplicar la migración con autorización, desplegar el contrato y
-comprobar en Galaxy cámara, Storage, reinicio y reconexión. Solo después se
+Este bloque sigue sin ser validación de campo: aunque la migración ya está
+aplicada, quedan pendientes desplegar el contrato y comprobar en Galaxy cámara,
+Storage, reinicio y reconexión. Solo después se
 decidirá si los códigos manuales y la posición relativa resuelven una tarea
 repetida antes de ampliar el croquis.
 

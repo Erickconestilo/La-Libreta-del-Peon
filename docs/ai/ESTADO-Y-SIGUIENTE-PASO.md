@@ -26,8 +26,9 @@ Antes y después del registro se comprobaron los objetos/columnas esperados; 024
 mantiene los cinco códigos y `name`, `default_unit` e `is_active` sin
 diferencias. Una comprobación read-only adicional confirmó las definiciones
 críticas de RLS/policies, índice 021, checks 022/026, constraints de partes y
-la función/trigger Auth. Las migraciones 027–030 quedan fuera de esta
-reconciliación y no fueron ejecutadas por este paso.
+la función/trigger Auth. Las migraciones 027–030 quedaron fuera del write de
+reconciliación 019–026; se aplicaron después, una por una, con backup y gates
+propios.
 
 ## Archivos cambiados
 
@@ -53,9 +54,9 @@ los SQL de las migraciones.` y `Filas registradas en schema_migrations: 8`.
 
 ## Siguiente paso único
 
-Continuar únicamente por las compuertas separadas de 027–030: backup vigente,
-prechecks específicos, readiness 030 local y validación posterior a cada
-migración. No usar 019–026 como motivo para reejecutar sus SQL.
+La compuerta de esquema está cerrada. El siguiente paso de esta misión es
+publicar/verificar el backend `b6df031` (o un descendiente revisado) y después
+validar Galaxy; no reejecutar 019–030.
 
 ## Validación local de esta tarea
 
