@@ -17,6 +17,12 @@ import {
   listRecentStationMessagesController,
   listStationMessagesController
 } from '../controllers/station-messages.controller.js';
+import {
+  createMountingEvidenceController,
+  createMountingVisitController,
+  listMountingVisitsController,
+  updateMountingVisitController
+} from '../controllers/mounting-visits.controller.js';
 import { listStationPrismsController } from '../controllers/prisms.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateOptionalUuidQuery, validateUuidParam } from '../middleware/validate-uuid.js';
@@ -71,6 +77,36 @@ stationsRouter.post(
   requireRole(['admin', 'topografo']),
   validateUuidParam('stationId'),
   createStationMessageController
+);
+stationsRouter.get(
+  '/:stationId/mounting-visits',
+  requireAuth,
+  requireRole(['admin', 'topografo', 'supervisor']),
+  validateUuidParam('stationId'),
+  listMountingVisitsController
+);
+stationsRouter.post(
+  '/:stationId/mounting-visits',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('stationId'),
+  createMountingVisitController
+);
+stationsRouter.patch(
+  '/:stationId/mounting-visits/:visitId',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('stationId'),
+  validateUuidParam('visitId'),
+  updateMountingVisitController
+);
+stationsRouter.post(
+  '/:stationId/mounting-visits/:visitId/evidence',
+  requireAuth,
+  requireRole(['admin', 'topografo']),
+  validateUuidParam('stationId'),
+  validateUuidParam('visitId'),
+  createMountingEvidenceController
 );
 stationsRouter.get(
   '/:stationId/prisms',
