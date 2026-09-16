@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { PoolClient } from 'pg';
 
 import { pool } from '../db/pool.js';
 import { assertWriteAllowed } from './safety.js';
@@ -8,8 +9,9 @@ import { assertWriteAllowed } from './safety.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const migrationsDirectory = path.resolve(__dirname, '../../migrations');
+const MIGRATION_LOCK_KEY = 827346153;
 
-const ensureMigrationsTable = async () => {
+const ensureMigrationsTable = async (client: PoolClient) => {
   const query = `
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,11 +20,11 @@ const ensureMigrationsTable = async () => {
     )
   `;
 
-  await pool.query(query);
+  await client.query(query);
 };
 
-const getAppliedMigrations = async () => {
-  const result = await pool.query<{
+const getAppliedMigrations = async (client: PoolClient) => {
+  const result = await client.query<{
     filename: string;
   }>('SELECT filename FROM schema_migrations');
 
@@ -40,34 +42,39 @@ const loadMigrationFiles = async () => {
 
 const runMigrations = async () => {
   assertWriteAllowed('run-migrations');
+  const client = await pool.connect();
 
-  await ensureMigrationsTable();
+  try {
+    // Keep the lock on the same connection used for the migration transactions.
+    await client.query('SELECT pg_advisory_lock($1::bigint)', [MIGRATION_LOCK_KEY]);
+    await ensureMigrationsTable(client);
 
-  const appliedMigrations = await getAppliedMigrations();
-  const migrationFiles = await loadMigrationFiles();
+    const appliedMigrations = await getAppliedMigrations(client);
+    const migrationFiles = await loadMigrationFiles();
 
-  for (const migrationFile of migrationFiles) {
-    if (appliedMigrations.has(migrationFile)) {
-      console.log(`Skipping already applied migration: ${migrationFile}`);
-      continue;
+    for (const migrationFile of migrationFiles) {
+      if (appliedMigrations.has(migrationFile)) {
+        console.log(`Skipping already applied migration: ${migrationFile}`);
+        continue;
+      }
+
+      const migrationPath = path.join(migrationsDirectory, migrationFile);
+      const sql = await fs.readFile(migrationPath, 'utf8');
+
+      try {
+        await client.query('BEGIN');
+        await client.query(sql);
+        await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [migrationFile]);
+        await client.query('COMMIT');
+        console.log(`Applied migration: ${migrationFile}`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
     }
-
-    const migrationPath = path.join(migrationsDirectory, migrationFile);
-    const sql = await fs.readFile(migrationPath, 'utf8');
-    const client = await pool.connect();
-
-    try {
-      await client.query('BEGIN');
-      await client.query(sql);
-      await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [migrationFile]);
-      await client.query('COMMIT');
-      console.log(`Applied migration: ${migrationFile}`);
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+  } finally {
+    await client.query('SELECT pg_advisory_unlock($1::bigint)', [MIGRATION_LOCK_KEY]).catch(() => undefined);
+    client.release();
   }
 };
 

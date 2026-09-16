@@ -35,8 +35,8 @@ export const assertProjectAccess = (
 
 /**
  * Consulta de obra y escritura de obra son permisos distintos. El mapa se
- * carga desde las membresías activas; si no existe (sesiones legacy o tests
- * antiguos), se conserva el comportamiento previo de topógrafo = escritura.
+ * carga desde las membresías activas; si falta, no se puede demostrar una
+ * autorización de escritura y la operación debe fallar cerrada.
  */
 export const assertProjectWriteAccess = (
   user: AuthenticatedUser | undefined,
@@ -60,8 +60,16 @@ export const assertProjectWriteAccess = (
     throw new AppError(forbiddenMessage, 403, 'READ_ONLY_ACCESS');
   }
 
-  if (typeof projectId === 'string' && user.projectAccess?.[projectId] === 'read') {
+  if (!user.projectAccess) {
+    throw new AppError(forbiddenMessage, 403, 'PROJECT_ACCESS_REQUIRED');
+  }
+
+  if (typeof projectId === 'string' && user.projectAccess[projectId] === 'read') {
     throw new AppError(forbiddenMessage, 403, 'READ_ONLY_PROJECT_MEMBERSHIP');
+  }
+
+  if (typeof projectId !== 'string' || user.projectAccess[projectId] !== 'write') {
+    throw new AppError(forbiddenMessage, 403, 'PROJECT_ACCESS_REQUIRED');
   }
 };
 

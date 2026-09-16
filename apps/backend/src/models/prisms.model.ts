@@ -22,7 +22,7 @@ const buildPrismScopeCondition = (projectIds: string[] | null, baseOffset: numbe
   };
 };
 
-const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
+export const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffset: number): PrismScope => {
   if (projectIds === null) {
     return { params: [], clause: '' };
   }
@@ -33,7 +33,8 @@ const buildStationProjectScopeCondition = (projectIds: string[] | null, baseOffs
 
   return {
     params: [projectIds],
-    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])`
+    clause: `AND s.project_id = ANY($${baseOffset}::uuid[])
+      AND (p.project_id IS NULL OR p.project_id = s.project_id)`
   };
 };
 
@@ -294,9 +295,10 @@ export const reconcilePrismObservationsForStation = async (
       external_id: string | null;
       id: string;
       name: string;
+      project_id: string | null;
     }>(
       `
-        SELECT id, external_id, name
+        SELECT id, external_id, name, project_id
         FROM stations
         WHERE id = $1
         FOR UPDATE
@@ -314,7 +316,9 @@ export const reconcilePrismObservationsForStation = async (
       new Set([station.external_id, station.name].filter((value): value is string => Boolean(value?.trim())))
     );
 
-    if (candidateCodes.length === 0) {
+    // An unmapped station has no tenant boundary, so it must not absorb
+    // imported observations from any project during automatic reconciliation.
+    if (candidateCodes.length === 0 || !station.project_id) {
       await client.query('COMMIT');
       return {
         candidateCodes,
@@ -331,11 +335,15 @@ export const reconcilePrismObservationsForStation = async (
             MIN(s.id::text)::uuid AS station_id,
             COUNT(DISTINCT s.id) AS station_count
           FROM prism_observations po
+          INNER JOIN prisms p ON p.id = po.prism_id
           INNER JOIN stations s
-            ON po.station_code = s.external_id
+            ON s.project_id = p.project_id
+            AND (po.station_code = s.external_id
             OR po.station_code = s.name
+            )
           WHERE po.station_id IS NULL
             AND po.station_code = ANY($2::text[])
+            AND p.project_id = $3
           GROUP BY po.id
         ),
         safe_matches AS (
@@ -351,7 +359,7 @@ export const reconcilePrismObservationsForStation = async (
         FROM safe_matches sm
         WHERE po.id = sm.observation_id
       `,
-      [stationId, candidateCodes]
+      [stationId, candidateCodes, station.project_id]
     );
 
     const matchedObservationCount = updateResult.rowCount ?? 0;
@@ -397,11 +405,15 @@ export const reconcilePrismObservationsForExistingStations = async () => {
           MIN(s.id::text)::uuid AS station_id,
           COUNT(DISTINCT s.id) AS station_count
         FROM prism_observations po
+        INNER JOIN prisms p ON p.id = po.prism_id
         INNER JOIN stations s
-          ON po.station_code = s.external_id
+          ON s.project_id = p.project_id
+          AND (po.station_code = s.external_id
           OR po.station_code = s.name
+          )
         WHERE po.station_id IS NULL
           AND po.station_code IS NOT NULL
+          AND p.project_id IS NOT NULL
         GROUP BY po.id
       ),
       safe_matches AS (

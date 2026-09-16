@@ -21,9 +21,20 @@ const buildIncidentScopeCondition = (projectScope: string[] | null, baseOffset: 
 
   return {
     params: [projectScope],
-    clause: `AND (s.project_id = ANY($${baseOffset}::uuid[]) OR p.project_id = ANY($${baseOffset}::uuid[]))`
+    clause: `AND (
+      (
+        s.project_id = ANY($${baseOffset}::uuid[])
+        AND (p.project_id IS NULL OR p.project_id = s.project_id)
+      )
+      OR (
+        s.project_id IS NULL
+        AND p.project_id = ANY($${baseOffset}::uuid[])
+      )
+    )`
   };
 };
+
+export const buildIncidentListScopeCondition = buildIncidentScopeCondition;
 
 export const buildIncidentResourceScopeCondition = (
   projectScope: string[] | null,
