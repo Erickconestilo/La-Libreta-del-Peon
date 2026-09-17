@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-import { apiFetch } from '../api';
+import { API_TIMEOUT_MESSAGE, apiFetch } from '../api';
 import { fetchWithTimeout } from '../fetch-timeout';
 
 jest.mock('../fetch-timeout', () => ({
@@ -31,5 +31,19 @@ describe('api login request diagnostics', () => {
     const [, init] = mockedFetchWithTimeout.mock.calls[0];
     const headers = new Headers((init as RequestInit).headers);
     expect(headers.get('X-Request-ID')).toBe(requestId);
+  });
+
+  it('classifies transport failures with stable codes instead of copy matching', async () => {
+    mockedFetchWithTimeout.mockRejectedValueOnce(new Error('socket disappeared'));
+    await expect(apiFetch('/health', { skipAuth: true })).rejects.toMatchObject({
+      code: 'NETWORK_UNAVAILABLE',
+      name: 'ApiTransportError'
+    });
+
+    mockedFetchWithTimeout.mockRejectedValueOnce(new Error(API_TIMEOUT_MESSAGE));
+    await expect(apiFetch('/health', { skipAuth: true })).rejects.toMatchObject({
+      code: 'TIMEOUT',
+      name: 'ApiTransportError'
+    });
   });
 });

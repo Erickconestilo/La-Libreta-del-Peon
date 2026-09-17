@@ -6,6 +6,8 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() || (
 );
 const GUEST_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_GUEST_PUBLIC_TOKEN ?? '';
 const API_REQUEST_TIMEOUT_MS = Number.parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT_MS ?? '18000', 10);
+export const API_TIMEOUT_MESSAGE = 'El servidor tardó demasiado en responder. Reintenta en unos segundos.';
+export const API_NETWORK_UNAVAILABLE_MESSAGE = 'No se pudo conectar. Revisa la conexión y vuelve a intentar.';
 let runtimeBearerToken: string | null = null;
 let authFailureHandler: (() => void) | null = null;
 
@@ -40,6 +42,33 @@ export class ApiRequestError extends Error {
 }
 
 export const isApiRequestError = (error: unknown): error is ApiRequestError => error instanceof ApiRequestError;
+
+export type ApiTransportErrorCode = 'NETWORK_UNAVAILABLE' | 'TIMEOUT';
+
+export class ApiTransportError extends Error {
+  code: ApiTransportErrorCode;
+
+  constructor(code: ApiTransportErrorCode, message: string) {
+    super(message);
+    this.name = 'ApiTransportError';
+    this.code = code;
+  }
+}
+
+export const isApiTransportError = (error: unknown): error is ApiTransportError =>
+  error instanceof ApiTransportError;
+
+const toApiTransportError = (error: unknown) => {
+  if (isApiTransportError(error)) {
+    return error;
+  }
+
+  if (error instanceof Error && error.message === API_TIMEOUT_MESSAGE) {
+    return new ApiTransportError('TIMEOUT', API_TIMEOUT_MESSAGE);
+  }
+
+  return new ApiTransportError('NETWORK_UNAVAILABLE', API_NETWORK_UNAVAILABLE_MESSAGE);
+};
 
 export const setApiBearerToken = (token: string | null) => {
   runtimeBearerToken = token?.trim() ? token.trim() : null;
@@ -89,15 +118,11 @@ export const apiFetch = async <T>(path: string, init?: ApiFetchInit) => {
       response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
         ...requestInit,
         headers,
-        timeoutMessage: 'El servidor tardó demasiado en responder. Reintenta en unos segundos.',
+        timeoutMessage: API_TIMEOUT_MESSAGE,
         timeoutMs: API_REQUEST_TIMEOUT_MS
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('tardó demasiado')) {
-        throw error;
-      }
-
-      throw new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.');
+      throw toApiTransportError(error);
     }
 
     const json = (await response.json().catch(() => ({
@@ -180,15 +205,11 @@ export const apiDownload = async (path: string, init?: ApiFetchInit): Promise<Ap
     response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
       ...requestInit,
       headers,
-      timeoutMessage: 'El servidor tardó demasiado en responder. Reintenta en unos segundos.',
+      timeoutMessage: API_TIMEOUT_MESSAGE,
       timeoutMs: API_REQUEST_TIMEOUT_MS
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes('tardó demasiado')) {
-      throw error;
-    }
-
-    throw new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.');
+    throw toApiTransportError(error);
   }
 
   if (runtimeBearerToken && response.status === 401) {

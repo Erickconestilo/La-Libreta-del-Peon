@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { ApiRequestError } from '@/lib/api';
+import { ApiRequestError, ApiTransportError } from '@/lib/api';
 import {
   canRunDeferredSessionRetry,
   canUseCachedIdentityOffline,
@@ -21,13 +21,14 @@ describe('session refresh failures', () => {
 
   it('only treats no-response/timeout and 5xx as transient validation failures', () => {
     expect(isTransientSessionValidationFailure(
-      new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.')
+      new ApiTransportError('NETWORK_UNAVAILABLE', 'copy can change without changing behavior')
     )).toBe(true);
     expect(isTransientSessionValidationFailure(
-      new Error('El servidor tardó demasiado en responder. Reintenta en unos segundos.')
+      new ApiTransportError('TIMEOUT', 'localized timeout copy')
     )).toBe(true);
     expect(isTransientSessionValidationFailure(new ApiRequestError(503, 'Service unavailable'))).toBe(true);
 
+    expect(isTransientSessionValidationFailure(new Error('No se pudo conectar. Revisa la conexión y vuelve a intentar.'))).toBe(false);
     expect(isTransientSessionValidationFailure(new ApiRequestError(403, 'Forbidden'))).toBe(false);
     expect(isTransientSessionValidationFailure(
       new ApiRequestError(401, 'Unauthorized', { code: 'OTHER_AUTH_ERROR' })

@@ -1,7 +1,4 @@
-import { isApiRequestError } from '@/lib/api';
-
-const NETWORK_ERROR_MESSAGE = 'No se pudo conectar. Revisa la conexión y vuelve a intentar.';
-const TIMEOUT_ERROR_FRAGMENT = 'tardó demasiado';
+import { isApiRequestError, isApiTransportError } from '@/lib/api';
 
 /** Only an explicit refresh-token rejection should discard persisted credentials. */
 export const isInvalidRefreshTokenError = (error: unknown) =>
@@ -29,11 +26,8 @@ export const isTransientSessionValidationFailure = (error: unknown) => {
     return error.status >= 500;
   }
 
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  return error.message === NETWORK_ERROR_MESSAGE || error.message.includes(TIMEOUT_ERROR_FRAGMENT);
+  return isApiTransportError(error) &&
+    (error.code === 'NETWORK_UNAVAILABLE' || error.code === 'TIMEOUT');
 };
 
 export const isSameStoredSessionIdentity = (
