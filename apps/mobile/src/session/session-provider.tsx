@@ -750,13 +750,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSavedSessions(normalized.sessions);
       await Storage.removeItemAsync(LEGACY_SESSION_KEY);
       await SecureStore.deleteItemAsync(LEGACY_SESSION_KEY);
-      const tokenInfo = getTokenWarning(trimmedToken);
       const isValid = await applySession(normalized.activeSessionId, normalized.sessions);
-      setSessionWarning(
-        isValid
-          ? tokenInfo.warning
-          : 'La sesión técnica es inválida. Revalida o pega un token nuevo.'
-      );
+      if (!isValid) {
+        setErrorMessage('La sesión técnica es inválida. Revalida o entra de nuevo.');
+        setAuthRequestDiagnostic(null);
+        return;
+      }
       setErrorMessage(null);
       setAuthRequestDiagnostic(null);
     } catch (error) {
@@ -810,8 +809,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       await Storage.removeItemAsync(LEGACY_SESSION_KEY);
       await SecureStore.deleteItemAsync(LEGACY_SESSION_KEY);
 
-      const tokenInfo = getTokenWarning(payload.session.accessToken);
-      setSessionWarning(isValid ? tokenInfo.warning : 'La sesión técnica es inválida. Revalida o pega un token nuevo.');
+      if (!isValid) {
+        setErrorMessage('La sesión técnica es inválida. Revalida o entra de nuevo.');
+        setAuthRequestDiagnostic(null);
+        return;
+      }
       setErrorMessage(null);
       setAuthRequestDiagnostic(null);
       return;
@@ -932,9 +934,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const normalized = await applyPersistedSessions({ sessions: nowSessions, activeSessionId });
       const isValid = await applySession(normalized.activeSessionId, normalized.sessions, { swallowAuthError: true });
       setErrorMessage(isValid ? null : 'La sesión técnica es inválida. Repite el token.');
-      if (isValid) {
-        setSessionWarning(null);
-      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo revalidar la sesión.';
       setErrorMessage(message);
