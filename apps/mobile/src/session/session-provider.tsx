@@ -8,7 +8,13 @@ import { apiFetch, isApiRequestError, setApiAuthFailureHandler, setApiBearerToke
 import { createRandomId } from '@/lib/random-id';
 import { queryClient } from '@/lib/query-client';
 import { getAuthRequestDiagnostic, type AuthRequestDiagnostic } from './auth-diagnostics';
-import { resolveSessionAfterRefreshFailure } from './session-refresh';
+import {
+  canRunDeferredSessionRetry,
+  canUseCachedIdentityOffline,
+  isSameStoredSessionIdentity,
+  isTransientSessionValidationFailure,
+  resolveSessionAfterRefreshFailure
+} from './session-refresh';
 import { findStoredSessionForUser } from './session-identity';
 
 type ApiEnvelope<T> = {
@@ -31,6 +37,7 @@ type AuthLoginPayload = {
 };
 
 type StoredTechSession = {
+  cachedUser?: AuthSessionUser | null;
   createdAt: string;
   email: string | null;
   fullName: string | null;
@@ -123,6 +130,10 @@ const parseSessionStore = (raw: string | null): SessionStore => {
           })
           .map((entry) => ({
             ...entry,
+            cachedUser:
+              entry.cachedUser && typeof entry.cachedUser === 'object'
+                ? (entry.cachedUser as AuthSessionUser)
+                : null,
             createdAt: String(entry.createdAt),
             email: typeof entry.email === 'string' ? entry.email : null,
             fullName: typeof entry.fullName === 'string' ? entry.fullName : null,
@@ -136,8 +147,9 @@ const parseSessionStore = (raw: string | null): SessionStore => {
           }))
       : [];
 
-    const activeSessionId =
-      typeof parsed?.activeSessionId === 'string' && sessions.some((session) => session.id === parsed.activeSessionId)
+    const activeSessionId = parsed?.activeSessionId === null
+      ? null
+      : typeof parsed?.activeSessionId === 'string' && sessions.some((session) => session.id === parsed.activeSessionId)
         ? parsed.activeSessionId
         : sessions[0]?.id ?? null;
 
@@ -178,7 +190,9 @@ const loadStateFromStorage = async (): Promise<SessionStore> => {
 const persistState = async (state: SessionStore) => {
   const normalized = {
     activeSessionId:
-      state.activeSessionId ?? (state.sessions.length > 0 ? state.sessions[0].id : null),
+      state.activeSessionId && state.sessions.some((session) => session.id === state.activeSessionId)
+        ? state.activeSessionId
+        : null,
     sessions: sortSessions(state.sessions)
   };
 
@@ -334,6 +348,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [isSessionInvalid, setIsSessionInvalid] = useState(false);
   const authCacheKeyRef = useRef<string | null>(null);
   const refreshRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshRetryGenerationRef = useRef(0);
+  const activeSessionIdRef = useRef<string | null>(null);
+
+  const setActiveSession = (sessionId: string | null) => {
+    activeSessionIdRef.current = sessionId;
+    setActiveSessionId(sessionId);
+  };
+
+  const cancelRefreshRetry = () => {
+    refreshRetryGenerationRef.current += 1;
+    if (refreshRetryTimeoutRef.current) {
+      clearTimeout(refreshRetryTimeoutRef.current);
+      refreshRetryTimeoutRef.current = null;
+    }
+  };
 
   useEffect(() => {
     void hydrateSession();
@@ -341,14 +370,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     return () => {
-      if (refreshRetryTimeoutRef.current) {
-        clearTimeout(refreshRetryTimeoutRef.current);
-      }
+      cancelRefreshRetry();
     };
   }, []);
 
   useEffect(() => {
     setApiAuthFailureHandler(() => {
+      cancelRefreshRetry();
       setCurrentUser(null);
       setStoredToken(null);
       setIsSessionInvalid(Boolean(activeSessionId));
@@ -386,6 +414,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return {
       ...existing,
       createdAt: existing?.createdAt ?? now,
+      cachedUser: payload.user,
       email: payload.user.email,
       fullName: payload.user.fullName,
       id: existing?.id ?? newSessionId(),
@@ -409,13 +438,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     const refreshed = await refreshSessionRequest(session.refreshToken);
+    if (!isSameStoredSessionIdentity(session, refreshed.user)) {
+      throw new Error('La identidad devuelta al renovar no coincide con la sesión técnica guardada.');
+    }
+
     return {
-      session: {
-        ...session,
-        token: refreshed.session.accessToken,
-        refreshToken: refreshed.session.refreshToken,
-        lastUsedAt: nowIso()
-      },
+      session: createSessionFromPayload(refreshed, session),
       refreshed: true
     };
   };
@@ -427,8 +455,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   ): Promise<boolean> => {
     const storedSession = sessions.find((entry) => entry.id === sessionId) ?? null;
     if (!storedSession) {
+      cancelRefreshRetry();
       clearServerCacheIfAuthChanged('guest');
-      setActiveSessionId(null);
+      setActiveSession(null);
       setStoredToken(null);
       setApiBearerToken(null);
       setCurrentUser(null);
@@ -439,6 +468,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     let nextSession = storedSession;
     let nextSessions = sessions;
+    let refreshDeferredByTransientFailure = false;
+    let refreshValidationFailed = false;
 
     try {
       const refreshedPayload = await buildActivePayloadFromSession(storedSession);
@@ -453,8 +484,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         nextSession = normalized.sessions.find((session) => session.id === sessionId) ?? nextSession;
       }
     } catch (error) {
+      refreshValidationFailed = true;
       const resolvedFailure = resolveSessionAfterRefreshFailure(storedSession, error);
       nextSession = resolvedFailure.session;
+      refreshDeferredByTransientFailure =
+        !resolvedFailure.shouldPersistInvalidation && isTransientSessionValidationFailure(error);
 
       if (resolvedFailure.shouldPersistInvalidation) {
         nextSessions = sessions.map((session) =>
@@ -464,10 +498,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           sessions: nextSessions,
           activeSessionId: sessionId
         });
-      } else if (!refreshRetryTimeoutRef.current) {
+      } else if (refreshDeferredByTransientFailure && !refreshRetryTimeoutRef.current) {
+        const retryGeneration = ++refreshRetryGenerationRef.current;
         refreshRetryTimeoutRef.current = setTimeout(() => {
           refreshRetryTimeoutRef.current = null;
-          void applySession(sessionId, sessions, { swallowAuthError: true });
+          if (
+            refreshRetryGenerationRef.current !== retryGeneration ||
+            activeSessionIdRef.current !== sessionId
+          ) {
+            return;
+          }
+
+          void (async () => {
+            const latestState = await loadStateFromStorage();
+            if (!canRunDeferredSessionRetry({
+              activeSessionId: activeSessionIdRef.current,
+              currentGeneration: refreshRetryGenerationRef.current,
+              persistedActiveSessionId: latestState.activeSessionId,
+              retryGeneration,
+              sessionId: storedSession.id
+            })) {
+              return;
+            }
+            void applySession(sessionId, latestState.sessions, { swallowAuthError: true });
+          })();
         }, SESSION_REFRESH_RETRY_DELAY_MS);
       }
     }
@@ -477,55 +531,128 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const canUseToken = Boolean(token) && !tokenInfo.isExpired;
     clearServerCacheIfAuthChanged(canUseToken ? `session:${nextSession.id}:${token}` : `invalid:${nextSession.id}`);
 
-    setActiveSessionId(sessionId);
+    setActiveSession(sessionId);
     setStoredToken(canUseToken ? token : null);
     setApiBearerToken(canUseToken ? token : null);
     setSessionWarning(tokenInfo.warning);
     setIsSessionInvalid(!canUseToken);
 
     if (!canUseToken) {
+      if (canUseCachedIdentityOffline({
+        authValidationDeferredByTransientFailure: false,
+        hasCachedUser: Boolean(nextSession.cachedUser),
+        refreshDeferredByTransientFailure,
+        tokenUsable: canUseToken
+      }) && nextSession.cachedUser) {
+        setCurrentUser(nextSession.cachedUser);
+        setStoredToken(null);
+        setApiBearerToken(null);
+        setIsSessionInvalid(false);
+        setSessionWarning('Revalidación temporalmente no disponible: usando la última identidad técnica validada. La sincronización queda pausada hasta revalidar.');
+        setSavedSessions(nextSessions);
+        setErrorMessage(null);
+        return true;
+      }
+
       setCurrentUser(null);
       if (!token) {
-        if (refreshRetryTimeoutRef.current) {
-          clearTimeout(refreshRetryTimeoutRef.current);
-          refreshRetryTimeoutRef.current = null;
-        }
+        cancelRefreshRetry();
         setSessionWarning('La sesión técnica es inválida. Repite el token.');
+      } else if (refreshValidationFailed && !refreshDeferredByTransientFailure) {
+        cancelRefreshRetry();
+        setSessionWarning('Sesión no verificada: revalida cuando tengas conexión o confirma tus permisos.');
       } else if (tokenInfo.isExpired) {
         setSessionWarning('No se pudo renovar la sesión todavía. Se reintentará automáticamente.');
       }
       return false;
     }
 
-    if (refreshRetryTimeoutRef.current) {
-      clearTimeout(refreshRetryTimeoutRef.current);
-      refreshRetryTimeoutRef.current = null;
-    }
+    cancelRefreshRetry();
 
     try {
-      await loadCurrentUser();
+      const user = await loadCurrentUser();
+      const validatedSession: StoredTechSession = {
+        ...nextSession,
+        cachedUser: user,
+        email: user.email,
+        fullName: user.fullName,
+        label: normalizeLabel(user.role, user.fullName),
+        lastUsedAt: nowIso(),
+        role: user.role,
+        userId: user.id
+      };
+      const validatedSessions = nextSessions.map((session) =>
+        session.id === validatedSession.id ? validatedSession : session
+      );
+      const normalized = await applyPersistedSessions({
+        activeSessionId: sessionId,
+        sessions: validatedSessions
+      });
       setErrorMessage(null);
       setIsSessionInvalid(false);
-      setSavedSessions(nextSessions);
+      setSavedSessions(normalized.sessions);
       return true;
     } catch (error) {
-      if (!isAuthError(error)) {
-        setCurrentUser(null);
-        setStoredToken(token);
-        setApiBearerToken(token);
+      const transientValidationFailure = isTransientSessionValidationFailure(error);
+      if (transientValidationFailure) {
+        const canUseCachedIdentity = canUseCachedIdentityOffline({
+          authValidationDeferredByTransientFailure: true,
+          hasCachedUser: Boolean(nextSession.cachedUser),
+          refreshDeferredByTransientFailure: false,
+          tokenUsable: canUseToken
+        });
+
+        setCurrentUser(canUseCachedIdentity ? nextSession.cachedUser ?? null : null);
+        setStoredToken(null);
+        setApiBearerToken(null);
+        clearServerCacheIfAuthChanged(`offline:${nextSession.id}`);
         setIsSessionInvalid(false);
-        setSessionWarning('Sin conexión: la sesión técnica se conserva hasta poder revalidarla.');
+        setSessionWarning(
+          canUseCachedIdentity
+            ? 'Revalidación temporalmente no disponible: usando la última identidad técnica validada. La sincronización queda pausada hasta revalidar.'
+            : 'Revalidación temporalmente no disponible. La sesión técnica se conserva hasta poder revalidarla.'
+        );
         setSavedSessions(nextSessions);
         setErrorMessage(null);
+
+        if (!refreshRetryTimeoutRef.current) {
+          const retryGeneration = ++refreshRetryGenerationRef.current;
+          refreshRetryTimeoutRef.current = setTimeout(() => {
+            refreshRetryTimeoutRef.current = null;
+            if (
+              refreshRetryGenerationRef.current !== retryGeneration ||
+              activeSessionIdRef.current !== sessionId
+            ) {
+              return;
+            }
+
+            void (async () => {
+              const latestState = await loadStateFromStorage();
+              if (!canRunDeferredSessionRetry({
+                activeSessionId: activeSessionIdRef.current,
+                currentGeneration: refreshRetryGenerationRef.current,
+                persistedActiveSessionId: latestState.activeSessionId,
+                retryGeneration,
+                sessionId: storedSession.id
+              })) {
+                return;
+              }
+              void applySession(sessionId, latestState.sessions, { swallowAuthError: true });
+            })();
+          }, SESSION_REFRESH_RETRY_DELAY_MS);
+        }
+
         return true;
       }
 
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
+      cancelRefreshRetry();
       setCurrentUser(null);
       setIsSessionInvalid(true);
       setStoredToken(null);
       setApiBearerToken(null);
       clearServerCacheIfAuthChanged(`invalid:${nextSession.id}`);
+      setSessionWarning('Sesión no verificada: revalida cuando tengas conexión o confirma tus permisos.');
 
       if (isAuthError(error) || options.swallowAuthError) {
         if (!options.swallowAuthError) {
@@ -547,43 +674,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const state = await loadStateFromStorage();
       loadedState = state;
       const nextState = await applyPersistedSessions(state);
+      setActiveSession(nextState.activeSessionId);
 
       await applySession(nextState.activeSessionId, nextState.sessions, { swallowAuthError: true });
-
-      if (nextState.activeSessionId) {
-        try {
-          const user = await getAuthMe();
-          const now = nowIso();
-          const resolvedSession = nextState.sessions.find((session) => session.id === nextState.activeSessionId);
-
-          if (resolvedSession) {
-            const mergedSession: StoredTechSession = {
-              ...resolvedSession,
-              email: user.email,
-              fullName: user.fullName,
-              label: normalizeLabel(user.role, user.fullName),
-              lastUsedAt: now,
-              role: user.role,
-              userId: user.id
-            };
-
-            const sessions = nextState.sessions.map((session) =>
-              session.id === mergedSession.id ? mergedSession : session
-            );
-            const normalized = await applyPersistedSessions({ ...nextState, sessions });
-            await applySession(normalized.activeSessionId, normalized.sessions, { swallowAuthError: true });
-          }
-        } catch {
-          // Keep technical sessions and keep blocked/invalid state from token validation.
-        }
-      }
 
       await Storage.removeItemAsync(LEGACY_SESSION_KEY);
       setErrorMessage(null);
     } catch {
       const fallbackSessions = loadedState?.sessions ?? [];
       setSavedSessions(fallbackSessions);
-      setActiveSessionId(null);
+      setActiveSession(null);
       setStoredToken(null);
       setApiBearerToken(null);
       setSessionWarning('No se pudo validar la sesión técnica guardada.');
@@ -595,6 +695,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const connectWithToken = async (token: string) => {
+    cancelRefreshRetry();
     const trimmedToken = token.trim();
     if (!trimmedToken) {
       throw new Error('El token no puede estar vacío.');
@@ -619,6 +720,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const mergedSession: StoredTechSession = existingSession
         ? {
             ...existingSession,
+            cachedUser: authenticatedUser,
             email: authenticatedUser.email,
             fullName: authenticatedUser.fullName,
             label: normalizeLabel(authenticatedUser.role, authenticatedUser.fullName),
@@ -628,6 +730,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             userId: authenticatedUser.id
           }
         : {
+            cachedUser: authenticatedUser,
             createdAt: now,
             email: authenticatedUser.email,
             fullName: authenticatedUser.fullName,
@@ -659,7 +762,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo validar el token.';
       setStoredToken(previousStoredToken);
-      setActiveSessionId(previousActiveSessionId);
+      setActiveSession(previousActiveSessionId);
       setSavedSessions(previousSessions);
       setApiBearerToken(previousStoredToken);
       await applySession(previousActiveSessionId, previousSessions, { swallowAuthError: true });
@@ -671,6 +774,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const connectWithCredentials = async (email: string, password: string) => {
+    cancelRefreshRetry();
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
       throw new Error('Introduce correo y contraseña.');
@@ -714,7 +818,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo validar la sesión.';
       setStoredToken(previousStoredToken);
-      setActiveSessionId(previousActiveSessionId);
+      setActiveSession(previousActiveSessionId);
       setSavedSessions(previousSessions);
       setApiBearerToken(previousStoredToken);
       await applySession(previousActiveSessionId, previousSessions, { swallowAuthError: true });
@@ -727,6 +831,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const activateSession = async (sessionId: string) => {
+    cancelRefreshRetry();
     setIsLoading(true);
 
     try {
@@ -753,6 +858,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeSession = async (sessionId: string) => {
+    cancelRefreshRetry();
     setIsLoading(true);
 
     try {
@@ -784,12 +890,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetToGuest = async () => {
+    cancelRefreshRetry();
     setIsLoading(true);
 
     try {
       const normalized = await applyPersistedSessions({ sessions: savedSessions, activeSessionId: null });
       setSavedSessions(normalized.sessions);
-      setActiveSessionId(null);
+      setActiveSession(null);
       setStoredToken(null);
       setApiBearerToken(null);
       setSessionWarning(null);
@@ -809,6 +916,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   };
 
   const revalidateActiveSession = async () => {
+    cancelRefreshRetry();
     setIsLoading(true);
 
     try {
