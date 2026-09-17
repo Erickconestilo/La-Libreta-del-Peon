@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-13
+verificado: 2026-09-17
 -->
 
 # Verificación De Artefactos CSV/XLSX
@@ -51,3 +51,23 @@ los dos archivos descargados de la misma ronda autenticada. La evidencia
 Galaxy del 13-09-2026 demostró generación HTTP `200` y apertura del selector
 nativo, pero no dejó los binarios accesibles en el almacenamiento público del
 dispositivo; por eso esa comparación concreta sigue pendiente.
+
+## Evidencia read-only conservada — 16/17-09-2026
+
+Para separar el contrato de exportación de la compuerta SAF, el backend local
+leyó en modo read-only la misma ronda documentada y generó fuera del repo un
+par CSV/XLSX mediante la misma función de dominio del endpoint. La revalidación
+del 17-09-2026 mantiene literalmente:
+
+```text
+EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación utf8Bom=true
+```
+
+- CSV: `4.065` bytes, SHA-256
+  `945AE5909356397FCFB2EB5CDC398B72AE5BEBA041C266FF89FF4861F8A2B796`.
+- XLSX: `8.152` bytes, SHA-256
+  `4C654481F2ECE079C89A0FA2ED401C3467158D07C5C72B9F1129DD1CE773E1DD`.
+
+Esto prueba estructura y paridad del contrato con datos reales; **no** prueba
+guardado SAF de v15 ni aceptación de oficina. Esas dos puertas permanecen
+abiertas y no se sustituyen por esta generación read-only.

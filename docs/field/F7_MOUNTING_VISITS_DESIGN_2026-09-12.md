@@ -91,3 +91,19 @@ la app sin red, añadir una foto real autorizada/no sensible, reconectar y
 comprobar que la segunda visita no altera la primera ni duplica la evidencia.
 Mientras `topofield-photos` siga público, no se usarán imágenes sensibles de
 terceros y una prueba solo con galería no se presentará como PASS de cámara.
+
+### Preflight read-only para la prueba física — 17-09-2026
+
+El estado remoto actual está limpio para una primera prueba de montaje:
+`station_mounting_visits=0` y `mounting_visit_evidence=0`. El bucket
+`topofield-photos` continúa con `public=true`; conserva límite de `5 MiB`, MIME
+permitidos JPEG/PNG/WebP y versionado desactivado. Existen objetos históricos
+de otros flujos de fotos, por lo que la prueba no debe usar el conteo total del
+bucket como prueba de éxito: debe demostrar la ruta exacta de la nueva visita y
+su evidencia asociada.
+
+La prueba física segura debe usar una foto autorizada/no sensible tomada con
+**Cámara**, crear la visita, conservarla durante reinicio/offline, reconectar y
+verificar una única evidencia recibida. `Galería` puede comprobarse como ruta
+secundaria, pero nunca sustituye el PASS de cámara. No se migrará el bucket a
+privado ni se fabricarán evidencias server-side para cerrar esta compuerta.

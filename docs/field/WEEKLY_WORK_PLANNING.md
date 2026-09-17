@@ -64,3 +64,24 @@ ejecutar físicamente el CRUD autenticado de QA, comprobar versiones/IDs y
 aislamiento entre sesiones. Las mutaciones de weekly-work siguen siendo online;
 la caché offline es solo de lectura. Por tanto, despliegue de esquema/backend y
 estabilidad general de v15 no equivalen a validación física de planificación.
+
+## Secuencia física QA pendiente de 030
+
+La relectura read-only del 17-09-2026 devuelve `0` filas en
+`project_weekly_work_items`, así que no hay planificación previa que deba
+preservarse o confundirse con la prueba. Cuando se ejecute en v15, la secuencia
+mínima usará una única fila QA y respetará el control optimista por `version`:
+
+1. crearla en `planned` con un `clientRequestId` nuevo;
+2. editar un campo con la `version` recibida y comprobar el incremento;
+3. marcarla `done` y comprobar `completed_at` no nulo;
+4. volverla a `planned` con la nueva `version` y comprobar
+   `completed_at = null`;
+5. eliminarla lógicamente usando la versión vigente y comprobar que ya no
+   aparece en el GET de la semana.
+
+El backend solo permite DELETE cuando el estado actual es `planned`; intentar
+borrar directamente un `done` produciría `409 WEEKLY_WORK_DELETE_NOT_ALLOWED`
+y no forma parte del camino feliz. La prueba física deberá conservar además el
+aislamiento por sesión y no reinterpretar la caché offline de solo lectura como
+una mutación recibida por el servidor.

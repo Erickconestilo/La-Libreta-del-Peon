@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-13
+  verificado: 2026-09-17
 -->
 
 # LOCAL_ANDROID_BUILD_RUNBOOK.md
@@ -580,17 +580,67 @@ y la planificación semanal editable después de desplegar el backend
 - Instalación: pendiente. `adb devices -l` devolvió `List of devices attached`
   sin dispositivos. No se desinstaló ni modificó el Galaxy.
 
+## 21g. Release final v15 reconciliada (17-09-2026)
+
+La candidata vigente **no** es v14 ni el primer APK generado con etiqueta v15.
+Después de los fixes de sesión `c05b7d0`, `14aa286` y `174d5e4`, la build final
+se generó una sola vez y quedó reconciliada contra los artefactos reales:
+
+- AAB canónica:
+  `C:\tf\apps\mobile\android\app\build\outputs\bundle\release\app-release.aab`.
+- Tamaño AAB: `40.173.432` bytes.
+- SHA-256 AAB:
+  `09F6FE2E439BB93C553BFE95D32BA42307D39051116955B270D37E47524BFBD5`.
+- `bundletool-all-1.18.3 validate`: código `0`.
+- Manifest de Bundletool y `aapt2`: paquete
+  `com.ciudadanoinusual.topofield`, `versionCode=15`, `versionName=1.0.0`,
+  `minSdkVersion=24`, `targetSdkVersion=36`, `compileSdkVersion=36`.
+- Certificado del AAB: SHA-256
+  `95:13:A8:DB:52:4E:87:BA:92:AB:FE:F2:24:CF:A2:BD:EA:36:05:C4:F5:19:FF:B1:6B:F0:72:68:1F:F2:53:30`.
+- Bundletool produjo el conjunto final
+  `stage4-evidence-20260917\v15\topofield-v15-174d5e4.apks`
+  (`53.598.930` bytes).
+- APK universal **canónica** para una reinstalación física, si llegara a ser
+  necesaria:
+  `stage4-evidence-20260917\v15\topofield-v15-universal.apk`.
+- Tamaño APK: `53.598.615` bytes.
+- SHA-256 APK:
+  `AC7920C18EF0394E2DC40E8A42BF84A1E0E4328656B4F2914A3457A1732ADF25`.
+- `apksigner verify --verbose --print-certs`: `Verifies`, V2 `true`, V3
+  `true`, un firmante, `CN=TopoField Android Release`, certificado SHA-256
+  `9513a8db524e87ba92abfef224cfa2bdea3605c4f519ffb16bf072681ff25330`.
+
+Existe además
+`stage4-evidence-20260917\v15-universal\universal.apk`, con el mismo tamaño pero
+SHA-256 `F716599A79BC7A6CE91357F88A270B6EF1A98DF9A06EF030C919BB49A643BDE5`.
+Ese archivo es **pre-final** y no debe instalarse ni citarse como la candidata
+v15 vigente.
+
+La APK final canónica se instaló con `adb install -r` y `dumpsys package`
+registró `lastUpdateTime=2026-09-17 21:47:54`. Después superó la regresión
+física de sesión offline/reinicio/reconexión descrita en `ROADMAP.md` y
+`PILOT_READINESS_CHECKLIST.md`. Por tanto, mientras el dispositivo permanezca
+desconectado no se lanza otra build ni se reinstala nada.
+
 ## 22. Proximos pasos posibles
 
-### Opcion A - actualizar la APK local en el Galaxy
+### Opcion A - revalidar la instalación cuando vuelva el Galaxy
 
-Intentar primero una actualización sobre la instalación existente. La APK v7 usa
-la firma de release de TopoField; `adb install -r` conserva la sesión y la caché
-offline si la firma y el `applicationId` coinciden:
+La última evidencia válida ya tiene la APK final v15 instalada. Al reconectar,
+primero comprobar el estado real sin reabrir trabajo demostrado:
 
 ```powershell
 adb devices -l
-adb install -r "C:\tf\apps\mobile\android\app\build\outputs\apk\release\app-release.apk"
+adb shell dumpsys package com.ciudadanoinusual.topofield
+```
+
+Si sigue en `versionCode=15` con la instalación final, continuar directamente
+con las pruebas funcionales pendientes. Solo si el dispositivo hubiera vuelto
+a una versión anterior se reinstala **la universal final canónica** preservando
+datos:
+
+```powershell
+adb install -r "C:\Users\guill\Documents\Aplicacion_Movil\topofield\stage4-evidence-20260917\v15\topofield-v15-universal.apk"
 ```
 
 Si aparece `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, detenerse. Solo después de que

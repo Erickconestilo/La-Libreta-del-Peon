@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-16
+verificado: 2026-09-17
 rol: field-evidence
 -->
 
@@ -49,7 +49,12 @@ EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación utf8Bom=true
 ```
 
 Esto cierra la paridad estructural del contrato con datos reales de Supabase.
-No equivale a afirmar que v13 haya guardado esos archivos mediante SAF ni que
+Los dos artefactos read-only conservados fuera del repositorio siguen pasando
+el verificador el 17-09-2026: CSV `4.065` bytes, SHA-256
+`945AE5909356397FCFB2EB5CDC398B72AE5BEBA041C266FF89FF4861F8A2B796`;
+XLSX `8.152` bytes, SHA-256
+`4C654481F2ECE079C89A0FA2ED401C3467158D07C5C72B9F1129DD1CE773E1DD`.
+No equivale a afirmar que v15 haya guardado esos archivos mediante SAF ni que
 el formato haya sido aceptado por el flujo de oficina: esas dos comprobaciones
 siguen pendientes de dispositivo/persona.
 
@@ -63,6 +68,9 @@ Test Suites: 1 passed, 1 total
 Tests:       6 passed, 6 total
 ```
 
-Este cambio no altera backend, Supabase, Render, EAS ni la versión instalada
-en el Galaxy. La release v7 sigue siendo la referencia física hasta generar
-una nueva APK y probarla en el dispositivo.
+La release final v15 ya está construida, firmada e instalada y superó la
+regresión de sesión offline/reinicio/reconexión. Esa evidencia general de v15
+no convierte SAF en PASS: `Guardar CSV` y `Guardar Excel` deben ejecutarse de
+nuevo físicamente con v15, extraer ambos binarios de la carpeta elegida y pasar
+el verificador antes de cerrar esta compuerta. La aceptación del formato por
+oficina sigue siendo una comprobación humana separada.
