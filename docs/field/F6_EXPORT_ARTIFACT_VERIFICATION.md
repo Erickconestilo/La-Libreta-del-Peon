@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-17
+verificado: 2026-09-18
 -->
 
 # Verificación De Artefactos CSV/XLSX
@@ -46,11 +46,10 @@ cabecera congelada, el comando termina con código distinto de cero.
 ## Límite de la evidencia
 
 Este verificador no descarga archivos, no llama a Render y no modifica
-Supabase. La paridad de producción solo queda cerrada cuando se le entregan
-los dos archivos descargados de la misma ronda autenticada. La evidencia
-Galaxy del 13-09-2026 demostró generación HTTP `200` y apertura del selector
-nativo, pero no dejó los binarios accesibles en el almacenamiento público del
-dispositivo; por eso esa comparación concreta sigue pendiente.
+Supabase. La paridad de una pareja concreta solo queda demostrada cuando se le
+entregan los dos archivos de la misma ronda. La evidencia Galaxy del 13-09-2026
+solo había demostrado generación HTTP `200` y apertura del selector nativo;
+esa limitación quedó resuelta después mediante el guardado SAF físico de v15.
 
 ## Evidencia read-only conservada — 16/17-09-2026
 
@@ -68,6 +67,25 @@ EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación utf8Bom=true
 - XLSX: `8.152` bytes, SHA-256
   `4C654481F2ECE079C89A0FA2ED401C3467158D07C5C72B9F1129DD1CE773E1DD`.
 
-Esto prueba estructura y paridad del contrato con datos reales; **no** prueba
-guardado SAF de v15 ni aceptación de oficina. Esas dos puertas permanecen
-abiertas y no se sustituyen por esta generación read-only.
+Esto prueba estructura y paridad del contrato con datos reales, pero sigue
+siendo una pareja generada read-only y no sustituye la prueba física siguiente.
+
+## Evidencia SAF física v15 — 17/18-09-2026
+
+Los archivos guardados desde el Galaxy mediante `Guardar CSV` y `Guardar
+Excel`, extraídos de `Download/TopoField-F6-v15`, fueron:
+
+- CSV: `4.770` bytes, SHA-256
+  `B4E1962532509B3A76CFFDAEA624FDEE1CB2385A08CCC6DC768671955C8E65BA`;
+- XLSX: `8.338` bytes, SHA-256
+  `CA50B19D664EC8A251F259144360BCA056A131405D641C2E2E4CE290B6611785`.
+
+El mismo comando oficial devolvió:
+
+```text
+EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación utf8Bom=true
+```
+
+Por tanto, guardado SAF + extracción + paridad de artefactos están demostrados
+para v15. Este verificador no decide si el formato satisface el flujo real de
+oficina; esa aceptación continúa siendo una validación humana independiente.

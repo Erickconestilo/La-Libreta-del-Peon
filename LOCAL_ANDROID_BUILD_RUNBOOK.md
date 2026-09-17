@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-17
+  verificado: 2026-09-18
 -->
 
 # LOCAL_ANDROID_BUILD_RUNBOOK.md
@@ -622,25 +622,74 @@ física de sesión offline/reinicio/reconexión descrita en `ROADMAP.md` y
 `PILOT_READINESS_CHECKLIST.md`. Por tanto, mientras el dispositivo permanezca
 desconectado no se lanza otra build ni se reinstala nada.
 
+## 21h. Release incremental v16 para recuperar evidencia F7 (18-09-2026)
+
+v16 no se creó por lectura preventiva de código. La prueba física F7 reprodujo
+primero en v15 un fallo determinista: una evidencia de montaje capturada offline
+sobre una visita ya sincronizada se persistía con `visitClientRequestId=null`,
+pero el validador de replay rechazaba cualquier valor que no fuera `undefined`
+o `string`, dejando el mismo ítem en error terminal
+`Invalid mounting evidence outbox payload`.
+
+La corrección quedó limitada a aceptar explícitamente `null` en ese campo,
+manteniendo la rama de recreación de visita únicamente cuando existe un
+`string`, y a una regresión que comprueba que la evidencia usa el `visitId`
+remoto sin recrear la visita. Se incrementó `versionCode` a `16`.
+
+- Test específico `sync-handlers`: `11/11` PASS.
+- TypeScript móvil: PASS.
+- Suite móvil completa: `25` suites / `144` tests PASS.
+- `npm run verify:pre-apk:local`: PASS para backend build, TypeScript y export
+  Android. Esto es evidencia local, no CI.
+- `npm run mobile:build-local-android`: el `clean` reprodujo el problema ya
+  conocido `manifest 'build.ninja' still dirty after 100 tries`; el fallback
+  sin `clean` terminó `BUILD SUCCESSFUL in 5m 19s`.
+- AAB: `40.173.432` bytes, SHA-256
+  `4E3CA6D1A20A92BA3F26BC6C9FE39ABF444F920FDE9FECBF33A709AED6A6B48E`.
+- Bundletool 1.18.3: `validate` código `0`; paquete
+  `com.ciudadanoinusual.topofield`, `versionCode=16`, `versionName=1.0.0`,
+  minSdk 24, targetSdk 36, compileSdk 36.
+- Conjunto `.apks`:
+  `stage4-evidence-20260917\v16\topofield-v16-f7-recovery.apks`,
+  `53.598.930` bytes, SHA-256
+  `72137046ACA5DF5853B0E60DAAF98156A21A7626D9AB375671D425D004876095`.
+- APK universal:
+  `stage4-evidence-20260917\v16\topofield-v16-universal.apk`,
+  `53.598.615` bytes, SHA-256
+  `171D37667C37A1752362588822906FF0DB2A4D229C339B98E6FD96DDCF601276`.
+- `apksigner`: `Verifies`, V2 `true`, V3 `true`, un firmante y el mismo
+  certificado SHA-256
+  `9513a8db524e87ba92abfef224cfa2bdea3605c4f519ffb16bf072681ff25330`.
+- `adb install -r` devolvió `Success`; `firstInstallTime` permaneció en
+  `2026-08-07 10:49:51` y `lastUpdateTime` pasó a
+  `2026-09-18 00:40:18`, por lo que no hubo desinstalación.
+
+Después de instalar v16, Perfil seguía mostrando **el mismo** error v15 con
+`Intentos: 1`; no se recapturó la foto. Un único `Reintentar` sobre ese ítem
+persistido terminó `1/1 synced` y dejó `No hay operaciones bloqueadas`. La
+consulta server-side y Storage confirmaron una sola evidencia con el mismo UUID
+y un único JPEG en la ruta esperada. Esta recuperación demuestra que la
+actualización preservó sesión, SQLite/outbox y el archivo local pendiente.
+
 ## 22. Proximos pasos posibles
 
-### Opcion A - revalidar la instalación cuando vuelva el Galaxy
+### Opcion A - revalidar la instalación actual
 
-La última evidencia válida ya tiene la APK final v15 instalada. Al reconectar,
-primero comprobar el estado real sin reabrir trabajo demostrado:
+La última evidencia válida ya tiene v16 instalada. Antes de cualquier prueba
+física futura, comprobar el estado real sin reabrir trabajo demostrado:
 
 ```powershell
 adb devices -l
 adb shell dumpsys package com.ciudadanoinusual.topofield
 ```
 
-Si sigue en `versionCode=15` con la instalación final, continuar directamente
-con las pruebas funcionales pendientes. Solo si el dispositivo hubiera vuelto
-a una versión anterior se reinstala **la universal final canónica** preservando
-datos:
+Si sigue en `versionCode=16`, continuar directamente con las pruebas que todavía
+sean necesarias. Si por alguna razón el dispositivo hubiera vuelto a una
+versión anterior y fuera necesario recuperar el fix F7, reinstalar la universal
+v16 verificada preservando datos:
 
 ```powershell
-adb install -r "C:\Users\guill\Documents\Aplicacion_Movil\topofield\stage4-evidence-20260917\v15\topofield-v15-universal.apk"
+adb install -r "C:\Users\guill\Documents\Aplicacion_Movil\topofield\stage4-evidence-20260917\v16\topofield-v16-universal.apk"
 ```
 
 Si aparece `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, detenerse. Solo después de que

@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-17
+  verificado: 2026-09-18
 rol: contrato
 -->
 
@@ -58,30 +58,34 @@ en Supabase el 16-09-2026. El backend que expone estas rutas está publicado en
 Render mediante `d3bef6ea0988e44524cd7cde8392906dc936e06f`; el readiness remoto
 verificado exige conjuntamente 029 y 030 y valida semánticamente PK, columnas,
 FKs, índices, CHECKs, RLS y deny-all. La release móvil final `versionCode=15`
-que contiene este cliente está instalada en el Galaxy y ya superó la regresión
-de sesión offline/reinicio/reconexión. Eso **no** valida todavía 030: falta
-ejecutar físicamente el CRUD autenticado de QA, comprobar versiones/IDs y
-aislamiento entre sesiones. Las mutaciones de weekly-work siguen siendo online;
-la caché offline es solo de lectura. Por tanto, despliegue de esquema/backend y
-estabilidad general de v15 no equivalen a validación física de planificación.
+fue la base de la prueba física; la release instalada posterior v16 conserva el
+mismo contrato. El CRUD autenticado ya se completó en Galaxy con versiones,
+`completed_at`, soft-delete y separación de permisos. Las mutaciones de
+weekly-work siguen siendo online y la caché offline es solo de lectura. La
+validación física no convierte la planificación semanal en ejecución real ni
+cierra por sí sola F5.
 
-## Secuencia física QA pendiente de 030
+## Secuencia física QA completada — 17/18-09-2026
 
-La relectura read-only del 17-09-2026 devuelve `0` filas en
-`project_weekly_work_items`, así que no hay planificación previa que deba
-preservarse o confundirse con la prueba. Cuando se ejecute en v15, la secuencia
-mínima usará una única fila QA y respetará el control optimista por `version`:
+La prueba partió de `0` filas activas y creó una única fila QA
+`E2E Stage4 v15`, id `4d9cb697-3fe1-433b-a980-623577a7ab93`, con
+`client_request_id=31ffbd1d-134f-4d84-a887-0d1c318cfa2d`. La secuencia física
+en Galaxy y la reconsulta read-only de PostgreSQL demostraron:
 
-1. crearla en `planned` con un `clientRequestId` nuevo;
-2. editar un campo con la `version` recibida y comprobar el incremento;
-3. marcarla `done` y comprobar `completed_at` no nulo;
-4. volverla a `planned` con la nueva `version` y comprobar
-   `completed_at = null`;
-5. eliminarla lógicamente usando la versión vigente y comprobar que ya no
-   aparece en el GET de la semana.
+1. creación `planned`, `version=1`, `completed_at=null`;
+2. edición de notas a `QA CRUD 030`, `version=2`, todavía `planned`;
+3. `done`, `version=3`, `completed_at=2026-09-17T22:08:03.530Z`;
+4. vuelta a `planned`, `version=4`, `completed_at=null`;
+5. borrado lógico desde `planned`, `version=5`, con
+   `deleted_at=2026-09-17T22:08:49.963Z` y `deleted_by` informado.
 
-El backend solo permite DELETE cuando el estado actual es `planned`; intentar
-borrar directamente un `done` produciría `409 WEEKLY_WORK_DELETE_NOT_ALLOWED`
-y no forma parte del camino feliz. La prueba física deberá conservar además el
-aislamiento por sesión y no reinterpretar la caché offline de solo lectura como
-una mutación recibida por el servidor.
+Tras el borrado, la UI volvió a `0/0` y `Día libre de planificación`, y la
+consulta activa de la obra volvió a cero filas. No se intentó borrar un `done`:
+el `409 WEEKLY_WORK_DELETE_NOT_ALLOWED` sigue siendo una regla contractual, no
+una prueba que hubiera que provocar para cerrar el camino feliz.
+
+La separación de sesión también quedó observada físicamente: al activar la
+cuenta `supervisor-piloto@topofield.local`, Bitácora mostró la semana en modo
+consulta sin `Añadir`, `Editar`, `Eliminar` ni acciones rápidas de estado. Por
+tanto, 030 tiene evidencia de versiones, `completed_at`, soft-delete y permisos
+en el dispositivo real, manteniendo separada la caché offline de solo lectura.

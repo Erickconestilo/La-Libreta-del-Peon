@@ -384,6 +384,66 @@ describe('syncOutboxItem', () => {
     expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
   });
 
+  it('uploads evidence for an already-synced mounting visit when the persisted visit request id is null', async () => {
+    mockApiFetch
+      .mockResolvedValueOnce({
+        data: {
+          path: 'mounting-visits/visit-server-id/evidence-request.jpg',
+          signedUrl: 'https://storage.example/mounting-upload'
+        },
+        error: null
+      } as never)
+      .mockResolvedValueOnce({ data: { id: 'evidence-server-id' }, error: null } as never);
+
+    await syncOutboxItem({
+      ...mountingVisitItem,
+      clientRequestId: '9d0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      id: 'ad0f6d27-bb52-43bb-a41a-a10ee1c37b99',
+      operation: 'update',
+      payload: {
+        evidenceInput: {
+          kind: 'general',
+          notes: 'Foto neutra no sensible',
+          positionX: null,
+          positionY: null,
+          prismId: null,
+          title: 'QA F7 v15 camera'
+        },
+        kind: 'mounting_evidence',
+        photo: {
+          contentType: 'image/jpeg',
+          fileSizeBytes: 1024,
+          height: 800,
+          localUri: 'file:///documents/topofield-offline-photos/mounting-synced-visit.jpg',
+          width: 1200
+        },
+        stationId: '13a0cba2-2f13-4661-a580-877484ee92e8',
+        visitClientRequestId: null,
+        visitId: 'visit-server-id',
+        visitInput: null
+      }
+    });
+
+    expect(mockApiFetch).toHaveBeenCalledTimes(2);
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      1,
+      '/uploads/photos/sign',
+      expect.objectContaining({
+        body: expect.stringContaining('"entityId":"visit-server-id"'),
+        method: 'POST'
+      })
+    );
+    expect(mockApiFetch).toHaveBeenNthCalledWith(
+      2,
+      '/stations/13a0cba2-2f13-4661-a580-877484ee92e8/mounting-visits/visit-server-id/evidence',
+      expect.objectContaining({
+        body: expect.stringContaining('"clientRequestId":"9d0f6d27-bb52-43bb-a41a-a10ee1c37b99"'),
+        method: 'POST'
+      })
+    );
+    expect(mockDeletePreparedPhoto).toHaveBeenCalledTimes(1);
+  });
+
   it('recreates the reading idempotently before attaching its persisted photo', async () => {
     mockApiFetch
       .mockResolvedValueOnce({

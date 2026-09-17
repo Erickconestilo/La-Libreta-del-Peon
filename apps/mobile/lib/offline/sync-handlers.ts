@@ -223,7 +223,7 @@ const syncMountingEvidence = async (item: OutboxItem): Promise<void> => {
   if (
     typeof stationId !== 'string' ||
     typeof visitId !== 'string' ||
-    (visitClientRequestId !== undefined && typeof visitClientRequestId !== 'string') ||
+    (visitClientRequestId !== undefined && visitClientRequestId !== null && typeof visitClientRequestId !== 'string') ||
     (visitClientRequestId && (!visitInput || typeof visitInput !== 'object')) ||
     !evidenceInput ||
     typeof evidenceInput !== 'object' ||

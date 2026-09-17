@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-16
+  verificado: 2026-09-18
 rol: handoff
 -->
 
@@ -10,6 +10,42 @@ rol: handoff
 
 Lee primero `ROADMAP.md`, después `MEMORIA.md` y `AGENTS.md`. Este archivo es
 solo el punto de reanudación; no sustituye la bitácora ni el roadmap.
+
+## Estado vigente de reanudación — 18-09-2026
+
+Esta sección **supersede los bloques históricos de pendientes más abajo**. No
+usar como siguiente paso las instrucciones antiguas de instalar v13, repetir
+A/B, cerrar 029/030, guardar SAF o validar Cámara/Storage: esas compuertas ya
+se ejecutaron físicamente y su evidencia está en `ROADMAP.md`, `MEMORIA.md` y
+los contratos de `docs/field/`.
+
+- Galaxy `SM-S938B` / `R5CY21X6FLE`: release instalada vigente
+  `versionCode=16`, `versionName=1.0.0`; v16 se instaló con `adb install -r`
+  preservando datos, sesión, outbox y foto local.
+- A/B topógrafo↔supervisor: completado; caché/outbox aislados y retry diferido
+  sin resurrección de la sesión anterior.
+- 029: completado offline → reinicio → ACK. UUID histórico
+  `7a113eb4-fac1-47e7-9be1-b123ca092cfc` y nuevo
+  `f503bada-3ce2-4385-bd2b-45364cce4776`, cada uno `count=1`.
+- 030: completado `planned v1 → edit v2 → done v3 → planned v4 → soft-delete
+  v5`; supervisor físicamente read-only.
+- F6 técnico: SAF real de v15 completado; CSV/XLSX extraídos y verificador
+  `15/15` OK. Sigue pendiente **aceptación humana de oficina**.
+- F7 slice de visitas de montaje: completado físicamente. Primera visita
+  offline/reinicio/replay, segunda append-only, foto tomada con **Cámara** y
+  persistida offline. v15 reprodujo un bug con `visitClientRequestId=null`; el
+  fix mínimo v16 recuperó **el mismo outbox/foto**. PostgreSQL tiene una única
+  evidencia y Storage un único JPEG en la ruta esperada.
+- Backend público continúa en
+  `d3bef6ea0988e44524cd7cde8392906dc936e06f`, readiness 029+030 disponible.
+- No hay GitHub Actions configuradas; no escribir `CI PASS`.
+
+**Siguiente trabajo legítimo:** F5 sigue abierta por dependencias humanas y de
+campo que no se pueden fabricar: umbral autorizado para cierre positivo,
+jornada observada de seis escenarios, clasificación/decisión de fricciones,
+5–8 conversaciones reales y aceptación de oficina. F8 sigue bloqueada por F5;
+F9 continúa aparcada. No reabrir la cadena física cerrada salvo que una nueva
+release cambie esos flujos o aparezca una regresión concreta.
 
 ## Compuerta de procedencia del repositorio
 

@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-17
+  verificado: 2026-09-18
 rol: contrato
 -->
 
@@ -154,26 +154,34 @@ motivo, notas y `occurred_at` devuelve el evento ya creado. Reutilizar ese UUID
 con un payload o contexto diferente devuelve `409`; no se acepta como replay
 válido un UUID reciclado para otra acción.
 
-### Evidencia server-side parcial del 17-09-2026
+### Evidencia física y server-side del 17/18-09-2026
 
-Una reconsulta read-only del 17-09-2026 contra la base confirmó exactamente una
-fila en `monitoring_work_execution_events` para el punto E2E:
+La prueba v15 cerró la secuencia que antes solo tenía evidencia parcial. Con
+Wi-Fi y datos móviles desactivados, el topógrafo registró un nuevo `Hecho`. La
+UI mostró `Pendiente local` y literalmente `Guardado en este dispositivo. Aún
+no existe confirmación del servidor.`. El mismo elemento sobrevivió a
+`force-stop`/reinicio y la ronda siguió mostrando un cambio local por
+sincronizar. Tras reconectar y revalidar la sesión, el outbox pasó de uno a
+cero y el historial del punto mostró el segundo `Hecho` ya recibido.
 
-- `event_type=completed`;
-- `occurred_at=2026-09-17T19:12:32.340Z`;
-- `created_at=2026-09-17T19:24:38.076Z`;
-- `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`;
-- `round_id=db3a59e3-3756-4d95-9890-f026379f33db`;
-- `round_point_id=ff4daa4c-63ef-49a3-bcdc-496f85c4cf25`;
-- `project_id=41fad7f5-23c7-4746-9213-ef4de8ab0cf9`.
+La reconsulta read-only posterior confirmó dos filas `completed`, distintas y
+sin duplicados, para el mismo actor, ronda, punto y obra:
 
-La separación de aproximadamente doce minutos entre `occurred_at` y
-`created_at`, junto con la ausencia de una segunda fila para ese
-`client_request_id`, es evidencia compatible con creación offline y entrega
-posterior única. Esta evidencia prueba parcialmente el contrato server-side y
-la idempotencia, pero **no sustituye** la secuencia UI requerida en v15:
-`Hecho` local antes del ACK, persistencia tras reinicio, `Recibido servidor`
-solo después del ACK y una segunda fila distinta usando un UUID nuevo.
+- histórica: `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`,
+  `occurred_at=2026-09-17T19:12:32.340Z`,
+  `created_at=2026-09-17T19:24:38.076Z`, `count=1`;
+- repetición v15:
+  `client_request_id=f503bada-3ce2-4385-bd2b-45364cce4776`,
+  `occurred_at=2026-09-17T21:54:23.433Z`,
+  `created_at=2026-09-17T21:58:53.162Z`, `count=1`.
+
+Ambas pertenecen a
+`round_id=db3a59e3-3756-4d95-9890-f026379f33db`,
+`round_point_id=ff4daa4c-63ef-49a3-bcdc-496f85c4cf25` y
+`project_id=41fad7f5-23c7-4746-9213-ef4de8ab0cf9`; el actor de las dos filas es
+`topofield-topografo@topofield.local`. La fila histórica no fue sobrescrita y
+el UUID nuevo no se reutilizó. Esta evidencia cubre local-before-ACK,
+persistencia, replay y recepción server-side del mismo resultado.
 
 El parte de zona aplica la misma precaución de idempotencia a nivel de
 interfaz: después de guardarlo o encolarlo, el botón queda bloqueado hasta que
@@ -254,7 +262,7 @@ registraron sin reejecutar SQL y 027, 028, 029 y 030 se aplicaron después, una
 por una, con backup/prechecks y verificación posterior. La evidencia vigente
 está en `docs/ai/RECONCILIACION-MIGRACIONES.md` y `MEMORIA.md` §12.
 
-## Runbook de despliegue y rollback — backend completo; físico v15 parcial
+## Runbook de despliegue y rollback — backend y cadena física 029 completados
 
 Los pasos siguientes siguen siendo la receta de referencia. El rollout remoto
 de esquema/backend se ejecutó el 16-09-2026 con la autorización ya registrada;
@@ -293,24 +301,22 @@ compuertas y no se presuponen superadas.
    mismo `client_request_id` y rechazo `409` si ese UUID se reutiliza con otro
    payload. Verificar permisos: supervisor lectura; admin/topógrafo escritura
    según membresía.
-10. **Build móvil.** **Completado para la candidata actual.** La v15 final desde
-    `174d5e4` se construyó después de todos los fixes de sesión. Bundletool
-    confirmó `versionCode=15`, minSdk 24/targetSdk 36; la APK universal pasó
-    `apksigner` con el certificado de release esperado y `adb install -r`
-    devolvió `Success` preservando datos. Las v12/v13/v14 quedan como evidencia
-    histórica de sus respectivas ejecuciones.
+10. **Build móvil.** **Completado para la release instalada actual.** v15 cerró
+    sesión, A/B, 029 y 030. Durante F7 apareció después un bug de replay ajeno
+    a 029 y se generó una v16 incremental que conserva la misma firma y los
+    datos de aplicación; `adb install -r` devolvió `Success`. Las releases
+    anteriores permanecen como evidencia histórica de sus respectivas pruebas.
 11. **E2E offline en Galaxy.** Registrar una acción sin red, confirmar que la
     UI indica estado local y nunca recepción, reiniciar si forma parte del caso,
     reconectar, observar replay con el mismo UUID y confirmar finalmente el
     histórico recibido. Incluir al menos un caso terminal (backend antiguo/
     conflicto) y uno reintentable (red/`5xx`).
 
-    **Estado 17-09-2026:** la regresión de **sesión** offline/reinicio/reconexión
-    ya pasó en v15: identidad técnica y `Mi jornada` sobrevivieron al arranque
-    en frío sin red y la UI mantuvo el aviso de revalidación diferida hasta
-    recuperar conectividad. La secuencia específica de entrega 029 descrita en
-    este paso sigue pendiente en v15; la fila server-side documentada arriba es
-    evidencia parcial de una ejecución anterior, no un sustituto de esa UI.
+    **Estado 18-09-2026:** sesión, aislamiento A/B y la secuencia completa de
+    entrega 029 ya pasaron físicamente. El resultado nuevo se guardó sin red,
+    sobrevivió al reinicio, no apareció como recibido antes del ACK, se
+    reprodujo al reconectar y terminó como una segunda fila distinta con
+    `count=1`, dejando intacta la histórica.
 12. **Rollback.** Si falla antes del backend, detener el rollout. Si 029 ya está
     aplicada y falla el backend, el rollback preferido es volver al backend
     anterior y **dejar la tabla aditiva 029 intacta**, preservando eventos. La
@@ -329,5 +335,7 @@ rechazar drift semántico; ese hardening quedó publicado como
 `d3bef6ea0988e44524cd7cde8392906dc936e06f` y Render lo sirve con readiness
 029+030. El verificador remoto de shell con una cuenta técnica sigue bloqueado
 por ausencia de `TOPOFIELD_AUTH_TOKEN` y no se sustituye por guest. En Galaxy,
-v15 ya pasó la regresión de sesión offline/reinicio/reconexión; siguen
-pendientes la evidencia UI/ACK completa de 029 y la matriz A/B asociada.
+v15 pasó la regresión de sesión, la matriz A/B y la entrega 029 completa; la
+release instalada se incrementó después a v16 únicamente por el bug físico de
+replay F7 documentado en su contrato de campo. El contrato 029 no queda
+pendiente de esa corrección.

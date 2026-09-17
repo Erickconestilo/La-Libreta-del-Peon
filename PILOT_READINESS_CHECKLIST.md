@@ -1,13 +1,13 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-17
+verificado: 2026-09-18
 -->
 
 # Checklist de Piloto
 
 El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No se trata solo de comprobar que todo funciona: hay que registrar cómo se usa. Usa `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` durante la jornada y convierte después los hallazgos en `docs/field/F5_HALLAZGOS_<fecha>.md` siguiendo la plantilla de `UX_RESEARCH_PLAN.md`.
 
-## Estado técnico y físico - 17-09-2026
+## Estado técnico y físico - 18-09-2026
 
 Cada casilla identifica su propia capa de evidencia. Tests locales, deploy,
 runtime remoto y validación física no se convierten unos en otros:
@@ -60,6 +60,17 @@ runtime remoto y validación física no se convierten unos en otros:
   Bundletool confirmó `versionCode=15`, minSdk 24/targetSdk 36 y `apksigner`
   confirmó el certificado de release esperado. `adb install -r` devolvió
   `Success` y `dumpsys` registró la actualización final a las 21:47:54.
+- [x] La release Android v16 quedó construida únicamente después de reproducir
+  físicamente el fallo F7 de replay de una evidencia con
+  `visitClientRequestId=null`. TypeScript pasa y móvil termina en `25` suites/
+  `144` tests. La AAB mide `40.173.432` bytes, SHA-256
+  `4E3CA6D1A20A92BA3F26BC6C9FE39ABF444F920FDE9FECBF33A709AED6A6B48E`;
+  la APK universal mide `53.598.615` bytes, SHA-256
+  `171D37667C37A1752362588822906FF0DB2A4D229C339B98E6FD96DDCF601276`.
+  Bundletool confirmó `versionCode=16`, minSdk 24/targetSdk 36; `apksigner`
+  verificó V2/V3 y el mismo certificado de release. `adb install -r` devolvió
+  `Success` y mantuvo `firstInstallTime=2026-08-07 10:49:51`, preservando el
+  outbox y la foto que v15 había dejado pendientes.
 - [x] La APK arm64 v7 quedó instalada históricamente en el Galaxy; `adb install -r`
   devolvió `Success` y `dumpsys package` confirmó `versionCode=7` y
   `lastUpdateTime=2026-09-13 07:39:25`. Se conserva como evidencia de esa
@@ -99,26 +110,37 @@ runtime remoto y validación física no se convierten unos en otros:
   `force-stop`, arranque en frío, conservación de la identidad `Topógrafo`
   y de la jornada cacheada, aviso explícito de revalidación diferida y
   reconexión/revalidación posterior sin `Sin sesión`.
-- [ ] Completar la matriz A/B en v15: cambiar topógrafo↔supervisor y demostrar
-  aislamiento de caché/outbox y que un retry diferido no resucita la sesión A.
-- [ ] Completar 029 en v15 con evidencia UI pre/post ACK. Existe ya evidencia
-  server-side **parcial** de una prueba anterior: exactamente una fila
-  `completed` con `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`,
-  `occurred_at=2026-09-17T19:12:32Z` y
-  `created_at=2026-09-17T19:24:38Z`, sin duplicado observado. La repetición
-  v15 debe usar un UUID nuevo y terminar con dos filas distintas, nunca
-  sobrescribir la existente.
-- [ ] Completar 030 físicamente en v15. La migración/backend están disponibles,
-  pero el CRUD autenticado real y el aislamiento de sesión aún no se han
-  demostrado en el Galaxy.
+- [x] Completar la matriz A/B en v15: con un outbox A pendiente y sin red, el
+  supervisor no reutilizó detalle/puntos ni el pendiente local del topógrafo;
+  el retry diferido no resucitó A y, al volver explícitamente a A, su outbox
+  seguía intacto incluso después de `force-stop`/reinicio.
+- [x] Completar 029 en v15 con evidencia UI pre/post ACK. Antes del ACK la UI
+  mostró `Hecho`, `Pendiente local` y ausencia explícita de confirmación del
+  servidor; el mismo ítem sobrevivió al reinicio y después se sincronizó. La
+  fila histórica `7a113eb4-fac1-47e7-9be1-b123ca092cfc` sigue intacta y la
+  repetición creó `f503bada-3ce2-4385-bd2b-45364cce4776`; ambas son
+  `completed`, cada UUID tiene `count=1` y actor/ronda/punto/obra coinciden.
+- [x] Completar 030 físicamente en v15. La fila QA pasó por
+  `planned v1 → edit v2 → done v3 → planned v4 → soft-delete v5`;
+  `completed_at` apareció solo en `done`, la UI activa volvió a `0/0` tras
+  borrar y el supervisor mostró Bitácora en lectura sin controles de mutación.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.
-- [ ] Validar con datos autorizados el parte y el cierre definitivo. La paridad
-  estructural CSV/XLSX ya se comprobó read-only con la misma ronda real de
-  Supabase: `EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15
-  worksheet=Auscultación utf8Bom=true`; falta repetir el guardado desde v15 y
-  confirmar la aceptación del formato en el flujo de oficina.
+- [x] Repetir el guardado SAF de CSV/XLSX desde v15 y verificar los dos binarios
+  extraídos. El CSV (`4.770` bytes, SHA-256 `B4E196...65BA`) y el XLSX (`8.338`
+  bytes, SHA-256 `CA50B1...1785`) pasaron literalmente
+  `EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15 worksheet=Auscultación
+  utf8Bom=true`.
+- [ ] Confirmar la **aceptación del formato por el flujo real de oficina**. El
+  guardado SAF y la paridad técnica ya están cerrados, pero esa aceptación no
+  se puede inferir del verificador ni fabricar sin la persona/flujo real.
+- [x] Completar la prueba física F7 de visitas de montaje con foto tomada por
+  **Cámara**: primera visita offline → reinicio → replay único; segunda visita
+  append-only; foto neutra/no sensible persistida durante otro reinicio offline;
+  v15 reprodujo un bug de replay, v16 recuperó el mismo outbox/foto y Storage
+  terminó con exactamente un JPEG en la ruta esperada y UUID de evidencia con
+  `count=1`. La primera visita quedó intacta.
 - [x] El Galaxy mostró el diagnóstico seguro del fallo reproducido:
   `HTTP 500`, `ROUND_EXPORT_FAILED` y un código de soporte UUID. La causa del
   500 quedó corregida, desplegada y verificada con CSV/XLSX `200`.
@@ -151,9 +173,9 @@ runtime remoto y validación física no se convierten unos en otros:
   `weekly-work` fallan con `503` controlado si 030 falta y PostgreSQL 17 efímero
   pasó UNIQUE/CHECK/RLS. Render sirve ahora el hardening fusionado como
   `d3bef6ea0988e44524cd7cde8392906dc936e06f` y
-  devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. La v15
-  correspondiente ya está instalada y pasó la regresión de sesión; sigue
-  pendiente el CRUD físico de weekly-work.
+  devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. El CRUD
+  físico de weekly-work quedó completado en v15 y la release instalada
+  posterior v16 conserva el mismo contrato.
 
 ## Paso 1 - Erick usando datos reales en campo
 
