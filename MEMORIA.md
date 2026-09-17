@@ -1,11 +1,11 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-13
+  verificado: 2026-09-17
 -->
 
 # MEMORIA.md — TopoField, estado de decisiones (rework)
 
-**Última actualización:** 13 de septiembre de 2026
+**Última actualización:** 17 de septiembre de 2026
 **Rol de este archivo:** el **porqué** de cada decisión, qué se verificó, con qué evidencia y en qué fecha, más la bitácora cronológica. Si hay contradicción entre este archivo y un resumen anterior (incluida cualquier auditoría externa), **manda lo verificado aquí**, con fecha de verificación.
 
 **Qué NO es este archivo (desde el 02-08-2026):** no es la fuente de verdad sobre en qué fase está el proyecto ni sobre qué toca hacer ahora. Eso vive en **`ROADMAP.md`**. Si este archivo y `ROADMAP.md` discrepan sobre el estado de una fase o el siguiente paso, manda `ROADMAP.md`.
@@ -507,31 +507,46 @@ Verificado directo contra Supabase tras la ejecución de Claude Code (migracione
 
 ---
 
-## 12a. Lista consolidada de pendientes (actualizada 13-09-2026)
+## 12a. Lista consolidada de pendientes (actualizada 17-09-2026)
 
 Erick pidió juntar en un solo lugar todo lo que sigue pendiente en el repo (estaba disperso en varias secciones y documentos). Esta lista sustituye a esas menciones sueltas para efectos de priorización; si hay contradicción, manda esta.
 
-**Estado consolidado al 13-09-2026:** el backend local compila y pasa `114/114`
-tests; móvil pasa `23` suites y `119/119` tests; tooling mantiene `13/13` y
-`docs:check` revisa `44` documentos sin avisos. La release Android activa
-`versionCode=12`, firmada con `CN=TopoField Android Release`, fue instalada y
-verificada en el Galaxy. Su smoke test recuperó una ronda cacheada, mostró la
-vista semanal de trabajo y mantuvo bloqueado el cierre con puntos pendientes;
-no se hicieron nuevas lecturas, fotos ni cambios remotos. La evidencia física
-completa de lectura y foto offline, reinicio, reconexión automática y unicidad
-en Supabase corresponde a la release histórica v7 y no debe atribuirse a v12
-sin repetirla. También queda como evidencia histórica que v7 generó CSV/XLSX
-y abrió el selector nativo con respuestas autenticadas `200` registradas por
-Render. Siguen abiertos el cierre definitivo con umbrales autorizados, la
-comparación estructurada de dos archivos exportados reales, la jornada
-observada y las entrevistas. El verificador local de CSV/XLSX está disponible
-mediante `npm run verify:export-artifacts`, pero todavía no se le han entregado
-dos binarios accesibles de una misma descarga real. Render está vivo en el
-commit `df224f9`, equivalente limpio del arreglo de scope de exportación. La
-auditoría de procedencia del 13-09-2026 detectó además que la historia
-alcanzable conserva objetos de la etapa anterior de purga, mientras `main` y
-`origin/main` apuntan a historiales distintos; el runtime actual está
-neutralizado y la purga completa sigue sin presentarse como cerrada.
+**Estado consolidado al 17-09-2026:** el backend desplegado y verificado
+públicamente sirve `d3bef6ea0988e44524cd7cde8392906dc936e06f` con
+`/health=200` y `/readiness=200`; 029 y 030 aparecen `ready`. La regresión
+backend del candidato publicado pasó `142/142` localmente, pero el repo no
+tiene GitHub Actions y por tanto no existe un PASS de CI que atribuirle. El
+móvil final v15 desde `174d5e4` pasa TypeScript y `25` suites/`143` tests.
+La AAB final mide `40.173.432` bytes (SHA-256
+`09f6fe2e439bb93c553bfe95d32ba42307d39051116955b270d37e47524bfbd5`)
+y la APK universal firmada `53.598.615` bytes (SHA-256
+`ac7920c18ef0394e2dc40e8a42bf84a1e0e4328656b4f2914a3457a1732adf25`).
+`adb install -r` devolvió `Success` preservando datos y sesiones.
+
+La regresión física concreta de sesión que falló en v13 y v14 quedó cerrada en
+v15: tras revalidar al topógrafo y preparar `Mi jornada`, Wi-Fi y datos móviles
+se dejaron en `0`, se hizo `force-stop` y la app arrancó en frío conservando
+la ronda cacheada, `Topógrafo` y `topofield-topografo@topofield.local`. La UI
+mostró el aviso de revalidación temporal y, de acuerdo con el copy de la propia
+app, la sincronización quedó pausada hasta revalidar; tras restaurar datos y
+revalidar, el aviso desapareció. Esta evidencia no cierra Stage 4 completo:
+faltan la matriz A/B, la secuencia UI/ACK de 029 y el CRUD físico de 030. La
+evidencia de lectura/foto offline y unicidad continúa siendo histórica de v7
+hasta repetir ese flujo con v15.
+
+F6 ya tiene paridad estructural read-only de un mismo par CSV/XLSX real
+(`15/15`, hoja `Auscultación`, BOM UTF-8), pero siguen pendientes el guardado
+SAF desde v15 y la aceptación de oficina. F5 sigue sin umbral autorizado para
+cerrar la ronda E2E y sin jornada humana observada/5–8 conversaciones reales;
+no se inventan esos datos. La auditoría de procedencia de Git continúa como
+deuda separada y no se resuelve reescribiendo historia sin autorización.
+
+Una relectura **read-only** del 17-09-2026 contra la base confirmó el bloqueo
+técnico de cierre: la ronda E2E sigue `active`, su único punto sigue `pending`,
+el instrumento esperado es `digital_level`, existen `15` lecturas y todas son
+`draft`, y el recuento de umbrales para esa combinación punto/instrumento es
+`0`. La misma consulta devolvió exactamente un evento 029 `completed`; no se
+hizo ninguna escritura para obtener esta evidencia.
 
 La release local `versionCode=10` también quedó preparada con Gradle y firmada
 como `CN=TopoField Android Release`; la AAB está en
@@ -545,15 +560,21 @@ filas. La v10 quedó instalada y lanzada en el Galaxy; `adb install -r` devolvi�
 `lastUpdateTime=2026-09-13 11:52:50`. El smoke test inicial no mostró crash ni
 pantalla blanca. El recorrido autenticado de campo sigue pendiente.
 
-El hardening local `f90c995` añade fallo cerrado cuando una sesión de topógrafo
-carece del mapa de membresías, pero la comparación remota verificó que no es
-antecesor de `df224f9`; por tanto esa defensa sigue pendiente de publicación y
-verificación en Render. Se añadió `npm run verify:remote:auth`, que lee el token
+El hardening local `f90c995` añadió fallo cerrado cuando una sesión de topógrafo
+carece del mapa de membresías. La comparación histórica mostró que ese commit
+no era antecesor de `df224f9`, pero esa inferencia ya no describe producción:
+la relectura del tree de `d3bef6ea0988e44524cd7cde8392906dc936e06f`
+confirma que `access-control.ts` contiene `PROJECT_ACCESS_REQUIRED` cuando
+falta `projectAccess` y que el test correspondiente también está presente.
+El contenido fail-closed sí llegó al snapshot/squash publicado aunque
+`f90c995` no sea ancestro del SHA de producción. Se añadió
+`npm run verify:remote:auth`, que lee el token
 solo desde `TOPOFIELD_AUTH_TOKEN`, comprueba `/auth/me`, `GET /me/journey` y
 UUIDs opcionales de obra/ronda y punto de ronda (`TOPOFIELD_ROUND_POINT_ID`), y
-solo imprime estados/códigos sin cuerpos ni credenciales. La comprobación del
-endpoint de estados de trabajo queda preparada para ejecutarse cuando la
-migración 029 y su despliegue estén disponibles.
+solo imprime estados/códigos sin cuerpos ni credenciales. La migración 029 y su
+backend ya están desplegados; el verificador remoto autenticado de shell sigue
+bloqueado porque no existe `TOPOFIELD_AUTH_TOKEN` disponible y no se
+creará/reseteará una credencial solo para marcar PASS.
 
 **Herramienta local verificada al 13-09-2026:** el script de release ahora
 reintenta `app:bundleRelease` sin `clean` cuando la limpieza nativa de Ninja
@@ -636,17 +657,19 @@ generó archivos, abrió el selector nativo y Render registró ambos `200`; la
 comparación estructurada del contenido sigue pendiente. No se tocaron servicios
 remotos en esta corrección local.
 
-**Ahora (bloquea piloto real o es fricción activa; reconciliado 13-09-2026):**
-La prueba de lectura/foto offline, reinicio, reconexión y unicidad ya está
-cerrada con la release v7. Los elementos que siguen aquí como pendientes son el
-cierre definitivo con umbral autorizado, la comparación estructurada de
-CSV/XLSX, la observación de campo y las entrevistas; las menciones a v5/v6,
-Render anterior y al primer fallo de adjuntos son evidencia histórica, no el
-estado actual. El registro explícito del resultado del operario ya está
-implementado localmente como eventos append-only por punto (`Empezar`, `Hecho`,
-`No realizado`, `Repetir` y `Bloqueado`) con razón obligatoria cuando procede,
-SQLite/outbox e idempotencia. La migración `029` aún no está aplicada en
-Supabase, por lo que este slice no está desplegado ni validado en el Galaxy.
+**Ahora (bloquea piloto real o es fricción activa; reconciliado 17-09-2026):**
+La prueba histórica de lectura/foto offline, reinicio, reconexión y unicidad
+sigue cerrada con la release v7. En v15 ya está cerrada específicamente la
+regresión de identidad técnica/`Mi jornada` durante arranque offline y
+reconexión. Los pendientes siguen siendo el cierre definitivo con umbral
+autorizado, el guardado SAF/aceptación de CSV/XLSX, la observación de campo y
+las entrevistas, además de completar Stage 4 A/B + 029 UI/ACK + 030 físico.
+El registro del resultado del operario está desplegado como eventos append-only
+por punto (`Empezar`, `Hecho`, `No realizado`, `Repetir` y `Bloqueado`) con
+razón obligatoria cuando procede, SQLite/outbox e idempotencia. La migración
+029 está aplicada y el backend está desplegado; existe evidencia server-side
+parcial de una entrega offline anterior, pero la secuencia UI completa de v15
+todavía no se presenta como validada.
 - **Entrega manual comprobada en Galaxy (13-09-2026):** desde el resumen de la
   ronda v7, `Compartir CSV` generó
   `topofield-ronda-db3a59e3-3756-4d95-9890-f026379f33db-1789281332679.csv` y
@@ -1330,3 +1353,7 @@ Regla (26-07-2026): cada avance real —fase completada, decisión tomada, corre
 - **2026-09-16 — Candidato limpio para publicar el hardening de readiness (Prime ChatGPT):** una consulta read-only de GitHub confirmó `main=349967a538a3a5e8f4c51245d02511b7ec6cce69` y que los cuatro blobs padre tocados por `6a44d75` coinciden exactamente con los de ese `main`. Se clonó `main` en un directorio separado, se copiaron únicamente `work-execution-capability.ts`, `work-execution.test.ts`, `weekly-work-capability.ts` y `weekly-work-capability.test.ts`, y el diff resultó `4 files changed, 367 insertions(+), 7 deletions(-)`. El snapshot compila y pasa backend `142/142`; el primer intento de tests falló únicamente porque el clon limpio no contiene `.env`, y la repetición inyectando en memoria el entorno local existente pasó sin copiar ni imprimir secretos. El commit local resultante es `69e8fd0` sobre `349967a`. No hubo push, PR ni deploy: Render continúa verificándose públicamente en `349967a`. En paralelo, las compuertas F5 siguen literales: ADB/mDNS sin Galaxy, sin `TOPOFIELD_AUTH_TOKEN`, ronda E2E `active` con `1` punto pending, `15` lecturas draft, `0` aceptadas, `0` umbrales, y bucket `topofield-photos` todavía `public=true`.
 - **2026-09-16 — Hardening de readiness publicado y verificado (Prime ChatGPT):** el candidato limpio `69e8fd0` se pusheó como `codex/f5-readiness-hardening-20260916`; PR #23 se verificó `CLEAN`/`MERGEABLE`, con un único commit y exactamente `4` archivos (`+367/-7`), sin móvil, docs ni migraciones. Se fusionó por squash como `d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render detectó el nuevo commit por auto-deploy y `dep-dalfq3bbc2fs7381i7vg` terminó `live`; no se lanzó un deploy manual duplicado. `npm run verify:remote:public` devolvió `/health=200` con `commit=d3bef6e...`, `/readiness=200` con 029+030 `ready` y `401 UNAUTHORIZED` en rondas/jornada sin bearer. Esta publicación no ejecutó migraciones ni escribió Supabase; solo activa en producción el probe semántico ya validado en PostgreSQL efímero y contra el esquema remoto en lectura. La revalidación post-deploy mantuvo los blockers externos: `adb devices -l` y `adb mdns services` sin Galaxy, `TOPOFIELD_AUTH_TOKEN_PRESENT=False` y `npm run verify:remote:auth` detenido literalmente en `TOPOFIELD_AUTH_TOKEN is required and is never printed`; no se crearon/resetearon credenciales.
 - **2026-09-16 — Stage 3, reconciliación de deploy y contrato remoto (Prime ChatGPT):** GitHub `main` se releyó en `d3bef6ea0988e44524cd7cde8392906dc936e06f` y PR #23 consta `MERGED`. El repositorio no tiene GitHub Actions: `gh run list --branch main` devolvió `[]` y `.github/workflows` no existe, por lo que no se atribuye un PASS de CI a la regresión local. El tree del candidato probado `69e8fd0` y el tree del squash publicado son idénticos (`a56c3e95ce84374e84bd405a906804fdb6d1ce41`). Render Dashboard muestra `dep-dalfq3bbc2fs7381i7vg` `Live`, commit `d3bef6e`, duración `32,1 s`; `npm run verify:remote:public` volvió a dar `/health=200` con ese SHA, `/readiness=200` con 029+030 `ready` y `401` en rutas protegidas sin bearer. Con IDs reales de la ronda, `/auth/me`, `/me/journey`, execution-events y weekly-work devolvieron `401`, nunca `404`; usando únicamente el `GUEST_PUBLIC_TOKEN` ya existente, `/auth/me=200` y los tres flujos técnicos `403`, confirmando routing/roles pero no una sesión técnica. El código exacto de `d3bef6e` enlaza `Mi jornada`/execution-events con `monitoring_work_execution_events` (029) y weekly-work con `project_weekly_work_items` (030), protegidos por sus capability guards. No existe `TOPOFIELD_AUTH_TOKEN` en Process/User/Machine ni en las claves del `.env`, así que el contrato técnico permanece bloqueado externamente y no se generaron/resetearon credenciales. Se corrigió además un falso-PASS del tooling: `ae3dfce` exige `authProvider=supabase` con rol técnico, rechaza guest, añade weekly-work y su `404` al verificador autenticado; `npm run test:tooling` pasa `19/19`. Este cambio de tooling no requirió ni provocó un nuevo deploy de Render.
+
+- **2026-09-17 — Fallos físicos v13/v14 y hardening de sesión v15 (Prime ChatGPT):** v13 reprodujo que, al arrancar sin red con token caducado, las obras cacheadas seguían visibles pero `Mi jornada` desaparecía porque la sesión terminaba con `currentUser=null`. v14 incorporó identidad cacheada, pero volvió a fallar físicamente incluso tras revalidación online: el camino con token aún usable y fallo de transporte en `/auth/me` también anulaba `currentUser`. Los fixes `c05b7d0`, `14aa286` y `174d5e4` cubren ambos caminos, conservan el aviso de revalidación diferida, clasifican red/timeout mediante `ApiTransportError.code` en lugar de copy visible, impiden que un retry de una sesión vieja la resucite tras un switch/reset y fallan cerrado si la identidad devuelta por refresh no coincide. TypeScript pasó y Jest terminó en `25` suites/`143` tests; una revisión independiente READ-ONLY no encontró blockers. Los tres commits quedaron publicados en `origin/codex/f5-field-stability` sin incluir el diff preexistente de `apps/mobile/package.json` ni la evidencia local.
+- **2026-09-17 — Release final v15 instalada y regresión offline/reinicio/reconexión superada (Prime ChatGPT):** la build final desde `174d5e4` terminó `BUILD SUCCESSFUL` después del fallback conocido por el clean de Reanimated. La AAB mide `40.173.432` bytes, SHA-256 `09f6fe2e439bb93c553bfe95d32ba42307d39051116955b270d37e47524bfbd5`; Bundletool confirmó `com.ciudadanoinusual.topofield`, `versionCode=15`, `versionName=1.0.0`, minSdk 24 y targetSdk 36. La APK universal mide `53.598.615` bytes, SHA-256 `ac7920c18ef0394e2dc40e8a42bf84a1e0e4328656b4f2914a3457a1732adf25`, y `apksigner` confirmó V2/V3 y el certificado SHA-256 `9513a8db524e87ba92abfef224cfa2bdea3605c4f519ffb16bf072681ff25330`. Se detectó que una v15 instalada a las 21:04 era anterior al AAB final de las 21:46 y no se aceptó como evidencia; la APK final se reinstaló con `adb install -r`, que devolvió `Success`, y `dumpsys` registró `lastUpdateTime=2026-09-17 21:47:54`. Con topógrafo revalidado y jornada preparada, se apagaron Wi-Fi/datos, se hizo `force-stop` y el arranque en frío mantuvo la ronda E2E, el perfil `Topógrafo`, la cuenta técnica y el aviso `Revalidación temporalmente no disponible: usando la última identidad técnica validada. La sincronización queda pausada hasta revalidar.`; no apareció `Sin sesión`. Al restaurar datos móviles y revalidar, el aviso desapareció. Esta prueba cierra la regresión de sesión, no Stage 4 completo.
+- **2026-09-17 — Evidencia parcial 029 y pendientes físicos restantes (Prime ChatGPT):** la evidencia server-side aportada durante las pruebas anteriores contiene exactamente una fila `completed` con `occurred_at=2026-09-17T19:12:32Z`, `created_at=2026-09-17T19:24:38Z`, `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`, ronda `db3a59e3-3756-4d95-9890-f026379f33db`, punto `ff4daa4c-63ef-49a3-bcdc-496f85c4cf25` y obra `41fad7f5-23c7-4746-9213-ef4de8ab0cf9`. La diferencia de unos 12 minutos y la única fila son compatibles con creación offline y replay único, por lo que se registra como evidencia parcial de contrato/idempotencia; no demuestra la UI `Hecho` local antes del ACK ni `Recibido servidor` después. La repetición v15 deberá usar un UUID nuevo y dejar dos filas distintas. También siguen pendientes A/B topógrafo↔supervisor y el CRUD físico de 030; F5 humano y SAF/aceptación de F6 permanecen abiertos.

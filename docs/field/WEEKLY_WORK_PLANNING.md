@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-16
+  verificado: 2026-09-17
 rol: contrato
 -->
 
@@ -57,8 +57,10 @@ La migración PostgreSQL `030_project_weekly_work.sql` quedó aplicada y registr
 en Supabase el 16-09-2026. El backend que expone estas rutas está publicado en
 Render mediante `d3bef6ea0988e44524cd7cde8392906dc936e06f`; el readiness remoto
 verificado exige conjuntamente 029 y 030 y valida semánticamente PK, columnas,
-FKs, índices, CHECKs, RLS y deny-all. La release móvil `versionCode=13` que
-contiene este cliente está preparada y firmada, pero todavía no se ha instalado
-ni validado físicamente en el Galaxy; tampoco se ha completado el CRUD
-autenticado de QA. Por tanto, despliegue de esquema/backend no equivale a
-validación de campo.
+FKs, índices, CHECKs, RLS y deny-all. La release móvil final `versionCode=15`
+que contiene este cliente está instalada en el Galaxy y ya superó la regresión
+de sesión offline/reinicio/reconexión. Eso **no** valida todavía 030: falta
+ejecutar físicamente el CRUD autenticado de QA, comprobar versiones/IDs y
+aislamiento entre sesiones. Las mutaciones de weekly-work siguen siendo online;
+la caché offline es solo de lectura. Por tanto, despliegue de esquema/backend y
+estabilidad general de v15 no equivalen a validación física de planificación.

@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: roadmap
-  verificado: 2026-09-16
+  verificado: 2026-09-17
 -->
 
 # ROADMAP.md — TopoField
@@ -25,8 +25,8 @@ Se resuelve con un solo eje, numerado `F0`–`F9`, y una tabla de equivalencias 
 | **F2** | Base offline fiable (outbox SQLite, sync, idempotencia) | ✅ Cerrada y validada en Galaxy real (29-07-2026) | MEMORIA Fase 2 |
 | **F3** | MVP de auscultación: rondas, puntos de control, lecturas, umbrales, histórico, foto adjunta | ✅ Cerrada y validada en Galaxy real (31-07-2026) | MEMORIA Fase 3 / PLAN Fase 5 punto 7 |
 | **F4** | Seguridad multi-tenant y preparación de release | ✅ Cerrada y **desplegada** (02-08-2026, ver evidencia abajo): auditoría por endpoint, 3 correcciones aplicadas, RLS activo en las 24 tablas, keystore y AAB firmado, D1 y D2 decididas. | MEMORIA Fase 5 |
-| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — E2E offline y exportación autenticada verificados en Galaxy v7; cierre con umbral, jornada observada y entrevistas pendientes** | PLAN Fase 4 (nunca ejecutada) |
-| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación, compartir/guardado local y verificador implementados. El 16-09-2026 un par CSV/XLSX generado read-only desde la misma ronda real de Supabase pasó paridad estructural (`15/15` filas, hoja `Auscultación`, BOM UTF-8); siguen pendientes el guardado SAF desde v13 y la aceptación del formato por el flujo de oficina. | parte de MEMORIA Fase 4 |
+| **F5** | **Reactivación operativa, validación de campo y encaje de producto** | 🔵 **ABIERTA — la release final v15 superó en Galaxy el arranque offline con reinicio, conservación de identidad técnica/Mi jornada y reconexión; siguen abiertos A/B + 029/030 físicos, cierre con umbral autorizado, jornada observada y entrevistas** | PLAN Fase 4 (nunca ejecutada) |
+| **F6** | Entregable Excel/CSV: exportar histórico en el formato que consume el flujo real | 🟡 Contrato, generación, compartir/guardado local y verificador implementados. El 16-09-2026 un par CSV/XLSX generado read-only desde la misma ronda real de Supabase pasó paridad estructural (`15/15` filas, hoja `Auscultación`, BOM UTF-8); siguen pendientes el guardado SAF desde la v15 físicamente validada y la aceptación del formato por el flujo de oficina. | parte de MEMORIA Fase 4 |
 | **F7** | Instrumentos y evidencias de campo | 🟡 **Slice desplegado, validación física pendiente:** testigo fotográfico, fisurómetro digital, potenciómetro, parte de zona y visitas de montaje append-only; memoria visual con filtros, vista ampliada y posición relativa orientativa. La migración 027 está aplicada y sus rutas están publicadas en Render desde `349967a`; falta validar en Galaxy cámara/Storage/reinicio/reconexión. Los pares de convergencia/peralte aún requieren procedimiento confirmado. La cobertura actual está detallada en [`INSTRUMENT_COVERAGE_MATRIX.md`](docs/field/INSTRUMENT_COVERAGE_MATRIX.md). | MEMORIA Fase 6 |
 | **F8** | Piloto con una segunda persona del equipo | ⚪ Pendiente, depende de F5 | PLAN Fase 6 / MEMORIA Fase 5 paso 2 |
 | **F9** | Integraciones con plataformas de cálculo | 🅿️ Aparcada, sin retorno claro hoy | MEMORIA Fase 7 |
@@ -45,7 +45,7 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 3. Verificado con `/api/v1/health`: pasó de `41e3cc3` a `a0ba934` (el mismo commit publicado), confirmando que Render redesplegó automáticamente tras el push.
 4. `tsc` limpio y 49/49 tests backend en verde sobre el `main` ya fusionado, verificado antes de dar el merge por bueno.
 
-**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. PR #22 publicó primero `349967a538a3a5e8f4c51245d02511b7ec6cce69`; la verificación independiente de Stage 2 detectó después falsos positivos semánticos en readiness y PR #23 publicó el hardening mínimo como `d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render auto-desplegó ese SHA (`dep-dalfq3bbc2fs7381i7vg`), `/api/v1/health` devolvió `200` con el mismo commit y `/api/v1/readiness` devolvió `200` con `workExecution.available=true` y `weeklyWork.available=true`; el verificador público terminó correctamente. F5 permanece abierta por la validación física de v13, el cierre con umbral autorizado, el guardado SAF/aceptación de exportaciones, la jornada observada y las entrevistas.
+**Estado actual:** producción tiene todo lo correspondiente a F4, con D1 aplicada y D2 decidida. El 16-09-2026 se cerró la compuerta de esquema: `019`–`026` quedaron registradas en `public.schema_migrations` sin reejecutar sus SQL y `027`–`030` se aplicaron después, una por una, con backup previo y verificación posterior. PR #22 publicó primero `349967a538a3a5e8f4c51245d02511b7ec6cce69`; la verificación independiente de Stage 2 detectó después falsos positivos semánticos en readiness y PR #23 publicó el hardening mínimo como `d3bef6ea0988e44524cd7cde8392906dc936e06f`. Render auto-desplegó ese SHA (`dep-dalfq3bbc2fs7381i7vg`), `/api/v1/health` devolvió `200` con el mismo commit y `/api/v1/readiness` devolvió `200` con `workExecution.available=true` y `weeklyWork.available=true`; el verificador público terminó correctamente. El 17-09-2026 la release móvil final v15 superó la regresión física de sesión offline/reinicio/reconexión que había fallado en v13/v14. F5 permanece abierta porque todavía faltan la matriz física A/B + 029/030, el cierre con umbral autorizado, el guardado SAF/aceptación de exportaciones, la jornada observada y las entrevistas.
 
 ## F5 — Reactivación operativa y validación de uso real en campo (fase actual)
 
@@ -64,9 +64,19 @@ Se detectó y se cerró el mismo día. Registro por trazabilidad, no como pendie
 
 **Puerta de producto de F5.** TopoField solo pasa a F6/F7 cuando existe evidencia de una tarea repetida que la app resuelve mejor que el flujo actual y cuando el flujo mínimo de campo no tiene bloqueos P0/P1 abiertos. Una opinión aislada, una función atractiva o una respuesta generada por IA no cuentan como validación de mercado.
 
-### Estado de F5 (revisado 16-09-2026)
+### Estado de F5 (revisado 17-09-2026)
 
-F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). La última release demostrada como instalada en Galaxy sigue siendo `versionCode=12`; la evidencia física completa de lectura/foto offline, reinicio, reconexión y unicidad corresponde históricamente a la v7, no a la v12. El backend actual ya está desplegado en Render como `d3bef6e` con el readiness 029+030 endurecido en verde. Para probarlo en móvil se preparó `versionCode=13`: TypeScript y `25` suites/`137` tests pasan, la AAB terminó con `BUILD SUCCESSFUL in 11m 5s`, Bundletool validó el bundle y generó una APK universal firmada (`53.598.615` bytes) con `versionCode=13`, firma V2 y el certificado `CN=TopoField Android Release`. `adb devices -l` no detectó ningún dispositivo durante esta ejecución, por lo que v13 **no está instalada ni validada físicamente**. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprobó con una ronda real `15/15` filas en CSV/XLSX generados read-only; lo pendiente es repetir el guardado mediante SAF desde v13 y confirmar que el formato sirve al flujo de oficina.
+F5 sigue abierta y está en **estabilización de campo**. La auditoría, el plan y la evidencia están versionados en `docs/field/`; todavía no existe el informe de una jornada observada ni se cumple el criterio de entrevistas. Expo 56 está alineado (`npx expo install --check` devuelve `Dependencies are up to date`). El backend actual está desplegado en Render como `d3bef6e` con readiness 029+030 endurecido y verificado públicamente. La release móvil candidata vigente es `versionCode=15` desde `HEAD 174d5e4`: TypeScript y `25` suites/`143` tests pasan; la AAB final terminó con `BUILD SUCCESSFUL`, mide `40.173.432` bytes y tiene SHA-256 `09f6fe2e439bb93c553bfe95d32ba42307d39051116955b270d37e47524bfbd5`; Bundletool confirmó paquete `com.ciudadanoinusual.topofield`, `versionCode=15`, `versionName=1.0.0`, minSdk 24 y targetSdk 36. La APK universal firmada mide `53.598.615` bytes, SHA-256 `ac7920c18ef0394e2dc40e8a42bf84a1e0e4328656b4f2914a3457a1732adf25`, y `apksigner` confirmó el certificado de release esperado. `adb install -r` devolvió `Success` sin borrar datos.
+
+La prueba física crítica del 17-09-2026 pasó en el Galaxy `SM-S938B`: tras revalidar la cuenta técnica de topógrafo y preparar `Mi jornada`, se dejó Wi-Fi y datos móviles en `0`, se hizo `force-stop` y se relanzó la app. La ronda `E2E-Galaxy-20260731-Atc` siguió visible desde caché, el perfil conservó `Topógrafo` y `topofield-topografo@topofield.local`, y la UI mostró literalmente `Revalidación temporalmente no disponible: usando la última identidad técnica validada. La sincronización queda pausada hasta revalidar.`; no apareció `Sin sesión`. Al restaurar datos móviles y revalidar, el aviso desapareció y volvió el estado técnico normal. Esta evidencia cierra la regresión concreta que había fallado físicamente en v13 y v14, pero **no cierra Stage 4 completo**: quedan el cambio A/B topógrafo↔supervisor, la secuencia UI de 029 antes/después del ACK y el CRUD físico de 030.
+
+Como evidencia parcial adicional de 029, el backend contiene una única fila `completed` creada durante las pruebas v14 con `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`, `occurred_at=2026-09-17T19:12:32Z` y `created_at=2026-09-17T19:24:38Z`, asociada a la ronda/punto/obra E2E. El desfase temporal y la unicidad de la fila son compatibles con creación offline seguida de sincronización única; no sustituyen la evidencia UI v15 de `Hecho` local antes del ACK y `Recibido servidor` después. El verificador local `npm run verify:export-artifacts -- <ronda.csv> <ronda.xlsx>` ya comprobó `15/15` filas en CSV/XLSX generados read-only; falta repetir el guardado mediante SAF desde v15 y confirmar que el formato sirve al flujo de oficina.
+
+La relectura read-only de la base del 17-09-2026 confirmó además que la ronda
+E2E sigue `active`, el punto `pending`, hay `15` lecturas `draft` y `0`
+umbrales para su combinación punto/instrumento. Por tanto el cierre positivo
+de Stage 5 continúa bloqueado por datos de campo autorizados; no se crea un
+umbral ni se aceptan lecturas para forzar un PASS.
 
 La comprobación local unificada previa a Stage 2 del 16-09-2026 terminó con
 `verify local completed successfully`: backend `139/139`, móvil `25` suites y
@@ -78,7 +88,11 @@ separado: build backend PASS, backend `142/142`, TypeScript móvil PASS, móvil
 `git diff --check` limpio. Estas cifras prueban el árbol local, no el despliegue
 de Render ni una build nueva en el Galaxy.
 
-Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añadió el probe de 030 y el snapshot de despliegue terminó fusionado en `main` como `349967a`; Render sirve ese SHA y readiness exige 029+030. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all. La v13 preparada contiene el cliente de weekly-work, pero falta instalarla y validarla físicamente; la planificación semanal no cierra F5.
+Tras los fixes de sesión de v15 (`c05b7d0`, `14aa286`, `174d5e4`), TypeScript
+móvil volvió a pasar y Jest terminó en `25` suites/`143` tests. Esta es evidencia
+local del código de v15; la evidencia física se registra separadamente arriba.
+
+Los commits `1dec6e9` y `97e70e4` añaden además una planificación semanal editable en Bitácora respaldada por `030_project_weekly_work.sql`. La migración 030 quedó aplicada y verificada en Supabase el 16-09-2026. `b6df031` añadió el probe de 030 y el snapshot de despliegue terminó fusionado en `main` como `349967a`; Render sirve el hardening posterior `d3bef6e` y readiness exige 029+030. La prueba PostgreSQL 17 efímera de 030 pasó reaplicación, UNIQUE/CHECK y RLS deny-all. La v15 instalada contiene el cliente de weekly-work y ya pasó la regresión de sesión offline/reconexión; el CRUD autenticado físico de 030 sigue pendiente y la planificación semanal no cierra F5.
 
 La verificación independiente de Stage 2 del 16-09-2026 encontró un falso
 positivo local en los probes: una policy 029 o un índice 030 con el nombre
@@ -228,9 +242,13 @@ campo.
  locales con recepción del servidor.
 
 La migración 029 quedó aplicada y verificada en Supabase el 16-09-2026. El
-contrato backend correspondiente está desplegado en Render mediante `349967a`
-y readiness lo declara disponible; queda pendiente repetir la comprobación en
-el Galaxy con v13.
+contrato backend correspondiente está desplegado en Render y el hardening
+vigente `d3bef6e` lo declara disponible en readiness. El 17-09-2026 quedó
+registrada una única fila server-side `completed` procedente de una prueba
+offline anterior, con `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`,
+sin duplicado observado. Esto prueba parcialmente contrato/idempotencia; queda
+pendiente repetir en v15 la UI local antes del ACK, el replay tras reinicio, la
+recepción y una segunda fila con un `client_request_id` nuevo.
 
 La migración 029 preparada también incluye índices únicos auxiliares y claves
 foráneas compuestas para mantener la relación `evento -> punto -> ronda ->
@@ -286,10 +304,14 @@ Las migraciones `022_project_membership_access_level.sql`,
 El último despliegue funcional verificado sirve el commit
 `d3bef6ea0988e44524cd7cde8392906dc936e06f`; `/health` devuelve ese SHA y
 `/readiness` devuelve `200` con work-execution 029 y weekly-work 030 disponibles.
-La fuente y la release móvil instalada más reciente están en
-`versionCode=12`, firmada y verificada con el certificado local de release.
-La AAB/APK arm64 quedó comprobada con Gradle y la instalación física devolvió
-`Success`.
+La release móvil instalada más reciente es `versionCode=15` desde
+`174d5e4`, firmada y verificada con el certificado local de release. La AAB
+final (`40.173.432` bytes, SHA-256 `09f6fe2e...24bfbd5`) pasó Bundletool y la
+APK universal (`53.598.615` bytes, SHA-256 `ac7920c1...732adf25`) pasó
+`apksigner`; `adb install -r` devolvió `Success`. En el Galaxy, v15 conservó
+identidad técnica y `Mi jornada` tras arranque en frío sin red y recuperó el
+estado normal tras reconectar/revalidar. Esto no sustituye las pruebas A/B,
+029 UI y 030 que siguen abiertas.
 La release histórica `versionCode=4` se instaló en el Galaxy
 `SM-S938B` (`R5CY21X6FLE`) con `adb install -r`, que devolvió `Success`. La
 consulta supervisora también quedó validada: login real, la única obra QA
@@ -417,7 +439,7 @@ Se mantienen en `MEMORIA.md` §12a, que es su sitio. Resumen de los que solo pue
 
 - **Resuelto (02-08-2026):** D1 aplicada por agente y cubierta con test de regresión; D2 cerrada por decisión de Erick (seguir en Free); `push --force-with-lease` de la reescritura de historial autorizado y ejecutado por Erick, con producción verificada por `/api/v1/health`.
 - **Resuelto (24-08-2026):** el login técnico en el Galaxy dejó de ser un pendiente. Render devolvió `200` para la cuenta técnica con rol `topografo` y el perfil de la release local mostró esa cuenta activa (bitácora de `MEMORIA.md` §12, «Validación externa de login y release local»). Esta línea figuraba como «el único pendiente que frena el trabajo» hasta la revisión del 01-09-2026, contradiciendo lo que ya decía «Estado de F5» en este mismo archivo.
-- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar la comparación estructurada de los archivos exportados. El E2E offline de lectura/foto, reinicio, reconexión y unicidad está comprobado como evidencia histórica en el Galaxy v7; la última release demostrada como instalada es `versionCode=12`, cuyo smoke test no generó nuevos datos remotos. El supervisor y las releases v4/v6 quedan como evidencia histórica.
+- **Abierto — validación pendiente:** repetir con umbrales autorizados el recorrido de cierre del operador y completar el guardado SAF/aceptación de los archivos exportados. La evidencia de lectura/foto offline y unicidad sigue siendo histórica de v7; la release activa v15 sí ha demostrado ya conservación de sesión técnica y `Mi jornada` durante offline + reinicio + reconexión. Faltan A/B, 029 UI/ACK y 030 físicos antes de cerrar Stage 4. El supervisor y las releases anteriores quedan como evidencia histórica cuando corresponda.
 - **Resuelto como política de seguridad; implementación privada pendiente:** mientras `topofield-photos` siga público, **queda prohibido usar fotos sensibles de terceros**. El piloto solo puede usar imágenes autorizadas y no sensibles y no debe compartir URLs de Storage. Antes de admitir material sensible deberá existir una tarea separada, revisada y autorizada, que migre a bucket privado y URLs de lectura firmadas y valide API+móvil. Esta decisión evita aceptar implícitamente el riesgo actual sin ejecutar unilateralmente un cambio de Storage que podría romper URLs existentes.
 - **Abierto, sin urgencia:** capa (3) de `MEMORIA.md` §5, datos de terceros; no se reabre salvo que Erick la traiga.
 

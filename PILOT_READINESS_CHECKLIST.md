@@ -1,20 +1,21 @@
 <!-- doc-status
 estado: vivo
-verificado: 2026-09-16
+verificado: 2026-09-17
 -->
 
 # Checklist de Piloto
 
 El Paso 1 es la fase **F5** de `ROADMAP.md`, la única abierta ahora mismo. No se trata solo de comprobar que todo funciona: hay que registrar cómo se usa. Usa `docs/field/F5_FIELD_OBSERVATION_TEMPLATE_2026-09-12.md` durante la jornada y convierte después los hallazgos en `docs/field/F5_HALLAZGOS_<fecha>.md` siguiendo la plantilla de `UX_RESEARCH_PLAN.md`.
 
-## Estado local automatizado - 16-09-2026
+## Estado técnico y físico - 17-09-2026
 
-Estas casillas solo prueban el árbol local; no equivalen a despliegue ni a
-validación en campo:
+Cada casilla identifica su propia capa de evidencia. Tests locales, deploy,
+runtime remoto y validación física no se convierten unos en otros:
 
 - [x] Backend compila y pasa `142/142` tests tras el hardening semántico de
   readiness de Stage 2.
-- [x] Móvil pasa TypeScript, `25` suites y `137/137` tests; la batería cubre
+- [x] Móvil pasa TypeScript, `25` suites y `143/143` tests en el candidato
+  final v15; la batería cubre
   además los estados de entrega local, conflicto, reintento y backend
   incompatible.
 - [x] Tooling local incluye compuertas pública y autenticada. La pública exige
@@ -51,6 +52,14 @@ validación en campo:
   de `53.598.615` bytes con `versionCode=13`, firma V2 y certificado
   `CN=TopoField Android Release`. **No está instalada:** `adb devices -l`
   devolvió `List of devices attached` sin dispositivos.
+- [x] La release final Android v15 desde `174d5e4` quedó construida,
+  validada y físicamente instalada sin borrar datos. La AAB mide `40.173.432`
+  bytes (SHA-256 `09f6fe2e439bb93c553bfe95d32ba42307d39051116955b270d37e47524bfbd5`);
+  la APK universal mide `53.598.615` bytes (SHA-256
+  `ac7920c18ef0394e2dc40e8a42bf84a1e0e4328656b4f2914a3457a1732adf25`).
+  Bundletool confirmó `versionCode=15`, minSdk 24/targetSdk 36 y `apksigner`
+  confirmó el certificado de release esperado. `adb install -r` devolvió
+  `Success` y `dumpsys` registró la actualización final a las 21:47:54.
 - [x] La APK arm64 v7 quedó instalada históricamente en el Galaxy; `adb install -r`
   devolvió `Success` y `dumpsys package` confirmó `versionCode=7` y
   `lastUpdateTime=2026-09-13 07:39:25`. Se conserva como evidencia de esa
@@ -85,13 +94,30 @@ validación en campo:
   `TOPOFIELD_AUTH_TOKEN is required and is never printed`; no existe esa variable
   en Process/User/Machine ni en el `.env`. No sustituir esta prueba por el guest
   ni crear/resetear credenciales solo para marcar PASS.
+- [x] Repetir en v15 la regresión física de sesión que falló en v13/v14:
+  revalidación online, preparación de `Mi jornada`, Wi-Fi/datos en `0`,
+  `force-stop`, arranque en frío, conservación de la identidad `Topógrafo`
+  y de la jornada cacheada, aviso explícito de revalidación diferida y
+  reconexión/revalidación posterior sin `Sin sesión`.
+- [ ] Completar la matriz A/B en v15: cambiar topógrafo↔supervisor y demostrar
+  aislamiento de caché/outbox y que un retry diferido no resucita la sesión A.
+- [ ] Completar 029 en v15 con evidencia UI pre/post ACK. Existe ya evidencia
+  server-side **parcial** de una prueba anterior: exactamente una fila
+  `completed` con `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`,
+  `occurred_at=2026-09-17T19:12:32Z` y
+  `created_at=2026-09-17T19:24:38Z`, sin duplicado observado. La repetición
+  v15 debe usar un UUID nuevo y terminar con dos filas distintas, nunca
+  sobrescribir la existente.
+- [ ] Completar 030 físicamente en v15. La migración/backend están disponibles,
+  pero el CRUD autenticado real y el aislamiento de sesión aún no se han
+  demostrado en el Galaxy.
 - [x] Ejecutar en el Galaxy el E2E físico de lectura y foto offline con
   reinicio, reconexión y sincronización única; Supabase verificó una lectura y
   un adjunto para el mismo `client_request_id`.
 - [ ] Validar con datos autorizados el parte y el cierre definitivo. La paridad
   estructural CSV/XLSX ya se comprobó read-only con la misma ronda real de
   Supabase: `EXPORT_ARTIFACTS_OK csvRows=15 xlsxRows=15
-  worksheet=Auscultación utf8Bom=true`; falta repetir el guardado desde v13 y
+  worksheet=Auscultación utf8Bom=true`; falta repetir el guardado desde v15 y
   confirmar la aceptación del formato en el flujo de oficina.
 - [x] El Galaxy mostró el diagnóstico seguro del fallo reproducido:
   `HTTP 500`, `ROUND_EXPORT_FAILED` y un código de soporte UUID. La causa del
@@ -99,7 +125,7 @@ validación en campo:
 - [x] Comparar estructuradamente CSV y XLSX de una misma ronda real: la lectura
   read-only de la ronda `db3a59e3-3756-4d95-9890-f026379f33db` produjo
   `15/15` filas y el verificador oficial devolvió `EXPORT_ARTIFACTS_OK`.
-  La descarga/guardado SAF desde v13 y la aceptación de oficina permanecen
+  La descarga/guardado SAF desde v15 y la aceptación de oficina permanecen
   como comprobaciones separadas.
 - [x] El operario puede declarar por punto `Empezar`, `Hecho`, `No realizado`,
   `Repetir` o `Bloqueado`; los resultados no realizados exigen motivo y el
@@ -125,8 +151,9 @@ validación en campo:
   `weekly-work` fallan con `503` controlado si 030 falta y PostgreSQL 17 efímero
   pasó UNIQUE/CHECK/RLS. Render sirve ahora el hardening fusionado como
   `d3bef6ea0988e44524cd7cde8392906dc936e06f` y
-  devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. La build
-  v13 correspondiente está preparada; falta únicamente su validación física.
+  devuelve `/api/v1/readiness = 200` con ambas capabilities `ready`. La v15
+  correspondiente ya está instalada y pasó la regresión de sesión; sigue
+  pendiente el CRUD físico de weekly-work.
 
 ## Paso 1 - Erick usando datos reales en campo
 
@@ -135,9 +162,10 @@ Comprobaciones técnicas:
 - [ ] Para un `topografo`, el alta de estación exige una obra asignada y no
   ofrece enviar `Sin obra`; probarlo en el dispositivo antes de una jornada.
 - [ ] **Confirmar que Supabase "topofield" está activo, no pausado**, antes de salir a campo. El free tier lo pausa solo tras varios días de inactividad (pasó el 02-08-2026); si está pausado, login y toda la app fallan sin que haya ningún bug en el código. Reactivar es gratis y no destructivo, pero tarda 1-2 minutos en levantar.
-- [x] Confirmar que la cuenta tecnica de Erick entra y que la sesión se
-  conserva durante el recorrido offline y tras la reconexión; una revalidación
-  explícita posterior también devolvió la vista operativa del topógrafo.
+- [x] Confirmar que la cuenta técnica entra y que la sesión se conserva durante
+  el arranque offline y tras la reconexión. En v15, la UI conservó
+  `Topógrafo`, `topofield-topografo@topofield.local` y `Mi jornada` tras
+  `force-stop` sin red; la revalidación posterior eliminó el aviso transitorio.
 - [ ] Usar el AAB firmado localmente y guardar al menos dos copias externas del keystore y sus credenciales antes de distribuirlo.
 - [x] Verificar login, una obra autorizada, una foto, una lectura offline y su
   sincronización en el dispositivo objetivo; la consulta remota confirmó una
@@ -148,7 +176,10 @@ Comprobaciones técnicas:
   devolvieron `401` y el contrato público terminó correctamente.
 - [ ] Mantener el backup de Git y no publicar la reescritura de historial sin la autorizacion separada de `push --force`.
 - [ ] Revisar los elementos de outbox en error antes de cerrar una jornada y conservar capturas o identificadores de incidencia si falla una sincronizacion.
-- [ ] Confirmar que la versión instalada contiene el mismo commit que el backend desplegado y que las migraciones de permisos, partes e instrumentos ya fueron aplicadas con autorización.
+- [x] Confirmar que la build móvil instalada corresponde al candidato final que
+  se pretende probar y que el backend desplegado soporta sus contratos. La v15
+  final procede de `174d5e4`; Render sirve `d3bef6e` y readiness confirma
+  029+030. Son reposiciones/capas distintas y no se exige que compartan SHA.
 - [ ] Registrar una captura como testigo fotográfico, una lectura digital y los tres pares del potenciómetro sin cobertura; distinguir guardado local de recibido por servidor.
 - [x] **Política de fotos:** mientras el bucket de la migración 007 siga
   público, quedan prohibidas las fotos sensibles de terceros. El piloto solo

@@ -1,6 +1,6 @@
 <!-- doc-status
 estado: vivo
-  verificado: 2026-09-13
+  verificado: 2026-09-17
 rol: contrato
 -->
 
@@ -111,8 +111,9 @@ crea `monitoring_work_execution_events` con:
 El backend exige que ronda, punto de ronda, punto de control y obra coincidan,
 y aplica el alcance del actor autenticado antes de leer o escribir. Los roles
 de consulta pueden obtener el histórico; solo `admin` y `topografo` pueden
-registrar eventos. La migración no se ha aplicado en Supabase. Además de la
-validación en el modelo, la migración preparada crea claves foráneas
+registrar eventos. La migración 029 quedó aplicada y registrada en Supabase el
+16-09-2026 y el backend que la consume está desplegado. Además de la validación
+en el modelo, la migración crea claves foráneas
 compuestas para impedir que un evento relacione una ronda, un punto y una obra
 diferentes aunque la escritura se haga directamente en PostgreSQL.
 
@@ -152,6 +153,27 @@ el mismo `client_request_id` con el mismo actor, punto, ronda, obra, tipo,
 motivo, notas y `occurred_at` devuelve el evento ya creado. Reutilizar ese UUID
 con un payload o contexto diferente devuelve `409`; no se acepta como replay
 válido un UUID reciclado para otra acción.
+
+### Evidencia server-side parcial del 17-09-2026
+
+Una reconsulta read-only del 17-09-2026 contra la base confirmó exactamente una
+fila en `monitoring_work_execution_events` para el punto E2E:
+
+- `event_type=completed`;
+- `occurred_at=2026-09-17T19:12:32.340Z`;
+- `created_at=2026-09-17T19:24:38.076Z`;
+- `client_request_id=7a113eb4-fac1-47e7-9be1-b123ca092cfc`;
+- `round_id=db3a59e3-3756-4d95-9890-f026379f33db`;
+- `round_point_id=ff4daa4c-63ef-49a3-bcdc-496f85c4cf25`;
+- `project_id=41fad7f5-23c7-4746-9213-ef4de8ab0cf9`.
+
+La separación de aproximadamente doce minutos entre `occurred_at` y
+`created_at`, junto con la ausencia de una segunda fila para ese
+`client_request_id`, es evidencia compatible con creación offline y entrega
+posterior única. Esta evidencia prueba parcialmente el contrato server-side y
+la idempotencia, pero **no sustituye** la secuencia UI requerida en v15:
+`Hecho` local antes del ACK, persistencia tras reinicio, `Recibido servidor`
+solo después del ACK y una segunda fila distinta usando un UUID nuevo.
 
 El parte de zona aplica la misma precaución de idempotencia a nivel de
 interfaz: después de guardarlo o encolarlo, el botón queda bloqueado hasta que
@@ -197,9 +219,10 @@ compuestas, índices y RLS/política) y publica dos señales distintas:
 
 - `GET /api/v1/health`: liveness del proceso. No garantiza compatibilidad de
   esquema.
-- `GET /api/v1/readiness`: readiness de despliegue. Devuelve `200` únicamente
-  cuando la capacidad 029 está disponible; devuelve `503` con estado
-  `not_ready` cuando falta la migración o el esquema está incompleto.
+- `GET /api/v1/readiness`: readiness de despliegue. En el backend vigente
+  devuelve `200` únicamente cuando todas las capacidades requeridas están
+  disponibles, incluidas 029 y 030; devuelve `503` con estado `not_ready`
+  si alguna falta o su esquema está incompleto.
 
 `apps/backend/render.yaml` usa `/api/v1/readiness` como `healthCheckPath`, por
 lo que una instancia incompatible no debe superar la compuerta de despliegue.
@@ -231,7 +254,7 @@ registraron sin reejecutar SQL y 027, 028, 029 y 030 se aplicaron después, una
 por una, con backup/prechecks y verificación posterior. La evidencia vigente
 está en `docs/ai/RECONCILIACION-MIGRACIONES.md` y `MEMORIA.md` §12.
 
-## Runbook de despliegue y rollback — ejecutado hasta backend; físico pendiente
+## Runbook de despliegue y rollback — backend completo; físico v15 parcial
 
 Los pasos siguientes siguen siendo la receta de referencia. El rollout remoto
 de esquema/backend se ejecutó el 16-09-2026 con la autorización ya registrada;
@@ -270,15 +293,24 @@ compuertas y no se presuponen superadas.
    mismo `client_request_id` y rechazo `409` si ese UUID se reutiliza con otro
    payload. Verificar permisos: supervisor lectura; admin/topógrafo escritura
    según membresía.
-10. **Build móvil.** La v12 instalada antes de esta misión es evidencia
-    histórica y no demuestra estos cambios. La `versionCode=13` que contiene el
-    cliente actual ya está preparada y firmada, pero no instalada; debe usarse
-    para la validación física sin desinstalar datos locales por defecto.
+10. **Build móvil.** **Completado para la candidata actual.** La v15 final desde
+    `174d5e4` se construyó después de todos los fixes de sesión. Bundletool
+    confirmó `versionCode=15`, minSdk 24/targetSdk 36; la APK universal pasó
+    `apksigner` con el certificado de release esperado y `adb install -r`
+    devolvió `Success` preservando datos. Las v12/v13/v14 quedan como evidencia
+    histórica de sus respectivas ejecuciones.
 11. **E2E offline en Galaxy.** Registrar una acción sin red, confirmar que la
     UI indica estado local y nunca recepción, reiniciar si forma parte del caso,
     reconectar, observar replay con el mismo UUID y confirmar finalmente el
     histórico recibido. Incluir al menos un caso terminal (backend antiguo/
     conflicto) y uno reintentable (red/`5xx`).
+
+    **Estado 17-09-2026:** la regresión de **sesión** offline/reinicio/reconexión
+    ya pasó en v15: identidad técnica y `Mi jornada` sobrevivieron al arranque
+    en frío sin red y la UI mantuvo el aviso de revalidación diferida hasta
+    recuperar conectividad. La secuencia específica de entrega 029 descrita en
+    este paso sigue pendiente en v15; la fila server-side documentada arriba es
+    evidencia parcial de una ejecución anterior, no un sustituto de esa UI.
 12. **Rollback.** Si falla antes del backend, detener el rollout. Si 029 ya está
     aplicada y falla el backend, el rollback preferido es volver al backend
     anterior y **dejar la tabla aditiva 029 intacta**, preservando eventos. La
@@ -292,8 +324,10 @@ compuertas y no se presuponen superadas.
 El 13-09-2026 Erick autorizó la secuencia de despliegue por compuertas. El
 16-09-2026 se completaron backup, reconciliación 019–026, aplicación individual
 027 -> 028 -> 029 -> 030, publicación y verificación pública del backend. La
-Stage 2 posterior revalidó el ledger en solo lectura y endureció localmente los
-probes para rechazar drift semántico aunque se conserven nombres de índices o
-políticas; ese hardening posterior no debe confundirse con un nuevo deploy
-hasta que exista evidencia de publicación. Siguen pendientes el contrato
-autenticado legítimo y el E2E físico con v13 en Galaxy.
+Stage 2 posterior revalidó el ledger en solo lectura y endureció los probes para
+rechazar drift semántico; ese hardening quedó publicado como
+`d3bef6ea0988e44524cd7cde8392906dc936e06f` y Render lo sirve con readiness
+029+030. El verificador remoto de shell con una cuenta técnica sigue bloqueado
+por ausencia de `TOPOFIELD_AUTH_TOKEN` y no se sustituye por guest. En Galaxy,
+v15 ya pasó la regresión de sesión offline/reinicio/reconexión; siguen
+pendientes la evidencia UI/ACK completa de 029 y la matriz A/B asociada.

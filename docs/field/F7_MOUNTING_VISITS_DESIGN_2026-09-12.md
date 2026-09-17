@@ -1,7 +1,7 @@
 <!-- doc-status
 estado: vivo
 rol: field-design
-verificado: 2026-09-13
+verificado: 2026-09-17
 -->
 
 # F7: Visitas De Montaje
@@ -17,7 +17,7 @@ referencias y fotos cercanas de prismas sin sobrescribir datos anteriores.
 ## Contrato local
 
 - Una visita pertenece a una estación y el servidor deriva su `project_id` de
-  esa estación. La migración preparada añade una clave foránea compuesta para
+  esa estación. La migración aplicada añade una clave foránea compuesta para
   que la base también rechace una pareja estación/obra incoherente.
 - Una visita tiene `visitedAt`, `status` (`draft`, `completed`, `blocked`),
   notas, resumen de cambios, autor y `clientRequestId` único.
@@ -79,11 +79,15 @@ creación incompleta se presente como trabajo ya realizado.
 
 ## Estado Y Verificación
 
-Implementado localmente en `codex/f5-field-stability` mediante `d270da3`,
-`a83beeb`, `8150c68`, `ee80825` y `5f92a66`; la migración PostgreSQL no está
-aplicada a Supabase y el endpoint no está desplegado. Las regresiones cubren
-validación, ruta exacta de Storage, roles, scope por `stations.project_id`,
-caché por sesión, sincronización ordenada de evidencia y aislamiento de
-borradores de lectura. La aceptación de campo requiere crear una visita,
-cerrar/reabrir la app sin red, añadir una foto real, reconectar y comprobar
-que la segunda visita no altera la primera ni duplica la evidencia.
+Implementado mediante `d270da3`, `a83beeb`, `8150c68`, `ee80825` y
+`5f92a66`. La migración PostgreSQL 027 quedó aplicada y registrada en Supabase
+el 16-09-2026 tras backup/prechecks; el backend con estas rutas fue publicado en
+PR #22 y Render sirve el hardening posterior `d3bef6e` con readiness 029+030
+verde. Las regresiones cubren validación, ruta exacta de Storage, roles, scope
+por `stations.project_id`, caché por sesión, sincronización ordenada de
+evidencia y aislamiento de borradores de lectura. **F7 no está físicamente
+cerrada:** la aceptación de campo aún requiere crear una visita, cerrar/reabrir
+la app sin red, añadir una foto real autorizada/no sensible, reconectar y
+comprobar que la segunda visita no altera la primera ni duplica la evidencia.
+Mientras `topofield-photos` siga público, no se usarán imágenes sensibles de
+terceros y una prueba solo con galería no se presentará como PASS de cámara.
